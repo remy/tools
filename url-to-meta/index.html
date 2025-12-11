@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL to Meta</title>
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #ddd;
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --danger-color: #dc3545;
+            --danger-hover: #a71d2a;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #1e1e1e;
+                --card-bg: #2d2d2d;
+                --text-color: #e0e0e0;
+                --border-color: #444;
+                --primary-color: #4da3ff;
+                --primary-hover: #0069d9;
+            }
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            color: white;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        pre {
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .output-container {
+            margin-top: 30px;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary-color);
+            font-size: 0.8em;
+            padding: 5px 10px;
+        }
+
+        #status {
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>URL to Meta (Gemini 2.0 Flash Lite)</h1>
+
+    <div class="form-group">
+        <label for="apiKey">Gemini API Key</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="password" id="apiKey" placeholder="Enter your Gemini API Key">
+            <button id="saveKeyBtn" class="btn-primary">Save</button>
+            <button id="clearKeyBtn" class="btn-danger">Clear</button>
+        </div>
+        <small id="keyStatus"></small>
+    </div>
+
+    <div class="form-group">
+        <label for="urls">URLs (one per line)</label>
+        <textarea id="urls" placeholder="https://example.com&#10;https://another-example.com"></textarea>
+    </div>
+
+    <div class="button-group">
+        <button id="processBtn" class="btn-primary">Process URLs</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="output-container hidden" id="outputContainer">
+        <label>Results</label>
+        <button id="copyBtn" class="copy-btn">Copy JSON</button>
+        <pre id="output"></pre>
+    </div>
+</div>
+
+<script>
+    const apiKeyInput = document.getElementById('apiKey');
+    const saveKeyBtn = document.getElementById('saveKeyBtn');
+    const clearKeyBtn = document.getElementById('clearKeyBtn');
+    const keyStatus = document.getElementById('keyStatus');
+    const urlsInput = document.getElementById('urls');
+    const processBtn = document.getElementById('processBtn');
+    const outputContainer = document.getElementById('outputContainer');
+    const outputPre = document.getElementById('output');
+    const copyBtn = document.getElementById('copyBtn');
+    const statusDiv = document.getElementById('status');
+
+    const STORAGE_KEY = 'gemini_api_key';
+
+    // Load API Key
+    function loadKey() {
+        const key = localStorage.getItem(STORAGE_KEY);
+        if (key) {
+            apiKeyInput.value = key;
+            keyStatus.textContent = 'Key saved in local storage.';
+            keyStatus.style.color = 'green';
+        } else {
+            keyStatus.textContent = 'No key saved.';
+            keyStatus.style.color = '#666';
+        }
+    }
+
+    // Save API Key
+    saveKeyBtn.addEventListener('click', () => {
+        const key = apiKeyInput.value.trim();
+        if (key) {
+            localStorage.setItem(STORAGE_KEY, key);
+            loadKey();
+            alert('API Key saved!');
+        } else {
+            alert('Please enter a key.');
+        }
+    });
+
+    // Clear API Key
+    clearKeyBtn.addEventListener('click', () => {
+        localStorage.removeItem(STORAGE_KEY);
+        apiKeyInput.value = '';
+        loadKey();
+        alert('API Key cleared!');
+    });
+
+    // Copy Results
+    copyBtn.addEventListener('click', () => {
+        const text = outputPre.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => copyBtn.textContent = originalText, 2000);
+        });
+    });
+
+    // Process URLs
+    processBtn.addEventListener('click', async () => {
+        const key = localStorage.getItem(STORAGE_KEY) || apiKeyInput.value.trim();
+        if (!key) {
+            alert('Please provide a Gemini API Key.');
+            return;
+        }
+
+        const rawUrls = urlsInput.value.trim().split('\n');
+        const urls = rawUrls.map(u => u.trim()).filter(u => u.length > 0);
+
+        if (urls.length === 0) {
+            alert('Please enter at least one URL.');
+            return;
+        }
+
+        processBtn.disabled = true;
+        processBtn.textContent = 'Processing...';
+        statusDiv.textContent = `Processing ${urls.length} URLs...`;
+        outputContainer.classList.add('hidden');
+        outputPre.textContent = '';
+
+        const results = [];
+
+        try {
+            // Sequential processing to avoid rate limits
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
+                statusDiv.textContent = `Processing ${i + 1} of ${urls.length}: ${url}`;
+
+                // Add a small delay between requests if needed, but sequential await is usually enough
+                const meta = await fetchMeta(url, key);
+                results.push(meta);
+            }
+
+            outputPre.textContent = JSON.stringify(results, null, 2);
+            outputContainer.classList.remove('hidden');
+            statusDiv.textContent = 'Done!';
+        } catch (error) {
+            console.error(error);
+            statusDiv.textContent = 'Error: ' + error.message;
+        } finally {
+            processBtn.disabled = false;
+            processBtn.textContent = 'Process URLs';
+        }
+    });
+
+    async function fetchMeta(url, apiKey) {
+        // Using Gemini 2.0 Flash Lite Preview as a robust default
+        const model = 'gemini-2.0-flash-lite-preview-02-05';
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const prompt = `
+            Extract the following metadata from this URL: ${url}
+
+            1. Date (publication date, YYYY-MM-DD if possible)
+            2. Title
+            3. Author
+            4. URL (return the one provided: ${url})
+
+            Use the Google Search tool to find this information if you cannot access the page directly.
+
+            Return ONLY a JSON object with these keys: "date", "title", "author", "url".
+            If a field is not found, set it to null.
+        `;
+
+        const requestBody = {
+            contents: [{
+                parts: [{ text: prompt }]
+            }],
+            tools: [{
+                google_search: {}
+            }],
+            generationConfig: {
+                responseMimeType: "application/json"
+            }
+        };
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Gemini API Error", errorData);
+                const msg = errorData.error?.message || 'API request failed';
+                return { date: null, title: null, author: null, url: url, error: `API Error: ${msg}` };
+            }
+
+            const data = await response.json();
+
+            // Parse the result
+            if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts) {
+                const textPart = data.candidates[0].content.parts.find(p => p.text);
+                if (textPart) {
+                    try {
+                        return JSON.parse(textPart.text);
+                    } catch (e) {
+                        console.error("Failed to parse JSON response for URL: " + url, textPart.text);
+                        // Fallback
+                        return { date: null, title: null, author: null, url: url, error: "JSON Parse Error" };
+                    }
+                }
+            }
+            return { date: null, title: null, author: null, url: url, error: "No content generated" };
+
+        } catch (error) {
+            console.error("Error fetching meta for " + url, error);
+            return { date: null, title: null, author: null, url: url, error: error.message };
+        }
+    }
+
+    // Initialize
+    loadKey();
+
+</script>
+
+</body>
+</html>
