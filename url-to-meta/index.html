@@ -143,7 +143,7 @@
             font-size: 0.8em;
             padding: 5px 10px;
         }
-
+        
         #status {
             margin-top: 10px;
             font-style: italic;
@@ -157,7 +157,7 @@
 <body>
 
 <div class="container">
-    <h1>URL to Meta (Gemini 2.0 Flash Lite)</h1>
+    <h1>URL to Meta (Gemini 2.5 Flash Lite)</h1>
 
     <div class="form-group">
         <label for="apiKey">Gemini API Key</label>
@@ -273,12 +273,12 @@
             for (let i = 0; i < urls.length; i++) {
                 const url = urls[i];
                 statusDiv.textContent = `Processing ${i + 1} of ${urls.length}: ${url}`;
-
+                
                 // Add a small delay between requests if needed, but sequential await is usually enough
                 const meta = await fetchMeta(url, key);
                 results.push(meta);
             }
-
+            
             outputPre.textContent = JSON.stringify(results, null, 2);
             outputContainer.classList.remove('hidden');
             statusDiv.textContent = 'Done!';
@@ -292,20 +292,20 @@
     });
 
     async function fetchMeta(url, apiKey) {
-        // Using Gemini 2.0 Flash Lite Preview as a robust default
-        const model = 'gemini-2.0-flash-lite-preview-02-05';
+        // Using Gemini 2.5 Flash Lite as requested
+        const model = 'gemini-2.5-flash-lite';
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
         const prompt = `
             Extract the following metadata from this URL: ${url}
-
+            
             1. Date (publication date, YYYY-MM-DD if possible)
             2. Title
             3. Author
             4. URL (return the one provided: ${url})
 
             Use the Google Search tool to find this information if you cannot access the page directly.
-
+            
             Return ONLY a JSON object with these keys: "date", "title", "author", "url".
             If a field is not found, set it to null.
         `;
@@ -339,13 +339,27 @@
             }
 
             const data = await response.json();
-
+            
             // Parse the result
             if (data.candidates && data.candidates[0].content && data.candidates[0].content.parts) {
-                const textPart = data.candidates[0].content.parts.find(p => p.text);
+                // Try to find the last part with text, as tool use might precede the final answer
+                const parts = data.candidates[0].content.parts;
+                let textPart = null;
+                
+                // Search backwards for text
+                for (let i = parts.length - 1; i >= 0; i--) {
+                    if (parts[i].text) {
+                        textPart = parts[i];
+                        break;
+                    }
+                }
+
                 if (textPart) {
                     try {
-                        return JSON.parse(textPart.text);
+                        let jsonText = textPart.text;
+                        // Remove markdown code blocks if present
+                        jsonText = jsonText.replace(/```json\n|\n```/g, '').replace(/```/g, '').trim();
+                        return JSON.parse(jsonText);
                     } catch (e) {
                         console.error("Failed to parse JSON response for URL: " + url, textPart.text);
                         // Fallback
