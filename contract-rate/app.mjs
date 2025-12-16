@@ -34,6 +34,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Helper Functions ---
 
+  function getSelectedWorkingDays() {
+    return Array.from(
+      document.querySelectorAll('input[name="workingDay"]:checked')
+    ).map((cb) => parseInt(cb.value));
+  }
+
+  function getVatStatus() {
+    const checkedVat = document.querySelector(
+      'input[name="vatStatus"]:checked'
+    );
+    return checkedVat ? checkedVat.value : 'exclusive';
+  }
+
+  function getFormState() {
+    return {
+      startDate: document.getElementById('startDate').value,
+      endDate: document.getElementById('endDate').value,
+      contractRate: document.getElementById('contractRate').value,
+      daysOff: daysOffCountInput?.value ?? '0',
+      vatStatus: getVatStatus(),
+      workingDays: getSelectedWorkingDays(),
+    };
+  }
+
+  function updateUrlFromForm() {
+    const state = getFormState();
+    const params = new URLSearchParams();
+
+    if (state.startDate) params.set('startDate', state.startDate);
+    if (state.endDate) params.set('endDate', state.endDate);
+    if (state.contractRate) params.set('contractRate', state.contractRate);
+    if (state.daysOff) params.set('daysOff', state.daysOff);
+    if (state.vatStatus) params.set('vatStatus', state.vatStatus);
+    if (state.workingDays.length > 0) {
+      params.set('workingDays', state.workingDays.join(','));
+    }
+
+    const newQuery = params.toString();
+    const newUrl = newQuery
+      ? `${window.location.pathname}?${newQuery}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }
+
+  function applyUrlStateToForm() {
+    const params = new URLSearchParams(window.location.search);
+
+    const startDateValue = params.get('startDate');
+    if (startDateValue) {
+      document.getElementById('startDate').value = startDateValue;
+    }
+
+    const endDateValue = params.get('endDate');
+    if (endDateValue) {
+      document.getElementById('endDate').value = endDateValue;
+    }
+
+    const contractRateValue = params.get('contractRate');
+    if (contractRateValue) {
+      document.getElementById('contractRate').value = contractRateValue;
+    }
+
+    const daysOffValue = params.get('daysOff');
+    if (daysOffValue !== null) {
+      daysOffCountInput.value = daysOffValue;
+    }
+
+    const vatStatusValue = params.get('vatStatus');
+    if (vatStatusValue === 'exclusive' || vatStatusValue === 'inclusive') {
+      const target = document.querySelector(
+        `input[name="vatStatus"][value="${vatStatusValue}"]`
+      );
+      if (target) target.checked = true;
+    }
+
+    if (params.has('workingDays')) {
+      const workingDaysRaw = params.get('workingDays') || '';
+      const workingDayValues = workingDaysRaw
+        .split(',')
+        .map((v) => parseInt(v.trim(), 10))
+        .filter((num) => !Number.isNaN(num));
+
+      document.querySelectorAll('input[name="workingDay"]').forEach((cb) => {
+        cb.checked = workingDayValues.includes(parseInt(cb.value, 10));
+      });
+    }
+  }
+
   /**
    * Formats a number as a currency string.
    * @param {number} amount
@@ -79,14 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let contractRate = parseFloat(
       document.getElementById('contractRate').value
     );
-    const vatStatus = document.querySelector(
-      'input[name="vatStatus"]:checked'
-    ).value;
+    const vatStatus = getVatStatus();
 
     // Get the selected working days
-    const selectedWorkingDays = Array.from(
-      document.querySelectorAll('input[name="workingDay"]:checked')
-    ).map((cb) => parseInt(cb.value));
+    const selectedWorkingDays = getSelectedWorkingDays();
 
     // --- Graceful Error/Validation Check (Swallowed Errors) ---
     if (
@@ -161,11 +245,26 @@ document.addEventListener('DOMContentLoaded', () => {
       daysOffCount.toString();
     document.getElementById('resultDailyRate').textContent =
       formatCurrency(effectiveDailyRate);
+
+    // Sync URL to current form values after a successful calculation
+    updateUrlFromForm();
   }
 
   // --- Initialization and Event Wiring ---
 
   // Attach 'input' or 'change' listener to all relevant fields for live calculation
+  function handleInputChange(event) {
+    // For radio buttons, ensure change is captured even when clicking labels
+    if (event && event.target && event.target.name === 'vatStatus') {
+      updateUrlFromForm();
+      calculate();
+      return;
+    }
+
+    updateUrlFromForm();
+    calculate();
+  }
+
   inputElements.forEach((element) => {
     // Use 'input' for text/date fields, 'change' for radios/checkboxes
     const eventType =
@@ -174,11 +273,14 @@ document.addEventListener('DOMContentLoaded', () => {
       element.type === 'date'
         ? 'input'
         : 'change';
-    element.addEventListener(eventType, calculate);
+    element.addEventListener(eventType, handleInputChange);
   });
 
   // Prevent default form submission entirely, as we are using live calculation
   form.addEventListener('submit', (e) => e.preventDefault());
+
+  // Prefill form from URL (if any) before initial calculation
+  applyUrlStateToForm();
 
   // Run calculation on load (will initialize results/error message based on initial state)
   calculate();
