@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Rate Calculator</title>
+    <link rel="stylesheet" href="./style.css">
+  </head>
+
+  <body>
+
+    <div class="container">
+      <form id="rateCalculatorForm">
+
+        <div class="input-group">
+          <label for="startDate">Start Date:</label>
+          <input type="date" id="startDate" required>
+        </div>
+        <div class="input-group">
+          <label for="endDate">End Date:</label>
+          <input type="date" id="endDate" required>
+        </div>
+
+        <fieldset class="input-group working-days-checkboxes">
+          <legend id="workingDaysLegend">Select Working Days:</legend>
+          <div role="group" aria-labelledby="workingDaysLegend">
+            <input type="checkbox" id="mon" name="workingDay" value="1"><label for="mon">Mon</label>
+            <input type="checkbox" id="tue" name="workingDay" value="2" checked><label for="tue">Tue</label>
+            <input type="checkbox" id="wed" name="workingDay" value="3" checked><label for="wed">Wed</label>
+            <input type="checkbox" id="thu" name="workingDay" value="4" checked><label for="thu">Thu</label>
+            <input checked type="checkbox" id="fri" name="workingDay" value="5"><label for="fri">Fri</label>
+            <input type="checkbox" id="sat" name="workingDay" value="6"><label for="sat">Sat</label>
+            <input type="checkbox" id="sun" name="workingDay" value="0"><label for="sun">Sun</label>
+          </div>
+        </fieldset>
+
+        <div class="input-group">
+          <label for="contractRate">Contract Rate (£):</label>
+          <input type="number" id="contractRate" step="0.01" min="0" required>
+        </div>
+
+        <fieldset class="input-group vat">
+          <legend id="vatStatusLegend">VAT Status (20%):</legend>
+          <div role="radiogroup" aria-labelledby="vatStatusLegend">
+            <input type="radio" id="vatExcl" name="vatStatus" value="exclusive" checked>
+            <label for="vatExcl">Excludes VAT</label>
+            <input type="radio" id="vatIncl" name="vatStatus" value="inclusive">
+            <label for="vatIncl">Includes VAT</label>
+          </div>
+        </fieldset>
+
+        <div class="input-group">
+          <label for="daysOffCount">Days Off:</label>
+          <input type="number" id="daysOffCount" min="0" step="1" value="0">
+        </div>
+
+        <button type="submit" class="calculate-button">Calculate</button>
+      </form>
+
+      <div id="error-message" class="error-message" role="alert" aria-live="assertive" style="display:none;"></div>
+
+      <div id="results" class="results-box" style="display:none;" aria-live="polite">
+        <h2>Results:</h2>
+        <p class="result-row"><span class="label">Total Contract Value (Excl. VAT):</span> <span class="value"
+            id="resultRate">£0.00</span></p>
+        <p class="result-row"><span class="label">Total Calculated Working Days:</span> <span class="value"
+            id="resultTotalDays">0</span></p>
+        <p class="result-row"><span class="label">Total Days Off Subtracted:</span> <span class="value"
+            id="resultDaysOff">0</span></p>
+        <p class="result-row daily-rate"><span class="label">Effective Daily Rate (Excl. VAT):</span> <span
+            class="value" id="resultDailyRate">£0.00</span>
+        </p>
+      </div>
+    </div>
+
+    <script src="./app.mjs"></script>
+  </body>
+
+</html>
