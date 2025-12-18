@@ -1,14 +1,14 @@
 {
   "contract-rate": {
-    "category": "Uncategorized",
+    "category": "Work",
     "title": "Contract Rate Calculator"
   },
   "countdown-numbers": {
-    "category": "Uncategorized",
-    "title": "Countdown: The Full Experience"
+    "category": "Game",
+    "title": "Countdown: The Number Experience"
   },
   "url-to-meta": {
-    "category": "Uncategorized",
+    "category": "Web",
     "title": "URL to Meta"
   }
 }
