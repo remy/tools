@@ -90,7 +90,7 @@ def generate_index_html(projects):
         li { margin-bottom: 12px; }
         a { text-decoration: none; color: #0366d6; font-weight: 600; font-size: 1.1em; }
         a:hover { text-decoration: underline; }
-        .project-path { font-size: 0.85em; color: #666; margin-left: 10px; font-weight: normal; }
+        .project-path { display: none; font-size: 0.85em; color: #666; margin-left: 10px; font-weight: normal; }
     </style>
 </head>
 <body>

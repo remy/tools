@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Countdown: The Full Experience</title>
+    <title>Countdown: The Number Experience</title>
     <style>
       :root {
         --blue: #0a4da2;
@@ -269,6 +269,8 @@
       let gameReady = false;
       let timerRunning = false;
       let tumblerTimeout = null;
+      let lastSolutionSteps = [];
+      let lastSolutionTarget = null;
       const countdownAudio = document.getElementById('countdown-audio');
       const startBtn = document.getElementById('start-clock-btn');
 
@@ -374,7 +376,9 @@
         clearTimeout(tumblerTimeout);
         document.body.classList.remove('timeout-bg');
         document.getElementById('progress').style.width = '0%';
-        document.getElementById('solution-text').style.display = 'none';
+        const solBox = document.getElementById('solution-text');
+        solBox.style.display = 'none';
+        solBox.innerText = '';
         timerRunning = false;
         if (gameReady) {
           setStartButton(true, 'START 30s CLOCK');
@@ -390,11 +394,11 @@
 
       // --- SOLVER & GENERATOR LOGIC ---
       function generateSolvableTarget(nums) {
-        const possible = new Set();
+        const possible = [];
         const seen = new Set();
 
         function key(arr) {
-          return arr.slice().sort((a, b) => a - b).join(',');
+          return arr.map(n => n.v).slice().sort((a, b) => a - b).join(',');
         }
 
         function search(arr) {
@@ -403,8 +407,8 @@
           seen.add(k);
 
           if (arr.length === 1) {
-            const v = arr[0];
-            if (v >= 100 && v <= 999 && Number.isInteger(v)) possible.add(v);
+            const n = arr[0];
+            if (n.v >= 100 && n.v <= 999 && Number.isInteger(n.v)) possible.push(n);
             return;
           }
 
@@ -414,39 +418,58 @@
               const a = arr[i], b = arr[j];
               const rest = arr.filter((_, idx) => idx !== i && idx !== j);
               const candidates = [
-                { v: a + b },
-                { v: a - b },
-                { v: a * b },
-                b !== 0 ? { v: a / b } : null
+                { v: a.v + b.v, sym: '+' },
+                { v: a.v - b.v, sym: '-' },
+                { v: a.v * b.v, sym: '×' },
+                b.v !== 0 ? { v: a.v / b.v, sym: '÷' } : null
               ].filter(Boolean);
 
               for (const c of candidates) {
                 if (c.v > 0 && Number.isInteger(c.v)) {
-                  search([...rest, c.v]);
+                  const arrow = (a.steps.length || b.steps.length) ? '⇒ ' : '';
+                  const step = `${arrow}${a.v} ${c.sym} ${b.v} = ${c.v}`;
+                  const next = { v: c.v, used: a.used + b.used, steps: [...a.steps, ...b.steps, step] };
+                  search([...rest, next]);
                 }
               }
             }
           }
         }
 
-        search(nums);
-        const pool = Array.from(possible);
-        if (!pool.length) return Math.floor(100 + Math.random() * 900);
-        return pool[Math.floor(Math.random() * pool.length)];
+        const start = nums.map(n => ({ v: n, used: 1, steps: [] }));
+        search(start);
+
+        if (!possible.length) {
+          lastSolutionSteps = [];
+          lastSolutionTarget = null;
+          return Math.floor(100 + Math.random() * 900);
+        }
+
+        const maxUsed = Math.max(...possible.map(p => p.used || 0));
+        const bestPool = possible.filter(p => p.used === maxUsed);
+        const chosen = bestPool[Math.floor(Math.random() * bestPool.length)];
+        lastSolutionSteps = chosen.steps;
+        lastSolutionTarget = chosen.v;
+        return chosen.v;
       }
 
       function revealSol() {
         const box = document.getElementById('solution-text');
         box.style.display = 'block';
         box.innerText = "Solving...";
-        const res = solve(currentNums, target);
-        if (res) {
-          const stepsText = res.steps.length
-            ? res.steps.join('\n')
-            : `Use ${res.v} directly`;
-          box.innerText = `SOLUTION:\n${stepsText}\nReached ${res.v}`;
+        if (lastSolutionTarget === target && lastSolutionSteps.length) {
+          const stepsText = lastSolutionSteps.join('\n');
+          box.innerText = `SOLUTION:\n${stepsText}\nReached ${lastSolutionTarget}`;
         } else {
-          box.innerText = "Stumped!";
+          const res = solve(currentNums, target);
+          if (res) {
+            const stepsText = res.steps.length
+              ? res.steps.join('\n')
+              : `Use ${res.v} directly`;
+            box.innerText = `SOLUTION:\n${stepsText}\nReached ${res.v}`;
+          } else {
+            box.innerText = "Stumped!";
+          }
         }
       }
 
