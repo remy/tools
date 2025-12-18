@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Countdown: The Full Experience</title>
+    <style>
+      :root {
+        --blue: #0a4da2;
+        --gold: #ffcc00;
+        --dark: #0f0f12;
+        --tile-front: #063970;
+        --tile-back: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, system-ui, sans-serif;
+        background-color: var(--dark);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        overflow: hidden;
+        transition: background-color 0.5s ease;
+      }
+
+      /* Time Out Background Effect */
+      body.timeout-bg {
+        background-color: #4a0000;
+      }
+
+      .bg-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, transparent 20%, rgba(232, 65, 24, 0.4) 100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.5s;
+        z-index: -1;
+      }
+
+      body.timeout-bg .bg-overlay {
+        opacity: 1;
+        animation: pulse 1s infinite alternate;
+      }
+
+      @keyframes pulse {
+        from {
+          opacity: 0.3;
+        }
+
+        to {
+          opacity: 0.8;
+        }
+      }
+
+      .app-container {
+        width: 100%;
+        max-width: 450px;
+        padding: 20px;
+        z-index: 10;
+      }
+
+      /* Mechanical Tumbler Target */
+      .target-display {
+        background: #000;
+        border: 4px solid #333;
+        border-radius: 12px;
+        height: 120px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 30px;
+        overflow: hidden;
+      }
+
+      .digit-slot {
+        width: 60px;
+        height: 90px;
+        background: #111;
+        border-radius: 6px;
+        position: relative;
+        font-size: 4rem;
+        font-weight: 900;
+        color: var(--gold);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .digit-slot.dimmed {
+        opacity: 0.2;
+      }
+
+      /* 3D Card Flips */
+      .tiles-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .card-container {
+        perspective: 1000px;
+        aspect-ratio: 1 / 1.1;
+      }
+
+      .card-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        text-align: center;
+        transition: transform 0.6s;
+        transform-style: preserve-3d;
+        cursor: pointer;
+      }
+
+      .card-inner.flipped {
+        transform: rotateY(180deg);
+      }
+
+      .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden;
+        border-radius: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2rem;
+        font-weight: 900;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      }
+
+      .card-front {
+        background: var(--tile-front);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .card-back {
+        background: var(--tile-back);
+        color: var(--blue);
+        transform: rotateY(180deg);
+      }
+
+      /* Progress & Controls */
+      .timer-wrap {
+        width: 100%;
+        height: 10px;
+        background: #222;
+        border-radius: 5px;
+        margin-bottom: 25px;
+        overflow: hidden;
+      }
+
+      #progress {
+        height: 100%;
+        width: 0%;
+        background: var(--gold);
+        transition: width 1s linear;
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+      }
+
+      button,
+      select {
+        flex: 1;
+        padding: 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .btn-gold {
+        background: var(--gold);
+        color: #000;
+      }
+
+      .btn-blue {
+        background: var(--blue);
+        color: white;
+      }
+
+      #solution-text {
+        margin-top: 15px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 15px;
+        border-radius: 8px;
+        font-family: monospace;
+        display: none;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <div class="bg-overlay"></div>
+
+    <div class="app-container">
+      <div class="target-display">
+        <div id="d3" class="digit-slot">0</div>
+        <div id="d2" class="digit-slot">0</div>
+        <div id="d1" class="digit-slot">0</div>
+        <div id="d0" class="digit-slot">0</div>
+      </div>
+
+      <div class="tiles-grid" id="grid">
+      </div>
+
+      <div class="timer-wrap">
+        <div id="progress"></div>
+      </div>
+
+      <audio id="countdown-audio" src="countdown.mp3" preload="auto"></audio>
+
+      <div class="controls">
+        <div class="row">
+          <select id="large-qty">
+            <option value="1">1 Large</option>
+            <option value="2" selected>2 Large</option>
+            <option value="3">3 Large</option>
+            <option value="4">4 Large</option>
+          </select>
+          <button class="btn-gold" onclick="startNewGame()">NEW GAME</button>
+        </div>
+        <button id="start-clock-btn" class="btn-blue" onclick="runTimer()">START 30s CLOCK</button>
+        <div id="solution-text"></div>
+        <button style="background:transparent; color:#666;" onclick="revealSol()">REVEAL SOLUTION</button>
+      </div>
+    </div>
+
+    <script>
+      let currentNums = [];
+      let target = 0;
+      let timerRef = null;
+      let gameReady = false;
+      let timerRunning = false;
+      let tumblerTimeout = null;
+      const countdownAudio = document.getElementById('countdown-audio');
+      const startBtn = document.getElementById('start-clock-btn');
+
+      function setStartButton(enabled, label) {
+        if (!startBtn) return;
+        startBtn.disabled = !enabled;
+        startBtn.innerText = label;
+      }
+
+      setStartButton(false, 'START 30s CLOCK');
+
+      // Build the grid
+      const grid = document.getElementById('grid');
+      for (let i = 0; i < 6; i++) {
+        grid.innerHTML += `
+            <div class="card-container">
+                <div class="card-inner" id="card-${i}">
+                    <div class="card-face card-front">?</div>
+                    <div class="card-face card-back"></div>
+                </div>
+            </div>`;
+      }
+
+      function startNewGame() {
+        resetUI();
+        clearTimeout(tumblerTimeout);
+        gameReady = true;
+        timerRunning = false;
+        setStartButton(true, 'START 30s CLOCK');
+        const lQty = parseInt(document.getElementById('large-qty').value);
+        const lPool = [25, 50, 75, 100].sort(() => Math.random() - 0.5);
+        const sPool = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10].sort(() => Math.random() - 0.5);
+
+        currentNums = [...lPool.slice(0, lQty), ...sPool.slice(0, 6 - lQty)];
+        target = generateSolvableTarget(currentNums);
+
+        // Flip cards one by one
+        currentNums.forEach((num, i) => {
+          setTimeout(() => {
+            const card = document.getElementById(`card-${i}`);
+            card.querySelector('.card-back').innerText = num;
+            card.classList.add('flipped');
+          }, i * 200);
+        });
+
+        // Start Tumbler Animation
+        const flipDelay = 200;
+        const flipDuration = 600; // matches .card-inner transition 0.6s
+        const totalDelay = ((currentNums.length - 1) * flipDelay) + flipDuration;
+        tumblerTimeout = setTimeout(() => animateTumbler(target), totalDelay);
+      }
+
+      function animateTumbler(val) {
+        const digits = val.toString().padStart(4, '0').split('');
+        // Animate each slot starting from the right (0) to left (3)
+        digits.reverse().forEach((finalDigit, i) => {
+          let count = 0;
+          const slot = document.getElementById(`d${i}`);
+          slot.classList.remove('dimmed');
+
+          const spin = setInterval(() => {
+            slot.innerText = Math.floor(Math.random() * 10);
+            count++;
+            if (count > 10 + (i * 10)) {
+              clearInterval(spin);
+              slot.innerText = finalDigit;
+              if (i === 3 && finalDigit === '0') slot.classList.add('dimmed');
+            }
+          }, 50);
+        });
+      }
+
+      function runTimer() {
+        if (!gameReady || timerRunning) return;
+        timerRunning = true;
+        setStartButton(false, 'COUNTDOWN RUNNING');
+        let elapsed = 0;
+        const prog = document.getElementById('progress');
+        clearInterval(timerRef);
+        document.body.classList.remove('timeout-bg');
+        prog.style.width = '0%';
+
+        if (countdownAudio) {
+          countdownAudio.pause();
+          countdownAudio.currentTime = 0;
+          countdownAudio.play().catch(() => { });
+        }
+
+        timerRef = setInterval(() => {
+          elapsed++;
+          prog.style.width = (elapsed / 30 * 100) + '%';
+          if (elapsed >= 30) {
+            clearInterval(timerRef);
+            document.body.classList.add('timeout-bg');
+            timerRunning = false;
+            setStartButton(true, 'START 30s CLOCK');
+          }
+        }, 1000);
+      }
+
+      function resetUI() {
+        clearInterval(timerRef);
+        clearTimeout(tumblerTimeout);
+        document.body.classList.remove('timeout-bg');
+        document.getElementById('progress').style.width = '0%';
+        document.getElementById('solution-text').style.display = 'none';
+        timerRunning = false;
+        if (gameReady) {
+          setStartButton(true, 'START 30s CLOCK');
+        } else {
+          setStartButton(false, 'START 30s CLOCK');
+        }
+        if (countdownAudio) {
+          countdownAudio.pause();
+          countdownAudio.currentTime = 0;
+        }
+        for (let i = 0; i < 6; i++) document.getElementById(`card-${i}`).classList.remove('flipped');
+      }
+
+      // --- SOLVER & GENERATOR LOGIC ---
+      function generateSolvableTarget(nums) {
+        let possible = new Set();
+        function walk(arr, d) {
+          if (d > 3 || possible.size > 40) return;
+          for (let i = 0; i < arr.length; i++) {
+            for (let j = 0; j < arr.length; j++) {
+              if (i === j) continue;
+              let ops = [arr[i] + arr[j], arr[i] - arr[j], arr[i] * arr[j], arr[i] / arr[j]];
+              ops.forEach(r => {
+                if (r > 100 && r < 1000 && Number.isInteger(r)) possible.add(r);
+                if (r > 0 && Number.isInteger(r) && arr.length > 2) {
+                  walk([...arr.filter((_, idx) => idx !== i && idx !== j), r], d + 1);
+                }
+              });
+            }
+          }
+        }
+        walk(nums, 0);
+        return Array.from(possible)[Math.floor(Math.random() * possible.length)] || 125;
+      }
+
+      function revealSol() {
+        const box = document.getElementById('solution-text');
+        box.style.display = 'block';
+        box.innerText = "Solving...";
+        const res = solve(currentNums, target);
+        box.innerText = res ? `SOLUTION: ${res}` : "Stumped!";
+      }
+
+      function solve(nums, target) {
+        let stack = nums.map(n => ({ v: n, e: n.toString() }));
+        function find(curr) {
+          for (let i = 0; i < curr.length; i++) {
+            if (curr[i].v === target) return curr[i].e;
+            for (let j = 0; j < curr.length; j++) {
+              if (i === j) continue;
+              const a = curr[i], b = curr[j], rem = curr.filter((_, idx) => idx !== i && idx !== j);
+              const ops = [{ v: a.v + b.v, e: `(${a.e}+${b.e})` }, { v: a.v - b.v, e: `(${a.e}-${b.e})` }, { v: a.v * b.v, e: `(${a.e}*${b.e})` }, { v: a.v / b.v, e: `(${a.e}/${b.e})` }];
+              for (let o of ops) {
+                if (o.v > 0 && Number.isInteger(o.v)) {
+                  const r = find([...rem, o]);
+                  if (r) return r;
+                }
+              }
+            }
+          }
+          return null;
+        }
+        return find(stack);
+      }
+    </script>
+  </body>
+
+</html>
