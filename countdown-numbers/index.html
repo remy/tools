@@ -29,7 +29,7 @@
         flex-direction: column;
         align-items: center;
         min-height: 100vh;
-        overflow: hidden;
+        /* overflow: hidden; */
         transition: background-color 0.5s ease;
       }
 
@@ -216,6 +216,11 @@
         font-family: monospace;
         display: none;
         line-height: 1.4;
+        font-size: 24px;
+      }
+
+      #solution-text:not(:empty)+button {
+        display: none;
       }
     </style>
   </head>
@@ -385,24 +390,49 @@
 
       // --- SOLVER & GENERATOR LOGIC ---
       function generateSolvableTarget(nums) {
-        let possible = new Set();
-        function walk(arr, d) {
-          if (d > 3 || possible.size > 40) return;
+        const possible = new Set();
+        const seen = new Set();
+
+        function key(arr) {
+          return arr.slice().sort((a, b) => a - b).join(',');
+        }
+
+        function search(arr) {
+          const k = key(arr);
+          if (seen.has(k)) return;
+          seen.add(k);
+
+          if (arr.length === 1) {
+            const v = arr[0];
+            if (v >= 100 && v <= 999 && Number.isInteger(v)) possible.add(v);
+            return;
+          }
+
           for (let i = 0; i < arr.length; i++) {
             for (let j = 0; j < arr.length; j++) {
               if (i === j) continue;
-              let ops = [arr[i] + arr[j], arr[i] - arr[j], arr[i] * arr[j], arr[i] / arr[j]];
-              ops.forEach(r => {
-                if (r > 100 && r < 1000 && Number.isInteger(r)) possible.add(r);
-                if (r > 0 && Number.isInteger(r) && arr.length > 2) {
-                  walk([...arr.filter((_, idx) => idx !== i && idx !== j), r], d + 1);
+              const a = arr[i], b = arr[j];
+              const rest = arr.filter((_, idx) => idx !== i && idx !== j);
+              const candidates = [
+                { v: a + b },
+                { v: a - b },
+                { v: a * b },
+                b !== 0 ? { v: a / b } : null
+              ].filter(Boolean);
+
+              for (const c of candidates) {
+                if (c.v > 0 && Number.isInteger(c.v)) {
+                  search([...rest, c.v]);
                 }
-              });
+              }
             }
           }
         }
-        walk(nums, 0);
-        return Array.from(possible)[Math.floor(Math.random() * possible.length)] || 125;
+
+        search(nums);
+        const pool = Array.from(possible);
+        if (!pool.length) return Math.floor(100 + Math.random() * 900);
+        return pool[Math.floor(Math.random() * pool.length)];
       }
 
       function revealSol() {
@@ -410,28 +440,60 @@
         box.style.display = 'block';
         box.innerText = "Solving...";
         const res = solve(currentNums, target);
-        box.innerText = res ? `SOLUTION: ${res}` : "Stumped!";
+        if (res) {
+          const stepsText = res.steps.length
+            ? res.steps.join('\n')
+            : `Use ${res.v} directly`;
+          box.innerText = `SOLUTION:\n${stepsText}\nReached ${res.v}`;
+        } else {
+          box.innerText = "Stumped!";
+        }
       }
 
       function solve(nums, target) {
-        let stack = nums.map(n => ({ v: n, e: n.toString() }));
+        const stack = nums.map(n => ({ v: n, used: 1, steps: [] }));
+
+        function better(a, b) {
+          if (!a) return b;
+          if (!b) return a;
+          if (a.used !== b.used) return a.used > b.used ? a : b;
+          if (a.steps.length !== b.steps.length) return a.steps.length < b.steps.length ? a : b;
+          return a;
+        }
+
         function find(curr) {
+          let best = null;
+
           for (let i = 0; i < curr.length; i++) {
-            if (curr[i].v === target) return curr[i].e;
+            if (curr[i].v === target) {
+              best = better(best, curr[i]);
+              continue;
+            }
             for (let j = 0; j < curr.length; j++) {
               if (i === j) continue;
               const a = curr[i], b = curr[j], rem = curr.filter((_, idx) => idx !== i && idx !== j);
-              const ops = [{ v: a.v + b.v, e: `(${a.e}+${b.e})` }, { v: a.v - b.v, e: `(${a.e}-${b.e})` }, { v: a.v * b.v, e: `(${a.e}*${b.e})` }, { v: a.v / b.v, e: `(${a.e}/${b.e})` }];
+              const ops = [
+                { v: a.v + b.v, sym: '+', val: a.v + b.v },
+                { v: a.v - b.v, sym: '-', val: a.v - b.v },
+                { v: a.v * b.v, sym: '×', val: a.v * b.v },
+                b.v !== 0 ? { v: a.v / b.v, sym: '÷', val: a.v / b.v } : null
+              ].filter(Boolean);
+
               for (let o of ops) {
                 if (o.v > 0 && Number.isInteger(o.v)) {
-                  const r = find([...rem, o]);
-                  if (r) return r;
+                  const arrow = (a.steps.length || b.steps.length) ? '⇒ ' : '';
+                  const step = `${arrow}${a.v} ${o.sym} ${b.v} = ${o.v}`;
+                  const next = { v: o.v, used: a.used + b.used, steps: [...a.steps, ...b.steps, step] };
+                  const candidate = find([...rem, next]);
+                  best = better(best, candidate);
                 }
               }
             }
           }
-          return null;
+
+          return best;
         }
+
         return find(stack);
       }
     </script>
