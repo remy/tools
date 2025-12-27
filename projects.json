@@ -7,12 +7,12 @@
     "category": "Game",
     "title": "Countdown: The Number Experience"
   },
+  "hass-sentence": {
+    "category": "Home Assistant",
+    "title": "HA Intent Parser Visualizer"
+  },
   "url-to-meta": {
     "category": "Web",
     "title": "URL to Meta"
-  },
-  "hass-sentence": {
-    "category": "Home Assistant",
-    "title": "Home Assistant Sentence Validator"
   }
 }
