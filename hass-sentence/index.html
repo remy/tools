@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HA Intent Parser Visualizer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%2303a9f4%22/><path d=%22M30 45v10m10-20v30m10-40v50m10-40v30m10-20v10%22 stroke=%22white%22 stroke-width=%228%22 stroke-linecap=%22round%22/></svg>">
+  </head>
+
+  <body>
+
+    <div class="container">
+      <header>
+        <h1>Home Assistant Syntax Parser</h1>
+        <p>A visual debugger for Assist intent recognition templates.</p>
+      </header>
+
+      <div class="card">
+        <div class="input-group">
+          <label>User Sentence</label>
+          <input id="sentenceInput" type="text" value="light in kitchen is on now">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="template-header-row">
+          <h2>Template Strings</h2>
+          <button id="addTemplateBtn" class="btn-add">+ Add Template</button>
+        </div>
+        <div id="templatesContainer"></div>
+      </div>
+
+      <div id="results">
+        <h2>Execution Trace</h2>
+        <div id="tracesContainer"></div>
+      </div>
+
+      <dl class="legend">
+        <div class="legend-item legend-alt">
+          <dt>(a|b)</dt>
+          <dd>Alternate</dd>
+        </div>
+        <div class="legend-item legend-opt">
+          <dt>[optional]</dt>
+          <dd>Optional</dd>
+        </div>
+        <div class="legend-item legend-perm">
+          <dt>(a;b)</dt>
+          <dd>Permute</dd>
+        </div>
+        <div class="legend-item legend-slot">
+          <dt>{list}</dt>
+          <dd>Slot</dd>
+        </div>
+        <div class="legend-item legend-rule">
+          <dt>&lt;rule&gt;</dt>
+          <dd>Expansion</dd>
+        </div>
+      </dl>
+
+      <footer>
+        <p>
+          Learn more about
+          <a href="https://developers.home-assistant.io/docs/voice/intent-recognition/template-sentence-syntax/#sentence-templates-syntax"
+            target="_blank" rel="noopener noreferrer">
+            Home Assistant Template Sentence Syntax
+          </a>
+        </p>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+
+  </body>
+
+</html>

@@ -10,5 +10,9 @@
   "url-to-meta": {
     "category": "Web",
     "title": "URL to Meta"
+  },
+  "hass-sentence": {
+    "category": "Home Assistant",
+    "title": "Home Assistant Sentence Validator"
   }
 }
