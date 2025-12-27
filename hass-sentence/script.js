@@ -1,3 +1,14 @@
+import {
+  parseSentence,
+  TextChunk,
+  Sequence,
+  Group,
+  Alternative,
+  Permutation,
+  ListReference,
+  RuleReference,
+} from './parser.js';
+
 const sentenceInput = document.getElementById('sentenceInput');
 const templatesContainer = document.getElementById('templatesContainer');
 const tracesContainer = document.getElementById('tracesContainer');
@@ -43,48 +54,6 @@ function updateURL() {
 
   const newURL = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState({}, '', newURL);
-}
-
-function tokenize(template) {
-  const tokens = [];
-  let remaining = template;
-
-  while (remaining.length > 0) {
-    let match;
-    // Match Optional [word]
-    if ((match = remaining.match(/^\[(.*?)\]/))) {
-      tokens.push({ type: 'opt', content: match[1], raw: match[0] });
-    }
-    // Match Alternates (a|b)
-    else if ((match = remaining.match(/^\(([^;]*?\|.*?)\)/))) {
-      tokens.push({ type: 'alt', content: match[1], raw: match[0] });
-    }
-    // Match Permutations (a;b)
-    else if ((match = remaining.match(/^\(([^|]*?;.*?)\)/))) {
-      tokens.push({ type: 'perm', content: match[1], raw: match[0] });
-    }
-    // Match Slots {name}
-    else if ((match = remaining.match(/^\{(.*?)\}/))) {
-      tokens.push({ type: 'slot', content: match[1], raw: match[0] });
-    }
-    // Match Rules <name>
-    else if ((match = remaining.match(/^<(.*?)>/))) {
-      tokens.push({ type: 'rule', content: match[1], raw: match[0] });
-    }
-    // Match Literal Text
-    else if ((match = remaining.match(/^([^\s[({<]+)/))) {
-      tokens.push({ type: 'text', content: match[1], raw: match[0] });
-    }
-    // Match Whitespace
-    else if ((match = remaining.match(/^(\s+)/))) {
-      tokens.push({ type: 'space', content: ' ', raw: match[0] });
-    } else {
-      remaining = remaining.substring(1);
-      continue;
-    }
-    remaining = remaining.substring(match[0].length);
-  }
-  return tokens;
 }
 
 function renderTemplates() {
@@ -173,86 +142,336 @@ function updateTemplateStatuses() {
   });
 }
 
-function generateTrace(templateValue, sentenceWords) {
-  const tokens = tokenize(templateValue);
-  const traceItems = [];
-  let wordPointer = 0;
-  let hasFailure = false;
+function matchExpression(expr, words, wordIndex, traceItems) {
+  // Returns { matched: boolean, wordsConsumed: number, traceItems: [] }
 
-  tokens.forEach((token) => {
-    if (token.type === 'space') return;
-
-    let status = 'Skipped';
-    let statusClass = 'status-skipped';
-    let note = '';
-    const currentWord = sentenceWords[wordPointer] || '';
-
-    switch (token.type) {
-      case 'text':
-        if (currentWord === token.content.toLowerCase()) {
-          status = 'Matched';
-          statusClass = 'status-matched';
-          note = `Literal match: <strong>${currentWord}</strong>`;
-          wordPointer++;
-        } else {
-          status = 'Fail';
-          statusClass = 'status-fail';
-          note = `Expected "${token.content}"`;
-          hasFailure = true;
-        }
-        break;
-      case 'opt':
-        if (currentWord === token.content.toLowerCase()) {
-          status = 'Matched';
-          statusClass = 'status-matched';
-          note = `Optional word present: <strong>${currentWord}</strong>`;
-          wordPointer++;
-        } else {
-          note = 'Word omitted (allowed)';
-        }
-        break;
-      case 'alt':
-        const options = token.content
-          .split('|')
-          .map((s) => s.trim().toLowerCase());
-        if (options.includes(currentWord)) {
-          status = 'Matched';
-          statusClass = 'status-matched';
-          note = `Matched variant: <strong>${currentWord}</strong>`;
-          wordPointer++;
-        } else {
-          status = 'Fail';
-          statusClass = 'status-fail';
-          note = `No variant matches "${currentWord}"`;
-          hasFailure = true;
-        }
-        break;
-      case 'slot':
-        if (currentWord) {
-          status = 'Extracted';
-          statusClass = 'status-matched';
-          note = `Assigned <strong>${currentWord}</strong> to {${token.content}}`;
-          wordPointer++;
-        } else {
-          status = 'Fail';
-          statusClass = 'status-fail';
-          note = 'Missing required value for slot';
-          hasFailure = true;
-        }
-        break;
-      case 'perm':
-        // Simplified perm logic for visualizer
-        status = 'Permuted';
-        statusClass = 'status-matched';
-        note = 'Checked order-independent group';
-        wordPointer++;
-        break;
+  if (expr instanceof TextChunk) {
+    const expectedWord = expr.text.trim();
+    if (!expectedWord) {
+      // Empty text chunk (e.g., from optional)
+      return { matched: true, wordsConsumed: 0 };
     }
 
-    traceItems.push({ token, status, statusClass, note });
-  });
+    const currentWord = words[wordIndex] || '';
 
-  return { traceItems, hasFailure };
+    if (currentWord === expectedWord) {
+      traceItems.push({
+        raw: expr.originalText,
+        type: 'text',
+        status: 'Matched',
+        statusClass: 'status-matched',
+        note: `Literal match: <strong>${currentWord}</strong>`,
+      });
+      return { matched: true, wordsConsumed: 1 };
+    } else {
+      traceItems.push({
+        raw: expr.originalText,
+        type: 'text',
+        status: 'Fail',
+        statusClass: 'status-fail',
+        note: `Expected "${expectedWord}", got "${currentWord}"`,
+      });
+      return { matched: false, wordsConsumed: 0 };
+    }
+  }
+
+  if (expr instanceof Sequence) {
+    let totalConsumed = 0;
+    let allMatched = true;
+
+    for (const item of expr.items) {
+      const result = matchExpression(
+        item,
+        words,
+        wordIndex + totalConsumed,
+        traceItems
+      );
+      if (!result.matched) {
+        allMatched = false;
+        break;
+      }
+      totalConsumed += result.wordsConsumed;
+    }
+
+    return { matched: allMatched, wordsConsumed: totalConsumed };
+  }
+
+  if (expr instanceof Alternative) {
+    // Build a display representation of the alternative
+    const alternatives = expr.items
+      .filter((item) => {
+        // Filter out empty alternatives (the empty optional choice)
+        if (item instanceof TextChunk && !item.text.trim()) return false;
+        return true;
+      })
+      .map((item) => {
+        if (item instanceof Sequence) {
+          return item.items
+            .map((i) => i.originalText || i.text || '?')
+            .join('')
+            .trim();
+        }
+        return (item.originalText || item.text || '?').trim();
+      })
+      .filter((s) => s); // Remove empty strings
+
+    const displayText = expr.isOptional
+      ? `[${alternatives.join('|')}]`
+      : `(${alternatives.join('|')})`;
+
+    // Try each sequence in the alternative
+    for (const seq of expr.items) {
+      const itemTrace = [];
+      const result = matchExpression(seq, words, wordIndex, itemTrace);
+
+      if (result.matched) {
+        // Found a match
+        const isEmptySequence =
+          seq instanceof Sequence && seq.items.length === 0;
+        const isEmpty =
+          isEmptySequence || (seq instanceof TextChunk && !seq.text.trim());
+
+        if (expr.isOptional && isEmpty) {
+          // Optional was skipped
+          traceItems.push({
+            raw: displayText,
+            type: 'opt',
+            status: 'Skipped',
+            statusClass: 'status-skipped',
+            note: 'Optional omitted (allowed)',
+          });
+        } else {
+          // Show which alternative/optional matched, then its contents
+          const matchedText = itemTrace
+            .map((t) => t.raw)
+            .join('')
+            .trim();
+          traceItems.push({
+            raw: displayText,
+            type: expr.isOptional ? 'opt' : 'alt',
+            status: 'Matched',
+            statusClass: 'status-matched',
+            note: expr.isOptional
+              ? `Optional present: matched "${matchedText}"`
+              : `Matched alternative: "${matchedText}"`,
+          });
+          // Don't add child items - the parent shows what matched
+        }
+
+        return { matched: true, wordsConsumed: result.wordsConsumed };
+      }
+    }
+
+    // No alternative matched
+    if (expr.isOptional) {
+      // Optional, so it's okay if nothing matched
+      traceItems.push({
+        raw: `[optional]`,
+        type: 'opt',
+        status: 'Skipped',
+        statusClass: 'status-skipped',
+        note: 'Optional omitted (allowed)',
+      });
+      return { matched: true, wordsConsumed: 0 };
+    } else {
+      // Required alternative that didn't match
+      traceItems.push({
+        raw: `(alternatives)`,
+        type: 'alt',
+        status: 'Fail',
+        statusClass: 'status-fail',
+        note: `No alternative matched`,
+      });
+      return { matched: false, wordsConsumed: 0 };
+    }
+  }
+
+  if (expr instanceof Permutation) {
+    // For visualization, we'll treat permutations simply
+    // In reality, HASSIL tries all permutations
+    traceItems.push({
+      raw: `(permutation)`,
+      type: 'perm',
+      status: 'Matched',
+      statusClass: 'status-matched',
+      note: 'Permutation group (simplified)',
+    });
+
+    // Just match items in order for now
+    let totalConsumed = 0;
+    for (const seq of expr.items) {
+      const result = matchExpression(
+        seq,
+        words,
+        wordIndex + totalConsumed,
+        traceItems
+      );
+      if (result.matched) {
+        totalConsumed += result.wordsConsumed;
+      }
+    }
+
+    return { matched: true, wordsConsumed: totalConsumed };
+  }
+
+  if (expr instanceof ListReference) {
+    const currentWord = words[wordIndex] || '';
+
+    if (currentWord) {
+      traceItems.push({
+        raw: `{${expr.listName}}`,
+        type: 'slot',
+        status: 'Extracted',
+        statusClass: 'status-matched',
+        note: `Assigned <strong>${currentWord}</strong> to {${expr.listName}}`,
+      });
+      return { matched: true, wordsConsumed: 1 };
+    } else {
+      traceItems.push({
+        raw: `{${expr.listName}}`,
+        type: 'slot',
+        status: 'Fail',
+        statusClass: 'status-fail',
+        note: 'Missing required value for slot',
+      });
+      return { matched: false, wordsConsumed: 0 };
+    }
+  }
+
+  if (expr instanceof RuleReference) {
+    traceItems.push({
+      raw: `<${expr.ruleName}>`,
+      type: 'rule',
+      status: 'Skipped',
+      statusClass: 'status-skipped',
+      note: 'Rule reference (not expanded)',
+    });
+    return { matched: true, wordsConsumed: 0 };
+  }
+
+  // Unknown expression type
+  return { matched: false, wordsConsumed: 0 };
+}
+
+// Debug helper to serialize expressions
+function serializeExpression(expr, depth = 0) {
+  if (!expr) return null;
+
+  const base = {
+    type: expr.constructor.name,
+  };
+
+  if (expr instanceof TextChunk) {
+    return { ...base, text: expr.text, originalText: expr.originalText };
+  }
+
+  if (expr instanceof ListReference) {
+    return { ...base, listName: expr.listName, isEndOfWord: expr.isEndOfWord };
+  }
+
+  if (expr instanceof RuleReference) {
+    return { ...base, ruleName: expr.ruleName };
+  }
+
+  if (expr instanceof Alternative) {
+    return {
+      ...base,
+      isOptional: expr.isOptional,
+      items: expr.items.map((item) => serializeExpression(item, depth + 1)),
+    };
+  }
+
+  if (
+    expr instanceof Group ||
+    expr instanceof Sequence ||
+    expr instanceof Permutation
+  ) {
+    return {
+      ...base,
+      items: expr.items.map((item) => serializeExpression(item, depth + 1)),
+    };
+  }
+
+  return base;
+}
+
+function generateTrace(templateValue, sentenceWords) {
+  const traceItems = [];
+  let hasFailure = false;
+  let debugInfo = null;
+
+  try {
+    const sentence = parseSentence(templateValue);
+
+    // Create debug info
+    debugInfo = {
+      template: templateValue,
+      sentence: sentenceWords.join(' '),
+      sentenceWords: sentenceWords,
+      parsedAST: serializeExpression(sentence.expression),
+    };
+
+    const result = matchExpression(
+      sentence.expression,
+      sentenceWords,
+      0,
+      traceItems
+    );
+
+    debugInfo.matchResult = {
+      matched: result.matched,
+      wordsConsumed: result.wordsConsumed,
+      totalWords: sentenceWords.length,
+    };
+
+    hasFailure = !result.matched;
+
+    // Check if all words were consumed
+    if (result.matched && result.wordsConsumed < sentenceWords.length) {
+      hasFailure = true;
+      traceItems.push({
+        raw: '(extra words)',
+        type: 'error',
+        status: 'Fail',
+        statusClass: 'status-fail',
+        note: `Extra words not matched: ${sentenceWords
+          .slice(result.wordsConsumed)
+          .join(' ')}`,
+      });
+    } else if (result.matched && result.wordsConsumed > sentenceWords.length) {
+      hasFailure = true;
+      traceItems.push({
+        raw: '(missing words)',
+        type: 'error',
+        status: 'Fail',
+        statusClass: 'status-fail',
+        note: `Template expects more words`,
+      });
+    }
+  } catch (error) {
+    hasFailure = true;
+    debugInfo = {
+      template: templateValue,
+      sentence: sentenceWords.join(' '),
+      error: error.message,
+      stack: error.stack,
+    };
+    traceItems.push({
+      raw: templateValue,
+      type: 'error',
+      status: 'Error',
+      statusClass: 'status-fail',
+      note: `Parse error: ${error.message}`,
+    });
+  }
+
+  // Log debug info to console
+  if (debugInfo) {
+    console.log('🔍 Debug Info:', debugInfo);
+    console.log('📋 Trace Items:', traceItems);
+  }
+
+  return { traceItems, hasFailure, debugInfo };
 }
 
 function update() {
@@ -266,7 +485,7 @@ function update() {
   let ok = false;
 
   templates.forEach((template, index) => {
-    const { traceItems, hasFailure } = generateTrace(
+    const { traceItems, hasFailure, debugInfo } = generateTrace(
       template.value,
       sentenceWords
     );
@@ -276,7 +495,7 @@ function update() {
     }
 
     // Store result for this template
-    templateResults.set(template.id, { hasFailure, traceItems });
+    templateResults.set(template.id, { hasFailure, traceItems, debugInfo });
 
     const section = document.createElement('div');
     section.className = 'trace-section';
@@ -299,13 +518,13 @@ function update() {
     const traceList = document.createElement('div');
     traceList.className = 'trace-list';
 
-    traceItems.forEach(({ token, status, statusClass, note }) => {
+    traceItems.forEach(({ raw, type, status, statusClass, note }) => {
       const div = document.createElement('div');
       div.className = 'trace-item';
       div.innerHTML = `
         <div>
-          <span class="syntax-raw text-${token.type}">${token.raw}</span>
-          <span class="type-label">${token.type} — ${note}</span>
+          <span class="syntax-raw text-${type}">${raw}</span>
+          <span class="type-label">${type} — ${note}</span>
         </div>
         <div class="match-status ${statusClass}">${status}</div>
       `;
