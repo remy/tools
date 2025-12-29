@@ -1,0 +1,802 @@
+[
+  {
+    "position": 1,
+    "quote": "Frankly, my dear, I don't give a damn.",
+    "title": "Gone with the Wind",
+    "year": 1939,
+    "stars": "Clark Gable",
+    "url": "https://www.themoviedb.org/movie/770"
+  },
+  {
+    "position": 2,
+    "quote": "I'm gonna make him an offer he can't refuse.",
+    "title": "The Godfather",
+    "year": 1972,
+    "stars": "Marlon Brando",
+    "url": "https://www.themoviedb.org/movie/238"
+  },
+  {
+    "position": 3,
+    "quote": "You don't understand! I coulda had class. I coulda been a contender. I could've been somebody, instead of a bum, which is what I am.",
+    "title": "On the Waterfront",
+    "year": 1954,
+    "stars": "Marlon Brando",
+    "url": "https://www.themoviedb.org/movie/654"
+  },
+  {
+    "position": 4,
+    "quote": "Toto, I've a feeling we're not in Kansas anymore.",
+    "title": "The Wizard of Oz",
+    "year": 1939,
+    "stars": "Judy Garland",
+    "url": "https://www.themoviedb.org/movie/630"
+  },
+  {
+    "position": 5,
+    "quote": "Here's looking at you, kid.",
+    "title": "Casablanca",
+    "year": 1942,
+    "stars": "Humphrey Bogart",
+    "url": "https://www.themoviedb.org/movie/289"
+  },
+  {
+    "position": 6,
+    "quote": "Go ahead, make my day.",
+    "title": "Sudden Impact",
+    "year": 1983,
+    "stars": "Clint Eastwood",
+    "url": "https://www.themoviedb.org/movie/10650"
+  },
+  {
+    "position": 7,
+    "quote": "All right, Mr. DeMille, I'm ready for my close-up.",
+    "title": "Sunset Boulevard",
+    "year": 1950,
+    "stars": "Gloria Swanson",
+    "url": "https://www.themoviedb.org/movie/599"
+  },
+  {
+    "position": 8,
+    "quote": "May the Force be with you.",
+    "title": "Star Wars",
+    "year": 1977,
+    "stars": "Harrison Ford",
+    "url": "https://www.themoviedb.org/movie/11"
+  },
+  {
+    "position": 9,
+    "quote": "Fasten your seatbelts. It's going to be a bumpy night.",
+    "title": "All About Eve",
+    "year": 1950,
+    "stars": "Bette Davis",
+    "url": "https://www.themoviedb.org/movie/705"
+  },
+  {
+    "position": 10,
+    "quote": "You talkin' to me?",
+    "title": "Taxi Driver",
+    "year": 1976,
+    "stars": "Robert De Niro",
+    "url": "https://www.themoviedb.org/movie/103"
+  },
+  {
+    "position": 11,
+    "quote": "What we've got here is failure to communicate.",
+    "title": "Cool Hand Luke",
+    "year": 1967,
+    "stars": "Strother Martin",
+    "url": "https://www.themoviedb.org/movie/903"
+  },
+  {
+    "position": 12,
+    "quote": "I love the smell of napalm in the morning.",
+    "title": "Apocalypse Now",
+    "year": 1979,
+    "stars": "Robert Duvall",
+    "url": "https://www.themoviedb.org/movie/28"
+  },
+  {
+    "position": 13,
+    "quote": "Love means never having to say you're sorry.",
+    "title": "Love Story",
+    "year": 1970,
+    "stars": "Ali MacGraw",
+    "url": "https://www.themoviedb.org/movie/9062"
+  },
+  {
+    "position": 14,
+    "quote": "The stuff that dreams are made of.",
+    "title": "The Maltese Falcon",
+    "year": 1941,
+    "stars": "Humphrey Bogart",
+    "url": "https://www.themoviedb.org/movie/28257"
+  },
+  {
+    "position": 15,
+    "quote": "E.T. phone home.",
+    "title": "E.T. the Extra-Terrestrial",
+    "year": 1982,
+    "stars": "Pat Welsh",
+    "url": "https://www.themoviedb.org/movie/601"
+  },
+  {
+    "position": 16,
+    "quote": "They call me Mister Tibbs!",
+    "title": "In the Heat of the Night",
+    "year": 1967,
+    "stars": "Sidney Poitier",
+    "url": "https://www.themoviedb.org/movie/10633"
+  },
+  {
+    "position": 17,
+    "quote": "Rosebud.",
+    "title": "Citizen Kane",
+    "year": 1941,
+    "stars": "Orson Welles",
+    "url": "https://www.themoviedb.org/movie/15"
+  },
+  {
+    "position": 18,
+    "quote": "Made it, Ma! Top of the world!",
+    "title": "White Heat",
+    "year": 1949,
+    "stars": "James Cagney",
+    "url": "https://www.themoviedb.org/movie/314897"
+  },
+  {
+    "position": 19,
+    "quote": "I'm as mad as hell, and I'm not going to take this anymore!",
+    "title": "Network",
+    "year": 1976,
+    "stars": "Peter Finch",
+    "url": "https://www.themoviedb.org/movie/10774"
+  },
+  {
+    "position": 20,
+    "quote": "Louis, I think this is the beginning of a beautiful friendship.",
+    "title": "Casablanca",
+    "year": 1942,
+    "stars": "Humphrey Bogart",
+    "url": "https://www.themoviedb.org/movie/289"
+  },
+  {
+    "position": 21,
+    "quote": "A census taker once tried to test me. I ate his liver with some fava beans and a nice Chianti.",
+    "title": "The Silence of the Lambs",
+    "year": 1991,
+    "stars": "Anthony Hopkins",
+    "url": "https://www.themoviedb.org/movie/274"
+  },
+  {
+    "position": 22,
+    "quote": "Bond. James Bond.",
+    "title": "Dr. No",
+    "year": 1962,
+    "stars": "Sean Connery",
+    "url": "https://www.themoviedb.org/movie/646"
+  },
+  {
+    "position": 23,
+    "quote": "There's no place like home.",
+    "title": "The Wizard of Oz",
+    "year": 1939,
+    "stars": "Judy Garland",
+    "url": "https://www.themoviedb.org/movie/630"
+  },
+  {
+    "position": 24,
+    "quote": "I am big! It's the pictures that got small.",
+    "title": "Sunset Boulevard",
+    "year": 1950,
+    "stars": "Gloria Swanson",
+    "url": "https://www.themoviedb.org/movie/599"
+  },
+  {
+    "position": 25,
+    "quote": "Show me the money!",
+    "title": "Jerry Maguire",
+    "year": 1996,
+    "stars": "Cuba Gooding Jr.",
+    "url": "https://www.themoviedb.org/movie/9390"
+  },
+  {
+    "position": 26,
+    "quote": "Why don't you come up sometime and see me?",
+    "title": "She Done Him Wrong",
+    "year": 1933,
+    "stars": "Mae West",
+    "url": "https://www.themoviedb.org/movie/43595"
+  },
+  {
+    "position": 27,
+    "quote": "I'm walkin' here! I'm walkin' here!",
+    "title": "Midnight Cowboy",
+    "year": 1969,
+    "stars": "Dustin Hoffman",
+    "url": "https://www.themoviedb.org/movie/3116"
+  },
+  {
+    "position": 28,
+    "quote": "Play it, Sam. Play 'As Time Goes By.'",
+    "title": "Casablanca",
+    "year": 1942,
+    "stars": "Ingrid Bergman",
+    "url": "https://www.themoviedb.org/movie/289"
+  },
+  {
+    "position": 29,
+    "quote": "You can't handle the truth!",
+    "title": "A Few Good Men",
+    "year": 1992,
+    "stars": "Jack Nicholson",
+    "url": "https://www.themoviedb.org/movie/881"
+  },
+  {
+    "position": 30,
+    "quote": "I want to be alone.",
+    "title": "Grand Hotel",
+    "year": 1932,
+    "stars": "Greta Garbo",
+    "url": "https://www.themoviedb.org/movie/648745"
+  },
+  {
+    "position": 31,
+    "quote": "After all, tomorrow is another day!",
+    "title": "Gone with the Wind",
+    "year": 1939,
+    "stars": "Vivien Leigh",
+    "url": "https://www.themoviedb.org/movie/770"
+  },
+  {
+    "position": 32,
+    "quote": "Round up the usual suspects.",
+    "title": "Casablanca",
+    "year": 1942,
+    "stars": "Claude Rains",
+    "url": "https://www.themoviedb.org/movie/289"
+  },
+  {
+    "position": 33,
+    "quote": "I'll have what she's having.",
+    "title": "When Harry Met Sally...",
+    "year": 1989,
+    "stars": "Estelle Reiner",
+    "url": "https://www.themoviedb.org/movie/639"
+  },
+  {
+    "position": 34,
+    "quote": "You know how to whistle, don't you, Steve? You just put your lips together and blow.",
+    "title": "To Have and Have Not",
+    "year": 1944,
+    "stars": "Lauren Bacall",
+    "url": "https://www.themoviedb.org/movie/22584"
+  },
+  {
+    "position": 35,
+    "quote": "You're gonna need a bigger boat.",
+    "title": "Jaws",
+    "year": 1975,
+    "stars": "Roy Scheider",
+    "url": "https://www.themoviedb.org/movie/578"
+  },
+  {
+    "position": 36,
+    "quote": "Badges? We ain't got no badges! We don't need no badges! I don't have to show you any stinking badges!",
+    "title": "The Treasure of the Sierra Madre",
+    "year": 1948,
+    "stars": "Alfonso Bedoya",
+    "url": "https://www.themoviedb.org/movie/3090"
+  },
+  {
+    "position": 37,
+    "quote": "I'll be back.",
+    "title": "The Terminator",
+    "year": 1984,
+    "stars": "Arnold Schwarzenegger",
+    "url": "https://www.themoviedb.org/movie/218"
+  },
+  {
+    "position": 38,
+    "quote": "Today, I consider myself the luckiest man on the face of the earth.",
+    "title": "The Pride of the Yankees",
+    "year": 1942,
+    "stars": "Gary Cooper",
+    "url": "https://www.themoviedb.org/movie/19140"
+  },
+  {
+    "position": 39,
+    "quote": "If you build it, he will come.",
+    "title": "Field of Dreams",
+    "year": 1989,
+    "stars": "Ray Liotta (voice)",
+    "url": "https://www.themoviedb.org/movie/2323"
+  },
+  {
+    "position": 40,
+    "quote": "Mama always said life was like a box of chocolates. You never know what you're gonna get.",
+    "title": "Forrest Gump",
+    "year": 1994,
+    "stars": "Tom Hanks",
+    "url": "https://www.themoviedb.org/movie/13"
+  },
+  {
+    "position": 41,
+    "quote": "We rob banks.",
+    "title": "Bonnie and Clyde",
+    "year": 1967,
+    "stars": "Warren Beatty",
+    "url": "https://www.themoviedb.org/movie/142461"
+  },
+  {
+    "position": 42,
+    "quote": "Plastics.",
+    "title": "The Graduate",
+    "year": 1967,
+    "stars": "Walter Brooke",
+    "url": "https://www.themoviedb.org/movie/37247"
+  },
+  {
+    "position": 43,
+    "quote": "We'll always have Paris.",
+    "title": "Casablanca",
+    "year": 1942,
+    "stars": "Humphrey Bogart",
+    "url": "https://www.themoviedb.org/movie/289"
+  },
+  {
+    "position": 44,
+    "quote": "I see dead people.",
+    "title": "The Sixth Sense",
+    "year": 1999,
+    "stars": "Haley Joel Osment",
+    "url": "https://www.themoviedb.org/movie/745"
+  },
+  {
+    "position": 45,
+    "quote": "Stella! Hey, Stella!",
+    "title": "A Streetcar Named Desire",
+    "year": 1951,
+    "stars": "Marlon Brando",
+    "url": "https://www.themoviedb.org/movie/1545279"
+  },
+  {
+    "position": 46,
+    "quote": "Oh, Jerry, don't let's ask for the moon. We have the stars.",
+    "title": "Now, Voyager",
+    "year": 1942,
+    "stars": "Bette Davis",
+    "url": "https://www.themoviedb.org/movie/32847"
+  },
+  {
+    "position": 47,
+    "quote": "Shane. Shane. Come back!",
+    "title": "Shane",
+    "year": 1953,
+    "stars": "Brandon deWilde",
+    "url": "https://www.themoviedb.org/movie/3110"
+  },
+  {
+    "position": 48,
+    "quote": "Well, nobody's perfect.",
+    "title": "Some Like It Hot",
+    "year": 1959,
+    "stars": "Joe E. Brown",
+    "url": "https://www.themoviedb.org/movie/239"
+  },
+  {
+    "position": 49,
+    "quote": "It's alive! It's alive!",
+    "title": "Frankenstein",
+    "year": 1931,
+    "stars": "Colin Clive",
+    "url": "https://www.themoviedb.org/movie/1062722"
+  },
+  {
+    "position": 50,
+    "quote": "Houston, we have a problem.",
+    "title": "Apollo 13",
+    "year": 1995,
+    "stars": "Tom Hanks",
+    "url": "https://www.themoviedb.org/movie/568"
+  },
+  {
+    "position": 51,
+    "quote": "You've got to ask yourself one question: 'Do I feel lucky?' Well, do ya, punk?",
+    "title": "Dirty Harry",
+    "year": 1971,
+    "stars": "Clint Eastwood",
+    "url": "https://www.themoviedb.org/movie/984"
+  },
+  {
+    "position": 52,
+    "quote": "You had me at 'hello.'",
+    "title": "Jerry Maguire",
+    "year": 1996,
+    "stars": "Renée Zellweger",
+    "url": "https://www.themoviedb.org/movie/9390"
+  },
+  {
+    "position": 53,
+    "quote": "One morning I shot an elephant in my pajamas. How he got in my pajamas, I don't know.",
+    "title": "Animal Crackers",
+    "year": 1930,
+    "stars": "Groucho Marx",
+    "url": "https://www.themoviedb.org/movie/13913"
+  },
+  {
+    "position": 54,
+    "quote": "There's no crying in baseball!",
+    "title": "A League of Their Own",
+    "year": 1992,
+    "stars": "Tom Hanks",
+    "url": "https://www.themoviedb.org/movie/11287"
+  },
+  {
+    "position": 55,
+    "quote": "La-dee-da, la-dee-da.",
+    "title": "Annie Hall",
+    "year": 1977,
+    "stars": "Diane Keaton",
+    "url": "https://www.themoviedb.org/movie/703"
+  },
+  {
+    "position": 56,
+    "quote": "A boy's best friend is his mother.",
+    "title": "Psycho",
+    "year": 1960,
+    "stars": "Anthony Perkins",
+    "url": "https://www.themoviedb.org/movie/539"
+  },
+  {
+    "position": 57,
+    "quote": "Greed, for lack of a better word, is good.",
+    "title": "Wall Street",
+    "year": 1987,
+    "stars": "Michael Douglas",
+    "url": "https://www.themoviedb.org/movie/10673"
+  },
+  {
+    "position": 58,
+    "quote": "Keep your friends close, but your enemies closer.",
+    "title": "The Godfather Part II",
+    "year": 1974,
+    "stars": "Al Pacino",
+    "url": "https://www.themoviedb.org/movie/240"
+  },
+  {
+    "position": 59,
+    "quote": "As God is my witness, I'll never be hungry again.",
+    "title": "Gone with the Wind",
+    "year": 1939,
+    "stars": "Vivien Leigh",
+    "url": "https://www.themoviedb.org/movie/770"
+  },
+  {
+    "position": 60,
+    "quote": "Well, here's another nice mess you've gotten me into!",
+    "title": "Sons of the Desert",
+    "year": 1933,
+    "stars": "Oliver Hardy",
+    "url": "https://www.themoviedb.org/movie/43128"
+  },
+  {
+    "position": 61,
+    "quote": "Say 'hello' to my little friend!",
+    "title": "Scarface",
+    "year": 1983,
+    "stars": "Al Pacino",
+    "url": "https://www.themoviedb.org/movie/111"
+  },
+  {
+    "position": 62,
+    "quote": "What a dump.",
+    "title": "Beyond the Forest",
+    "year": 1949,
+    "stars": "Bette Davis",
+    "url": "https://www.themoviedb.org/movie/35896"
+  },
+  {
+    "position": 63,
+    "quote": "Mrs. Robinson, you're trying to seduce me. Aren't you?",
+    "title": "The Graduate",
+    "year": 1967,
+    "stars": "Dustin Hoffman",
+    "url": "https://www.themoviedb.org/movie/37247"
+  },
+  {
+    "position": 64,
+    "quote": "Gentlemen, you can't fight in here! This is the War Room!",
+    "title": "Dr. Strangelove or: How I Learned to Stop Worrying and Love the Bomb",
+    "year": 1964,
+    "stars": "Peter Sellers",
+    "url": "https://www.themoviedb.org/movie/935"
+  },
+  {
+    "position": 65,
+    "quote": "Elementary, my dear Watson.",
+    "title": "The Adventures of Sherlock Holmes",
+    "year": 1939,
+    "stars": "Basil Rathbone",
+    "url": "https://www.themoviedb.org/movie/17481"
+  },
+  {
+    "position": 66,
+    "quote": "Get your stinking paws off me, you damned dirty ape!",
+    "title": "Planet of the Apes",
+    "year": 1968,
+    "stars": "Charlton Heston",
+    "url": "https://www.themoviedb.org/movie/869"
+  },
+  {
+    "position": 67,
+    "quote": "Of all the gin joints in all the towns in all the world, she walks into mine.",
+    "title": "Casablanca",
+    "year": 1942,
+    "stars": "Humphrey Bogart",
+    "url": "https://www.themoviedb.org/movie/289"
+  },
+  {
+    "position": 68,
+    "quote": "Here's Johnny!",
+    "title": "The Shining",
+    "year": 1980,
+    "stars": "Jack Nicholson",
+    "url": "https://www.themoviedb.org/movie/694"
+  },
+  {
+    "position": 69,
+    "quote": "They're here!",
+    "title": "Poltergeist",
+    "year": 1982,
+    "stars": "Heather O'Rourke",
+    "url": "https://www.themoviedb.org/movie/609"
+  },
+  {
+    "position": 70,
+    "quote": "Is it safe?",
+    "title": "Marathon Man",
+    "year": 1976,
+    "stars": "Laurence Olivier",
+    "url": "https://www.themoviedb.org/movie/10518"
+  },
+  {
+    "position": 71,
+    "quote": "Wait a minute, wait a minute. You ain't heard nothin' yet!",
+    "title": "The Jazz Singer",
+    "year": 1927,
+    "stars": "Al Jolson",
+    "url": "https://www.themoviedb.org/movie/216925"
+  },
+  {
+    "position": 72,
+    "quote": "No wire hangers, ever!",
+    "title": "Mommie Dearest",
+    "year": 1981,
+    "stars": "Faye Dunaway",
+    "url": "https://www.themoviedb.org/movie/15660"
+  },
+  {
+    "position": 73,
+    "quote": "Mother of mercy, is this the end of Rico?",
+    "title": "Little Caesar",
+    "year": 1930,
+    "stars": "Edward G. Robinson",
+    "url": "https://www.themoviedb.org/movie/27899"
+  },
+  {
+    "position": 74,
+    "quote": "Forget it, Jake, it's Chinatown.",
+    "title": "Chinatown",
+    "year": 1974,
+    "stars": "Joe Mantell",
+    "url": "https://www.themoviedb.org/movie/829"
+  },
+  {
+    "position": 75,
+    "quote": "I have always depended on the kindness of strangers.",
+    "title": "A Streetcar Named Desire",
+    "year": 1951,
+    "stars": "Vivien Leigh",
+    "url": "https://www.themoviedb.org/movie/1545279"
+  },
+  {
+    "position": 76,
+    "quote": "Hasta la vista, baby.",
+    "title": "Terminator 2: Judgment Day",
+    "year": 1991,
+    "stars": "Arnold Schwarzenegger",
+    "url": "https://www.themoviedb.org/movie/280"
+  },
+  {
+    "position": 77,
+    "quote": "Soylent Green is people!",
+    "title": "Soylent Green",
+    "year": 1973,
+    "stars": "Charlton Heston",
+    "url": "https://www.themoviedb.org/movie/12101"
+  },
+  {
+    "position": 78,
+    "quote": "Open the pod bay doors, please, HAL.",
+    "title": "2001: A Space Odyssey",
+    "year": 1968,
+    "stars": "Keir Dullea",
+    "url": "https://www.themoviedb.org/movie/62"
+  },
+  {
+    "position": 79,
+    "quote": "Striker: Surely you can't be serious. Rumack: I am serious... and don't call me Shirley.",
+    "title": "Airplane!",
+    "year": 1980,
+    "stars": "Robert Hays and Leslie Nielsen",
+    "url": "https://www.themoviedb.org/movie/813"
+  },
+  {
+    "position": 80,
+    "quote": "Yo, Adrian!",
+    "title": "Rocky",
+    "year": 1976,
+    "stars": "Sylvester Stallone",
+    "url": "https://www.themoviedb.org/movie/1366"
+  },
+  {
+    "position": 81,
+    "quote": "Hello, gorgeous.",
+    "title": "Funny Girl",
+    "year": 1968,
+    "stars": "Barbra Streisand",
+    "url": "https://www.themoviedb.org/movie/16085"
+  },
+  {
+    "position": 82,
+    "quote": "Toga! Toga!",
+    "title": "National Lampoon's Animal House",
+    "year": 1978,
+    "stars": "John Belushi",
+    "url": "https://www.themoviedb.org/movie/154227"
+  },
+  {
+    "position": 83,
+    "quote": "Listen to them. Children of the night. What music they make.",
+    "title": "Dracula",
+    "year": 1931,
+    "stars": "Bela Lugosi",
+    "url": "https://www.themoviedb.org/movie/1246049"
+  },
+  {
+    "position": 84,
+    "quote": "Oh, no, it wasn't the airplanes. It was Beauty killed the Beast.",
+    "title": "King Kong",
+    "year": 1933,
+    "stars": "Robert Armstrong",
+    "url": "https://www.themoviedb.org/movie/254"
+  },
+  {
+    "position": 85,
+    "quote": "My precious.",
+    "title": "The Lord of the Rings: The Two Towers",
+    "year": 2002,
+    "stars": "Andy Serkis",
+    "url": "https://www.themoviedb.org/movie/121"
+  },
+  {
+    "position": 86,
+    "quote": "Attica! Attica!",
+    "title": "Dog Day Afternoon",
+    "year": 1975,
+    "stars": "Al Pacino",
+    "url": "https://www.themoviedb.org/movie/968"
+  },
+  {
+    "position": 87,
+    "quote": "Sawyer, you're going out a youngster, but you've got to come back a star!",
+    "title": "42nd Street",
+    "year": 1933,
+    "stars": "Warner Baxter",
+    "url": "https://www.themoviedb.org/movie/594345"
+  },
+  {
+    "position": 88,
+    "quote": "Listen to me, mister. You're my knight in shining armor. Don't you forget it. You're going to get back on that horse, and I'm going to be right behind you, holding on tight, and away we're gonna go, go, go!",
+    "title": "On Golden Pond",
+    "year": 1981,
+    "stars": "Katharine Hepburn",
+    "url": "https://www.themoviedb.org/movie/11816"
+  },
+  {
+    "position": 89,
+    "quote": "Tell 'em to go out there with all they got and win just one for the Gipper.",
+    "title": "Knute Rockne, All American",
+    "year": 1940,
+    "stars": "Pat O'Brien",
+    "url": "https://www.themoviedb.org/movie/43812"
+  },
+  {
+    "position": 90,
+    "quote": "A martini. Shaken, not stirred.",
+    "title": "Goldfinger",
+    "year": 1964,
+    "stars": "Sean Connery",
+    "url": "https://www.themoviedb.org/movie/658"
+  },
+  {
+    "position": 91,
+    "quote": "Who's on first?",
+    "title": "The Naughty Nineties",
+    "year": 1945,
+    "stars": "Bud Abbott",
+    "url": "https://www.themoviedb.org/movie/33536"
+  },
+  {
+    "position": 92,
+    "quote": "Cinderella story. Outta nowhere. A former greenskeeper, now, about to become the Masters champion. It looks like a mirac... It's in the hole! It's in the hole! It's in the hole!",
+    "title": "Caddyshack",
+    "year": 1980,
+    "stars": "Bill Murray",
+    "url": "https://www.themoviedb.org/movie/11977"
+  },
+  {
+    "position": 93,
+    "quote": "Life is a banquet, and most poor suckers are starving to death!",
+    "title": "Auntie Mame",
+    "year": 1958,
+    "stars": "Rosalind Russell",
+    "url": "https://www.themoviedb.org/movie/16347"
+  },
+  {
+    "position": 94,
+    "quote": "I feel the need—the need for speed!",
+    "title": "Top Gun",
+    "year": 1986,
+    "stars": "Tom Cruise and Anthony Edwards",
+    "url": "https://www.themoviedb.org/movie/744"
+  },
+  {
+    "position": 95,
+    "quote": "Carpe diem. Seize the day, boys. Make your lives extraordinary.",
+    "title": "Dead Poets Society",
+    "year": 1989,
+    "stars": "Robin Williams",
+    "url": "https://www.themoviedb.org/movie/207"
+  },
+  {
+    "position": 96,
+    "quote": "Snap out of it!",
+    "title": "Moonstruck",
+    "year": 1987,
+    "stars": "Cher",
+    "url": "https://www.themoviedb.org/movie/2039"
+  },
+  {
+    "position": 97,
+    "quote": "My mother thanks you. My father thanks you. My sister thanks you. And I thank you.",
+    "title": "Yankee Doodle Dandy",
+    "year": 1942,
+    "stars": "James Cagney",
+    "url": "https://www.themoviedb.org/movie/3087"
+  },
+  {
+    "position": 98,
+    "quote": "Nobody puts Baby in a corner.",
+    "title": "Dirty Dancing",
+    "year": 1987,
+    "stars": "Patrick Swayze",
+    "url": "https://www.themoviedb.org/movie/88"
+  },
+  {
+    "position": 99,
+    "quote": "I'll get you, my pretty, and your little dog too!",
+    "title": "The Wizard of Oz",
+    "year": 1939,
+    "stars": "Margaret Hamilton",
+    "url": "https://www.themoviedb.org/movie/630"
+  },
+  {
+    "position": 100,
+    "quote": "I'm the king of the world!",
+    "title": "Titanic",
+    "year": 1997,
+    "stars": "Leonardo DiCaprio",
+    "url": "https://www.themoviedb.org/movie/597"
+  }
+]
