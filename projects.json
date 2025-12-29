@@ -7,13 +7,13 @@
     "category": "Game",
     "title": "Countdown: The Number Experience"
   },
-  "quote-game": {
-    "category": "Game",
-    "title": "AFI Quote Master"
-  },
   "hass-sentence": {
     "category": "Home Assistant",
     "title": "HA Intent Parser Visualizer"
+  },
+  "quote-game": {
+    "category": "Game",
+    "title": "AFI Quote Master"
   },
   "url-to-meta": {
     "category": "Web",
