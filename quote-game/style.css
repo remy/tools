@@ -199,6 +199,80 @@ button.secondary {
   border-radius: 8px;
   margin: 10px 0 20px;
 }
+label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+#min-year,
+#max-year {
+  width: 80px;
+  padding: 8px;
+  background: #000;
+  border: 1px solid var(--border);
+  color: #fff;
+  border-radius: 5px;
+  text-align: center;
+}
+
+#settings-btn {
+  cursor: pointer;
+  border: none;
+  transition: transform 0.2s;
+}
+
+#settings-btn:hover {
+  transform: rotate(45deg);
+}
+
+/* Collection Specifics */
+.collection-modal {
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.collection-list {
+  flex: 1;
+  overflow-y: auto;
+  text-align: left;
+  margin: 15px 0;
+  padding-right: 5px;
+}
+
+.collection-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 10px;
+}
+
+.collection-info {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.replay-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border: 1px solid var(--primary);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.replay-link:hover {
+  background: var(--primary);
+  color: white;
+}
 
 /* Desktop Adjustments */
 @media (min-height: 500px) {

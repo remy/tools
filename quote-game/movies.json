@@ -798,5 +798,965 @@
     "year": 1997,
     "stars": "Leonardo DiCaprio",
     "url": "https://www.themoviedb.org/movie/597"
+  },
+  {
+    "position": 101,
+    "quote": "I'm just a girl, standing in front of a boy, asking him to love her.",
+    "title": "Notting Hill",
+    "year": 1999,
+    "stars": "Julia Roberts",
+    "url": "https://www.themoviedb.org/movie/509"
+  },
+  {
+    "position": 102,
+    "quote": "I'm also just a girl, standing in front of a boy, asking him to love her.",
+    "title": "Notting Hill",
+    "year": 1999,
+    "stars": "Julia Roberts",
+    "url": "https://www.themoviedb.org/movie/509"
+  },
+  {
+    "position": 103,
+    "quote": "Why so serious?",
+    "title": "The Dark Knight",
+    "year": 2008,
+    "stars": "Heath Ledger",
+    "url": "https://www.themoviedb.org/movie/155"
+  },
+  {
+    "position": 104,
+    "quote": "I drink your milkshake! I drink it up!",
+    "title": "There Will Be Blood",
+    "year": 2007,
+    "stars": "Daniel Day-Lewis",
+    "url": "https://www.themoviedb.org/movie/7345"
+  },
+  {
+    "position": 105,
+    "quote": "Our business is life itself.",
+    "title": "Jurassic Park",
+    "year": 1993,
+    "stars": "Jeff Goldblum",
+    "url": "https://www.themoviedb.org/movie/329"
+  },
+  {
+    "position": 106,
+    "quote": "Look at me. I am the captain now.",
+    "title": "Captain Phillips",
+    "year": 2013,
+    "stars": "Barkhad Abdi",
+    "url": "https://www.themoviedb.org/movie/109424"
+  },
+  {
+    "position": 107,
+    "quote": "That'll do, Pig. That'll do.",
+    "title": "Babe",
+    "year": 1995,
+    "stars": "James Cromwell",
+    "url": "https://www.themoviedb.org/movie/9598"
+  },
+  {
+    "position": 108,
+    "quote": "Help me, Obi-Wan Kenobi. You're my only hope.",
+    "title": "Star Wars",
+    "year": 1977,
+    "stars": "Carrie Fisher",
+    "url": "https://www.themoviedb.org/movie/11"
+  },
+  {
+    "position": 109,
+    "quote": "Just keep swimming.",
+    "title": "Finding Nemo",
+    "year": 2003,
+    "stars": "Ellen DeGeneres",
+    "url": "https://www.themoviedb.org/movie/12"
+  },
+  {
+    "position": 110,
+    "quote": "If you're a bird, I'm a bird.",
+    "title": "The Notebook",
+    "year": 2004,
+    "stars": "Ryan Gosling",
+    "url": "https://www.themoviedb.org/movie/11036"
+  },
+  {
+    "position": 111,
+    "quote": "Keep the change, ya filthy animal.",
+    "title": "Home Alone",
+    "year": 1990,
+    "stars": "Macaulay Culkin",
+    "url": "https://www.themoviedb.org/movie/771"
+  },
+  {
+    "position": 112,
+    "quote": "Wanna know how I got these scars?",
+    "title": "The Dark Knight",
+    "year": 2008,
+    "stars": "Heath Ledger",
+    "url": "https://www.themoviedb.org/movie/155"
+  },
+  {
+    "position": 113,
+    "quote": "The first rule of Fight Club is: You do not talk about Fight Club.",
+    "title": "Fight Club",
+    "year": 1999,
+    "stars": "Brad Pitt",
+    "url": "https://www.themoviedb.org/movie/550"
+  },
+  {
+    "position": 114,
+    "quote": "With great power comes great responsibility.",
+    "title": "Spider-Man",
+    "year": 2002,
+    "stars": "Cliff Robertson",
+    "url": "https://www.themoviedb.org/movie/557"
+  },
+  {
+    "position": 115,
+    "quote": "Winter is coming.",
+    "title": "Game of Thrones",
+    "year": 2011,
+    "stars": "Sean Bean",
+    "url": "https://www.themoviedb.org/movie/738562"
+  },
+  {
+    "position": 116,
+    "quote": "I'm going to have to science the s*** out of this.",
+    "title": "The Martian",
+    "year": 2015,
+    "stars": "Matt Damon",
+    "url": "https://www.themoviedb.org/movie/286217"
+  },
+  {
+    "position": 117,
+    "quote": "Get in loser, we're going shopping.",
+    "title": "Mean Girls",
+    "year": 2004,
+    "stars": "Rachel McAdams",
+    "url": "https://www.themoviedb.org/movie/10625"
+  },
+  {
+    "position": 118,
+    "quote": "What is this? A center for ants?",
+    "title": "Zoolander",
+    "year": 2001,
+    "stars": "Ben Stiller",
+    "url": "https://www.themoviedb.org/movie/9398"
+  },
+  {
+    "position": 119,
+    "quote": "I am Groot.",
+    "title": "Guardians of the Galaxy",
+    "year": 2014,
+    "stars": "Vin Diesel",
+    "url": "https://www.themoviedb.org/movie/118340"
+  },
+  {
+    "position": 120,
+    "quote": "Great Scott!",
+    "title": "Back to the Future",
+    "year": 1985,
+    "stars": "Christopher Lloyd",
+    "url": "https://www.themoviedb.org/movie/105"
+  },
+  {
+    "position": 121,
+    "quote": "Are you not entertained?!",
+    "title": "Gladiator",
+    "year": 2000,
+    "stars": "Russell Crowe",
+    "url": "https://www.themoviedb.org/movie/98"
+  },
+  {
+    "position": 122,
+    "quote": "You shall not pass!",
+    "title": "The Lord of the Rings: The Fellowship of the Ring",
+    "year": 2001,
+    "stars": "Ian McKellen",
+    "url": "https://www.themoviedb.org/movie/120"
+  },
+  {
+    "position": 123,
+    "quote": "You're a wizard, Harry.",
+    "title": "Harry Potter and the Philosopher's Stone",
+    "year": 2001,
+    "stars": "Robbie Coltrane",
+    "url": "https://www.themoviedb.org/movie/671"
+  },
+  {
+    "position": 124,
+    "quote": "This is the day you will always remember as the day you almost caught Captain Jack Sparrow!",
+    "title": "Pirates of the Caribbean: The Curse of the Black Pearl",
+    "year": 2003,
+    "stars": "Johnny Depp",
+    "url": "https://www.themoviedb.org/movie/22"
+  },
+  {
+    "position": 125,
+    "quote": "On Wednesdays we wear pink.",
+    "title": "Mean Girls",
+    "year": 2004,
+    "stars": "Lacey Chabert",
+    "url": "https://www.themoviedb.org/movie/10625"
+  },
+  {
+    "position": 126,
+    "quote": "I wish I knew how to quit you.",
+    "title": "Brokeback Mountain",
+    "year": 2005,
+    "stars": "Jake Gyllenhaal",
+    "url": "https://www.themoviedb.org/movie/142"
+  },
+  {
+    "position": 127,
+    "quote": "I will find you, and I will kill you.",
+    "title": "Taken",
+    "year": 2008,
+    "stars": "Liam Neeson",
+    "url": "https://www.themoviedb.org/movie/8681"
+  },
+  {
+    "position": 128,
+    "quote": "I am Iron Man.",
+    "title": "Iron Man",
+    "year": 2008,
+    "stars": "Robert Downey Jr.",
+    "url": "https://www.themoviedb.org/movie/1726"
+  },
+  {
+    "position": 129,
+    "quote": "I love you 3000.",
+    "title": "Avengers: Endgame",
+    "year": 2019,
+    "stars": "Robert Downey Jr.",
+    "url": "https://www.themoviedb.org/movie/299534"
+  },
+  {
+    "position": 130,
+    "quote": "Wakanda Forever!",
+    "title": "Black Panther",
+    "year": 2018,
+    "stars": "Chadwick Boseman",
+    "url": "https://www.themoviedb.org/movie/284054"
+  },
+  {
+    "position": 131,
+    "quote": "You either die a hero or live long enough to see yourself become the villain.",
+    "title": "The Dark Knight",
+    "year": 2008,
+    "stars": "Aaron Eckhart",
+    "url": "https://www.themoviedb.org/movie/155"
+  },
+  {
+    "position": 132,
+    "quote": "A million dollars isn't cool. You know what's cool? A billion dollars.",
+    "title": "The Social Network",
+    "year": 2010,
+    "stars": "Justin Timberlake",
+    "url": "https://www.themoviedb.org/movie/37799"
+  },
+  {
+    "position": 133,
+    "quote": "You mustn't be afraid to dream a little bigger, darling.",
+    "title": "Inception",
+    "year": 2010,
+    "stars": "Tom Hardy",
+    "url": "https://www.themoviedb.org/movie/27205"
+  },
+  {
+    "position": 134,
+    "quote": "I'm in a glass case of emotion!",
+    "title": "Anchorman: The Legend of Ron Burgundy",
+    "year": 2004,
+    "stars": "Will Ferrell",
+    "url": "https://www.themoviedb.org/movie/13988"
+  },
+  {
+    "position": 135,
+    "quote": "60% of the time, it works every time.",
+    "title": "Anchorman: The Legend of Ron Burgundy",
+    "year": 2004,
+    "stars": "Paul Rudd",
+    "url": "https://www.themoviedb.org/movie/13988"
+  },
+  {
+    "position": 136,
+    "quote": "Did we just become best friends?",
+    "title": "Step Brothers",
+    "year": 2008,
+    "stars": "Will Ferrell and John C. Reilly",
+    "url": "https://www.themoviedb.org/movie/12133"
+  },
+  {
+    "position": 137,
+    "quote": "This is Sparta!",
+    "title": "300",
+    "year": 2006,
+    "stars": "Gerard Butler",
+    "url": "https://www.themoviedb.org/movie/1271"
+  },
+  {
+    "position": 138,
+    "quote": "May the odds be ever in your favor.",
+    "title": "The Hunger Games",
+    "year": 2012,
+    "stars": "Elizabeth Banks",
+    "url": "https://www.themoviedb.org/movie/70160"
+  },
+  {
+    "position": 139,
+    "quote": "Let it go.",
+    "title": "Frozen",
+    "year": 2013,
+    "stars": "Idina Menzel",
+    "url": "https://www.themoviedb.org/movie/109445"
+  },
+  {
+    "position": 140,
+    "quote": "I'm not fucking leaving!",
+    "title": "The Wolf of Wall Street",
+    "year": 2013,
+    "stars": "Leonardo DiCaprio",
+    "url": "https://www.themoviedb.org/movie/106646"
+  },
+  {
+    "position": 141,
+    "quote": "Not quite my tempo.",
+    "title": "Whiplash",
+    "year": 2014,
+    "stars": "J.K. Simmons",
+    "url": "https://www.themoviedb.org/movie/244786"
+  },
+  {
+    "position": 142,
+    "quote": "Fish are friends, not food.",
+    "title": "Finding Nemo",
+    "year": 2003,
+    "stars": "Barry Humphries",
+    "url": "https://www.themoviedb.org/movie/12"
+  },
+  {
+    "position": 143,
+    "quote": "Adventure is out there!",
+    "title": "Up",
+    "year": 2009,
+    "stars": "Christopher Plummer",
+    "url": "https://www.themoviedb.org/movie/14160"
+  },
+  {
+    "position": 144,
+    "quote": "Where is my super suit?",
+    "title": "The Incredibles",
+    "year": 2004,
+    "stars": "Samuel L. Jackson",
+    "url": "https://www.themoviedb.org/movie/9806"
+  },
+  {
+    "position": 145,
+    "quote": "Ohana means family. Family means nobody gets left behind or forgotten.",
+    "title": "Lilo & Stitch",
+    "year": 2002,
+    "stars": "Chris Sanders",
+    "url": "https://www.themoviedb.org/movie/11544"
+  },
+  {
+    "position": 146,
+    "quote": "Off with their heads!",
+    "title": "Alice in Wonderland",
+    "year": 1951,
+    "stars": "Verna Felton",
+    "url": "https://www.themoviedb.org/movie/12092"
+  },
+  {
+    "position": 147,
+    "quote": "Second star to the right and straight on 'til morning.",
+    "title": "Peter Pan",
+    "year": 1953,
+    "stars": "Bobby Driscoll",
+    "url": "https://www.themoviedb.org/movie/10693"
+  },
+  {
+    "position": 148,
+    "quote": "Supercalifragilisticexpialidocious.",
+    "title": "Mary Poppins",
+    "year": 1964,
+    "stars": "Julie Andrews",
+    "url": "https://www.themoviedb.org/movie/433"
+  },
+  {
+    "position": 149,
+    "quote": "A spoonful of sugar helps the medicine go down.",
+    "title": "Mary Poppins",
+    "year": 1964,
+    "stars": "Julie Andrews",
+    "url": "https://www.themoviedb.org/movie/433"
+  },
+  {
+    "position": 150,
+    "quote": "When you wish upon a star...",
+    "title": "Pinocchio",
+    "year": 1940,
+    "stars": "Cliff Edwards",
+    "url": "https://www.themoviedb.org/movie/10895"
+  },
+  {
+    "position": 151,
+    "quote": "You complete me.",
+    "title": "Jerry Maguire",
+    "year": 1996,
+    "stars": "Tom Cruise",
+    "url": "https://www.themoviedb.org/movie/9390"
+  },
+  {
+    "position": 152,
+    "quote": "What's in the box?!",
+    "title": "Seven",
+    "year": 1995,
+    "stars": "Brad Pitt",
+    "url": "https://www.themoviedb.org/movie/807"
+  },
+  {
+    "position": 153,
+    "quote": "Get busy living, or get busy dying.",
+    "title": "The Shawshank Redemption",
+    "year": 1994,
+    "stars": "Morgan Freeman",
+    "url": "https://www.themoviedb.org/movie/278"
+  },
+  {
+    "position": 154,
+    "quote": "They may take our lives, but they'll never take our freedom!",
+    "title": "Braveheart",
+    "year": 1995,
+    "stars": "Mel Gibson",
+    "url": "https://www.themoviedb.org/movie/197"
+  },
+  {
+    "position": 155,
+    "quote": "As if!",
+    "title": "Clueless",
+    "year": 1995,
+    "stars": "Alicia Silverstone",
+    "url": "https://www.themoviedb.org/movie/9603"
+  },
+  {
+    "position": 156,
+    "quote": "What, like it's hard?",
+    "title": "Legally Blonde",
+    "year": 2001,
+    "stars": "Reese Witherspoon",
+    "url": "https://www.themoviedb.org/movie/1091"
+  },
+  {
+    "position": 157,
+    "quote": "I'm not a regular mom, I'm a cool mom.",
+    "title": "Mean Girls",
+    "year": 2004,
+    "stars": "Amy Poehler",
+    "url": "https://www.themoviedb.org/movie/10625"
+  },
+  {
+    "position": 158,
+    "quote": "Very nice!",
+    "title": "Borat",
+    "year": 2006,
+    "stars": "Sacha Baron Cohen",
+    "url": "https://www.themoviedb.org/movie/492"
+  },
+  {
+    "position": 159,
+    "quote": "If you can dodge a wrench, you can dodge a ball.",
+    "title": "Dodgeball: A True Underdog Story",
+    "year": 2004,
+    "stars": "Rip Torn",
+    "url": "https://www.themoviedb.org/movie/11536"
+  },
+  {
+    "position": 160,
+    "quote": "Tina, you fat lard, come get some dinner!",
+    "title": "Napoleon Dynamite",
+    "year": 2004,
+    "stars": "Jon Heder",
+    "url": "https://www.themoviedb.org/movie/8193"
+  },
+  {
+    "position": 161,
+    "quote": "I am McLovin.",
+    "title": "Superbad",
+    "year": 2007,
+    "stars": "Christopher Mintz-Plasse",
+    "url": "https://www.themoviedb.org/movie/8373"
+  },
+  {
+    "position": 162,
+    "quote": "It's so fluffy I'm gonna die!",
+    "title": "Despicable Me",
+    "year": 2010,
+    "stars": "Elsie Fisher",
+    "url": "https://www.themoviedb.org/movie/20352"
+  },
+  {
+    "position": 163,
+    "quote": "There is no spoon.",
+    "title": "The Matrix",
+    "year": 1999,
+    "stars": "Rowan Witt",
+    "url": "https://www.themoviedb.org/movie/603"
+  },
+  {
+    "position": 164,
+    "quote": "Dodge this.",
+    "title": "The Matrix",
+    "year": 1999,
+    "stars": "Carrie-Anne Moss",
+    "url": "https://www.themoviedb.org/movie/603"
+  },
+  {
+    "position": 165,
+    "quote": "Welcome to Earth!",
+    "title": "Independence Day",
+    "year": 1996,
+    "stars": "Will Smith",
+    "url": "https://www.themoviedb.org/movie/602"
+  },
+  {
+    "position": 166,
+    "quote": "Pop quiz, hotshot.",
+    "title": "Speed",
+    "year": 1994,
+    "stars": "Dennis Hopper",
+    "url": "https://www.themoviedb.org/movie/1637"
+  },
+  {
+    "position": 167,
+    "quote": "The greatest trick the devil ever pulled was convincing the world he didn't exist.",
+    "title": "The Usual Suspects",
+    "year": 1995,
+    "stars": "Kevin Spacey",
+    "url": "https://www.themoviedb.org/movie/629"
+  },
+  {
+    "position": 168,
+    "quote": "Get to the chopper!",
+    "title": "Predator",
+    "year": 1987,
+    "stars": "Arnold Schwarzenegger",
+    "url": "https://www.themoviedb.org/movie/106"
+  },
+  {
+    "position": 169,
+    "quote": "I'll buy that for a dollar!",
+    "title": "RoboCop",
+    "year": 1987,
+    "stars": "Dan O'Herlihy",
+    "url": "https://www.themoviedb.org/movie/108"
+  },
+  {
+    "position": 170,
+    "quote": "Jessica, only child, Illinois, Chicago.",
+    "title": "Parasite",
+    "year": 2019,
+    "stars": "Park So-dam",
+    "url": "https://www.themoviedb.org/movie/496243"
+  },
+  {
+    "position": 171,
+    "quote": "Yeah, I'm thinking I'm back.",
+    "title": "John Wick",
+    "year": 2014,
+    "stars": "Keanu Reeves",
+    "url": "https://www.themoviedb.org/movie/245891"
+  },
+  {
+    "position": 172,
+    "quote": "Witness me!",
+    "title": "Mad Max: Fury Road",
+    "year": 2015,
+    "stars": "Nicholas Hoult",
+    "url": "https://www.themoviedb.org/movie/76341"
+  },
+  {
+    "position": 173,
+    "quote": "Manners maketh man.",
+    "title": "Kingsman: The Secret Service",
+    "year": 2014,
+    "stars": "Colin Firth",
+    "url": "https://www.themoviedb.org/movie/207703"
+  },
+  {
+    "position": 174,
+    "quote": "I am Kenough.",
+    "title": "Barbie",
+    "year": 2023,
+    "stars": "Ryan Gosling",
+    "url": "https://www.themoviedb.org/movie/346698"
+  },
+  {
+    "position": 175,
+    "quote": "Now I am become Death, the destroyer of worlds.",
+    "title": "Oppenheimer",
+    "year": 2023,
+    "stars": "Cillian Murphy",
+    "url": "https://www.themoviedb.org/movie/872585"
+  },
+  {
+    "position": 176,
+    "quote": "In another life, I would have really liked just doing laundry and taxes with you.",
+    "title": "Everything Everywhere All at Once",
+    "year": 2022,
+    "stars": "Ke Huy Quan",
+    "url": "https://www.themoviedb.org/movie/601796"
+  },
+  {
+    "position": 177,
+    "quote": "It's a leap of faith. That's all it is, Miles. A leap of faith.",
+    "title": "Spider-Man: Into the Spider-Verse",
+    "year": 2018,
+    "stars": "Jake Johnson",
+    "url": "https://www.themoviedb.org/movie/324857"
+  },
+  {
+    "position": 178,
+    "quote": "Dread it. Run from it. Destiny arrives all the same.",
+    "title": "Avengers: Infinity War",
+    "year": 2018,
+    "stars": "Josh Brolin",
+    "url": "https://www.themoviedb.org/movie/299536"
+  },
+  {
+    "position": 179,
+    "quote": "Why is the rum gone?",
+    "title": "Pirates of the Caribbean: The Curse of the Black Pearl",
+    "year": 2003,
+    "stars": "Johnny Depp",
+    "url": "https://www.themoviedb.org/movie/22"
+  },
+  {
+    "position": 180,
+    "quote": "ISuspectFoulPlay",
+    "title": "Knives Out",
+    "year": 2019,
+    "stars": "Daniel Craig",
+    "url": "https://www.themoviedb.org/movie/546554"
+  },
+  {
+    "position": 181,
+    "quote": "Magic mirror on the wall, who is the fairest one of all?",
+    "title": "Snow White and the Seven Dwarfs",
+    "year": 1937,
+    "stars": "Lucille La Verne",
+    "url": "https://www.themoviedb.org/movie/598"
+  },
+  {
+    "position": 182,
+    "quote": "No, I am your father.",
+    "title": "Star Wars: The Empire Strikes Back",
+    "year": 1980,
+    "stars": "James Earl Jones",
+    "url": "https://www.themoviedb.org/movie/1891"
+  },
+  {
+    "position": 183,
+    "quote": "Yippee-ki-yay, motherfucker!",
+    "title": "Die Hard",
+    "year": 1988,
+    "stars": "Bruce Willis",
+    "url": "https://www.themoviedb.org/movie/562"
+  },
+  {
+    "position": 184,
+    "quote": "The Dude abides.",
+    "title": "The Big Lebowski",
+    "year": 1998,
+    "stars": "Jeff Bridges",
+    "url": "https://www.themoviedb.org/movie/115"
+  },
+  {
+    "position": 185,
+    "quote": "Inconceivable!",
+    "title": "The Princess Bride",
+    "year": 1987,
+    "stars": "Wallace Shawn",
+    "url": "https://www.themoviedb.org/movie/2493"
+  },
+  {
+    "position": 186,
+    "quote": "My name is Inigo Montoya. You killed my father. Prepare to die.",
+    "title": "The Princess Bride",
+    "year": 1987,
+    "stars": "Mandy Patinkin",
+    "url": "https://www.themoviedb.org/movie/2493"
+  },
+  {
+    "position": 187,
+    "quote": "Who you gonna call? Ghostbusters!",
+    "title": "Ghostbusters",
+    "year": 1984,
+    "stars": "Ray Parker Jr.",
+    "url": "https://www.themoviedb.org/movie/4307"
+  },
+  {
+    "position": 188,
+    "quote": "Snakes. Why did it have to be snakes?",
+    "title": "Raiders of the Lost Ark",
+    "year": 1981,
+    "stars": "Harrison Ford",
+    "url": "https://www.themoviedb.org/movie/85"
+  },
+  {
+    "position": 189,
+    "quote": "Hakuna Matata.",
+    "title": "The Lion King",
+    "year": 1994,
+    "stars": "Nathan Lane and Ernie Sabella",
+    "url": "https://www.themoviedb.org/movie/8587"
+  },
+  {
+    "position": 190,
+    "quote": "The world is yours.",
+    "title": "Scarface",
+    "year": 1983,
+    "stars": "Al Pacino",
+    "url": "https://www.themoviedb.org/movie/111"
+  },
+  {
+    "position": 191,
+    "quote": "Say 'what' again! I dare you!",
+    "title": "Pulp Fiction",
+    "year": 1994,
+    "stars": "Samuel L. Jackson",
+    "url": "https://www.themoviedb.org/movie/680"
+  },
+  {
+    "position": 192,
+    "quote": "I'm funny how? I mean, funny like I'm a clown? I amuse you?",
+    "title": "Goodfellas",
+    "year": 1990,
+    "stars": "Joe Pesci",
+    "url": "https://www.themoviedb.org/movie/769"
+  },
+  {
+    "position": 193,
+    "quote": "Good evening, Clarice.",
+    "title": "The Silence of the Lambs",
+    "year": 1991,
+    "stars": "Anthony Hopkins",
+    "url": "https://www.themoviedb.org/movie/274"
+  },
+  {
+    "position": 194,
+    "quote": "Come with me if you want to live.",
+    "title": "Terminator 2: Judgment Day",
+    "year": 1991,
+    "stars": "Arnold Schwarzenegger",
+    "url": "https://www.themoviedb.org/movie/280"
+  },
+  {
+    "position": 195,
+    "quote": "Have you ever danced with the devil in the pale moonlight?",
+    "title": "Batman",
+    "year": 1989,
+    "stars": "Jack Nicholson",
+    "url": "https://www.themoviedb.org/movie/268"
+  },
+  {
+    "position": 196,
+    "quote": "It's showtime!",
+    "title": "Beetlejuice",
+    "year": 1988,
+    "stars": "Michael Keaton",
+    "url": "https://www.themoviedb.org/movie/4011"
+  },
+  {
+    "position": 197,
+    "quote": "One does not simply walk into Mordor.",
+    "title": "The Lord of the Rings: The Fellowship of the Ring",
+    "year": 2001,
+    "stars": "Sean Bean",
+    "url": "https://www.themoviedb.org/movie/120"
+  },
+  {
+    "position": 198,
+    "quote": "Avengers, assemble!",
+    "title": "Avengers: Endgame",
+    "year": 2019,
+    "stars": "Chris Evans",
+    "url": "https://www.themoviedb.org/movie/299534"
+  },
+  {
+    "position": 199,
+    "quote": "Leave the gun. Take the cannoli.",
+    "title": "The Godfather",
+    "year": 1972,
+    "stars": "Richard S. Castellano",
+    "url": "https://www.themoviedb.org/movie/238"
+  },
+  {
+    "position": 200,
+    "quote": "In the morning, I'm making waffles!",
+    "title": "Shrek",
+    "year": 2001,
+    "stars": "Eddie Murphy",
+    "url": "https://www.themoviedb.org/movie/808"
+  },
+  {
+    "position": 201,
+    "quote": "That's my secret, Cap. I'm always angry.",
+    "title": "The Avengers",
+    "year": 2012,
+    "stars": "Mark Ruffalo",
+    "url": "https://www.themoviedb.org/movie/24428"
+  },
+  {
+    "position": 202,
+    "quote": "By the power of Grayskull!",
+    "title": "Masters of the Universe",
+    "year": 1987,
+    "stars": "Dolph Lundgren",
+    "url": "https://www.themoviedb.org/movie/11905"
+  },
+  {
+    "position": 203,
+    "quote": "To infinity and beyond!",
+    "title": "Toy Story",
+    "year": 1995,
+    "stars": "Tim Allen",
+    "url": "https://www.themoviedb.org/movie/862"
+  },
+  {
+    "position": 204,
+    "quote": "What we do in life echoes in eternity.",
+    "title": "Gladiator",
+    "year": 2000,
+    "stars": "Russell Crowe",
+    "url": "https://www.themoviedb.org/movie/98"
+  },
+  {
+    "position": 205,
+    "quote": "On your left.",
+    "title": "Captain America: The Winter Soldier",
+    "year": 2014,
+    "stars": "Chris Evans",
+    "url": "https://www.themoviedb.org/movie/100402"
+  },
+  {
+    "position": 206,
+    "quote": "You is kind. You is smart. You is important.",
+    "title": "The Help",
+    "year": 2011,
+    "stars": "Viola Davis",
+    "url": "https://www.themoviedb.org/movie/50646"
+  },
+  {
+    "position": 207,
+    "quote": "I don't want to survive. I want to live.",
+    "title": "12 Years a Slave",
+    "year": 2013,
+    "stars": "Chiwetel Ejiofor",
+    "url": "https://www.themoviedb.org/movie/110416"
+  },
+  {
+    "position": 208,
+    "quote": "Wax on, wax off.",
+    "title": "The Karate Kid",
+    "year": 1984,
+    "stars": "Pat Morita",
+    "url": "https://www.themoviedb.org/movie/1885"
+  },
+  {
+    "position": 209,
+    "quote": "Just when I thought I was out, they pull me back in.",
+    "title": "The Godfather Part III",
+    "year": 1990,
+    "stars": "Al Pacino",
+    "url": "https://www.themoviedb.org/movie/242"
+  },
+  {
+    "position": 210,
+    "quote": "I'm not bad. I'm just drawn that way.",
+    "title": "Who Framed Roger Rabbit",
+    "year": 1988,
+    "stars": "Kathleen Turner",
+    "url": "https://www.themoviedb.org/movie/2142"
+  },
+  {
+    "position": 211,
+    "quote": "Roads? Where we're going, we don't need roads.",
+    "title": "Back to the Future",
+    "year": 1985,
+    "stars": "Christopher Lloyd",
+    "url": "https://www.themoviedb.org/movie/105"
+  },
+  {
+    "position": 212,
+    "quote": "I mean, funny like I'm a clown? I amuse you?",
+    "title": "Goodfellas",
+    "year": 1990,
+    "stars": "Joe Pesci",
+    "url": "https://www.themoviedb.org/movie/769"
+  },
+  {
+    "position": 213,
+    "quote": "Lisan al-Gaib!",
+    "title": "Dune: Part Two",
+    "year": 2024,
+    "stars": "Javier Bardem",
+    "url": "https://www.themoviedb.org/movie/693134"
+  },
+  {
+    "position": 214,
+    "quote": "It's not the plane, it's the pilot.",
+    "title": "Top Gun: Maverick",
+    "year": 2022,
+    "stars": "Tom Cruise",
+    "url": "https://www.themoviedb.org/movie/361743"
+  },
+  {
+    "position": 215,
+    "quote": "I suspected foul play!",
+    "title": "Knives Out",
+    "year": 2019,
+    "stars": "Daniel Craig",
+    "url": "https://www.themoviedb.org/movie/546554"
+  },
+  {
+    "position": 216,
+    "quote": "You're tearing me apart, Lisa!",
+    "title": "The Room",
+    "year": 2003,
+    "stars": "Tommy Wiseau",
+    "url": "https://www.themoviedb.org/movie/17473"
+  },
+  {
+    "position": 217,
+    "quote": "Wait a minute. Is this a doughnut hole within a doughnut's hole?",
+    "title": "Glass Onion: A Knives Out Mystery",
+    "year": 2022,
+    "stars": "Daniel Craig",
+    "url": "https://www.themoviedb.org/movie/661347"
+  },
+  {
+    "position": 218,
+    "quote": "Language is the first weapon drawn in a conflict.",
+    "title": "Arrival",
+    "year": 2016,
+    "stars": "Amy Adams",
+    "url": "https://www.themoviedb.org/movie/329865"
+  },
+  {
+    "position": 219,
+    "quote": "Sink into the floor.",
+    "title": "Get Out",
+    "year": 2017,
+    "stars": "Catherine Keener",
+    "url": "https://www.themoviedb.org/movie/419430"
+  },
+  {
+    "position": 220,
+    "quote": "What's the most you ever lost on a coin toss?",
+    "title": "No Country for Old Men",
+    "year": 2007,
+    "stars": "Javier Bardem",
+    "url": "https://www.themoviedb.org/movie/82692"
   }
 ]
