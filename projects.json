@@ -11,6 +11,10 @@
     "category": "Home Assistant",
     "title": "HA Intent Parser Visualizer"
   },
+  "page-count": {
+    "category": "Utilities",
+    "title": "Personal Book Tracker"
+  },
   "quote-game": {
     "category": "Game",
     "title": "AFI Quote Master"
@@ -18,9 +22,5 @@
   "url-to-meta": {
     "category": "Utilities",
     "title": "URL to Meta"
-  },
-  "page-count": {
-    "category": "Utilities",
-    "title": "Book Pager Counter"
   }
 }
