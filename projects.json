@@ -1,6 +1,6 @@
 {
   "contract-rate": {
-    "category": "Work",
+    "category": "Utilities",
     "title": "Contract Rate Calculator"
   },
   "countdown-numbers": {
@@ -16,7 +16,11 @@
     "title": "AFI Quote Master"
   },
   "url-to-meta": {
-    "category": "Web",
+    "category": "Utilities",
     "title": "URL to Meta"
+  },
+  "page-count": {
+    "category": "Utilities",
+    "title": "Book Pager Counter"
   }
 }
