@@ -19,12 +19,12 @@
     "category": "Game",
     "title": "AFI Quote Master"
   },
+  "time-add": {
+    "category": "Utilities",
+    "title": "Finish Time Calculator"
+  },
   "url-to-meta": {
     "category": "Utilities",
     "title": "URL to Meta"
-  },
-  "time-add": {
-    "category": "Utilities",
-    "title": "Time Add"
   }
 }
