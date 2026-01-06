@@ -13,7 +13,7 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -66,16 +66,62 @@
 
     input:focus {
       outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .result {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
       padding: 1.5rem;
       border-radius: 0.75rem;
       text-align: center;
       margin-top: 2rem;
+    }
+
+    .share-btn {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .share-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .share-btn:active {
+      transform: translateY(0);
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1a202c;
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .notification.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
     }
 
     .result-label {
@@ -123,12 +169,27 @@
       <div class="result-label">End Time</div>
       <div class="result-time" id="endTime">19:30</div>
     </div>
+
+    <button class="share-btn" id="shareBtn">Share Link</button>
   </div>
+
+  <div class="notification" id="notification">Link copied to clipboard!</div>
 
   <script>
     const startInput = document.getElementById('startTime');
     const minutesInput = document.getElementById('minutes');
     const endTimeDisplay = document.getElementById('endTime');
+    const shareBtn = document.getElementById('shareBtn');
+    const notification = document.getElementById('notification');
+
+    function loadFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const time = params.get('time');
+      const mins = params.get('mins');
+      
+      if (time) startInput.value = time;
+      if (mins) minutesInput.value = mins;
+    }
 
     function calculate() {
       const startTime = startInput.value;
@@ -151,9 +212,28 @@
       endTimeDisplay.textContent = `${endHours}:${endMinutes}`;
     }
 
+    function shareLink() {
+      const time = startInput.value;
+      const mins = minutesInput.value || '0';
+      
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.searchParams.set('time', time);
+      url.searchParams.set('mins', mins);
+      
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        notification.classList.add('show');
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 2000);
+      });
+    }
+
     startInput.addEventListener('input', calculate);
     minutesInput.addEventListener('input', calculate);
+    shareBtn.addEventListener('click', shareLink);
 
+    loadFromURL();
     calculate();
   </script>
 </body>
