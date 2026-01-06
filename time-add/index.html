@@ -1,159 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
-
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finish Time Calculator</title>
+    <title>Time Calculator</title>
     <style>
-      :root {
-        --primary: #6366f1;
-        --bg: #f8fafc;
-        --card: #ffffff;
-        --text: #1e293b;
-      }
-
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        background-color: var(--bg);
-        color: var(--text);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-      }
-
-      .container {
-        background: var(--card);
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        width: 100%;
-        max-width: 400px;
-      }
-
-      h1 {
-        margin-top: 0;
-        font-size: 1.5rem;
-        text-align: center;
-      }
-
-      .input-group {
-        margin-bottom: 1.5rem;
-      }
-
-      label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-      }
-
-      input {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        font-size: 1rem;
-        box-sizing: border-box;
-      }
-
-      #result {
-        margin-top: 2rem;
-        padding: 1rem;
-        background: #f1f5f9;
-        border-radius: 8px;
-        text-align: center;
-        min-height: 3rem;
-      }
-
-      .time-display {
-        font-size: 2rem;
-        font-weight: bold;
-        color: var(--primary);
-        display: block;
-      }
-    </style>
-  </head>
-
-  <body>
-
-    <div class="container">
-      <h1>End Time Calculator</h1>
-
-      <div class="input-group">
-        <label for="startTime">Start Time</label>
-        <input type="time" id="startTime" value="19:00">
-      </div>
-
-      <div class="input-group">
-        <label for="duration">Duration (minutes)</label>
-        <input type="number" id="duration" placeholder="e.g. 120" min="0">
-      </div>
-
-      <div id="result">
-        Enter details to see end time
-      </div>
-    </div>
-
-    <script>
-      const startTimeInput = document.getElementById('startTime');
-      const durationInput = document.getElementById('duration');
-      const resultDiv = document.getElementById('result');
-
-      // 1. On load, check URL for existing parameters
-      window.addEventListener('load', () => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.has('start')) startTimeInput.value = params.get('start');
-        if (params.has('len')) durationInput.value = params.get('len');
-
-        calculateEndTime();
-      });
-
-      function updateURL(start, len) {
-        const params = new URLSearchParams();
-        if (start) params.set('start', start);
-        if (len) params.set('len', len);
-
-        // Update URL without refreshing the page
-        const newRelativePathQuery = window.location.pathname + '?' + params.toString();
-        history.replaceState(null, '', newRelativePathQuery);
-      }
-
-      function calculateEndTime() {
-        const startTime = startTimeInput.value;
-        const duration = parseInt(durationInput.value);
-
-        // Update the URL every time an input changes
-        updateURL(startTime, durationInput.value);
-
-        if (!startTime || isNaN(duration)) {
-          resultDiv.innerHTML = "Enter details to see end time";
-          return;
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --radius: 12px;
         }
 
-        const [hours, minutes] = startTime.split(':').map(Number);
-        const date = new Date();
-        date.setHours(hours);
-        date.setMinutes(minutes + duration);
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            padding: 2rem 1rem;
+            margin: 0;
+        }
 
-        const endHours = date.getHours().toString().padStart(2, '0');
-        const endMinutes = date.getMinutes().toString().padStart(2, '0');
+        time-calc {
+            background: var(--card);
+            padding: 2rem;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            display: grid;
+            gap: 1.5rem;
+        }
 
-        // Optional: Check if it ends on a different day
-        const isNextDay = date.getDate() !== new Date().getDate();
-        const dayLabel = isNextDay ? ' <small>(Next Day)</small>' : '';
+        .input-group {
+            display: grid;
+            gap: 0.5rem;
+        }
 
-        resultDiv.innerHTML = `
-            <span>Finish Time:</span>
-            <span class="time-display">${endHours}:${endMinutes}${dayLabel}</span>
-        `;
-      }
+        label {
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+        }
 
-      startTimeInput.addEventListener('input', calculateEndTime);
-      durationInput.addEventListener('input', calculateEndTime);
+        input {
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1.25rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .result-area {
+            margin-top: 1rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed #e2e8f0;
+            text-align: center;
+        }
+
+        .result-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-time {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <time-calc></time-calc>
+
+    <script>
+        class TimeCalc extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+            }
+
+            connectedCallback() {
+                // Get initial state from URL
+                const params = new URLSearchParams(window.location.search);
+                const initialStart = params.get('start') || '19:30';
+                const initialDuration = params.get('duration') || '30';
+
+                this.render(initialStart, initialDuration);
+                this.calculate();
+            }
+
+            updateURL(start, duration) {
+                const url = new URL(window.location);
+                url.searchParams.set('start', start);
+                url.searchParams.set('duration', duration);
+                window.history.replaceState({}, '', url);
+            }
+
+            calculate() {
+                const startVal = this.shadowRoot.querySelector('#start').value;
+                const durationVal = parseInt(this.shadowRoot.querySelector('#duration').value) || 0;
+                
+                if (startVal) {
+                    const [hours, minutes] = startVal.split(':').map(Number);
+                    const date = new Date();
+                    date.setHours(hours);
+                    date.setMinutes(minutes + durationVal);
+
+                    const endHours = date.getHours().toString().padStart(2, '0');
+                    const endMins = date.getMinutes().toString().padStart(2, '0');
+                    
+                    this.shadowRoot.querySelector('#output').textContent = `${endHours}:${endMins}`;
+                    this.updateURL(startVal, durationVal);
+                }
+            }
+
+            render(start, duration) {
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        :host { display: block; }
+                        /* Re-using styles from light DOM for shadow DOM */
+                        @import url(document.location.href);
+                    </style>
+                    <div class="input-group">
+                        <label for="start">Start Time</label>
+                        <input type="time" id="start" value="${start}">
+                    </div>
+                    <div class="input-group">
+                        <label for="duration">Duration (Minutes)</label>
+                        <input type="number" id="duration" value="${duration}" placeholder="0" min="0">
+                    </div>
+                    <div class="result-area">
+                        <div class="result-label">Calculated End Time</div>
+                        <strong class="result-time" id="output">--:--</strong>
+                    </div>
+                `;
+
+                this.shadowRoot.querySelectorAll('input').forEach(input => {
+                    input.addEventListener('input', () => this.calculate());
+                });
+            }
+        }
+
+        customElements.define('time-calc', TimeCalc);
     </script>
-
-  </body>
-
+</body>
 </html>
