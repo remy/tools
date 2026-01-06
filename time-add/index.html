@@ -1,183 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Calc</title>
-    <style>
-        :root {
-            --bg: #000000;
-            --card: #1c1c1e;
-            --accent: #0a84ff;
-            --text: #ffffff;
-            --input-bg: #2c2c2e;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
 
-        time-app {
-            width: 100%;
-            max-width: 340px;
-            padding: 16px;
-        }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 24px;
-        }
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
 
-        .field {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+    .field {
+      margin-bottom: 1.5rem;
+    }
 
-        label {
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: 600;
-            color: #8e8e93;
-            letter-spacing: 0.5px;
-        }
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
 
-        /* Styled native inputs */
-        input {
-            appearance: none;
-            background: var(--input-bg);
-            border: none;
-            border-radius: 10px;
-            color: var(--text);
-            font-size: 1.2rem;
-            font-weight: 500;
-            padding: 12px;
-            text-align: center;
-        }
+    input {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.125rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 0.75rem;
+      transition: all 0.2s;
+      background: white;
+      color: #1a202c;
+    }
 
-        input:focus {
-            outline: 2px solid var(--accent);
-        }
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
 
-        /* Result styling */
-        .display {
-            background: var(--card);
-            border-radius: 16px;
-            padding: 24px 0;
-            text-align: center;
-            border: 1px solid #38383a;
-        }
+    .result {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      text-align: center;
+      margin-top: 2rem;
+    }
 
-        .result-time {
-            font-size: 4rem;
-            font-weight: 700;
-            letter-spacing: -2px;
-            line-height: 1;
-        }
+    .result-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
 
-        .share-link {
-            display: block;
-            margin-top: 20px;
-            color: var(--accent);
-            font-size: 13px;
-            text-decoration: none;
-            font-weight: 500;
-            cursor: pointer;
-        }
-    </style>
+    .result-time {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: white;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (min-width: 640px) {
+      .container {
+        padding: 2.5rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <h1>Time Calculator</h1>
+    
+    <div class="field">
+      <label for="startTime">Start Time</label>
+      <input type="time" id="startTime" value="19:30">
+    </div>
 
-    <time-app></time-app>
+    <div class="field">
+      <label for="minutes">Minutes to Add</label>
+      <input type="number" id="minutes" value="0" min="0" step="1">
+    </div>
 
-    <script>
-        class TimeApp extends HTMLElement {
-            constructor() {
-                super();
-                this.attachShadow({ mode: 'open' });
-            }
+    <div class="result">
+      <div class="result-label">End Time</div>
+      <div class="result-time" id="endTime">19:30</div>
+    </div>
+  </div>
 
-            connectedCallback() {
-                const p = new URLSearchParams(window.location.search);
-                this.state = {
-                    t: p.get('t') || '19:30',
-                    d: p.get('d') || '30'
-                };
-                this.render();
-                this.update();
-            }
+  <script>
+    const startInput = document.getElementById('startTime');
+    const minutesInput = document.getElementById('minutes');
+    const endTimeDisplay = document.getElementById('endTime');
 
-            update() {
-                const t = this.shadowRoot.querySelector('#t').value;
-                const d = this.shadowRoot.querySelector('#d').value;
-                
-                if (!t) return;
+    function calculate() {
+      const startTime = startInput.value;
+      const minutesToAdd = parseInt(minutesInput.value) || 0;
 
-                const [h, m] = t.split(':').map(Number);
-                const date = new Date();
-                date.setHours(h, m + (parseInt(d) || 0));
+      if (!startTime) {
+        endTimeDisplay.textContent = '--:--';
+        return;
+      }
 
-                const out = date.toLocaleTimeString([], { 
-                    hour: '2-digit', minute: '2-digit', hour12: false 
-                });
+      const [hours, minutes] = startTime.split(':').map(Number);
+      const startDate = new Date();
+      startDate.setHours(hours, minutes, 0, 0);
+      
+      const endDate = new Date(startDate.getTime() + minutesToAdd * 60000);
+      
+      const endHours = String(endDate.getHours()).padStart(2, '0');
+      const endMinutes = String(endDate.getMinutes()).padStart(2, '0');
+      
+      endTimeDisplay.textContent = `${endHours}:${endMinutes}`;
+    }
 
-                this.shadowRoot.querySelector('#out').textContent = out;
-                
-                // Silent URL update
-                const url = new URL(window.location);
-                url.searchParams.set('t', t);
-                url.searchParams.set('d', d);
-                window.history.replaceState({}, '', url);
-            }
+    startInput.addEventListener('input', calculate);
+    minutesInput.addEventListener('input', calculate);
 
-            copy() {
-                navigator.clipboard.writeText(window.location.href);
-                const link = this.shadowRoot.querySelector('.share-link');
-                link.textContent = 'Copied Link!';
-                setTimeout(() => link.textContent = 'Copy URL to Share', 2000);
-            }
-
-            render() {
-                this.shadowRoot.innerHTML = `
-                    <style>@import url(document.location.href);</style>
-                    <div class="grid">
-                        <div class="field">
-                            <label>Start</label>
-                            <input type="time" id="t" value="${this.state.t}">
-                        </div>
-                        <div class="field">
-                            <label>Minutes</label>
-                            <input type="number" id="d" value="${this.state.d}" inputmode="numeric">
-                        </div>
-                    </div>
-
-                    <div class="display">
-                        <label>End Time</label>
-                        <div class="result-time" id="out">--:--</div>
-                    </div>
-
-                    <div style="text-align: center;">
-                        <span class="share-link" id="copy">Copy URL to Share</span>
-                    </div>
-                `;
-
-                this.shadowRoot.querySelectorAll('input').forEach(i => 
-                    i.addEventListener('input', () => this.update())
-                );
-                this.shadowRoot.querySelector('#copy').addEventListener('click', () => this.copy());
-            }
-        }
-
-        customElements.define('time-app', TimeApp);
-    </script>
+    calculate();
+  </script>
 </body>
 </html>
