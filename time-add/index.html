@@ -3,159 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Calculator</title>
+    <title>ChronoCalc</title>
     <style>
         :root {
-            --primary: #2563eb;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #1e293b;
-            --radius: 12px;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.2);
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --radius-lg: 24px;
+            --radius-sm: 12px;
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: var(--bg);
-            color: var(--text);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(30, 41, 59, 0.4) 0px, transparent 50%);
+            color: var(--text-main);
             display: flex;
+            align-items: center;
             justify-content: center;
-            padding: 2rem 1rem;
+            min-height: 100vh;
             margin: 0;
+            padding: 20px;
         }
 
-        time-calc {
-            background: var(--card);
-            padding: 2rem;
-            border-radius: var(--radius);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        time-calculator {
             width: 100%;
             max-width: 400px;
-            display: grid;
-            gap: 1.5rem;
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
         }
 
-        .input-group {
-            display: grid;
-            gap: 0.5rem;
-        }
+        .header { margin-bottom: 2rem; }
+        h1 { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; }
+        p { color: var(--text-dim); margin: 0.25rem 0 0 0; font-size: 0.875rem; }
 
-        label {
-            font-weight: 600;
-            font-size: 0.875rem;
-            text-transform: uppercase;
+        .form-grid { display: grid; gap: 1.5rem; }
+
+        .field { display: flex; flex-direction: column; gap: 0.5rem; }
+        
+        label { 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            color: var(--text-dim);
             letter-spacing: 0.05em;
-            color: #64748b;
         }
 
         input {
-            padding: 0.75rem;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 1.25rem;
-            font-family: inherit;
-            transition: border-color 0.2s;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            color: white;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
         }
 
         input:focus {
             outline: none;
-            border-color: var(--primary);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--accent-glow);
         }
 
-        .result-area {
-            margin-top: 1rem;
-            padding-top: 1.5rem;
-            border-top: 2px dashed #e2e8f0;
+        .display-container {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+            border-radius: var(--radius-sm);
             text-align: center;
+            position: relative;
         }
 
-        .result-label {
-            font-size: 0.875rem;
-            color: #64748b;
-            margin-bottom: 0.5rem;
-        }
-
-        .result-time {
-            font-size: 3rem;
+        .result-val {
+            font-size: 3.5rem;
             font-weight: 800;
-            color: var(--primary);
+            font-variant-numeric: tabular-nums;
+            background: linear-gradient(to bottom right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
             display: block;
         }
+
+        .share-btn {
+            margin-top: 1.5rem;
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s active;
+        }
+
+        .share-btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
-    <time-calc></time-calc>
+    <time-calculator></time-calculator>
 
     <script>
-        class TimeCalc extends HTMLElement {
+        class TimeCalculator extends HTMLElement {
             constructor() {
                 super();
                 this.attachShadow({ mode: 'open' });
             }
 
             connectedCallback() {
-                // Get initial state from URL
                 const params = new URLSearchParams(window.location.search);
-                const initialStart = params.get('start') || '19:30';
-                const initialDuration = params.get('duration') || '30';
-
-                this.render(initialStart, initialDuration);
-                this.calculate();
-            }
-
-            updateURL(start, duration) {
-                const url = new URL(window.location);
-                url.searchParams.set('start', start);
-                url.searchParams.set('duration', duration);
-                window.history.replaceState({}, '', url);
+                this.state = {
+                    start: params.get('t') || '19:30',
+                    duration: params.get('d') || '45'
+                };
+                this.render();
             }
 
             calculate() {
-                const startVal = this.shadowRoot.querySelector('#start').value;
-                const durationVal = parseInt(this.shadowRoot.querySelector('#duration').value) || 0;
+                const startInput = this.shadowRoot.querySelector('#start').value;
+                const durationInput = this.shadowRoot.querySelector('#duration').value;
                 
-                if (startVal) {
-                    const [hours, minutes] = startVal.split(':').map(Number);
-                    const date = new Date();
-                    date.setHours(hours);
-                    date.setMinutes(minutes + durationVal);
+                if (!startInput) return;
 
-                    const endHours = date.getHours().toString().padStart(2, '0');
-                    const endMins = date.getMinutes().toString().padStart(2, '0');
-                    
-                    this.shadowRoot.querySelector('#output').textContent = `${endHours}:${endMins}`;
-                    this.updateURL(startVal, durationVal);
+                const [h, m] = startInput.split(':').map(Number);
+                const date = new Date();
+                date.setHours(h, m + (parseInt(durationInput) || 0));
+
+                const result = date.toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    hour12: false 
+                });
+
+                this.shadowRoot.querySelector('#result').textContent = result;
+                
+                // Sync URL
+                const url = new URL(window.location);
+                url.searchParams.set('t', startInput);
+                url.searchParams.set('d', durationInput);
+                window.history.replaceState({}, '', url);
+            }
+
+            async share() {
+                try {
+                    await navigator.share({
+                        title: 'Time Calculation',
+                        url: window.location.href
+                    });
+                } catch (err) {
+                    // Fallback: Copy to clipboard
+                    navigator.clipboard.writeText(window.location.href);
+                    alert('Link copied to clipboard!');
                 }
             }
 
-            render(start, duration) {
+            render() {
                 this.shadowRoot.innerHTML = `
-                    <style>
-                        :host { display: block; }
-                        /* Re-using styles from light DOM for shadow DOM */
-                        @import url(document.location.href);
-                    </style>
-                    <div class="input-group">
-                        <label for="start">Start Time</label>
-                        <input type="time" id="start" value="${start}">
+                    <style>@import url(document.location.href);</style>
+                    <div class="header">
+                        <h1>ChronoCalc</h1>
+                        <p>Calculate end times instantly</p>
                     </div>
-                    <div class="input-group">
-                        <label for="duration">Duration (Minutes)</label>
-                        <input type="number" id="duration" value="${duration}" placeholder="0" min="0">
+                    
+                    <div class="form-grid">
+                        <div class="field">
+                            <label>Start Time</label>
+                            <input type="time" id="start" value="${this.state.start}">
+                        </div>
+                        <div class="field">
+                            <label>Duration (min)</label>
+                            <input type="number" id="duration" value="${this.state.duration}" placeholder="0">
+                        </div>
                     </div>
-                    <div class="result-area">
-                        <div class="result-label">Calculated End Time</div>
-                        <strong class="result-time" id="output">--:--</strong>
+
+                    <div class="display-container">
+                        <label>Expected Finish</label>
+                        <span class="result-val" id="result">--:--</span>
                     </div>
+
+                    <button class="share-btn" id="share">Share Calculation</button>
                 `;
 
-                this.shadowRoot.querySelectorAll('input').forEach(input => {
-                    input.addEventListener('input', () => this.calculate());
-                });
+                this.shadowRoot.querySelectorAll('input').forEach(i => 
+                    i.addEventListener('input', () => this.calculate())
+                );
+                
+                this.shadowRoot.querySelector('#share').addEventListener('click', () => this.share());
+                
+                this.calculate();
             }
         }
 
-        customElements.define('time-calc', TimeCalc);
+        customElements.define('time-calculator', TimeCalculator);
     </script>
 </body>
 </html>
