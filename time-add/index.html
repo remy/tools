@@ -1,159 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Calculator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finish Time Calculator</title>
-    <style>
-      :root {
-        --primary: #6366f1;
-        --bg: #f8fafc;
-        --card: #ffffff;
-        --text: #1e293b;
-      }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
 
-      body {
-        font-family: system-ui, -apple-system, sans-serif;
-        background-color: var(--bg);
-        color: var(--text);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-      }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
 
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .field {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1.125rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 0.75rem;
+      transition: all 0.2s;
+      background: white;
+      color: #1a202c;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .result {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      text-align: center;
+      margin-top: 2rem;
+    }
+
+    .share-btn {
+      width: 100%;
+      padding: 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: none;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .share-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .share-btn:active {
+      transform: translateY(0);
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1a202c;
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .notification.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .result-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .result-time {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: white;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (min-width: 640px) {
       .container {
-        background: var(--card);
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-        width: 100%;
-        max-width: 400px;
+        padding: 2.5rem;
       }
 
       h1 {
-        margin-top: 0;
-        font-size: 1.5rem;
-        text-align: center;
-      }
-
-      .input-group {
-        margin-bottom: 1.5rem;
-      }
-
-      label {
-        display: block;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-      }
-
-      input {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        font-size: 1rem;
-        box-sizing: border-box;
-      }
-
-      #result {
-        margin-top: 2rem;
-        padding: 1rem;
-        background: #f1f5f9;
-        border-radius: 8px;
-        text-align: center;
-        min-height: 3rem;
-      }
-
-      .time-display {
         font-size: 2rem;
-        font-weight: bold;
-        color: var(--primary);
-        display: block;
       }
-    </style>
-  </head>
-
-  <body>
-
-    <div class="container">
-      <h1>End Time Calculator</h1>
-
-      <div class="input-group">
-        <label for="startTime">Start Time</label>
-        <input type="time" id="startTime" value="19:00">
-      </div>
-
-      <div class="input-group">
-        <label for="duration">Duration (minutes)</label>
-        <input type="number" id="duration" placeholder="e.g. 120" min="0">
-      </div>
-
-      <div id="result">
-        Enter details to see end time
-      </div>
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Time Calculator</h1>
+    
+    <div class="field">
+      <label for="startTime">Start Time</label>
+      <input type="time" id="startTime" value="19:30">
     </div>
 
-    <script>
-      const startTimeInput = document.getElementById('startTime');
-      const durationInput = document.getElementById('duration');
-      const resultDiv = document.getElementById('result');
+    <div class="field">
+      <label for="minutes">Minutes to Add</label>
+      <input type="number" id="minutes" value="0" min="0" step="1">
+    </div>
 
-      // 1. On load, check URL for existing parameters
-      window.addEventListener('load', () => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.has('start')) startTimeInput.value = params.get('start');
-        if (params.has('len')) durationInput.value = params.get('len');
+    <div class="result">
+      <div class="result-label">End Time</div>
+      <div class="result-time" id="endTime">19:30</div>
+    </div>
 
-        calculateEndTime();
+    <button class="share-btn" id="shareBtn">Share Link</button>
+  </div>
+
+  <div class="notification" id="notification">Link copied to clipboard!</div>
+
+  <script>
+    const startInput = document.getElementById('startTime');
+    const minutesInput = document.getElementById('minutes');
+    const endTimeDisplay = document.getElementById('endTime');
+    const shareBtn = document.getElementById('shareBtn');
+    const notification = document.getElementById('notification');
+
+    function loadFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const time = params.get('time');
+      const mins = params.get('mins');
+      
+      if (time) startInput.value = time;
+      if (mins) minutesInput.value = mins;
+    }
+
+    function calculate() {
+      const startTime = startInput.value;
+      const minutesToAdd = parseInt(minutesInput.value) || 0;
+
+      if (!startTime) {
+        endTimeDisplay.textContent = '--:--';
+        return;
+      }
+
+      const [hours, minutes] = startTime.split(':').map(Number);
+      const startDate = new Date();
+      startDate.setHours(hours, minutes, 0, 0);
+      
+      const endDate = new Date(startDate.getTime() + minutesToAdd * 60000);
+      
+      const endHours = String(endDate.getHours()).padStart(2, '0');
+      const endMinutes = String(endDate.getMinutes()).padStart(2, '0');
+      
+      endTimeDisplay.textContent = `${endHours}:${endMinutes}`;
+    }
+
+    function shareLink() {
+      const time = startInput.value;
+      const mins = minutesInput.value || '0';
+      
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.searchParams.set('time', time);
+      url.searchParams.set('mins', mins);
+      
+      navigator.clipboard.writeText(url.toString()).then(() => {
+        notification.classList.add('show');
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 2000);
       });
+    }
 
-      function updateURL(start, len) {
-        const params = new URLSearchParams();
-        if (start) params.set('start', start);
-        if (len) params.set('len', len);
+    startInput.addEventListener('input', calculate);
+    minutesInput.addEventListener('input', calculate);
+    shareBtn.addEventListener('click', shareLink);
 
-        // Update URL without refreshing the page
-        const newRelativePathQuery = window.location.pathname + '?' + params.toString();
-        history.replaceState(null, '', newRelativePathQuery);
-      }
-
-      function calculateEndTime() {
-        const startTime = startTimeInput.value;
-        const duration = parseInt(durationInput.value);
-
-        // Update the URL every time an input changes
-        updateURL(startTime, durationInput.value);
-
-        if (!startTime || isNaN(duration)) {
-          resultDiv.innerHTML = "Enter details to see end time";
-          return;
-        }
-
-        const [hours, minutes] = startTime.split(':').map(Number);
-        const date = new Date();
-        date.setHours(hours);
-        date.setMinutes(minutes + duration);
-
-        const endHours = date.getHours().toString().padStart(2, '0');
-        const endMinutes = date.getMinutes().toString().padStart(2, '0');
-
-        // Optional: Check if it ends on a different day
-        const isNextDay = date.getDate() !== new Date().getDate();
-        const dayLabel = isNextDay ? ' <small>(Next Day)</small>' : '';
-
-        resultDiv.innerHTML = `
-            <span>Finish Time:</span>
-            <span class="time-display">${endHours}:${endMinutes}${dayLabel}</span>
-        `;
-      }
-
-      startTimeInput.addEventListener('input', calculateEndTime);
-      durationInput.addEventListener('input', calculateEndTime);
-    </script>
-
-  </body>
-
+    loadFromURL();
+    calculate();
+  </script>
+</body>
 </html>
