@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'https://esm.sh/react@18.2.0';
 import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
@@ -13,6 +14,7 @@ const DISMISSED_KEY = 'org-notifications-dismissed-days';
 const CACHE_DB = 'org-notifications-cache';
 const CACHE_STORE = 'supplemental-results';
 const CACHE_TTL_MS = 60 * 60 * 1000;
+const AUTO_REFRESH_TTL_MS = 2 * 60 * 60 * 1000;
 
 const defaultConfig = {
   org: '',
@@ -37,6 +39,9 @@ const typeLabels = {
   Commit: 'Commit',
   Discussion: 'Discussion',
 };
+
+const toSourceClass = (source) =>
+  `source-pill source-${source.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
 const toDisplayDate = (isoString) => {
   const date = new Date(isoString);
@@ -105,6 +110,24 @@ const groupNotifications = (items) => {
       items: list,
     }))
     .sort((a, b) => (a.key < b.key ? 1 : -1));
+};
+
+const groupItemsByUrl = (items) => {
+  const grouped = new Map();
+  items.forEach((item) => {
+    const url = item.html_url || toHtmlUrl(item) || '';
+    const key = url || `item-${item.id}`;
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        key,
+        url,
+        item,
+        sources: new Set(),
+      });
+    }
+    grouped.get(key).sources.add(item._source || 'Activity');
+  });
+  return Array.from(grouped.values());
 };
 
 const loadConfig = () => {
@@ -177,6 +200,7 @@ const App = () => {
   const [showConfig, setShowConfig] = useState(true);
   const [debug, setDebug] = useState([]);
   const [supplemental, setSupplemental] = useState([]);
+  const autoRefreshAttempted = useRef(false);
 
   useEffect(() => {
     const storedConfig = loadConfig();
@@ -186,6 +210,10 @@ const App = () => {
       setShowConfig(false);
     }
   }, []);
+
+  useEffect(() => {
+    autoRefreshAttempted.current = false;
+  }, [config.org]);
 
   useEffect(() => {
     const loadCached = async () => {
@@ -198,6 +226,16 @@ const App = () => {
           const age = Date.now() - cached.cachedAt;
           const ageLabel = age > CACHE_TTL_MS ? 'stale cache' : 'cache';
           setStatus(`Loaded ${cached.items.length} ${ageLabel} results.`);
+          if (
+            !autoRefreshAttempted.current &&
+            age > AUTO_REFRESH_TTL_MS &&
+            config.org &&
+            config.token &&
+            !loading
+          ) {
+            autoRefreshAttempted.current = true;
+            fetchNotifications();
+          }
         }
       } catch (error) {
         setDebug((entries) => [
@@ -207,7 +245,7 @@ const App = () => {
       }
     };
     loadCached();
-  }, [config.org]);
+  }, [config.org, config.token, loading]);
 
   const combinedItems = useMemo(
     () =>
@@ -461,8 +499,9 @@ const App = () => {
                 <p>No items in the last 7 days.</p>
               </div>
             `
-          : combinedGroups.map(
-              (group) => html`
+          : combinedGroups.map((group) => {
+              const groupedItems = groupItemsByUrl(group.items);
+              return html`
                 ${!showDismissed && dismissedDays.includes(group.key)
                   ? null
                   : html`
@@ -471,7 +510,7 @@ const App = () => {
                           <h2>${group.dateLabel}</h2>
                           <div className="actions">
                             <span className="meta-pill"
-                              >${group.items.length} items</span
+                              >${groupedItems.length} items</span
                             >
                             ${!dismissedDays.includes(group.key) &&
                             html`
@@ -485,41 +524,51 @@ const App = () => {
                           </div>
                         </div>
                         <div className="notification-list">
-                          ${group.items.map((item) => {
+                          ${groupedItems.map((entry) => {
+                            const item = entry.item;
                             const repoName = repoFromApiUrl(
                               item.repository_url
                             );
-                            const type = item.pull_request
-                              ? 'Pull request'
-                              : 'Issue';
                             const author = item.user?.login
                               ? `Opened by ${item.user.login}`
                               : 'Opened';
-                            const source = item._source || 'Activity';
+                            const sources = Array.from(entry.sources);
                             return html`
-                              <div className="notification" key=${item.id}>
+                              <div
+                                className="notification-group"
+                                key=${entry.key}
+                              >
                                 <div>
                                   <a
                                     className="title-link"
-                                    href=${item.html_url}
+                                    href=${entry.url}
                                     target="_blank"
                                     rel="noreferrer"
                                   >
                                     ${item.title}
                                   </a>
                                 </div>
-                                <small>
-                                  <strong>${source}</strong> · ${author} ·${' '}
-                                  ${repoName}
-                                </small>
+                                <small className="notification-meta"
+                                  >${author} · ${repoName}</small
+                                >
+                                <div className="notification-sources">
+                                  ${sources.map(
+                                    (source) =>
+                                      html`<span className=${toSourceClass(
+                                        source
+                                      )}>
+                                        ${source}
+                                      </span>`
+                                  )}
+                                </div>
                               </div>
                             `;
                           })}
                         </div>
                       </div>
                     `}
-              `
-            )}
+              `;
+            })}
       </section>
     </div>
   `;

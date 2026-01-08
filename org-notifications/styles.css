@@ -3,7 +3,7 @@
   --ink: #1a1a1a;
   --muted: #5b5f66;
   --accent: #2e7d6b;
-  --accent-dark: #13574a;
+  --accent-dark: #051512;
   --paper: #f7f2ea;
   --card: #ffffff;
   --shadow: 0 18px 48px rgba(17, 31, 27, 0.18);
@@ -199,20 +199,13 @@ button:active {
   gap: 12px;
 }
 
-.notification {
+.notification-group {
   padding: 10px 12px;
   border-radius: 16px;
-  /* border: 1px solid rgba(26, 26, 26, 0.06); */
   background: #fff;
   display: grid;
-  gap: 8px;
+  gap: 6px;
   animation: fadeInUp 0.4s ease both;
-}
-
-.notification a {
-  color: var(--accent-dark);
-  text-decoration: none;
-  font-weight: 600;
 }
 
 .title-link {
@@ -225,8 +218,43 @@ button:active {
   text-decoration: underline;
 }
 
-.notification small {
+.notification-meta {
   color: var(--muted);
+}
+
+.title-link:visited {
+  /* opacity: 0.72; */
+  color: #888787;
+}
+
+.notification-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.source-pill {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(46, 125, 107, 0.12);
+  color: var(--accent-dark);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.source-assigned-to-you {
+  background: rgba(30, 136, 229, 0.16);
+  color: #0d47a1;
+}
+
+.source-review-requested {
+  background: rgba(255, 143, 0, 0.2);
+  color: #7a3d00;
+}
+
+.source-mentioned {
+  background: rgba(106, 27, 154, 0.16);
+  color: #4a0072;
 }
 
 .toggle-row {
@@ -267,3 +295,4 @@ input[type='checkbox'] {
     align-items: flex-start;
   }
 }
+
