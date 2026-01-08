@@ -40,6 +40,11 @@ const typeLabels = {
   Discussion: 'Discussion',
 };
 
+const isMergedOrClosedPr = (item) =>
+  Boolean(
+    item?.pull_request && (item.state === 'closed' || item.pull_request.merged_at)
+  );
+
 const toSourceClass = (source) =>
   `source-pill source-${source.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
 
@@ -197,6 +202,7 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [dismissedDays, setDismissedDays] = useState([]);
   const [showDismissed, setShowDismissed] = useState(false);
+  const [showMergedClosedPrs, setShowMergedClosedPrs] = useState(false);
   const [showConfig, setShowConfig] = useState(true);
   const [debug, setDebug] = useState([]);
   const [supplemental, setSupplemental] = useState([]);
@@ -485,6 +491,13 @@ const App = () => {
             onChange=${(event) => setShowDismissed(event.target.checked)}
           />
           <label htmlFor="show-dismissed">Show dismissed days</label>
+          <input
+            id="show-merged-closed"
+            type="checkbox"
+            checked=${showMergedClosedPrs}
+            onChange=${(event) => setShowMergedClosedPrs(event.target.checked)}
+          />
+          <label htmlFor="show-merged-closed">Show merged/closed PRs</label>
           ${dismissedDays.length > 0 &&
           html`
             <button className="secondary" onClick=${restoreAll}>
@@ -501,72 +514,83 @@ const App = () => {
             `
           : combinedGroups.map((group) => {
               const groupedItems = groupItemsByUrl(group.items);
+              const visibleItems = groupedItems.filter(
+                (entry) =>
+                  showMergedClosedPrs || !isMergedOrClosedPr(entry.item)
+              );
               return html`
                 ${!showDismissed && dismissedDays.includes(group.key)
                   ? null
-                  : html`
-                      <div className="day-card" key=${group.key}>
-                        <div className="day-header">
-                          <h2>${group.dateLabel}</h2>
-                          <div className="actions">
-                            <span className="meta-pill"
-                              >${groupedItems.length} items</span
-                            >
-                            ${!dismissedDays.includes(group.key) &&
-                            html`
-                              <button
-                                className="secondary"
-                                onClick=${() => dismissDay(group.key)}
+                  : visibleItems.length === 0
+                    ? null
+                    : html`
+                        <div className="day-card" key=${group.key}>
+                          <div className="day-header">
+                            <h2>${group.dateLabel}</h2>
+                            <div className="actions">
+                              <span className="meta-pill"
+                                >${visibleItems.length} items</span
                               >
-                                Dismiss day
-                              </button>
-                            `}
+                              ${!dismissedDays.includes(group.key) &&
+                              html`
+                                <button
+                                  className="secondary"
+                                  onClick=${() => dismissDay(group.key)}
+                                >
+                                  Dismiss day
+                                </button>
+                              `}
+                            </div>
+                          </div>
+                          <div className="notification-list">
+                            ${visibleItems.map((entry) => {
+                              const item = entry.item;
+                              const repoName = repoFromApiUrl(
+                                item.repository_url
+                              );
+                              const author = item.user?.login
+                                ? `Opened by ${item.user.login}`
+                                : 'Opened';
+                              const sources = Array.from(entry.sources);
+                              const statusLabel = isMergedOrClosedPr(item)
+                                ? item.pull_request?.merged_at
+                                  ? '[merged] '
+                                  : '[closed] '
+                                : '';
+                              return html`
+                                <div
+                                  className="notification-group"
+                                  key=${entry.key}
+                                >
+                                  <div>
+                                    <a
+                                      className="title-link"
+                                      href=${entry.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      ${statusLabel}${item.title}
+                                    </a>
+                                  </div>
+                                  <small className="notification-meta"
+                                    >${author} · ${repoName}</small
+                                  >
+                                  <div className="notification-sources">
+                                    ${sources.map(
+                                      (source) =>
+                                        html`<span className=${toSourceClass(
+                                          source
+                                        )}>
+                                          ${source}
+                                        </span>`
+                                    )}
+                                  </div>
+                                </div>
+                              `;
+                            })}
                           </div>
                         </div>
-                        <div className="notification-list">
-                          ${groupedItems.map((entry) => {
-                            const item = entry.item;
-                            const repoName = repoFromApiUrl(
-                              item.repository_url
-                            );
-                            const author = item.user?.login
-                              ? `Opened by ${item.user.login}`
-                              : 'Opened';
-                            const sources = Array.from(entry.sources);
-                            return html`
-                              <div
-                                className="notification-group"
-                                key=${entry.key}
-                              >
-                                <div>
-                                  <a
-                                    className="title-link"
-                                    href=${entry.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                  >
-                                    ${item.title}
-                                  </a>
-                                </div>
-                                <small className="notification-meta"
-                                  >${author} · ${repoName}</small
-                                >
-                                <div className="notification-sources">
-                                  ${sources.map(
-                                    (source) =>
-                                      html`<span className=${toSourceClass(
-                                        source
-                                      )}>
-                                        ${source}
-                                      </span>`
-                                  )}
-                                </div>
-                              </div>
-                            `;
-                          })}
-                        </div>
-                      </div>
-                    `}
+                      `}
               `;
             })}
       </section>

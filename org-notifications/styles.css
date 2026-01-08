@@ -259,9 +259,13 @@ button:active {
 
 .toggle-row {
   display: flex;
-  gap: 12px;
+  gap: 4px;
   align-items: center;
   margin-top: 12px;
+
+  label + input {
+    margin-left: 20px;
+  }
 }
 
 input[type='checkbox'] {
@@ -295,4 +299,3 @@ input[type='checkbox'] {
     align-items: flex-start;
   }
 }
-
