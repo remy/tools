@@ -1,34 +1,34 @@
 {
   "contract-rate": {
     "category": "Utilities",
-    "title": "Contract Rate Calculator"
+    "title": "💼 Contract Rate Calculator"
   },
   "countdown-numbers": {
     "category": "Game",
-    "title": "Countdown: The Number Experience"
+    "title": "🔢 Countdown: The Number Experience"
   },
   "hass-sentence": {
     "category": "Home Assistant",
-    "title": "HA Intent Parser Visualizer"
+    "title": "🏠 HA Intent Parser Visualizer"
   },
   "org-notifications": {
     "category": "Utilities",
-    "title": "Org Notifications"
+    "title": "🔔 Org Notifications"
   },
   "page-count": {
     "category": "Utilities",
-    "title": "Personal Book Tracker"
+    "title": "📖 My Pages Read"
   },
   "quote-game": {
     "category": "Game",
-    "title": "AFI Quote Master"
+    "title": "🎬 AFI Quote Master"
   },
   "time-add": {
     "category": "Utilities",
-    "title": "Time Calculator"
+    "title": "⏱️ Time Calculator"
   },
   "url-to-meta": {
     "category": "Utilities",
-    "title": "URL to Meta"
+    "title": "🔗 URL to Meta"
   }
 }

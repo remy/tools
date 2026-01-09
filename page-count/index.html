@@ -4,7 +4,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Book Tracker</title>
+    <title>My Pages Read</title>
     <style>
       body {
         font-family: system-ui, sans-serif;
@@ -50,6 +50,28 @@
         background: #fff;
         max-height: 300px;
         overflow-y: auto;
+        position: relative;
+        min-height: 60px;
+      }
+
+      #results.loading::after {
+        content: 'Searching...';
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #444;
+        background: rgba(255, 255, 255, 0.9);
+        pointer-events: none;
+        border-radius: 8px;
+        z-index: 1;
+      }
+
+      #results.loading .result-item {
+        opacity: 0.6;
       }
 
       .result-item {
@@ -62,6 +84,22 @@
 
       .result-item:hover {
         background: #f9f9f9;
+      }
+
+      .editable-pages {
+        cursor: text;
+        border-bottom: 1px dashed transparent;
+        transition: border-color 0.2s;
+      }
+
+      .editable-pages:hover,
+      .editable-pages:focus {
+        border-color: #007bff;
+      }
+
+      .clear-btn {
+        margin-top: 10px;
+        background: #dc3545;
       }
 
       /* Reading List Styles */
@@ -92,7 +130,7 @@
 
   <body>
 
-    <h2>📚 My Book Tracker</h2>
+    <h2>📚 My Pages Read</h2>
 
     <div class="card">
       <h3>Search Books</h3>
@@ -123,13 +161,24 @@
           </tr>
         </tfoot>
       </table>
+      <div style="display: flex; justify-content: flex-end;">
+        <button id="clearList" class="clear-btn" type="button">Clear list</button>
+      </div>
     </div>
 
     <script>
       let myBooks = [];
       let typingTimer;                // Timer identifier for debounce
-      const doneTypingInterval = 600;  // Time in ms (0.6 seconds)
+      const doneTypingInterval = 100;  // Time in ms
       const bookInput = document.getElementById('bookInput');
+      const resultsDiv = document.getElementById('results');
+      const bookListBody = document.getElementById('bookList');
+      const totalDisplay = document.getElementById('totalPageCount');
+      const clearListBtn = document.getElementById('clearList');
+      let lastResultsHTML = '';
+      let lastObservedValue = '';
+      let lastQueriedText = '';
+      let currentSearchRequestId = 0;
 
       // 1. Listen for the "Enter" key
       bookInput.addEventListener('keydown', (e) => {
@@ -141,94 +190,248 @@
 
       // 2. Listen for idle time (Debounce)
       bookInput.addEventListener('keyup', () => {
-        clearTimeout(typingTimer);
-        if (bookInput.value) {
-          typingTimer = setTimeout(searchBooks, doneTypingInterval);
+        const currentValue = bookInput.value;
+        if (currentValue === lastObservedValue) {
+          return;
         }
-      });
+        lastObservedValue = currentValue;
+        clearTimeout(typingTimer);
 
-      async function searchBooks() {
-        const query = bookInput.value.trim();
-        const resultsDiv = document.getElementById('results');
-
-        // Don't search if the input is empty
-        if (!query) {
-          resultsDiv.innerHTML = '';
+        if (!currentValue.trim()) {
+          searchBooks();
           return;
         }
 
-        resultsDiv.innerHTML = '<p style="padding:10px">Searching...</p>';
+        typingTimer = setTimeout(searchBooks, doneTypingInterval);
+      });
+
+      clearListBtn.addEventListener('click', () => {
+        if (!myBooks.length) {
+          return;
+        }
+        myBooks = [];
+        renderList();
+        resultsDiv.classList.remove('loading');
+        lastResultsHTML = '';
+        lastQueriedText = '';
+        lastObservedValue = '';
+      });
+
+      function loadBooks() {
+        const stored = localStorage.getItem('trackedBooks');
+        if (!stored) {
+          myBooks = [];
+          return;
+        }
+        try {
+          myBooks = JSON.parse(stored) ?? [];
+        } catch (error) {
+          myBooks = [];
+        }
+      }
+
+      function saveBooks() {
+        localStorage.setItem('trackedBooks', JSON.stringify(myBooks));
+      }
+
+      function updateTotals() {
+        const total = myBooks.reduce((sum, book) => sum + (Number(book.pages) || 0), 0);
+        totalDisplay.innerText = total;
+      }
+
+      function attachPageEditor(span) {
+        let editing = false;
+        const index = Number(span.dataset.index);
+
+        const finalize = () => {
+          if (!editing) {
+            return;
+          }
+          editing = false;
+          span.setAttribute('contenteditable', 'false');
+          let parsed = Number.parseInt(span.textContent.trim(), 10);
+          if (Number.isNaN(parsed) || parsed < 0) {
+            parsed = 0;
+          }
+          span.textContent = parsed;
+
+          if (myBooks[index].pages !== parsed) {
+            myBooks[index].pages = parsed;
+            saveBooks();
+            updateTotals();
+          }
+        };
+
+        span.addEventListener('focus', () => {
+          editing = true;
+          span.setAttribute('contenteditable', 'true');
+        });
+
+        span.addEventListener('blur', finalize);
+
+        span.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            span.blur();
+          }
+          if (event.key === 'Escape') {
+            span.textContent = myBooks[index].pages;
+            span.blur();
+          }
+        });
+
+        span.addEventListener('pointerdown', () => {
+          if (!editing) {
+            span.focus();
+          }
+        });
+      }
+
+      function renderList() {
+        bookListBody.innerHTML = '';
+
+        if (myBooks.length === 0) {
+          bookListBody.innerHTML = '<tr><td colspan="4" class="empty-msg">No books added yet.</td></tr>';
+          updateTotals();
+          saveBooks();
+          return;
+        }
+
+        myBooks.forEach((book, index) => {
+          const row = document.createElement('tr');
+
+          const titleCell = document.createElement('td');
+          titleCell.textContent = book.title;
+          row.appendChild(titleCell);
+
+          const authorCell = document.createElement('td');
+          authorCell.textContent = book.author;
+          row.appendChild(authorCell);
+
+          const yearCell = document.createElement('td');
+          yearCell.textContent = book.year;
+          row.appendChild(yearCell);
+
+          const pageCell = document.createElement('td');
+          const pageSpan = document.createElement('span');
+          pageSpan.className = 'editable-pages';
+          const pageCount = Number(book.pages) || 0;
+          pageSpan.textContent = pageCount;
+          pageSpan.dataset.index = index;
+          pageSpan.tabIndex = 0;
+          pageSpan.setAttribute('contenteditable', 'false');
+          pageCell.appendChild(pageSpan);
+          row.appendChild(pageCell);
+
+          bookListBody.appendChild(row);
+          attachPageEditor(pageSpan);
+        });
+
+        updateTotals();
+        saveBooks();
+      }
+
+      async function searchBooks() {
+        const query = bookInput.value.trim();
+        const requestId = ++currentSearchRequestId;
+
+        if (!query) {
+          resultsDiv.innerHTML = '';
+          lastResultsHTML = '';
+          lastQueriedText = '';
+          resultsDiv.classList.remove('loading');
+          return;
+        }
+
+        if (query === lastQueriedText) {
+          resultsDiv.classList.remove('loading');
+          return;
+        }
+
+        lastQueriedText = query;
+
+        const hasResultItems = Boolean(resultsDiv.querySelector('.result-item'));
+        if (hasResultItems) {
+          resultsDiv.classList.add('loading');
+        } else {
+          resultsDiv.classList.remove('loading');
+          resultsDiv.innerHTML = '<p style="padding:10px">Searching...</p>';
+        }
 
         try {
           const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=intitle:${encodeURIComponent(query)}&maxResults=5`);
           const data = await response.json();
 
-          resultsDiv.innerHTML = '';
-
-          if (!data.items) {
-            resultsDiv.innerHTML = '<p style="padding:10px">No results found.</p>';
+          if (requestId !== currentSearchRequestId) {
             return;
           }
 
-          data.items.forEach(item => {
-            const info = item.volumeInfo;
-            const book = {
-              title: info.title || 'Unknown Title',
-              author: info.authors ? info.authors[0] : 'Unknown Author',
-              year: info.publishedDate ? info.publishedDate.split('-')[0] : 'N/A',
-              pages: info.pageCount || 0
-            };
+          const books = (data.items ?? [])
+            .map(item => {
+              const info = item.volumeInfo;
+              return {
+                title: info.title || 'Unknown Title',
+                author: info.authors ? info.authors[0] : 'Unknown Author',
+                year: info.publishedDate ? info.publishedDate.split('-')[0] : 'N/A',
+                pages: info.pageCount || 0
+              };
+            })
+            .filter(book => book.pages > 0);
 
-            const div = document.createElement('div');
-            div.className = 'result-item';
+          const newResultsHtml = books.length
+            ? books.map(renderResultItem).join('')
+            : '<p style="padding:10px">No results found.</p>';
 
-            // Create a safe string for the onclick function
-            const bookData = JSON.stringify(book).replace(/'/g, "&apos;");
+          resultsDiv.classList.remove('loading');
 
-            div.innerHTML = `
+          if (newResultsHtml === lastResultsHTML) {
+            return;
+          }
+
+          resultsDiv.innerHTML = newResultsHtml;
+          lastResultsHTML = newResultsHtml;
+        } catch (error) {
+          if (requestId !== currentSearchRequestId) {
+            return;
+          }
+
+          lastQueriedText = '';
+
+          resultsDiv.classList.remove('loading');
+          const errorHtml = '<p style="padding:10px; color:red">Error fetching data.</p>';
+
+          if (errorHtml === lastResultsHTML) {
+            return;
+          }
+
+          resultsDiv.innerHTML = errorHtml;
+          lastResultsHTML = errorHtml;
+        }
+      }
+
+      function renderResultItem(book) {
+        const bookData = JSON.stringify(book).replace(/'/g, "&apos;");
+        return `
+                    <div class="result-item">
                         <span><strong>${book.title}</strong> by ${book.author} (${book.year}) - ${book.pages} pgs</span>
                         <button onclick='addBook(${bookData})'>Add</button>
-                    `;
-            resultsDiv.appendChild(div);
-          });
-        } catch (error) {
-          resultsDiv.innerHTML = '<p style="padding:10px; color:red">Error fetching data.</p>';
-        }
+                    </div>
+                `;
       }
 
       function addBook(book) {
         myBooks.push(book);
         renderList();
-        document.getElementById('results').innerHTML = '';
+        resultsDiv.innerHTML = '';
+        lastResultsHTML = '';
+        resultsDiv.classList.remove('loading');
+        lastQueriedText = '';
+        lastObservedValue = '';
+        clearTimeout(typingTimer);
         bookInput.value = '';
       }
 
-      function renderList() {
-        const listBody = document.getElementById('bookList');
-        const totalDisplay = document.getElementById('totalPageCount');
-        listBody.innerHTML = '';
-
-        if (myBooks.length === 0) {
-          listBody.innerHTML = '<tr><td colspan="4" class="empty-msg">No books added yet.</td></tr>';
-          totalDisplay.innerText = '0';
-          return;
-        }
-
-        let totalPages = 0;
-        myBooks.forEach(book => {
-          totalPages += book.pages;
-          const row = `<tr>
-                    <td>${book.title}</td>
-                    <td>${book.author}</td>
-                    <td>${book.year}</td>
-                    <td>${book.pages}</td>
-                </tr>`;
-          listBody.innerHTML += row;
-        });
-
-        totalDisplay.innerText = totalPages;
-      }
-
+      loadBooks();
       renderList();
     </script>
   </body>
