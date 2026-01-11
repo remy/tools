@@ -8,6 +8,7 @@ on:
 jobs:
   update-index:
     runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
     permissions:
       contents: write
     steps:
@@ -40,6 +41,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update project index [skip ci]"
+            git commit -m "Update project index"
             git push
           fi
