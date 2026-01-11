@@ -1,4 +1,8 @@
 {
+  "capcalc": {
+    "category": "Utilities",
+    "title": "Capacitor Calcuator"
+  },
   "contract-rate": {
     "category": "Utilities",
     "title": "Contract Rate Calculator"
