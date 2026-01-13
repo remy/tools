@@ -36,7 +36,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html projects.json
+          git add index.html projects.json style.css script.js
           # Check if there are changes
           if git diff --staged --quiet; then
             echo "No changes to commit"

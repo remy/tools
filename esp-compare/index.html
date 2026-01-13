@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <title>ESP32 Supermini Comparison</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Side-by-side comparison of ESP32 Supermini boards and specifications" />
+  <meta name="category" content="Utilities" />
+  <style>
+    /* ---------- Colour tokens ---------- */
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-alt: #020617;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+      --border: #1f2933;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --panel: #ffffff;
+        --panel-alt: #f1f5f9;
+        --text: #0f172a;
+        --muted: #475569;
+        --accent: #0284c7;
+        --border: #e2e8f0;
+      }
+    }
+
+    /* ---------- Base ---------- */
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                   Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    header, main {
+      max-width: 1200px;
+      margin: auto;
+      padding: 1.5rem;
+    }
+
+    header {
+      padding-top: 2.5rem;
+    }
+
+    h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2.2rem;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 800px;
+    }
+
+    h2 {
+      margin-top: 3rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    /* ---------- Table ---------- */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      background: var(--panel);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--accent);
+      font-weight: 600;
+      background: var(--panel-alt);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ---------- Chip sections ---------- */
+    .chip {
+      margin-top: 3rem;
+      background: var(--panel);
+      border-radius: 10px;
+      padding: 1.5rem 1.75rem;
+      border: 1px solid var(--border);
+    }
+
+    .chip h3 {
+      margin-top: 0;
+      font-size: 1.6rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.2rem;
+      margin-top: 1rem;
+    }
+
+    .card {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.1rem;
+    }
+
+    .card h4 {
+      margin: 0 0 0.4rem 0;
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    footer {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>ESP32 Supermini Variants — Practical Comparison</h1>
+  <p>
+    Overview of ESP32-S3, ESP32-C3, ESP32-C6, and ESP32-H2 supermini boards,
+    focusing on power, radios, and real-world suitability.
+  </p>
+</header>
+
+<main>
+  <h2>High-Level Comparison</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Chip</th>
+        <th>CPU</th>
+        <th>Wireless</th>
+        <th>Power Profile</th>
+        <th>Primary Strength</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>ESP32-S3</strong></td>
+        <td>Dual-core Xtensa LX7 @ 240MHz</td>
+        <td>Wi-Fi 4, Bluetooth LE</td>
+        <td>High</td>
+        <td>Performance, USB, graphics, ML</td>
+      </tr>
+      <tr>
+        <td><strong>ESP32-C3</strong></td>
+        <td>Single-core RISC-V @ 160MHz</td>
+        <td>Wi-Fi 4, Bluetooth LE</td>
+        <td>Low</td>
+        <td>Simple, low-power Wi-Fi IoT</td>
+      </tr>
+      <tr>
+        <td><strong>ESP32-C6</strong></td>
+        <td>Single-core RISC-V</td>
+        <td>Wi-Fi 6, Bluetooth LE, Zigbee, Thread</td>
+        <td>Low</td>
+        <td>Modern Wi-Fi + mesh protocols</td>
+      </tr>
+      <tr>
+        <td><strong>ESP32-H2</strong></td>
+        <td>Single-core RISC-V</td>
+        <td>Zigbee, Thread, Bluetooth LE</td>
+        <td>Very low</td>
+        <td>Battery-first mesh devices</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <section class="chip">
+    <h3>ESP32-S3 Supermini</h3>
+    <div class="grid">
+      <div class="card"><h4>What it is</h4><p>High-performance ESP32 with dual cores and rich peripherals.</p></div>
+      <div class="card"><h4>Power usage</h4><p>Highest of the group; best on mains or large batteries.</p></div>
+      <div class="card"><h4>Stand-out features</h4><p>USB OTG, LCD/camera, ML vector instructions.</p></div>
+      <div class="card"><h4>Best use cases</h4><p>Displays, USB devices, cameras, ML inference.</p></div>
+    </div>
+  </section>
+
+  <section class="chip">
+    <h3>ESP32-C3 Supermini</h3>
+    <div class="grid">
+      <div class="card"><h4>What it is</h4><p>Entry-level RISC-V ESP32 focused on efficiency.</p></div>
+      <div class="card"><h4>Power usage</h4><p>Low; suitable for battery devices with Wi-Fi.</p></div>
+      <div class="card"><h4>Stand-out features</h4><p>Minimal, mature Wi-Fi + BLE platform.</p></div>
+      <div class="card"><h4>Best use cases</h4><p>Sensors, switches, simple Home Assistant nodes.</p></div>
+    </div>
+  </section>
+
+  <section class="chip">
+    <h3>ESP32-C6 Supermini</h3>
+    <div class="grid">
+      <div class="card"><h4>What it is</h4><p>Next-gen ESP32 with Wi-Fi 6 and 802.15.4.</p></div>
+      <div class="card"><h4>Power usage</h4><p>Low; more efficient than earlier Wi-Fi ESP32s.</p></div>
+      <div class="card"><h4>Stand-out features</h4><p>Wi-Fi 6, Zigbee, Thread in one chip.</p></div>
+      <div class="card"><h4>Best use cases</h4><p>Matter devices, hybrid Wi-Fi/mesh products.</p></div>
+    </div>
+  </section>
+
+  <section class="chip">
+    <h3>ESP32-H2 Supermini</h3>
+    <div class="grid">
+      <div class="card"><h4>What it is</h4><p>Ultra-low-power ESP32 without Wi-Fi.</p></div>
+      <div class="card"><h4>Power usage</h4><p>Lowest; designed for long coin-cell life.</p></div>
+      <div class="card"><h4>Stand-out features</h4><p>Zigbee/Thread-first architecture.</p></div>
+      <div class="card"><h4>Best use cases</h4><p>Battery sensors, Zigbee end devices.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    S3 = performance · C3 = simplicity · C6 = modern connectivity · H2 = extreme efficiency
+  </footer>
+</main>
+
+</body>
+</html>

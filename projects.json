@@ -1,38 +1,57 @@
 {
   "capcalc": {
     "category": "Utilities",
+    "description": "Decode capacitor codes and calculate values from ceramic capacitor markings",
     "title": "Capacitor Value Calculator"
   },
   "contract-rate": {
     "category": "Utilities",
+    "description": "Calculate contract rates and earnings based on working days and hourly rates",
     "title": "Contract Rate Calculator"
   },
   "countdown-numbers": {
     "category": "Game",
+    "description": "Play the classic numbers round from Countdown - reach the target using arithmetic operations",
     "title": "Countdown: The Number Experience"
+  },
+  "esp-compare": {
+    "category": "Utilities",
+    "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
+    "title": "ESP32 Supermini Comparison"
   },
   "hass-sentence": {
     "category": "Home Assistant",
+    "description": "Visual debugger for Home Assistant Assist intent recognition templates",
     "title": "HA Intent Parser Visualizer"
   },
   "org-notifications": {
     "category": "Utilities",
+    "description": "View and manage GitHub organization notifications in a clean interface",
     "title": "Org Notifications"
   },
   "page-count": {
     "category": "Utilities",
+    "description": "Track your daily reading progress and visualize pages read over time",
     "title": "My Pages Read"
   },
   "quote-game": {
     "category": "Game",
+    "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
     "title": "AFI Quote Master"
   },
   "time-add": {
     "category": "Utilities",
+    "description": "Add and subtract time durations with hours, minutes, and seconds",
     "title": "Time Calculator"
   },
   "url-to-meta": {
     "category": "Utilities",
+    "description": "Extract metadata and Open Graph information from any URL",
     "title": "URL to Meta"
+  },
+  "wake-lock": {
+    "category": "Demos",
+    "description": "Demonstration of the Screen Wake Lock API to prevent device screen from dimming",
+    "title": "Wake Lock Demo"
   }
 }

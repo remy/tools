@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Demonstration of the Screen Wake Lock API to prevent device screen from dimming">
+    <meta name="category" content="Demos">
+    <title>Wake Lock Demo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 400px;
+        margin: 4rem auto;
+        text-align: center;
+      }
+
+      button {
+        font-size: 1.2rem;
+        padding: 1rem 2rem;
+        cursor: pointer;
+      }
+
+      .status {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        border-radius: 4px;
+        background: #f0f0f0;
+      }
+
+      .status.active {
+        background: #d4edda;
+      }
+
+      /* Styling when the wake lock is active */
+      wake-lock[active] {
+        border: 2px solid green;
+        background: green;
+      }
+
+      /* Styling when inactive (default) */
+      wake-lock:not([active]) {
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Wake Lock Demo</h1>
+
+    <wake-lock>
+      <button>Toggle Wake Lock</button>
+    </wake-lock>
+
+    <div class="status" id="status">Inactive</div>
+    <script src="./wake-lock.js"></script>
+    <script>
+
+      // Demo event handling
+      const wl = document.querySelector('wake-lock');
+      const status = document.getElementById('status');
+
+      wl.addEventListener('locked', () => {
+        status.textContent = 'Active — screen will stay awake';
+        status.classList.add('active');
+      });
+
+      wl.addEventListener('released', () => {
+        status.textContent = 'Inactive';
+        status.classList.remove('active');
+      });
+
+      wl.addEventListener('error', (e) => {
+        status.textContent = `Error: ${e.detail.message}`;
+        status.classList.remove('active');
+      });
+
+      wl.addEventListener('unsupported', () => {
+        status.textContent = 'Wake Lock not supported in this browser';
+      });
+
+    </script>
+  </body>
+
+</html>
