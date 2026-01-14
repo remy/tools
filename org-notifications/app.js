@@ -269,6 +269,31 @@ const App = () => {
     [combinedItems]
   );
 
+  const listedGroups = useMemo(
+    () =>
+      showDismissed
+        ? combinedGroups
+        : combinedGroups.filter((group) => !dismissedDays.includes(group.key)),
+    [combinedGroups, dismissedDays, showDismissed]
+  );
+
+  const totalOpenItems = useMemo(
+    () =>
+      listedGroups.reduce((total, group) => {
+        const groupedItems = groupItemsByUrl(group.items);
+        const openItems = groupedItems.filter(
+          (entry) => !isMergedOrClosedPr(entry.item)
+        );
+        return total + openItems.length;
+      }, 0),
+    [listedGroups]
+  );
+
+  useEffect(() => {
+    const orgLabel = config.org || 'org';
+    document.title = `[${totalOpenItems}] ${orgLabel} github issues`;
+  }, [config.org, totalOpenItems]);
+
   const fetchNotifications = async () => {
     if (!config.org || !config.token) {
       setStatus('Add org + token to load notifications.');
