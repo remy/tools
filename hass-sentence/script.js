@@ -26,7 +26,8 @@ function initFromURL() {
   const templatesParam = params.get('t');
 
   if (sentence) {
-    sentenceInput.value = decodeURIComponent(sentence);
+    // Decode twice to handle potential double-encoding from some sources
+    sentenceInput.value = decodeURIComponent(decodeURIComponent(sentence));
   } else {
     sentenceInput.value = 'light in kitchen is on now';
   }
@@ -34,7 +35,7 @@ function initFromURL() {
   if (templatesParam) {
     const templateValues = templatesParam
       .split('|')
-      .map((t) => decodeURIComponent(t));
+      .map((t) => decodeURIComponent(decodeURIComponent(t))); // Decode twice
     templates = templateValues.map((value) => ({ id: nextId++, value }));
   } else {
     templates = [
@@ -651,8 +652,11 @@ function escapeHTML(str) {
 function update() {
   const sentenceWords = sentenceInput.value
     .toLowerCase()
+    .replace(/[.,?¿!;:]/g, '')
     .split(/\s+/)
     .filter((w) => w);
+
+  console.log('Processed sentence words:', sentenceWords);
 
   tracesContainer.innerHTML = '';
 
