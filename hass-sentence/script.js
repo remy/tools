@@ -8,6 +8,7 @@ import {
   ListReference,
   RuleReference,
 } from './parser.js';
+import { COMMON_EXPANSION_RULES, COMMON_LISTS } from './common-rules.js';
 
 const sentenceInput = document.getElementById('sentenceInput');
 const templatesContainer = document.getElementById('templatesContainer');
@@ -140,6 +141,75 @@ function updateTemplateStatuses() {
       existingPill.remove();
     }
   });
+}
+
+const ruleCache = new Map();
+const slotCache = new Map();
+
+function getRuleExpression(ruleName) {
+  if (ruleCache.has(ruleName)) {
+    return ruleCache.get(ruleName);
+  }
+
+  const ruleDefinition = COMMON_EXPANSION_RULES[ruleName];
+  if (!ruleDefinition) return null;
+
+  try {
+    const sentence = parseSentence(ruleDefinition);
+    ruleCache.set(ruleName, sentence.expression);
+    return sentence.expression;
+  } catch (e) {
+    console.error(`Error parsing rule <${ruleName}>:`, e);
+    return null;
+  }
+}
+
+function preprocessListValue(text) {
+  // Handles cases like `word[s]` -> `(word|words)`
+  return text.replace(/(\w+)\[(\w+)\]/g, '($1$2|$1)');
+}
+
+function getSlotMatcher(listName) {
+  if (slotCache.has(listName)) {
+    return slotCache.get(listName);
+  }
+
+  const listDef = COMMON_LISTS[listName];
+  if (!listDef) return null;
+
+  let matcher = null;
+
+  if (listDef.wildcard) {
+    matcher = { type: 'wildcard' };
+  } else if (listDef.range) {
+    matcher = { type: 'range', ...listDef.range };
+  } else if (listDef.values) {
+    matcher = {
+      type: 'values',
+      items: listDef.values
+        .map((val) => {
+          const text = typeof val === 'string' ? val : val.in;
+          const out = typeof val === 'string' ? val : val.out;
+          try {
+            const processedText = preprocessListValue(text);
+            return {
+              expression: parseSentence(processedText).expression,
+              out: out,
+            };
+          } catch (e) {
+            console.error(
+              `Error parsing list item "${text}" in {${listName}}:`,
+              e
+            );
+            return null;
+          }
+        })
+        .filter(Boolean),
+    };
+  }
+
+  slotCache.set(listName, matcher);
+  return matcher;
 }
 
 function matchExpression(expr, words, wordIndex, traceItems) {
@@ -316,37 +386,137 @@ function matchExpression(expr, words, wordIndex, traceItems) {
 
   if (expr instanceof ListReference) {
     const currentWord = words[wordIndex] || '';
+    const matcher = getSlotMatcher(expr.listName);
 
-    if (currentWord) {
-      traceItems.push({
-        raw: `{${expr.listName}}`,
-        type: 'slot',
-        status: 'Extracted',
-        statusClass: 'status-matched',
-        note: `Assigned <strong>${currentWord}</strong> to {${expr.listName}}`,
-      });
-      return { matched: true, wordsConsumed: 1 };
-    } else {
+    if (!matcher) {
+      // Fallback: Just check if there is a word
+      if (currentWord) {
+        traceItems.push({
+          raw: `{${expr.listName}}`,
+          type: 'slot',
+          status: 'Extracted',
+          statusClass: 'status-matched',
+          note: `Assigned <strong>${currentWord}</strong> to {${expr.listName}} (no list def)`,
+        });
+        return { matched: true, wordsConsumed: 1 };
+      } else {
+        traceItems.push({
+          raw: `{${expr.listName}}`,
+          type: 'slot',
+          status: 'Fail',
+          statusClass: 'status-fail',
+          note: `Missing required value for slot {${expr.listName}}`,
+        });
+        return { matched: false, wordsConsumed: 0 };
+      }
+    }
+
+    if (matcher.type === 'wildcard') {
+      if (currentWord) {
+        traceItems.push({
+          raw: `{${expr.listName}}`,
+          type: 'slot',
+          status: 'Extracted (Common)',
+          statusClass: 'status-matched',
+          note: `Assigned <strong>${currentWord}</strong> to {${expr.listName}} (wildcard)`,
+        });
+        return { matched: true, wordsConsumed: 1 };
+      }
+    } else if (matcher.type === 'range') {
+      const num = parseFloat(currentWord);
+      const min = matcher.from;
+      const max = matcher.to;
+
+      if (!isNaN(num) && num >= min && num <= max) {
+        traceItems.push({
+          raw: `{${expr.listName}}`,
+          type: 'slot',
+          status: 'Extracted (Common)',
+          statusClass: 'status-matched',
+          note: `Assigned <strong>${currentWord}</strong> to {${expr.listName}} (range ${min}-${max})`,
+        });
+        return { matched: true, wordsConsumed: 1 };
+      } else {
+        traceItems.push({
+          raw: `{${expr.listName}}`,
+          type: 'slot',
+          status: 'Fail',
+          statusClass: 'status-fail',
+          note: `Expected number ${min}-${max}, got "${currentWord}"`,
+        });
+        return { matched: false, wordsConsumed: 0 };
+      }
+    } else if (matcher.type === 'values') {
+      // Try to match one of the values
+      for (const item of matcher.items) {
+        // We do a temporary trace for the slot item to not pollute the main trace unless matched
+        const tempTrace = [];
+        const result = matchExpression(
+          item.expression,
+          words,
+          wordIndex,
+          tempTrace
+        );
+
+        if (result.matched) {
+          const matchedWords = words
+            .slice(wordIndex, wordIndex + result.wordsConsumed)
+            .join(' ');
+          let note = `Matched list item: <strong>${matchedWords}</strong>`;
+          if (item.out !== undefined && item.out !== matchedWords) {
+            note += ` ➜ <code>${item.out}</code>`;
+          }
+
+          traceItems.push({
+            raw: `{${expr.listName}}`,
+            type: 'slot',
+            status: 'Matched (Common)',
+            statusClass: 'status-matched',
+            note: note,
+          });
+          return { matched: true, wordsConsumed: result.wordsConsumed };
+        }
+      }
+
       traceItems.push({
         raw: `{${expr.listName}}`,
         type: 'slot',
         status: 'Fail',
         statusClass: 'status-fail',
-        note: 'Missing required value for slot',
+        note: `No matching value found in list {${expr.listName}} starting at "${currentWord}"`,
       });
       return { matched: false, wordsConsumed: 0 };
     }
+
+    // Fallback failure
+    return { matched: false, wordsConsumed: 0 };
   }
 
   if (expr instanceof RuleReference) {
-    traceItems.push({
-      raw: `<${expr.ruleName}>`,
-      type: 'rule',
-      status: 'Skipped',
-      statusClass: 'status-skipped',
-      note: 'Rule reference (not expanded)',
-    });
-    return { matched: true, wordsConsumed: 0 };
+    const ruleExpr = getRuleExpression(expr.ruleName);
+
+    if (ruleExpr) {
+      traceItems.push({
+        raw: `<${expr.ruleName}>`,
+        type: 'rule',
+        status: 'Expanded (Common)',
+        statusClass: 'status-matched',
+        note: `Expanding rule: ${COMMON_EXPANSION_RULES[expr.ruleName]}`,
+      });
+      // Recursively match the expanded rule
+      return matchExpression(ruleExpr, words, wordIndex, traceItems);
+    } else {
+      traceItems.push({
+        raw: `<${expr.ruleName}>`,
+        type: 'rule',
+        status: 'Skipped',
+        statusClass: 'status-skipped',
+        note: `Rule reference not found (checked ${
+          Object.keys(COMMON_EXPANSION_RULES).length
+        } rules)`,
+      });
+      return { matched: true, wordsConsumed: 0 };
+    }
   }
 
   // Unknown expression type
@@ -474,6 +644,10 @@ function generateTrace(templateValue, sentenceWords) {
   return { traceItems, hasFailure, debugInfo };
 }
 
+function escapeHTML(str) {
+  return str.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function update() {
   const sentenceWords = sentenceInput.value
     .toLowerCase()
@@ -506,7 +680,7 @@ function update() {
     header.innerHTML = `
       <div>
         <div class="template-number">Template ${index + 1}</div>
-        <div class="trace-template-display">${template.value}</div>
+        <div class="trace-template-display">${escapeHTML(template.value)}</div>
       </div>
       <div class="trace-overall-status ${
         hasFailure ? 'overall-fail' : 'overall-success'
