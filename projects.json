@@ -39,6 +39,10 @@
     "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
     "title": "AFI Quote Master"
   },
+  "tax": {
+    "category": "Utilities",
+    "title": "Dynamic Tax Calculator"
+  },
   "time-add": {
     "category": "Utilities",
     "description": "Add and subtract time durations with hours, minutes, and seconds",
