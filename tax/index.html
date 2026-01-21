@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Tax Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --primary-color: #3b82f6;
+        /* Blue 500 */
+        --background-color: #f3f4f6;
+        /* Gray 100 */
+        --card-background: #ffffff;
+        --text-color: #1f2937;
+        /* Gray 800 */
+        --border-color: #d1d5db;
+        /* Gray 300 */
+        --focus-ring: #60a5fa;
+        /* Blue 400 */
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--background-color);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        margin: 0;
+        padding: 2rem 1rem;
+        color: var(--text-color);
+      }
+
+      .container {
+        width: 100%;
+        max-width: 768px;
+        padding: 1.5rem;
+        background-color: var(--card-background);
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      @media (max-width: 450px) {
+        body {
+          padding: 0;
+        }
+
+        .container {
+          box-shadow: none;
+          border-radius: 0;
+          height: 100vh;
+        }
+      }
+
+      h1 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+        text-align: center;
+      }
+
+      p.subtitle {
+        text-align: center;
+        color: #6b7280;
+        /* Gray 500 */
+        margin-bottom: 1.5rem;
+      }
+
+      .input-group {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background-color: #fafafa;
+      }
+
+      label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .input-group label {
+        margin-bottom: 0.5rem;
+      }
+
+      input[type="number"],
+      input[type="text"] {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        box-sizing: border-box;
+      }
+
+      input[type="number"]:focus,
+      input[type="text"]:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+      }
+
+      input[readonly] {
+        background-color: #e5e7eb;
+        /* Gray 200 */
+        cursor: not-allowed;
+        font-weight: 600;
+        color: var(--primary-color);
+      }
+
+      .tax-rate-section {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 8px;
+        background-color: #e0f2f1;
+        /* Light Teal/Cyan for distinction */
+      }
+
+      .tax-rate-section input {
+        width: 80px;
+        text-align: center;
+        padding: 0.5rem;
+        font-weight: 700;
+        color: #065f46;
+        /* Dark Teal */
+      }
+
+      .rate-label {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+
+      .single-column {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .section-header {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 1rem;
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 0.5rem;
+        grid-column: 1 / -1;
+        /* Span across both columns on desktop */
+      }
+
+      .output-fields {
+        margin-top: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .error-message {
+        color: #ef4444;
+        /* Red 500 */
+        margin-top: 1rem;
+        text-align: center;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Tax Calculation Tool</h1>
+      <p class="subtitle">Calculate tax amounts in both directions (Inclusive ↔ Exclusive).</p>
+
+      <!-- Tax Rate Input -->
+      <div class="tax-rate-section">
+        <label for="taxRate" class="rate-label">Current Tax Rate:</label>
+        <input type="text" id="taxRate" value="20.0" oninput="calculateFromInclusive(); calculateFromExclusive();">
+        <span class="rate-label">%</span>
+      </div>
+
+      <div class="single-column">
+        <div class="input-group">
+          <label for="grossValue">Gross Value:</label>
+          <input type="text" id="grossValue" placeholder="e.g., 120.00" oninput="calculateFromGross()">
+        </div>
+        <div class="input-group">
+          <label for="taxAmount">Tax Amount:</label>
+          <input type="text" id="taxAmount" readonly placeholder="Calculated Tax">
+        </div>
+        <div class="input-group">
+          <label for="netValue">Net Value:</label>
+          <input type="text" id="netValue" placeholder="e.g., 100.00" oninput="calculateFromNet()">
+        </div>
+      </div>
+
+      <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+    </div>
+
+    <script>
+      // Helper for querySelector
+      const $ = s => document.querySelector(s);
+      // DOM element references
+      const grossInput = $('#grossValue');
+      const netInput = $('#netValue');
+      const taxRateInput = $('#taxRate');
+      const errorDisplay = $('#errorMessage');
+
+      /**
+       * Parses the tax rate input and returns the multiplier (e.g., 20 -> 0.2).
+       * @returns {number | null} The tax multiplier or null if invalid.
+       */
+      function getTaxMultiplier() {
+        const sanitizedRate = sanitizeNumberInput(taxRateInput.value);
+        const rate = parseFloat(sanitizedRate);
+        if (isNaN(rate) || rate < 0) {
+          errorDisplay.textContent = "Please enter a valid, non-negative tax rate.";
+          errorDisplay.style.display = 'block';
+          return null;
+        }
+        errorDisplay.style.display = 'none';
+        return rate / 100;
+      }
+
+      /**
+       * Clears all calculation output fields.
+       */
+      function clearOutputs() {
+        $('#taxAmount').value = '';
+        grossInput.value = '';
+        netInput.value = '';
+      }
+
+      /**
+       * Formats a number to two decimal places and adds the currency symbol.
+       * @param {number} value - The number to format.
+       * @returns {string} The formatted string.
+       */
+      function formatCurrency(value) {
+        // Check for NaN or infinity, return empty string if invalid
+        if (isNaN(value) || !isFinite(value)) {
+          return '';
+        }
+        // Format to 2 decimal places with comma separation (optional, but good practice)
+        return '£' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      }
+
+
+
+      /**
+       * Sanitizes a string input by removing commas, spaces, and currency symbols.
+       * @param {string} value - The input string to sanitize.
+       * @returns {string} The sanitized numeric string.
+       */
+      function sanitizeNumberInput(value) {
+        if (typeof value !== 'string') value = String(value);
+        // Remove £, $, €, commas, and spaces
+        return value.replace(/[£$€,\s]/g, '').replace(/,/g, '');
+      }
+
+      /**
+       * Calculates Tax Exclusive (Net) from Tax Inclusive (Gross) amount.
+       */
+      function calculateFromGross() {
+        const taxMultiplier = getTaxMultiplier();
+        if (taxMultiplier === null) {
+          clearOutputs();
+          return;
+        }
+        const sanitizedGross = sanitizeNumberInput(grossInput.value);
+        const grossValue = parseFloat(sanitizedGross);
+        // Clear net input to avoid confusion
+        netInput.value = '';
+        if (isNaN(grossValue) || grossValue <= 0) {
+          clearOutputs();
+          return;
+        }
+        const netValue = grossValue / (1 + taxMultiplier);
+        const taxAmount = grossValue - netValue;
+        $('#taxAmount').value = formatCurrency(taxAmount);
+        netInput.value = formatCurrency(netValue).replace('£', '');
+      }
+
+      function calculateFromNet() {
+        const taxMultiplier = getTaxMultiplier();
+        if (taxMultiplier === null) {
+          clearOutputs();
+          return;
+        }
+        const sanitizedNet = sanitizeNumberInput(netInput.value);
+        const netValue = parseFloat(sanitizedNet);
+        // Clear gross input to avoid confusion
+        grossInput.value = '';
+        if (isNaN(netValue) || netValue <= 0) {
+          clearOutputs();
+          return;
+        }
+        const grossValue = netValue * (1 + taxMultiplier);
+        const taxAmount = grossValue - netValue;
+        $('#taxAmount').value = formatCurrency(taxAmount);
+        grossInput.value = formatCurrency(grossValue).replace('£', '');
+      }
+
+      // Initialize the app by clearing outputs on load and setting up listeners
+      document.addEventListener('DOMContentLoaded', () => {
+        clearOutputs();
+        taxRateInput.addEventListener('input', () => {
+          if (grossInput.value) calculateFromGross();
+          if (netInput.value) calculateFromNet();
+        });
+      });
+    </script>
+  </body>
+
+</html>
