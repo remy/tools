@@ -46,6 +46,7 @@
   },
   "tax": {
     "category": "Utilities",
+    "description": "Calculate tax-inclusive (gross) and tax-exclusive (net) values with customizable tax rates and real-time conversion",
     "title": "Dynamic Tax Calculator"
   },
   "time-add": {
