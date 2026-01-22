@@ -1,0 +1,230 @@
+:root {
+  /* Default Theme */
+  --colour-primary: #03a9f4; /* HA Blueish */
+  --colour-primary-hover: #0288d1;
+  --colour-primary-light: #e1f5fe;
+  
+  --colour-accent: #ff9800; /* HA Orange */
+  --colour-accent-hover: #f57c00;
+  --colour-accent-light: #fff3e0;
+  
+  --colour-bg: #fafafa;
+  --colour-bg-secondary: #f4f4f5;
+  --colour-bg-tertiary: #e4e4e7;
+  --colour-border: #d4d4d8;
+  --colour-text: #18181b;
+  --colour-text-secondary: #52525b;
+  --colour-text-tertiary: #a1a1aa;
+  
+  --colour-success: #10b981;
+  --colour-success-light: #d1fae5;
+  --colour-error: #ef4444;
+  --colour-error-light: #fee2e2;
+  
+  --colour-input-border: #d4d4d8;
+  --colour-input-focus: #03a9f4;
+  --colour-shadow: rgba(0, 0, 0, 0.1);
+  
+  --colour-block-bg: #ffffff;
+  --colour-block-border: #e4e4e7;
+
+  /* Syntax Highlighting */
+  --syntax-keyword: #d73a49;
+  --syntax-string: #032f62;
+  --syntax-variable: #e36209;
+  --syntax-comment: #6a737d;
+  --syntax-number: #005cc5;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.5rem;
+  --space-2xl: 2rem;
+}
+
+[data-theme="dark"] {
+  --colour-bg: #0a0a0a;
+  --colour-bg-secondary: #171717;
+  --colour-border: #404040;
+  --colour-text: #fafafa;
+  --colour-text-secondary: #a1a1aa;
+  --colour-input-border: #404040;
+  --colour-block-bg: #171717;
+  --colour-block-border: #262626;
+  
+  --syntax-keyword: #ff7b72;
+  --syntax-string: #a5d6ff;
+  --syntax-variable: #ffa657;
+  --syntax-comment: #8b949e;
+  --syntax-number: #79c0ff;
+}
+
+/* Reset & Base */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--colour-text);
+  background: var(--colour-bg);
+}
+
+/* Layout */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: var(--space-lg);
+}
+
+.grid { display: grid; gap: var(--space-lg); }
+@media (min-width: 768px) {
+  .grid-md-2 {grid-template-columns: 500px 1fr;}
+}
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-between { justify-content: space-between; align-items: center; }
+.flex-center { align-items: center; justify-content: center; }
+.gap-sm { gap: var(--space-sm); }
+.gap-md { gap: var(--space-md); }
+.flex-grow { flex-grow: 1; }
+.h-full { height: 100%; }
+
+/* Typography */
+h1 { font-size: 1.75rem; margin-bottom: var(--space-sm); }
+h2 { font-size: 1.5rem; margin-bottom: var(--space-sm); }
+p { margin-bottom: var(--space-md); color: var(--colour-text-secondary); }
+.text-sm { font-size: 0.875rem; }
+.text-lg { font-size: 1.125rem; font-weight: 600; }
+.text-secondary { color: var(--colour-text-secondary); }
+.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.whitespace-pre-wrap { white-space: pre-wrap; }
+
+/* Components */
+.section-block {
+  background: var(--colour-block-bg);
+  border: 1px solid var(--colour-block-border);
+  border-radius: 0.5rem;
+  padding: var(--space-lg);
+  box-shadow: 0 1px 2px var(--colour-shadow);
+}
+.section-block-title {
+    margin: 0 0 var(--space-lg) 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--colour-border);
+}
+
+.input, .select {
+  width: 100%;
+  padding: var(--space-sm);
+  background: var(--colour-bg);
+  border: 1px solid var(--colour-input-border);
+  border-radius: 0.375rem;
+  color: var(--colour-text);
+}
+.input:focus, .select:focus {
+  outline: 2px solid var(--colour-primary);
+  border-color: var(--colour-primary);
+}
+
+.well {
+  background: var(--colour-bg-secondary);
+  border: 1px solid var(--colour-border);
+  border-radius: 0.375rem;
+  padding: var(--space-md);
+  min-height: 200px;
+  overflow-x: auto;
+}
+
+.alert {
+  padding: var(--space-md);
+  border-radius: 0.375rem;
+  border-left: 4px solid;
+}
+.alert-error {
+  background: var(--colour-error-light);
+  border-color: var(--colour-error);
+  color: #991b1b;
+}
+
+.hidden { display: none; }
+.mt-md { margin-top: var(--space-md); }
+.mb-sm { margin-bottom: var(--space-sm); }
+.mb-lg { margin-bottom: var(--space-lg); }
+.p-0 { padding: 0; }
+.p-sm { padding: var(--space-sm); }
+.border-0 { border: none; }
+.shadow-none { box-shadow: none; }
+.bg-transparent { background: transparent; }
+.form-label { display: block; font-weight: 500; }
+.form-error { color: var(--colour-error); font-size: 0.875rem; margin-top: var(--space-xs); }
+
+/* Editor Styles */
+.editor-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  border: 1px solid var(--colour-input-border);
+  border-radius: 0.375rem;
+  background: var(--colour-bg);
+  overflow: hidden;
+}
+
+.editor-container:focus-within {
+  border-color: var(--colour-primary);
+  box-shadow: 0 0 0 3px var(--colour-primary-light);
+}
+
+.editor-input, .editor-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: var(--space-sm);
+  margin: 0;
+  border: none;
+  background: transparent;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: auto;
+  box-sizing: border-box;
+}
+
+.editor-input {
+  z-index: 10;
+  color: transparent;
+  caret-color: var(--colour-text);
+  resize: none;
+}
+.editor-input::placeholder {
+  color: var(--colour-text-tertiary);
+}
+
+.editor-highlight {
+  z-index: 5;
+  color: var(--colour-text);
+  pointer-events: none;
+  border-color: transparent;
+}
+
+/* Syntax Tokens */
+.token-keyword { color: var(--syntax-keyword); font-weight: bold; }
+.token-string { color: var(--syntax-string); }
+.token-variable { color: var(--syntax-variable); }
+.token-comment { color: var(--syntax-comment); font-style: italic; }
+.token-number { color: var(--syntax-number); }
+.token-bracket { color: var(--colour-text-secondary); }
+
+#render-error {
+  white-space: pre-wrap;
+  font-size: 0.8rem;
+}

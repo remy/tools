@@ -19,6 +19,11 @@
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
     "title": "ESP32 Supermini Comparison"
   },
+  "ha-template-debugger": {
+    "category": "Home Assistant",
+    "description": "Test and debug Home Assistant Jinja2 templates with real-time rendering and variable support.",
+    "title": "HA Template Debugger"
+  },
   "hass-sentence": {
     "category": "Home Assistant",
     "description": "Visual debugger for Home Assistant Assist intent recognition templates",

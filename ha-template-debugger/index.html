@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Test and debug Home Assistant Jinja2 templates with real-time rendering and variable support.">
+    <meta name="category" content="Home Assistant">
+    <title>HA Template Debugger</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HA Template Debugger</h1>
+            <p class="mb-lg">Test and debug Home Assistant Jinja2 templates.</p>
+        </header>
+
+        <main class="grid grid-md-2">
+            <div class="flex flex-col gap-md">
+                <section class="section-block p-0 border-0 shadow-none bg-transparent m-0">
+                    <div class="flex flex-between mb-sm">
+                        <label for="template-input" class="form-label text-lg">Template</label>
+                        <span class="text-sm text-secondary">Jinja2</span>
+                    </div>
+                    <div class="editor-container" id="template-editor">
+                        <div class="editor-highlight" aria-hidden="true"></div>
+                        <textarea id="template-input" class="editor-input input" spellcheck="false" placeholder="Enter your template here...&#10;Example:&#10;The light is {{ states('light.living_room') }}"></textarea>
+                    </div>
+                </section>
+
+                <section class="section-block p-0 border-0 shadow-none bg-transparent m-0">
+                    <div class="flex flex-between mb-sm">
+                        <label for="variables-input" class="form-label text-lg">Variables</label>
+                        <div class="flex flex-center gap-sm">
+                            <select id="variables-format" class="select text-sm p-sm">
+                                <option value="json">JSON</option>
+                                <option value="yaml">YAML</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="editor-container" id="variables-editor">
+                        <div class="editor-highlight" aria-hidden="true"></div>
+                        <textarea id="variables-input" class="editor-input input" spellcheck="false" placeholder='{&#10;  "states": {&#10;    "light.living_room": "on"&#10;  }&#10;}'></textarea>
+                    </div>
+                    <div id="variables-error" class="form-error hidden"></div>
+                </section>
+            </div>
+
+            <div class="flex flex-col">
+                <section class="section-block h-full flex flex-col">
+                    <h2 class="section-block-title">Result</h2>
+                    <div id="output" class="well flex-grow font-mono whitespace-pre-wrap"></div>
+                    <div id="render-error" class="alert alert-error hidden mt-md"></div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
