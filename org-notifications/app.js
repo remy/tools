@@ -338,6 +338,10 @@ const App = () => {
           label: 'Mentioned',
           query: `org:${config.org} mentions:${username} updated:>=${sinceDate}`,
         },
+        {
+          label: 'Opened by you',
+          query: `org:${config.org} author:${username} type:pr updated:>=${sinceDate}`,
+        },
       ];
 
       const supplementalResults = [];

@@ -257,6 +257,11 @@ button:active {
   color: #4a0072;
 }
 
+.source-opened-by-you {
+  background: rgba(0, 121, 107, 0.18);
+  color: #004d40;
+}
+
 .toggle-row {
   display: flex;
   gap: 4px;
