@@ -1,18 +1,20 @@
 /**
  * JinjaJS - A standalone, lightweight Jinja2-inspired template engine for JavaScript.
- * * Updated: Support for multiline variable interpolation {{ ... }} blocks.
+ * * Updated: Fixed if/elif/else logic to prevent multiple branches from executing.
  */
 
 class JinjaJS {
   constructor(options = {}) {
     const utils = {
       replace: (v, old, replacement) => String(v).split(old).join(replacement),
-      as_timestamp: (v) => {
-        const d = v ? new Date(v) : new Date();
-        return d.getTime() / 1000;
+      as_timestamp: (v, defaultVal = null) => {
+        if (v === null || v === undefined) return defaultVal;
+        const d = new Date(v);
+        return isNaN(d.getTime()) ? defaultVal : d.getTime() / 1000;
       },
       strptime: (str, format) => new Date(str),
       timestamp_custom: (ts, format, local = true) => {
+        if (!ts) return "";
         const d = new Date(ts * 1000);
         return local ? d.toLocaleString() : d.toUTCString();
       },
@@ -113,7 +115,7 @@ class JinjaJS {
   }
 
   _evaluate(expr, context, loc = { line: 0, col: 0 }) {
-    expr = expr.trim().replace(/\s+/g, ' '); // Normalize multiline expressions
+    expr = expr.trim().replace(/\s+/g, ' '); 
     if (!expr) return undefined;
 
     try {
@@ -151,19 +153,27 @@ class JinjaJS {
       if (expr.includes(' or ')) return expr.split(/\s+or\s+/).some(p => !!this._evaluate(p, context, loc));
       if (expr.includes(' and ')) return expr.split(/\s+and\s+/).every(p => !!this._evaluate(p, context, loc));
 
-      // 4. Comparisons/Math
+      // 4. Comparisons
       const compMatch = expr.match(/(.*?)(\s*(==|!=|<=|>=|<|>)\s*)(.*)/);
       if (compMatch) {
         const left = this._evaluate(compMatch[1], context, loc), op = compMatch[3], right = this._evaluate(compMatch[4], context, loc);
         switch(op) { case '==': return left == right; case '!=': return left != right; case '<': return left < right; case '>': return left > right; case '<=': return left <= right; case '>=': return left >= right; }
       }
-      const mathMatch = expr.match(/(.*?)(\s*([\+\-\*\/])\s*)(.*)/);
+
+      // 5. Math and String Concatenation (~)
+      const mathMatch = expr.match(/(.*?)(\s*([\+\-\*\/~])\s*)(.*)/);
       if (mathMatch && !/^['"].*['"]$/.test(expr)) {
         const left = this._evaluate(mathMatch[1], context, loc), op = mathMatch[3], right = this._evaluate(mathMatch[4], context, loc);
-        switch(op) { case '+': return left + right; case '-': return left - right; case '*': return left * right; case '/': return left / right; }
+        switch(op) { 
+          case '+': return left + right; 
+          case '-': return left - right; 
+          case '*': return left * right; 
+          case '/': return left / right;
+          case '~': return String(left ?? '') + String(right ?? '');
+        }
       }
 
-      // 5. Pipe Filters
+      // 6. Pipe Filters
       if (expr.includes('|')) {
         const parts = expr.split('|');
         let val = this._evaluate(parts[0], context, loc);
@@ -179,7 +189,7 @@ class JinjaJS {
         return val;
       }
 
-      // 6. Literals
+      // 7. Literals
       if (expr.startsWith('[') && expr.endsWith(']')) return expr.slice(1, -1).split(/,(?=(?:(?:[^']*'){2})*[^']*$)/).map(item => this._evaluate(item, context, loc));
       if (expr.startsWith('{') && expr.endsWith('}')) {
         const obj = {};
@@ -206,7 +216,7 @@ class JinjaJS {
   _resolveChain(expr, context, loc) {
     const parts = expr.split(/(\.|\(|\)|\[|\])/g).filter(p => p && p !== '.');
     let res = (context[parts[0]] !== undefined) ? context : (this.macros[parts[0]] !== undefined) ? this.macros : this.globals;
-
+    
     let i = 0;
     while (i < parts.length) {
       let part = parts[i].trim();
@@ -256,7 +266,6 @@ class JinjaJS {
 
   render(template, context = {}) {
     const tokens = [], errors = [];
-    // Updated regex to support multiline in both interpolation {{ }} and tags {% %}
     const re = /\{#[\s\S]*?#\}|\{\{\s*(-?)([\s\S]*?)(-?)\s*\}\}|\{\%\s*(-?)([\s\S]*?)(-?)\s*\%\}|([^{]+|\{)/g;
     let match;
 
@@ -270,9 +279,9 @@ class JinjaJS {
       const index = match.index;
       const loc = getLoc(index);
       const [full, dashLVar, varContent, dashRVar, dashLTag, tagContent, dashRTag, plainText] = match;
-
+      
       if (full.startsWith('{#')) continue;
-
+      
       if (plainText) {
         tokens.push({ type: 'text', value: plainText, loc });
       } else if (varContent !== undefined) {
@@ -287,7 +296,7 @@ class JinjaJS {
     const execute = (ctx) => {
       let output = '';
       const validTags = ['if', 'elif', 'else', 'endif', 'for', 'endfor', 'set', 'macro', 'endmacro'];
-
+      
       while (tokenIdx < tokens.length) {
         const token = tokens[tokenIdx];
         const processTrim = (t) => {
@@ -309,7 +318,7 @@ class JinjaJS {
           tokenIdx++;
         } else if (token.type === 'tag') {
           const { command, raw, loc } = token;
-
+          
           if (!validTags.includes(command)) {
             errors.push(`[Line ${loc.line}, Col ${loc.col}] Syntax Error: Unknown tag "{% ${command} %}"`);
             tokenIdx++;
@@ -320,9 +329,11 @@ class JinjaJS {
             if (command === 'if') {
               let conditionMet = !!this._evaluate(raw.slice(2).trim(), ctx, loc);
               processTrim(token); tokenIdx++;
+              
               if (conditionMet) {
                 output += execute(ctx);
               } else {
+                // Find next elif, else, or endif at current depth
                 let depth = 1;
                 while (tokenIdx < tokens.length && depth > 0) {
                   const t = tokens[tokenIdx];
@@ -333,24 +344,27 @@ class JinjaJS {
                 }
               }
 
+              // After processing a branch (or skipping the 'if' body), handle remaining branches
               while (tokenIdx < tokens.length) {
                 const subTag = tokens[tokenIdx];
                 if (subTag.command === 'elif') {
                   if (!conditionMet) {
                     conditionMet = !!this._evaluate(subTag.raw.slice(4).trim(), ctx, subTag.loc);
                     tokenIdx++;
-                    if (conditionMet) output += execute(ctx);
-                    else {
-                        let depth = 1;
-                        while (tokenIdx < tokens.length && depth > 0) {
-                          const t = tokens[tokenIdx];
-                          if (t.command === 'if') depth++;
-                          else if (t.command === 'endif') depth--;
-                          else if (depth === 1 && (t.command === 'elif' || t.command === 'else')) break;
-                          tokenIdx++;
-                        }
+                    if (conditionMet) {
+                      output += execute(ctx);
+                    } else {
+                      let depth = 1;
+                      while (tokenIdx < tokens.length && depth > 0) {
+                        const t = tokens[tokenIdx];
+                        if (t.command === 'if') depth++;
+                        else if (t.command === 'endif') depth--;
+                        else if (depth === 1 && (t.command === 'elif' || t.command === 'else')) break;
+                        tokenIdx++;
+                      }
                     }
                   } else {
+                    // Already met, skip this block
                     tokenIdx++;
                     let depth = 1;
                     while (tokenIdx < tokens.length && depth > 0) {
@@ -365,7 +379,7 @@ class JinjaJS {
                   if (!conditionMet) {
                     tokenIdx++;
                     output += execute(ctx);
-                    conditionMet = true;
+                    conditionMet = true; // Prevents any other else if logic somehow
                   } else {
                     tokenIdx++;
                     let depth = 1;
@@ -379,7 +393,7 @@ class JinjaJS {
                 } else if (subTag.command === 'endif') {
                   tokenIdx++; break;
                 } else {
-                  break;
+                  break; 
                 }
               }
             } else if (command === 'elif' || command === 'else' || command === 'endif' || command === 'endfor' || command === 'endmacro') {
