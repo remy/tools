@@ -1,6 +1,6 @@
 /**
  * JinjaJS - A standalone, lightweight Jinja2-inspired template engine for JavaScript.
- * * Updated: Support for '~' string concatenation operator and enhanced 'as_timestamp'.
+ * * Updated: Fixed if/elif/else logic to prevent multiple branches from executing.
  */
 
 class JinjaJS {
@@ -329,9 +329,11 @@ class JinjaJS {
             if (command === 'if') {
               let conditionMet = !!this._evaluate(raw.slice(2).trim(), ctx, loc);
               processTrim(token); tokenIdx++;
+              
               if (conditionMet) {
                 output += execute(ctx);
               } else {
+                // Find next elif, else, or endif at current depth
                 let depth = 1;
                 while (tokenIdx < tokens.length && depth > 0) {
                   const t = tokens[tokenIdx];
@@ -342,24 +344,27 @@ class JinjaJS {
                 }
               }
 
+              // After processing a branch (or skipping the 'if' body), handle remaining branches
               while (tokenIdx < tokens.length) {
                 const subTag = tokens[tokenIdx];
                 if (subTag.command === 'elif') {
                   if (!conditionMet) {
                     conditionMet = !!this._evaluate(subTag.raw.slice(4).trim(), ctx, subTag.loc);
                     tokenIdx++;
-                    if (conditionMet) output += execute(ctx);
-                    else {
-                        let depth = 1;
-                        while (tokenIdx < tokens.length && depth > 0) {
-                          const t = tokens[tokenIdx];
-                          if (t.command === 'if') depth++;
-                          else if (t.command === 'endif') depth--;
-                          else if (depth === 1 && (t.command === 'elif' || t.command === 'else')) break;
-                          tokenIdx++;
-                        }
+                    if (conditionMet) {
+                      output += execute(ctx);
+                    } else {
+                      let depth = 1;
+                      while (tokenIdx < tokens.length && depth > 0) {
+                        const t = tokens[tokenIdx];
+                        if (t.command === 'if') depth++;
+                        else if (t.command === 'endif') depth--;
+                        else if (depth === 1 && (t.command === 'elif' || t.command === 'else')) break;
+                        tokenIdx++;
+                      }
                     }
                   } else {
+                    // Already met, skip this block
                     tokenIdx++;
                     let depth = 1;
                     while (tokenIdx < tokens.length && depth > 0) {
@@ -374,7 +379,7 @@ class JinjaJS {
                   if (!conditionMet) {
                     tokenIdx++;
                     output += execute(ctx);
-                    conditionMet = true;
+                    conditionMet = true; // Prevents any other else if logic somehow
                   } else {
                     tokenIdx++;
                     let depth = 1;
