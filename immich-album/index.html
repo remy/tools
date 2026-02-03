@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Immich Album Manager</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <h1>Immich Album Manager</h1>
+
+    <div class="config">
+      <div class="config-header" onclick="toggleConfig()">
+        <span>Configuration</span>
+        <span id="configToggle">▼</span>
+      </div>
+      <div class="config-content" id="configContent">
+        <label>Immich Server URL</label>
+        <input type="text" id="serverUrl" placeholder="https://immich.example.com">
+        <label>API Key</label>
+        <input type="password" id="apiKey" placeholder="Your Immich API key">
+        <div class="checkbox-group">
+          <label>
+            <input type="checkbox" id="useProxy">
+            <span>Proxy via <span id="proxyHost"></span></span>
+          </label>
+        </div>
+        <button class="btn-primary" onclick="loadAlbums()">Load Albums</button>
+        <div class="usage-section">
+          <h3>Usage</h3>
+          <p>This tool can help quickly manage many Immich albums to delete, merge or edit using an easy filter process.
+            This run entirely in the browser and talks directly to your Immich instance.</p>
+          <ul>
+            <li>Your Immich server needs to support CORS, otherwise enable the proxy option above, <a href="server.js"
+                target="_blank">sample proxy server</a></li>
+            <li>Filter supports partial regex: <code>^trip</code> (starts with), <code>2024$</code> (ends with),
+              <code>trip.*beach</code> (contains both)
+            </li>
+            <li>Filter by asset count with <code>?</code> prefix:
+              <ul>
+                <li><code>?1</code> — exact count</li>
+                <li><code>?&gt;10</code> or <code>?&gt;=10</code> — greater than</li>
+                <li><code>?&lt;5</code> or <code>?&lt;=5</code> — less than</li>
+                <li><code>?10-50</code> — range (inclusive)</li>
+              </ul>
+            </li>
+            <li>Hover an album to visit 🔗 or rename ✏️</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="status" class="status hidden"></div>
+
+    <div id="albumsSection" class="hidden">
+      <div class="album-count-info">
+        <span id="albumCount">0 albums</span>
+      </div>
+      <div class="sticky-controls">
+        <div class="toolbar">
+          <input type="text" id="filter" placeholder="Filter albums..." oninput="renderAlbums()">
+          <button class="btn-secondary" onclick="selectAll()">Select All</button>
+          <button class="btn-secondary" onclick="selectNone()">Select None</button>
+          <span class="select-info"><span id="selectedCount">0</span> selected</span>
+        </div>
+        <div class="action-buttons">
+          <button class="btn-primary" onclick="confirmMerge()" id="mergeBtn" disabled>Merge Selected</button>
+          <button class="btn-danger" onclick="confirmDelete()" id="deleteBtn" disabled>Delete Selected</button>
+        </div>
+      </div>
+      <div id="albumList" class="album-list"></div>
+    </div>
+
+    <div id="modal" class="modal-overlay hidden">
+      <div class="modal">
+        <h2>Confirm Deletion</h2>
+        <p>Delete these <span id="deleteCount">0</span> albums? (Images will NOT be deleted)</p>
+        <ul id="deleteList"></ul>
+        <div class="modal-buttons">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-danger" onclick="executeDelete()">Delete Albums</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="mergeModal" class="modal-overlay hidden">
+      <div class="modal">
+        <h2>Merge Albums</h2>
+        <p>Merge these <span id="mergeCount">0</span> albums:</p>
+        <ul id="mergeList"></ul>
+        <div class="merge-input-group">
+          <label for="mergeTargetName">Target Album Name:</label>
+          <input type="text" id="mergeTargetName" placeholder="Enter album name..."
+            onkeypress="if(event.key==='Enter'){event.preventDefault();executeMerge();}">
+          <p class="merge-hint">If the album exists, photos will be added to it. If not, a new album will be created.
+          </p>
+        </div>
+        <div class="modal-buttons">
+          <button class="btn-secondary" onclick="closeMergeModal()">Cancel</button>
+          <button class="btn-primary" onclick="executeMerge()">Merge Albums</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="renameModal" class="modal-overlay hidden">
+      <div class="modal">
+        <h2>Rename Album</h2>
+        <div class="merge-input-group">
+          <label for="renameInput">New Album Name:</label>
+          <input type="text" id="renameInput" placeholder="Enter new album name..."
+            onkeypress="if(event.key==='Enter'){event.preventDefault();executeRename();}">
+        </div>
+        <div class="modal-buttons">
+          <button class="btn-secondary" onclick="closeRenameModal()">Cancel</button>
+          <button class="btn-primary" onclick="executeRename()">Rename</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+
+</html>
