@@ -155,6 +155,10 @@ h1 {
   margin-right: 10px;
   cursor: pointer;
 }
+.proxy-url-group {
+  margin-bottom: 15px;
+  margin-left: 28px;
+}
 button {
   padding: 10px 20px;
   border: none;

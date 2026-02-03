@@ -25,8 +25,12 @@
         <div class="checkbox-group">
           <label>
             <input type="checkbox" id="useProxy">
-            <span>Proxy via <span id="proxyHost"></span></span>
+            <span>Use proxy server</span>
           </label>
+        </div>
+        <div id="proxyUrlGroup" class="proxy-url-group hidden">
+          <label>Proxy URL</label>
+          <input type="text" id="proxyUrl" placeholder="http://localhost:3000">
         </div>
         <button class="btn-primary" onclick="loadAlbums()">Load Albums</button>
         <div class="usage-section">

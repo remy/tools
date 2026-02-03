@@ -5,7 +5,22 @@ const path = require('path');
 
 const PORT = 3000;
 
+function setCorsHeaders(req, res) {
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, x-immich-url');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+}
+
 const server = http.createServer(async (req, res) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    setCorsHeaders(req, res);
+    res.writeHead(204);
+    res.end();
+    return;
+  }
   // Serve index.html for root
   if (!req.url.startsWith('/api/')) {
     const filename = req.url === '/' ? '/index.html' : req.url;
@@ -33,6 +48,9 @@ const server = http.createServer(async (req, res) => {
     });
     return;
   }
+
+  // Set CORS headers for all API responses
+  setCorsHeaders(req, res);
 
   // Proxy API requests
   const immichUrl = req.headers['x-immich-url'];

@@ -21,21 +21,26 @@ function getConfig() {
     .value.replace(/\/$/, '');
   const apiKey = $('#apiKey').value;
   const useProxy = $('#useProxy').checked;
-  return { serverUrl, apiKey, useProxy };
+  const proxyUrl = $('#proxyUrl').value.replace(/\/$/, '');
+  return { serverUrl, apiKey, useProxy, proxyUrl };
 }
 
 async function apiCall(endpoint, options = {}) {
-  const { serverUrl, apiKey, useProxy } = getConfig();
+  const { serverUrl, apiKey, useProxy, proxyUrl } = getConfig();
 
   if (!serverUrl || !apiKey) {
     throw new Error('Server URL and API key are required');
   }
 
+  if (useProxy && !proxyUrl) {
+    throw new Error('Proxy URL is required when using proxy mode');
+  }
+
   let url, headers;
 
   if (useProxy) {
-    // Use proxy mode - call through local server
-    url = endpoint;
+    // Use proxy mode - call through proxy server
+    url = `${proxyUrl}${endpoint}`;
     headers = {
       'x-api-key': apiKey,
       'x-immich-url': serverUrl,
@@ -508,19 +513,21 @@ function toggleConfig() {
   localStorage.setItem('config_collapsed', isCollapsed);
 }
 
-// Set proxy hostname
-$('#proxyHost').textContent = location.hostname;
-
 // Load saved config
 const savedUrl = localStorage.getItem('immich_url');
 const savedKey = localStorage.getItem('immich_key');
 const savedProxy = localStorage.getItem('immich_proxy');
+const savedProxyUrl = localStorage.getItem('immich_proxy_url');
 const savedConfigCollapsed = localStorage.getItem('config_collapsed');
 
 if (savedUrl) $('#serverUrl').value = savedUrl;
 if (savedKey) $('#apiKey').value = savedKey;
+if (savedProxyUrl) $('#proxyUrl').value = savedProxyUrl;
 if (savedProxy !== null) {
   $('#useProxy').checked = savedProxy === 'true';
+  if (savedProxy === 'true') {
+    $('#proxyUrlGroup').classList.remove('hidden');
+  }
 }
 
 // Apply saved collapsed state
@@ -544,8 +551,18 @@ document
   );
 document
   .getElementById('useProxy')
+  .addEventListener('change', (e) => {
+    localStorage.setItem('immich_proxy', e.target.checked);
+    if (e.target.checked) {
+      $('#proxyUrlGroup').classList.remove('hidden');
+    } else {
+      $('#proxyUrlGroup').classList.add('hidden');
+    }
+  });
+document
+  .getElementById('proxyUrl')
   .addEventListener('change', (e) =>
-    localStorage.setItem('immich_proxy', e.target.checked)
+    localStorage.setItem('immich_proxy_url', e.target.value)
   );
 
 // Auto-load albums if config exists
