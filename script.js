@@ -118,8 +118,8 @@
             return;
         }
 
-        // Show filter on any printable character
-        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Show filter on any printable character (except space)
+        if (e.key.length === 1 && e.key !== ' ' && !e.ctrlKey && !e.metaKey && !e.altKey) {
             showFilter();
             // Let the character be typed into the input
         }

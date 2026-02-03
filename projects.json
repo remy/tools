@@ -29,6 +29,11 @@
     "description": "Visual debugger for Home Assistant Assist intent recognition templates",
     "title": "HA Intent Parser Visualizer"
   },
+  "immich-album": {
+    "category": "Immich",
+    "description": "Browser-based tool to bulk manage Immich albums - filter, delete, merge, and rename albums with regex and asset count filtering",
+    "title": "Immich Album Manager"
+  },
   "org-notifications": {
     "category": "Utilities",
     "description": "View and manage GitHub organization notifications in a clean interface",

@@ -79,6 +79,22 @@ def extract_category_from_commit(commit_msg):
     return None
 
 def generate_index_html(projects):
+    # Read existing index.html to get templates
+    with open('index.html', 'r', encoding='utf-8') as f:
+        html_content = f.read()
+
+    # Extract templates using regex to preserve exact whitespace
+    category_match = re.search(r'<template id="category-template">(.*?)</template>', html_content, re.DOTALL)
+    project_match = re.search(r'<template id="project-template">(.*?)</template>', html_content, re.DOTALL)
+
+    if not category_match or not project_match:
+        print("Error: Could not find templates in index.html")
+        return
+
+    # Strip leading/trailing whitespace from templates but keep internal structure
+    category_tpl = category_match.group(1).strip()
+    project_tpl = project_match.group(1)
+
     # Group projects by category
     categories = defaultdict(list)
     for path, data in projects.items():
@@ -88,52 +104,36 @@ def generate_index_html(projects):
             'description': data.get('description', '')
         })
 
-    html = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Index</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="filter-container" id="filterContainer">
-        <input type="text" class="filter-input" id="filterInput" placeholder="Type to filter projects...">
-        <div class="filter-hint">Enter to open • Tab to select • Esc to close</div>
-    </div>
-    <div class="container">
-        <header>
-            <h1>Project Index</h1>
-            <p class="subtitle">A collection of tools and utilities</p>
-        </header>
-"""
-
+    # Generate sections using templates
+    sections = []
     for category in sorted(categories.keys()):
-        html += f"        <section class=\"category-section\">\n"
-        html += f"            <h2>{category}</h2>\n"
-        html += f"            <ul class=\"projects-list\">\n"
+        projects_html = ""
         for project in sorted(categories[category], key=lambda x: x['title']):
-            html += f"                <li class=\"project-item\">\n"
-            html += f"                    <a href=\"{project['path']}/index.html\">\n"
-            html += f"                        <div class=\"project-info\">\n"
-            html += f"                            <div class=\"project-title\">{project['title']}</div>\n"
+            project_html = project_tpl
+            project_html = project_html.replace('{{path}}', project['path'])
+            project_html = project_html.replace('{{title}}', project['title'])
+            # Handle optional description - remove line if empty
             if project['description']:
-                html += f"                            <div class=\"project-description\">{project['description']}</div>\n"
-            html += f"                        </div>\n"
-            html += f"                        <span class=\"project-path\">{project['path']}</span>\n"
-            html += f"                    </a>\n"
-            html += f"                </li>\n"
-        html += "            </ul>\n"
-        html += "        </section>\n"
+                project_html = project_html.replace('{{description}}', project['description'])
+            else:
+                # Remove the description div if no description
+                project_html = re.sub(r'\s*<div class="project-description">\{\{description\}\}</div>', '', project_html)
+            projects_html += project_html
 
-    html += "    </div>\n"
-    html += "    <footer>\n"
-    html += "        <p>Responsible disclosure: All these demos and tools have been coded with AI.</p>\n"
-    html += "    </footer>\n"
-    html += "    <script src=\"script.js\"></script>\n</body>\n</html>"
+        section_html = category_tpl
+        section_html = section_html.replace('{{category}}', category)
+        section_html = section_html.replace('{{projects}}', projects_html)
+        sections.append(section_html)
+
+    # Join sections with proper indentation
+    sections_html = '\n        '.join(sections)
+
+    # Replace content between markers
+    pattern = r'(<!-- PROJECTS:START -->).*?(<!-- PROJECTS:END -->)'
+    new_content = re.sub(pattern, r'\1\n        ' + sections_html + r'\n        \2', html_content, flags=re.DOTALL)
 
     with open('index.html', 'w', encoding='utf-8') as f:
-        f.write(html)
+        f.write(new_content)
 
 def main():
     parser = argparse.ArgumentParser()
