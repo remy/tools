@@ -63,12 +63,6 @@ const server = http.createServer(async (req, res) => {
   const targetUrl = new URL(req.url, immichUrl);
   const client = targetUrl.protocol === 'https:' ? https : http;
 
-  console.log(
-    `Proxying request to: ${targetUrl.toString()}, , ${
-      req.headers['x-api-key']
-    }`
-  );
-
   // Collect request body for POST/PUT/PATCH requests
   let body = null;
   if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
