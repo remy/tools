@@ -1,3 +1,11 @@
+/*
+
+  This is a sample proxy server that you can run locally to avoid CORS issues.
+
+  Note that the public url to this project DOES NOT use any server code, and is
+  hosted on Netlify as a static site. This server code is only for local use.
+
+*/
 const http = require('http');
 const https = require('https');
 const fs = require('fs');
@@ -8,8 +16,14 @@ const PORT = 3000;
 function setCorsHeaders(req, res) {
   const origin = req.headers.origin || '*';
   res.setHeader('Access-Control-Allow-Origin', origin);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, x-immich-url');
+  res.setHeader(
+    'Access-Control-Allow-Methods',
+    'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+  );
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, x-api-key, x-immich-url'
+  );
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
