@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VS Code JSON Validator</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        line-height: 1.5;
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        background: #f4f4f9;
+      }
+
+      section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+        color: #333;
+      }
+
+      textarea {
+        width: 100%;
+        height: 300px;
+        font-family: 'Courier New', monospace;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      button {
+        background: #007acc;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+
+      button:hover {
+        background: #005f9e;
+      }
+
+      #results {
+        background: white;
+        border: 1px solid #ddd;
+        padding: 1rem;
+        border-radius: 4px;
+        min-height: 100px;
+      }
+
+      .error {
+        color: #d32f2f;
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #eee;
+      }
+
+      .success {
+        color: #2e7d32;
+        font-weight: bold;
+      }
+
+      .pos {
+        font-weight: bold;
+        color: #666;
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <h1>VS Code JSON Validator</h1>
+    <p>This uses <code>vscode-json-languageservice</code> to provide editor-grade validation directly in your browser.
+    </p>
+
+    <section>
+      <div>
+        <label>JSON Input</label>
+        <textarea id="jsonInput">{
+  "name": "Gemini",
+  "version": "1.0",
+  "settings": {
+    "theme": "invalid-theme-name"
+  },
+  "missingComma": true
+  "extra": "this line will cause a syntax error"
+}</textarea>
+      </div>
+      <div>
+        <label>JSON Schema</label>
+        <textarea id="schemaInput">{
+  "type": "object",
+  "properties": {
+    "name": { "type": "string" },
+    "version": { "type": "number" },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "theme": { "enum": ["light", "dark"] }
+      }
+    }
+  },
+  "required": ["name", "version"]
+}</textarea>
+      </div>
+    </section>
+
+    <button id="validateBtn">Run Validation</button>
+
+    <h3>Results</h3>
+    <div id="results">Click "Run Validation" to see results.</div>
+
+    <script type="module">
+      import { getLanguageService } from 'https://esm.sh/vscode-json-languageservice';
+      import { TextDocument } from 'https://esm.sh/vscode-languageserver-textdocument';
+
+      const jsonArea = document.getElementById('jsonInput');
+      const schemaArea = document.getElementById('schemaInput');
+      const validateBtn = document.getElementById('validateBtn');
+      const resultsDiv = document.getElementById('results');
+
+      // Use a unique internal URI
+      const SCHEMA_URI = 'internal://schema.json';
+
+      async function runValidation() {
+        const jsonText = jsonArea.value;
+        const schemaText = schemaArea.value;
+
+        // 1. Setup the Language Service
+        const ls = getLanguageService({
+          schemaRequestService: async (uri) => {
+            // Flexible check: if the requested URI starts with our internal URI,
+            // return the content from the textarea.
+            if (uri.startsWith(SCHEMA_URI)) {
+              return schemaText;
+            }
+            return '';
+          },
+          promiseConstructor: Promise
+        });
+
+        // 2. Configure it to use our schema
+        ls.configure({
+          validate: true,
+          allowComments: true,
+          schemas: [{
+            uri: SCHEMA_URI,
+            fileMatch: ['input.json'] // This matches the filename in TextDocument.create
+          }]
+        });
+
+        // 3. Create the virtual document
+        const textDoc = TextDocument.create('input.json', 'json', 1, jsonText);
+
+        // 4. Perform the actual validation
+        const jsonDoc = ls.parseJSONDocument(textDoc);
+
+        try {
+          const diagnostics = await ls.doValidation(textDoc, jsonDoc);
+
+          // 5. Render results
+          resultsDiv.innerHTML = '';
+
+          if (diagnostics.length === 0) {
+            resultsDiv.innerHTML = '<p class="success">✅ JSON is valid and matches schema!</p>';
+            return;
+          }
+
+          diagnostics.forEach(diag => {
+            const div = window.document.createElement('div');
+            div.className = 'error';
+            const line = (diag.range.start.line || 0) + 1;
+            const char = (diag.range.start.character || 0) + 1;
+            div.innerHTML = `<span class="pos">[Line ${line}, Col ${char}]</span> ${diag.message}`;
+            resultsDiv.appendChild(div);
+          });
+        } catch (e) {
+          resultsDiv.innerHTML = `<p class="error">Execution Error: ${e.message}</p>`;
+        }
+      }
+
+      validateBtn.addEventListener('click', runValidation);
+    </script>
+  </body>
+
+</html>

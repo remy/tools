@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="Bulk rotate images in Immich. Select multiple thumbnails to rotate clockwise or counter-clockwise en masse via the API.">
+    <title>Immich Mass Rotate</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="sidebar">
+        <h1>Immich Mass Rotate</h1>
+
+        <div class="form-group">
+          <label for="host">Immich Host</label>
+          <input type="text" id="host" placeholder="http://localhost:3001" />
+        </div>
+
+        <div class="form-group">
+          <label for="apiKey">API Key</label>
+          <input type="password" id="apiKey" placeholder="Your API key" />
+        </div>
+
+        <div class="form-group">
+          <label for="year">Year</label>
+          <input type="number" id="year" placeholder="2024" />
+        </div>
+
+        <div class="form-group use-proxy">
+          <label for="useProxy">Use Proxy</label>
+          <input type="checkbox" id="useProxy" />
+        </div>
+
+        <div class="form-group" id="proxyGroup" style="display: none;">
+          <label for="proxy">Proxy URL</label>
+          <input type="text" id="proxy" placeholder="http://localhost:3000" />
+        </div>
+
+        <button id="loadBtn" class="btn-primary">Load Images</button>
+
+        <div class="controls">
+          <div class="control-info">
+            <strong>Keyboard Shortcuts:</strong>
+            <div class="shortcut">R - Rotate Clockwise</div>
+            <div class="shortcut">Shift+R - Rotate Counter-Clockwise</div>
+            <div class="shortcut">N - Next Page</div>
+            <div class="shortcut">Shift+N - Previous Page</div>
+            <div class="shortcut">F - Toggle image fill</div>
+            <div class="shortcut">Z - Toggle image zoom</div>
+          </div>
+          <button id="toggleSidebarBtn" class="btn-secondary" style="width: 100%; margin-top: 1rem;">Hide
+            Config</button>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="toolbar">
+          <div class="rotation-tools">
+            <button id="showConfigBtn" class="rotate-btn" title="Show Configuration" style="display: none;"><svg
+                width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <title>cogs</title>
+                <path
+                  d="M15.9,18.45C17.25,18.45 18.35,17.35 18.35,16C18.35,14.65 17.25,13.55 15.9,13.55C14.54,13.55 13.45,14.65 13.45,16C13.45,17.35 14.54,18.45 15.9,18.45M21.1,16.68L22.58,17.84C22.71,17.95 22.75,18.13 22.66,18.29L21.26,20.71C21.17,20.86 21,20.92 20.83,20.86L19.09,20.16C18.73,20.44 18.33,20.67 17.91,20.85L17.64,22.7C17.62,22.87 17.47,23 17.3,23H14.5C14.32,23 14.18,22.87 14.15,22.7L13.89,20.85C13.46,20.67 13.07,20.44 12.71,20.16L10.96,20.86C10.81,20.92 10.62,20.86 10.54,20.71L9.14,18.29C9.05,18.13 9.09,17.95 9.22,17.84L10.7,16.68L10.65,16L10.7,15.31L9.22,14.16C9.09,14.05 9.05,13.86 9.14,13.71L10.54,11.29C10.62,11.13 10.81,11.07 10.96,11.13L12.71,11.84C13.07,11.56 13.46,11.32 13.89,11.15L14.15,9.29C14.18,9.13 14.32,9 14.5,9H17.3C17.47,9 17.62,9.13 17.64,9.29L17.91,11.15C18.33,11.32 18.73,11.56 19.09,11.84L20.83,11.13C21,11.07 21.17,11.13 21.26,11.29L22.66,13.71C22.75,13.86 22.71,14.05 22.58,14.16L21.1,15.31L21.15,16L21.1,16.68M6.69,8.07C7.56,8.07 8.26,7.37 8.26,6.5C8.26,5.63 7.56,4.92 6.69,4.92A1.58,1.58 0 0,0 5.11,6.5C5.11,7.37 5.82,8.07 6.69,8.07M10.03,6.94L11,7.68C11.07,7.75 11.09,7.87 11.03,7.97L10.13,9.53C10.08,9.63 9.96,9.67 9.86,9.63L8.74,9.18L8,9.62L7.81,10.81C7.79,10.92 7.7,11 7.59,11H5.79C5.67,11 5.58,10.92 5.56,10.81L5.4,9.62L4.64,9.18L3.5,9.63C3.41,9.67 3.3,9.63 3.24,9.53L2.34,7.97C2.28,7.87 2.31,7.75 2.39,7.68L3.34,6.94L3.31,6.5L3.34,6.06L2.39,5.32C2.31,5.25 2.28,5.13 2.34,5.03L3.24,3.47C3.3,3.37 3.41,3.33 3.5,3.37L4.63,3.82L5.4,3.38L5.56,2.19C5.58,2.08 5.67,2 5.79,2H7.59C7.7,2 7.79,2.08 7.81,2.19L8,3.38L8.74,3.82L9.86,3.37C9.96,3.33 10.08,3.37 10.13,3.47L11.03,5.03C11.09,5.13 11.07,5.25 11,5.32L10.03,6.06L10.06,6.5L10.03,6.94Z" />
+              </svg></button>
+            <button id="rotateLeftBtn" class="rotate-btn" title="Rotate Counter-Clockwise (Shift+R)">
+              <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <title>file-rotate-left-outline</title>
+                <path
+                  d="M4 11C4 6.58 7.58 3 12 3L13 3.06V5.08L12 5C8.69 5 6 7.69 6 11H9L5 15L1 11H4M17 7H13C11.9 7 11 7.9 11 9V18C11 19.11 11.9 20 13 20H19C20.11 20 21 19.11 21 18V11L17 7M19 18H13V9H16V12H19V18Z" />
+              </svg>
+            </button>
+            <button id="rotateRightBtn" class="rotate-btn" title="Rotate Clockwise (R)">
+              <svg width="24" height="24" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <title>file-rotate-right-outline</title>
+                <path
+                  d="M20 11H23L19 15L15 11H18C18 7.69 15.31 5 12 5L11 5.08V3.06L12 3C16.42 3 20 6.58 20 11M9 7H5C3.9 7 3 7.9 3 9V18C3 19.11 3.9 20 5 20H11C12.11 20 13 19.11 13 18V11L9 7M11 18H5V9H8V12H11V18Z" />
+              </svg>
+            </button>
+          </div>
+
+          <div id="status" class="status toolbar-status"></div>
+
+          <div id="pageInfo" class="page-info"></div>
+        </div>
+
+        <div id="gallery" tabindex="-1" class="gallery"></div>
+
+        <div class="pagination">
+          <button id="prevPageBtn" class="btn-pagination">Previous</button>
+          <span id="pageNumber" class="page-number"></span>
+          <button id="nextPageBtn" class="btn-pagination">Next</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+
+</html>

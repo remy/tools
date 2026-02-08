@@ -1,0 +1,43 @@
+{
+  "albums": { "total": 0, "count": 0, "items": [], "facets": [] },
+  "assets": {
+    "total": 250,
+    "count": 250,
+    "items": [
+      {
+        "id": "0640c5cd-27ed-47d0-b842-2e77f46c0a32",
+        "createdAt": "2026-02-06T20:46:09.400Z",
+        "deviceAssetId": "14233",
+        "ownerId": "687fd9a8-42a1-4a21-b493-2eab805e142d",
+        "deviceId": "bf7f1d81decc2b54d094c803595c8f17f3e7571c9b13c8171c48e2f8ea4a88ff",
+        "libraryId": null,
+        "type": "IMAGE",
+        "originalPath": "/data/upload/687fd9a8-42a1-4a21-b493-2eab805e142d/ad/70/ad70c23c-7bc0-4043-9e3e-b0e3d74c34aa.jpg",
+        "originalFileName": "PD_0172_edited.jpg",
+        "originalMimeType": "image/jpeg",
+        "thumbhash": "mhgWDQKGeH93Z2dYiIeYd6mfpvpp",
+        "fileCreatedAt": "2026-02-06T20:46:09.237Z",
+        "fileModifiedAt": "2026-02-06T20:46:10.000Z",
+        "localDateTime": "2026-02-06T20:46:09.237Z",
+        "updatedAt": "2026-02-06T20:46:09.650Z",
+        "isFavorite": false,
+        "isArchived": false,
+        "isTrashed": false,
+        "visibility": "timeline",
+        "duration": "0:00:00.00000",
+        "livePhotoVideoId": null,
+        "people": [],
+        "checksum": "HbOEL+3fIQAaBx18nSZiBWoGyp8=",
+        "isOffline": false,
+        "hasMetadata": true,
+        "duplicateId": null,
+        "resized": true,
+        "width": 1184,
+        "height": 1760,
+        "isEdited": false
+      }
+    ],
+    "facets": [],
+    "nextPage": "2"
+  }
+}
