@@ -40,8 +40,14 @@
     "title": "Immich Mass Rotate"
   },
   "json-schema": {
-    "category": "Uncategorized",
+    "category": "Utilities",
+    "description": "Validate JSON against a schema with real-time error reporting and syntax highlighting",
     "title": "VS Code JSON Validator"
+  },
+  "movies": {
+    "category": "Utilities",
+    "description": "Compare showtimes across Brighton cinemas (Odeon, Cineworld, Duke of York's) and plan your movie outings",
+    "title": "Brighton Cinema Planner"
   },
   "org-notifications": {
     "category": "Utilities",
