@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-const fs = require("node:fs/promises");
-const path = require("node:path");
+const fs = require('node:fs/promises');
+const path = require('node:path');
 
-const DEFAULT_QUICKBOOK_ID = "10108";
-const DEFAULT_CINEMA_ID = "014";
+const DEFAULT_QUICKBOOK_ID = '10108';
+const DEFAULT_CINEMA_ID = '014';
 const DEFAULT_DAYS = 7;
-const DEFAULT_OUTPUT = "cineworld-movies.json";
-const DEFAULT_RAW_DIR = "cineworld-events";
+const DEFAULT_OUTPUT = 'cineworld-movies.json';
+const DEFAULT_RAW_DIR = 'cineworld-events';
 
 function parseArgs(argv) {
   const options = {
@@ -17,48 +17,48 @@ function parseArgs(argv) {
     cinemaId: DEFAULT_CINEMA_ID,
     output: DEFAULT_OUTPUT,
     rawDir: DEFAULT_RAW_DIR,
-    noRaw: false
+    noRaw: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     const next = argv[index + 1];
 
-    if (arg === "--days" && next) {
+    if (arg === '--days' && next) {
       options.days = Number(next);
       index += 1;
       continue;
     }
-    if (arg === "--start" && next) {
+    if (arg === '--start' && next) {
       options.startDate = next;
       index += 1;
       continue;
     }
-    if (arg === "--cinema" && next) {
+    if (arg === '--cinema' && next) {
       options.cinemaId = next;
       index += 1;
       continue;
     }
-    if (arg === "--quickbook" && next) {
+    if (arg === '--quickbook' && next) {
       options.quickbookId = next;
       index += 1;
       continue;
     }
-    if (arg === "--out" && next) {
+    if (arg === '--out' && next) {
       options.output = next;
       index += 1;
       continue;
     }
-    if (arg === "--raw-dir" && next) {
+    if (arg === '--raw-dir' && next) {
       options.rawDir = next;
       index += 1;
       continue;
     }
-    if (arg === "--no-raw") {
+    if (arg === '--no-raw') {
       options.noRaw = true;
       continue;
     }
-    if (arg === "--help") {
+    if (arg === '--help') {
       printHelp();
       process.exit(0);
     }
@@ -66,15 +66,20 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!Number.isInteger(options.days) || options.days < 1 || options.days > 31) {
-    throw new Error("--days must be an integer between 1 and 31");
+  if (
+    !Number.isInteger(options.days) ||
+    options.days < 1 ||
+    options.days > 31
+  ) {
+    throw new Error('--days must be an integer between 1 and 31');
   }
 
   return options;
 }
 
 function printHelp() {
-  console.log(`
+  console.log(
+    `
 Fetch Cineworld film events for multiple days and merge them for frontend consumption.
 
 Usage:
@@ -89,13 +94,14 @@ Options:
   --raw-dir PATH       Directory for per-day raw payloads (default: cineworld-events)
   --no-raw             Do not save per-day raw payloads
   --help               Show this help
-`.trim());
+`.trim()
+  );
 }
 
 function getStartDate(startDateInput) {
   if (startDateInput) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(startDateInput)) {
-      throw new Error("--start must be in YYYY-MM-DD format");
+      throw new Error('--start must be in YYYY-MM-DD format');
     }
     const explicit = new Date(`${startDateInput}T00:00:00`);
     if (Number.isNaN(explicit.getTime())) {
@@ -111,18 +117,18 @@ function getStartDate(startDateInput) {
 
 function formatDateYmd(date) {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
 function toIsoLocal(date) {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hour = String(date.getHours()).padStart(2, "0");
-  const minute = String(date.getMinutes()).padStart(2, "0");
-  const second = String(date.getSeconds()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  const second = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day}T${hour}:${minute}:${second}`;
 }
 
@@ -135,13 +141,15 @@ function getDates(startDate, days) {
 }
 
 function normalizeFilmId(value) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || '')
+    .trim()
+    .toLowerCase();
 }
 
 function normalizeDateTime(value, fallbackDate) {
-  if (value == null || value === "") return null;
+  if (value == null || value === '') return null;
 
-  if (typeof value === "number" && Number.isFinite(value)) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
     const millis = value > 1e12 ? value : value > 1e9 ? value * 1000 : null;
     if (!millis) return null;
     return toIsoLocal(new Date(millis));
@@ -172,24 +180,31 @@ function mergeFilm(existingFilm, incomingFilm) {
 
   const merged = { ...existingFilm };
   const scalarFields = [
-    "name",
-    "title",
-    "length",
-    "posterLink",
-    "videoLink",
-    "link",
-    "releaseYear",
-    "releaseDate",
-    "weight"
+    'name',
+    'title',
+    'length',
+    'posterLink',
+    'videoLink',
+    'link',
+    'releaseYear',
+    'releaseDate',
+    'weight',
   ];
 
   for (const field of scalarFields) {
-    if ((merged[field] == null || merged[field] === "") && incomingFilm[field] != null && incomingFilm[field] !== "") {
+    if (
+      (merged[field] == null || merged[field] === '') &&
+      incomingFilm[field] != null &&
+      incomingFilm[field] !== ''
+    ) {
       merged[field] = incomingFilm[field];
     }
   }
 
-  if ((!Array.isArray(merged.attributeIds) || merged.attributeIds.length === 0) && Array.isArray(incomingFilm.attributeIds)) {
+  if (
+    (!Array.isArray(merged.attributeIds) || merged.attributeIds.length === 0) &&
+    Array.isArray(incomingFilm.attributeIds)
+  ) {
     merged.attributeIds = [...incomingFilm.attributeIds];
   }
 
@@ -197,37 +212,62 @@ function mergeFilm(existingFilm, incomingFilm) {
 }
 
 function addFilm(filmsById, rawFilm) {
-  if (!rawFilm || typeof rawFilm !== "object") return;
+  if (!rawFilm || typeof rawFilm !== 'object') return;
 
-  const id = normalizeFilmId(rawFilm.id || rawFilm.filmId || rawFilm.film_id || rawFilm.scheduledFilmId || rawFilm.ScheduledFilmId);
+  const id = normalizeFilmId(
+    rawFilm.id ||
+      rawFilm.filmId ||
+      rawFilm.film_id ||
+      rawFilm.scheduledFilmId ||
+      rawFilm.ScheduledFilmId
+  );
   if (!id) return;
 
   const canonicalFilm = {
     id,
-    name: rawFilm.name || rawFilm.title || "",
+    name: rawFilm.name || rawFilm.title || '',
     length: rawFilm.length ?? rawFilm.runtime ?? null,
-    posterLink: rawFilm.posterLink || rawFilm.poster || rawFilm.image || rawFilm.imageUrl || "",
-    videoLink: rawFilm.videoLink || rawFilm.trailer || rawFilm.trailerUrl || "",
-    link: rawFilm.link || rawFilm.url || "",
+    posterLink:
+      rawFilm.posterLink ||
+      rawFilm.poster ||
+      rawFilm.image ||
+      rawFilm.imageUrl ||
+      '',
+    videoLink: rawFilm.videoLink || rawFilm.trailer || rawFilm.trailerUrl || '',
+    link: rawFilm.link || rawFilm.url || '',
     weight: rawFilm.weight ?? 0,
-    releaseYear: rawFilm.releaseYear || "",
-    releaseDate: rawFilm.releaseDate || "",
-    attributeIds: Array.isArray(rawFilm.attributeIds) ? rawFilm.attributeIds : []
+    releaseYear: rawFilm.releaseYear || '',
+    releaseDate: rawFilm.releaseDate || '',
+    attributeIds: Array.isArray(rawFilm.attributeIds)
+      ? rawFilm.attributeIds
+      : [],
   };
 
   filmsById.set(id, mergeFilm(filmsById.get(id), canonicalFilm));
 }
 
-function getFilmIdFromObject(node, inheritedFilmId = "") {
-  const explicit = node.filmId || node.film_id || node.scheduledFilmId || node.ScheduledFilmId;
+function getFilmIdFromObject(node, inheritedFilmId = '') {
+  const explicit =
+    node.filmId || node.film_id || node.scheduledFilmId || node.ScheduledFilmId;
   if (explicit) return normalizeFilmId(explicit);
 
-  if (node.film && typeof node.film === "object") {
-    const nested = node.film.id || node.film.filmId || node.film.film_id || node.film.scheduledFilmId;
+  if (node.film && typeof node.film === 'object') {
+    const nested =
+      node.film.id ||
+      node.film.filmId ||
+      node.film.film_id ||
+      node.film.scheduledFilmId;
     if (nested) return normalizeFilmId(nested);
   }
 
-  if (node.id && (node.name || node.title || node.posterLink || node.releaseDate || node.releaseYear)) {
+  if (
+    node.id &&
+    (node.name ||
+      node.title ||
+      node.posterLink ||
+      node.releaseDate ||
+      node.releaseYear)
+  ) {
     return normalizeFilmId(node.id);
   }
 
@@ -236,14 +276,14 @@ function getFilmIdFromObject(node, inheritedFilmId = "") {
 
 function getEventDateTimeFromObject(node, fallbackDate) {
   const directFields = [
-    "eventDateTime",
-    "dateTime",
-    "datetime",
-    "showTime",
-    "showtime",
-    "startDateTime",
-    "startTime",
-    "performanceDateTime"
+    'eventDateTime',
+    'dateTime',
+    'datetime',
+    'showTime',
+    'showtime',
+    'startDateTime',
+    'startTime',
+    'performanceDateTime',
   ];
 
   for (const field of directFields) {
@@ -272,7 +312,7 @@ function addEvent(eventsByFilmId, filmId, dateTime) {
 }
 
 function mergeEventsMap(eventsByFilmId, eventsMapLike) {
-  if (!eventsMapLike || typeof eventsMapLike !== "object") return;
+  if (!eventsMapLike || typeof eventsMapLike !== 'object') return;
 
   for (const [rawFilmId, values] of Object.entries(eventsMapLike)) {
     const filmId = normalizeFilmId(rawFilmId);
@@ -289,7 +329,7 @@ function mergeEventsMap(eventsByFilmId, eventsMapLike) {
 
 function walkPayload(node, context, seen) {
   if (node == null) return;
-  if (typeof node !== "object") return;
+  if (typeof node !== 'object') return;
   if (seen.has(node)) return;
   seen.add(node);
 
@@ -308,7 +348,10 @@ function walkPayload(node, context, seen) {
     addEvent(context.eventsByFilmId, filmId, eventDateTime);
   }
 
-  const nextContext = { ...context, currentFilmId: filmId || context.currentFilmId };
+  const nextContext = {
+    ...context,
+    currentFilmId: filmId || context.currentFilmId,
+  };
   for (const value of Object.values(node)) {
     walkPayload(value, nextContext, seen);
   }
@@ -335,14 +378,16 @@ function mapToSortedObject(mapOfSets) {
 async function fetchDayPayload(baseUrl, date) {
   const response = await fetch(baseUrl, {
     headers: {
-      "accept": "application/json",
-      "user-agent": "movies-local-cineworld-fetch/1.0"
-    }
+      accept: 'application/json',
+      'user-agent': 'movies-local-cineworld-fetch/1.0',
+    },
   });
 
   if (!response.ok) {
     const snippet = await response.text();
-    throw new Error(`HTTP ${response.status} while fetching ${date}: ${snippet.slice(0, 200)}`);
+    throw new Error(
+      `HTTP ${response.status} while fetching ${date}: ${snippet.slice(0, 200)}`
+    );
   }
 
   return response.json();
@@ -363,12 +408,21 @@ async function main() {
 
   for (const date of dates) {
     const url = `https://www.cineworld.co.uk/uk/data-api-service/v1/quickbook/${encodeURIComponent(options.quickbookId)}/film-events/in-cinema/${encodeURIComponent(options.cinemaId)}/at-date/${date}?attr=&lang=en_GB`;
-    const payload = await fetchDayPayload(url, date);
+    let payload;
+
+    try {
+      payload = await fetchDayPayload(url, date);
+    } catch (error) {
+      console.error(
+        `Failed to fetch data for ${date}: ${error.message || error}`
+      );
+      continue;
+    }
     fetchedDates.push(date);
 
     if (!options.noRaw) {
       const rawPath = path.join(options.rawDir, `${date}.json`);
-      await fs.writeFile(rawPath, JSON.stringify(payload, null, 2), "utf8");
+      await fs.writeFile(rawPath, JSON.stringify(payload, null, 2), 'utf8');
     }
 
     const body = payload?.body || payload;
@@ -386,14 +440,14 @@ async function main() {
         filmsById,
         eventsByFilmId,
         fallbackDate: date,
-        currentFilmId: ""
+        currentFilmId: '',
       },
       new WeakSet()
     );
   }
 
   const merged = {
-    source: "cineworld-film-events",
+    source: 'cineworld-film-events',
     generatedAt: new Date().toISOString(),
     requestedDates: fetchedDates,
     body: {
@@ -402,14 +456,19 @@ async function main() {
         const rightName = (right.name || right.title || right.id).toString();
         return leftName.localeCompare(rightName);
       }),
-      eventsDatesByFilmId: mapToSortedObject(eventsByFilmId)
-    }
+      eventsDatesByFilmId: mapToSortedObject(eventsByFilmId),
+    },
   };
 
-  await fs.writeFile(options.output, JSON.stringify(merged, null, 2), "utf8");
+  await fs.writeFile(options.output, JSON.stringify(merged, null, 2), 'utf8');
 
-  const eventsCount = Object.values(merged.body.eventsDatesByFilmId).reduce((sum, times) => sum + times.length, 0);
-  console.log(`Saved ${merged.body.films.length} films and ${eventsCount} showtimes to ${options.output}`);
+  const eventsCount = Object.values(merged.body.eventsDatesByFilmId).reduce(
+    (sum, times) => sum + times.length,
+    0
+  );
+  console.log(
+    `Saved ${merged.body.films.length} films and ${eventsCount} showtimes to ${options.output}`
+  );
   if (!options.noRaw) {
     console.log(`Saved raw daily payloads to ${options.rawDir}/`);
   }
