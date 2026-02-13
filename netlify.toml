@@ -1,2 +1,0 @@
-[context.production]
-  command = "bash build.sh"
