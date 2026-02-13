@@ -961,42 +961,28 @@ class MovieScheduleApp extends HTMLElement {
         movieMap.get(movieId).showtimes.push(...weekShows);
       }
 
-      const cineworldEventDays = [];
-      for (
-        let d = new Date(start);
-        d < end;
-        d = new Date(d.getTime() + DAY_MS)
-      ) {
-        cineworldEventDays.push(toDayKey(d));
-      }
-
-      const cineworldEventResps = await Promise.all(
-        cineworldEventDays.map((day) =>
-          fetch(`./cineworld-events/${day}.json`)
-            .then((r) => (r.ok ? r.json() : null))
-            .catch(() => null)
-        )
-      );
-
-      const cineworldFilmMap = new Map();
-      for (const dayData of cineworldEventResps) {
-        if (!dayData?.body) continue;
-        for (const film of dayData.body.films || []) {
-          const filmId = normalizeMovieId(film.id);
-          if (!cineworldFilmMap.has(filmId)) {
-            cineworldFilmMap.set(filmId, film);
-          }
+      let cineworldData = null;
+      try {
+        const cineworldResp = await fetch('./cineworld-movies.json');
+        if (cineworldResp.ok) {
+          cineworldData = await cineworldResp.json();
         }
-        for (const event of dayData.body.events || []) {
-          const filmId = normalizeMovieId(event.filmId);
+      } catch {}
+
+      if (cineworldData?.body) {
+        const cineworldFilmMap = new Map(
+          (cineworldData.body.films || []).map((film) => [
+            normalizeMovieId(film.id),
+            film,
+          ])
+        );
+
+        for (const [rawFilmId, dateTimes] of Object.entries(
+          cineworldData.body.eventsDatesByFilmId || {}
+        )) {
+          const filmId = normalizeMovieId(rawFilmId);
           const film = cineworldFilmMap.get(filmId);
-          if (!film) continue;
-
-          const parsed = parseShowDateValue(event.eventDateTime);
-          if (!parsed) continue;
-
-          const { date, hasExplicitTime } = parsed;
-          if (date < start || date >= end) continue;
+          if (!film || !Array.isArray(dateTimes)) continue;
 
           const movieId = `CW-${filmId}`;
 
@@ -1019,21 +1005,27 @@ class MovieScheduleApp extends HTMLElement {
             });
           }
 
-          movieMap.get(movieId).showtimes.push({
-            dayKey: toDayKey(date),
-            timeLabel: hasExplicitTime ? formatTime24(date) : 'TBC',
-            startsAt: date.getTime(),
-            cinemaId: CINEWORLD_BRIGHTON.id,
-            sessionId: event.id || '',
-            bookingUrl: event.bookingLink || '',
-            cinemaName:
-              cinemaNameById.get(CINEWORLD_BRIGHTON.id) ||
-              CINEWORLD_BRIGHTON.name,
-            screen: event.auditoriumTinyName
-              ? `Screen ${event.auditoriumTinyName}`
-              : '',
-            hasExactTime: hasExplicitTime,
-          });
+          for (const dateTimeStr of dateTimes) {
+            const parsed = parseShowDateValue(dateTimeStr);
+            if (!parsed) continue;
+
+            const { date, hasExplicitTime } = parsed;
+            if (date < start || date >= end) continue;
+
+            movieMap.get(movieId).showtimes.push({
+              dayKey: toDayKey(date),
+              timeLabel: hasExplicitTime ? formatTime24(date) : 'TBC',
+              startsAt: date.getTime(),
+              cinemaId: CINEWORLD_BRIGHTON.id,
+              sessionId: '',
+              bookingUrl: '',
+              cinemaName:
+                cinemaNameById.get(CINEWORLD_BRIGHTON.id) ||
+                CINEWORLD_BRIGHTON.name,
+              screen: '',
+              hasExactTime: hasExplicitTime,
+            });
+          }
         }
       }
 
