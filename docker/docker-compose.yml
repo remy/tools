@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  builder:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: tools-builder
+    environment:
+      # Optional: Set your repository details here
+      GIT_AUTHOR_NAME: 'Docker Builder'
+      GIT_AUTHOR_EMAIL: 'docker-builder@local'
+      GIT_COMMITTER_NAME: 'Docker Builder'
+      GIT_COMMITTER_EMAIL: 'docker-builder@local'
+    volumes:
+      # Mount the local repository
+      - ..:/app
+      # Mount SSH key for git authentication
+      - ~/.ssh:/root/.ssh:ro
+      - ~/.gitconfig:/root/.gitconfig:ro
+    restart: unless-stopped
+    # Optional: Set resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
