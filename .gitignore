@@ -1,4 +1,3 @@
 .DS_Store
 .venv
-movies/*.json
-movies/cineworld-events/*.json
+movies/cineworld-events/*
