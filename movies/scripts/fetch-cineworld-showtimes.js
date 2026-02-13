@@ -376,10 +376,24 @@ function mapToSortedObject(mapOfSets) {
 }
 
 async function fetchDayPayload(baseUrl, date) {
+  console.log(baseUrl);
   const response = await fetch(baseUrl, {
     headers: {
-      accept: 'application/json',
-      'user-agent': 'movies-local-cineworld-fetch/1.0',
+      // accept: 'application/json',
+      // 'user-agent': 'movies-local-cineworld-fetch/1.0',
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:147.0) Gecko/20100101 Firefox/147.0',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-GB',
+      'Alt-Used': 'www.cineworld.co.uk',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-GPC': '1',
+      Priority: 'u=0, i',
+      Pragma: 'no-cache',
+      'Cache-Control': 'no-cache',
     },
   });
 
