@@ -165,6 +165,42 @@ movie-schedule-app {
   margin-bottom: 8px;
 }
 
+#reset-cache-btn {
+  margin-top: 12px;
+}
+
+.button {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--surface-strong), var(--surface));
+  color: var(--text-main);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.button:hover {
+  border-color: var(--accent);
+  background: linear-gradient(
+    180deg,
+    rgba(232, 90, 48, 0.08),
+    rgba(232, 90, 48, 0.04)
+  );
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+
 .status {
   padding: 14px 26px 0;
   color: var(--text-soft);

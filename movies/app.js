@@ -23,7 +23,7 @@ function stripTitle(title) {
 
 function stripBracketedContent(title) {
   return stripTitle(title)
-    .replace(/\s*[\(\[\{][^\)\]\}]*[\)\]\}]\s*/g, ' ')
+    .replace(/\s*[\(\[\{][^\)\]\}]*[\)\]\}]\s.*/g, ' ')
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
@@ -95,13 +95,13 @@ function parseShowDateValue(value) {
   } else if (typeof value === 'object') {
     raw = String(
       value.Showtime ||
-        value.showtime ||
-        value.startsAt ||
-        value.startTime ||
-        value.dateTime ||
-        value.datetime ||
-        value.date ||
-        ''
+      value.showtime ||
+      value.startsAt ||
+      value.startTime ||
+      value.dateTime ||
+      value.datetime ||
+      value.date ||
+      ''
     ).trim();
   }
 
@@ -236,6 +236,21 @@ class TMDBIndexedDBCache {
     this.dbPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(this.dbName, 1);
 
+      // also check if the store name exist and if it doesn't create it (handles case where db exists but store doesn't, e.g. from older version)
+      const dbCheckRequest = indexedDB.open(this.dbName);
+      dbCheckRequest.onsuccess = () => {
+        const db = dbCheckRequest.result;
+        if (!db.objectStoreNames.contains(this.storeName)) {
+          db.close();
+          indexedDB.deleteDatabase(this.dbName);
+          this.dbPromise = null;
+          resolve(this.openDb());
+        } else {
+          db.close();
+          resolve(request.result);
+        }
+      };
+
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains(this.storeName)) {
@@ -268,15 +283,33 @@ class TMDBIndexedDBCache {
 
     await new Promise((resolve) => {
       const tx = db.transaction(this.storeName, 'readwrite');
-      tx.objectStore(this.storeName).put({
+      const request = tx.objectStore(this.storeName).put({
         id,
         value,
         updatedAt: Date.now(),
       });
-      tx.oncomplete = () => resolve();
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
       tx.onerror = () => resolve();
       tx.onabort = () => resolve();
     });
+  }
+
+  async clear() {
+    const db = await this.openDb();
+    if (!db) return;
+
+    await new Promise((resolve) => {
+      const tx = db.transaction(this.storeName, 'readwrite');
+      const request = tx.objectStore(this.storeName).clear();
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+      tx.onerror = () => resolve();
+      tx.onabort = () => resolve();
+    });
+
+    // Invalidate cached db promise so it reopens fresh next time
+    this.dbPromise = null;
   }
 }
 
@@ -353,31 +386,50 @@ class TMDBService {
   }
 
   async findMovieResult(movie) {
+    let titleToSearch = movie.title;
+
+    // If title starts with £, immediately split on colon and use 2nd part
+    const stripped = stripTitle(titleToSearch);
+    if (stripped.startsWith('£') && stripped.includes(':')) {
+      titleToSearch = stripped.split(':').slice(1).join(':').trim();
+    }
+
+
+    let year = movie.releaseYear;
+
+    if (/\(\d{4}\)/.test(titleToSearch)) {
+      const match = titleToSearch.match(/\((\d{4})\)/);
+      if (match) {
+        year = Number(match[1]);
+        titleToSearch = titleToSearch.replace(/\(\d{4}\)/, '').trim();
+      }
+    }
+
     const primaryResult = await this.searchMovie(
-      movie.title,
-      movie.releaseYear
+      titleToSearch,
+      year,
     );
     if (primaryResult) return primaryResult;
 
-    const fallbackTitle = stripBracketedContent(movie.title);
+    const fallbackTitle = stripBracketedContent(titleToSearch);
     if (
       fallbackTitle &&
-      fallbackTitle.toLowerCase() !== stripTitle(movie.title).toLowerCase()
+      fallbackTitle.toLowerCase() !== stripTitle(titleToSearch).toLowerCase()
     ) {
       const bracketResult = await this.searchMovie(
         fallbackTitle,
-        movie.releaseYear
+        // year
       );
       if (bracketResult) return bracketResult;
     }
 
-    const stripped = stripTitle(movie.title);
-    if (stripped.includes(':')) {
+    const strippedForColon = stripTitle(titleToSearch);
+    if (strippedForColon.includes(':')) {
       const afterColon = stripBracketedContent(
-        stripped.split(':').slice(1).join(':')
+        strippedForColon.split(':').slice(1).join(':')
       );
       if (afterColon) {
-        return this.searchMovie(afterColon, movie.releaseYear);
+        return this.searchMovie(afterColon, year);
       }
     }
 
@@ -399,23 +451,60 @@ class TMDBService {
       throw new Error('tmdb_not_found');
     }
 
-    const detailsResp = await fetch(
-      `https://api.themoviedb.org/3/movie/${result.id}?api_key=${this.apiKey}`
-    );
-    if (!detailsResp.ok) {
+    const [detailsResp, creditsResp, videosResp] = await Promise.all([
+      fetch(
+        `https://api.themoviedb.org/3/movie/${result.id}?api_key=${this.apiKey}`
+      ),
+      fetch(
+        `https://api.themoviedb.org/3/movie/${result.id}/credits?api_key=${this.apiKey}`
+      ),
+      fetch(
+        `https://api.themoviedb.org/3/movie/${result.id}/videos?api_key=${this.apiKey}`
+      ),
+    ]);
+
+    if (!detailsResp.ok || !creditsResp.ok || !videosResp.ok) {
       throw new Error('tmdb_details_failed');
     }
 
-    const details = await detailsResp.json();
-    const lookupPayload = {
+    const [details, credits, videos] = await Promise.all([
+      detailsResp.json(),
+      creditsResp.json(),
+      videosResp.json(),
+    ]);
+
+    const director = (credits.crew || [])
+      .filter((person) => person.job === 'Director')
+      .map((person) => person.name);
+    const cast = (credits.cast || []).slice(0, 6).map((person) => person.name);
+    const trailer = (videos.results || []).find(
+      (video) => video.site === 'YouTube' && video.type === 'Trailer'
+    );
+
+    const detailsPayload = {
       tmdbId: result.id,
+      overview: details.overview || '',
+      genres: (details.genres || []).map((genre) => genre.name),
+      runtime: details.runtime,
+      cast,
+      director,
+      trailerUrl: trailer
+        ? `https://www.youtube.com/watch?v=${trailer.key}`
+        : '',
+      voteAverage: details.vote_average,
       posterPath: details.poster_path
         ? `https://image.tmdb.org/t/p/w500${details.poster_path}`
         : '',
       backdropPath: details.backdrop_path
         ? `https://image.tmdb.org/t/p/w780${details.backdrop_path}`
         : '',
-      details: cachedLookup?.details || null,
+    };
+
+    const lookupPayload = {
+      tmdbId: result.id,
+      posterPath: detailsPayload.posterPath,
+      backdropPath: detailsPayload.backdropPath,
+      details: detailsPayload,
     };
 
     await this.setCachedLookup(movie, lookupPayload);
@@ -535,12 +624,12 @@ class DayPicker extends HTMLElement {
           <option value="next-14-days" ${selected === 'next-14-days' ? 'selected' : ''}>Next 2 weeks</option>
           <option disabled>────────────────────</option>
           ${days
-            .map((day) => {
-              const optionLabel = formatDayLabel(day);
-              const isSelected = selected === day ? 'selected' : '';
-              return `<option value="${escapeHtml(day)}" ${isSelected}>${escapeHtml(optionLabel)}</option>`;
-            })
-            .join('')}
+        .map((day) => {
+          const optionLabel = formatDayLabel(day);
+          const isSelected = selected === day ? 'selected' : '';
+          return `<option value="${escapeHtml(day)}" ${isSelected}>${escapeHtml(optionLabel)}</option>`;
+        })
+        .join('')}
         </select>
       </label>
     `;
@@ -610,6 +699,7 @@ class MovieCard extends HTMLElement {
       this.tmdbState.data = details;
       this.tmdbState.loading = false;
     } catch (error) {
+      console.error(error)
       this.tmdbState.loading = false;
       this.tmdbState.error =
         error.message === 'missing_key'
@@ -655,16 +745,100 @@ class MovieCard extends HTMLElement {
 
   async toggleExpanded() {
     this.expanded = !this.expanded;
-    this.render();
+
+    // Update just the details section
+    let detailsEl = this.querySelector('.card-details');
+
     if (this.expanded) {
+      const detailsHtml = this.renderCardDetails();
+      if (!detailsEl) {
+        detailsEl = document.createElement('div');
+        this.querySelector('.card-top').after(detailsEl);
+      }
+      detailsEl.innerHTML = detailsHtml;
+
+      // Update toggle indicator
+      const toggleIndicator = this.querySelector('.toggle-indicator');
+      if (toggleIndicator) toggleIndicator.textContent = 'Hide details';
+
+      // Update aria-expanded
+      const cardTop = this.querySelector('.card-top');
+      if (cardTop) cardTop.setAttribute('aria-expanded', 'true');
+
       await this.loadTmdbDetails();
+    } else {
+      if (detailsEl) {
+        detailsEl.remove();
+      }
+
+      // Update toggle indicator
+      const toggleIndicator = this.querySelector('.toggle-indicator');
+      if (toggleIndicator) toggleIndicator.textContent = 'Show details';
+
+      // Update aria-expanded
+      const cardTop = this.querySelector('.card-top');
+      if (cardTop) cardTop.setAttribute('aria-expanded', 'false');
     }
+  }
+
+  renderCardDetails() {
+    if (!this.movie) return '';
+
+    const timesByDay = this.groupedTimes();
+    const showCount = this.getFilteredTimes().length;
+    const hasTimes = showCount > 0;
+
+    return `
+      <div class="card-details">
+        <div class="time-grid">
+          ${hasTimes
+        ? timesByDay
+          .map(([dayKey, shows]) => {
+            const pills = shows
+              .map((show) => {
+                const ticketUrl =
+                  show.bookingUrl ||
+                  (show.sessionId
+                    ? `https://web.picturehouses.com/order/showtimes/${encodeURIComponent(show.cinemaId)}-${encodeURIComponent(show.sessionId)}/seats`
+                    : '');
+                const timeText =
+                  show.hasExactTime === false
+                    ? 'Times TBC'
+                    : show.timeLabel;
+
+                if (!ticketUrl) {
+                  return `<span class="time-pill">${escapeHtml(timeText)}${show.screen
+                    ? ` <span class="tmdb-muted">${escapeHtml(show.screen)}</span>`
+                    : ''
+                    }</span>`;
+                }
+
+                return `<a class="time-pill time-pill-link" href="${ticketUrl}" target="_blank" rel="noreferrer" title="Book ${escapeHtml(timeText)}">${escapeHtml(timeText)}${show.screen
+                  ? ` <span class="tmdb-muted">${escapeHtml(show.screen)}</span>`
+                  : ''
+                  }</a>`;
+              })
+              .join('');
+
+            return `
+                          <section class="day-block">
+                            <h4 class="day-title">${escapeHtml(formatDayLabel(dayKey))}</h4>
+                            <div class="time-row">${pills}</div>
+                          </section>
+                        `;
+          })
+          .join('')
+        : `<section class="day-block"><p class="tmdb-muted">No showtimes for this day.</p></section>`
+      }
+        </div>
+        ${this.renderTmdbPanel()}
+      </div>
+    `;
   }
 
   render() {
     if (!this.movie) return;
 
-    const timesByDay = this.groupedTimes();
     const showCount = this.getFilteredTimes().length;
     const hasTimes = showCount > 0;
     const nextShow = this.getFilteredTimes()[0];
@@ -676,11 +850,10 @@ class MovieCard extends HTMLElement {
     this.innerHTML = `
       <article class="movie-card">
         <div class="card-top" role="button" tabindex="0" aria-expanded="${this.expanded ? 'true' : 'false'}">
-          ${
-            cardImageUrl
-              ? `<img class="poster" src="${escapeHtml(cardImageUrl)}" alt="${escapeHtml(this.movie.title)}" loading="lazy" />`
-              : `<div class="poster-placeholder">No poster</div>`
-          }
+          ${cardImageUrl
+        ? `<img class="poster" src="${escapeHtml(cardImageUrl)}" alt="${escapeHtml(this.movie.title)}" loading="lazy" />`
+        : `<div class="poster-placeholder">No poster</div>`
+      }
           <div class="movie-main">
             <h3 class="movie-title">
               ${certAsset ? `<img class="cert-icon" src="certs/${encodeURIComponent(certAsset)}.svg" alt="Rated ${escapeHtml(this.movie.rating)}" />` : ''}
@@ -691,67 +864,14 @@ class MovieCard extends HTMLElement {
               ${this.movie.releaseYear ? `<span>${escapeHtml(this.movie.releaseYear)}</span>` : ''}
               <span>${escapeHtml(this.movie.cinemaLabel)}</span>
             </div>
-            <p class="next-time">${
-              hasTimes
-                ? `Next: ${escapeHtml(formatDayLabel(nextShow.dayKey))} at ${escapeHtml(nextShowLabel)}`
-                : 'No shows for selected day.'
-            }</p>
+            <p class="next-time">${hasTimes
+        ? `Next: ${escapeHtml(formatDayLabel(nextShow.dayKey))} at ${escapeHtml(nextShowLabel)}`
+        : 'No shows for selected day.'
+      }</p>
           </div>
           <span class="toggle-indicator">${this.expanded ? 'Hide details' : 'Show details'}</span>
         </div>
-        ${
-          this.expanded
-            ? `
-            <div class="card-details">
-              <div class="time-grid">
-                ${
-                  hasTimes
-                    ? timesByDay
-                        .map(([dayKey, shows]) => {
-                          const pills = shows
-                            .map((show) => {
-                              const ticketUrl =
-                                show.bookingUrl ||
-                                (show.sessionId
-                                  ? `https://web.picturehouses.com/order/showtimes/${encodeURIComponent(show.cinemaId)}-${encodeURIComponent(show.sessionId)}/seats`
-                                  : '');
-                              const timeText =
-                                show.hasExactTime === false
-                                  ? 'Times TBC'
-                                  : show.timeLabel;
-
-                              if (!ticketUrl) {
-                                return `<span class="time-pill">${escapeHtml(timeText)}${
-                                  show.screen
-                                    ? ` <span class="tmdb-muted">${escapeHtml(show.screen)}</span>`
-                                    : ''
-                                }</span>`;
-                              }
-
-                              return `<a class="time-pill time-pill-link" href="${ticketUrl}" target="_blank" rel="noreferrer" title="Book ${escapeHtml(timeText)}">${escapeHtml(timeText)}${
-                                show.screen
-                                  ? ` <span class="tmdb-muted">${escapeHtml(show.screen)}</span>`
-                                  : ''
-                              }</a>`;
-                            })
-                            .join('');
-
-                          return `
-                            <section class="day-block">
-                              <h4 class="day-title">${escapeHtml(formatDayLabel(dayKey))}</h4>
-                              <div class="time-row">${pills}</div>
-                            </section>
-                          `;
-                        })
-                        .join('')
-                    : `<section class="day-block"><p class="tmdb-muted">No showtimes for this day.</p></section>`
-                }
-              </div>
-              ${this.renderTmdbPanel()}
-            </div>
-          `
-            : ''
-        }
+        ${this.expanded ? this.renderCardDetails() : ''}
       </article>
     `;
 
@@ -808,6 +928,7 @@ class MovieScheduleApp extends HTMLElement {
             <label class="field" for="tmdb-key">
               <input id="tmdb-key" class="input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Optional: for descriptions, cast, director" />
             </label>
+            <button id="reset-cache-btn" class="button" type="button">Reset cache</button>
           </details>
 
         </section>
@@ -858,6 +979,16 @@ class MovieScheduleApp extends HTMLElement {
 
     tmdbInput.addEventListener('change', (event) => {
       updateTmdbKey(event.target.value, { refresh: true });
+    });
+
+    const resetCacheBtn = this.querySelector('#reset-cache-btn');
+    resetCacheBtn?.addEventListener('click', async () => {
+      if (confirm('Clear the TMDB cache? This will remove all cached movie data.')) {
+        await this.tmdbService.idbCache.clear();
+        this.tmdbService.detailsCache.clear();
+        this.tmdbService.lookupCache.clear();
+        this.refreshCards();
+      }
     });
 
     customElements.whenDefined('day-picker').then(() => {
@@ -967,7 +1098,7 @@ class MovieScheduleApp extends HTMLElement {
         if (cineworldResp.ok) {
           cineworldData = await cineworldResp.json();
         }
-      } catch {}
+      } catch { }
 
       if (cineworldData?.body) {
         const cineworldFilmMap = new Map(
@@ -1106,7 +1237,7 @@ class MovieScheduleApp extends HTMLElement {
             movie.landscapeImageUrl = artwork.backdropPath;
             changed = true;
           }
-        } catch {}
+        } catch { }
       }
     } finally {
       this.prefetchingArtwork = false;
