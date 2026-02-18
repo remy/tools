@@ -1,7 +1,8 @@
 {
   "buzzer": {
-    "category": "Uncategorized",
-    "title": "Buzzer with Wake Lock"
+    "category": "Game",
+    "description": "A simple game timer with 15s restart and 30s single modes, featuring a wake lock option to keep the screen awake during use.",
+    "title": "15s countdown"
   },
   "capcalc": {
     "category": "Utilities",

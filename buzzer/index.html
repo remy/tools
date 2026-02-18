@@ -1,248 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Buzzer with Wake Lock</title>
+    <title>15s countdown</title>
+    <meta name="description"
+      content="A simple game timer with 15s restart and 30s single modes, featuring a wake lock option to keep the screen awake during use.">
+    <meta name="category" content="Game">
     <style>
-        :root {
-            --bg-dark: #121212;
-            --red: #d63031;
-            --blue: #0984e3;
-            --green: #00b894;
+      :root {
+        --bg-dark: #121212;
+        --red: #d63031;
+        --blue: #0984e3;
+        --green: #00b894;
+      }
+
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        width: 100vw;
+        background-color: var(--bg-dark);
+        font-family: -apple-system, system-ui, sans-serif;
+        overflow: hidden;
+        touch-action: manipulation;
+      }
+
+      /* Full-screen buzzer background */
+      #buzzer-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: var(--red);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1;
+        transition: background-color 0.15s ease;
+      }
+
+      .top-nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px 0;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        z-index: 10;
+      }
+
+      .btn {
+        padding: 12px 20px;
+        border: 2px solid white;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        cursor: pointer;
+        min-width: 120px;
+        pointer-events: auto;
+      }
+
+      .btn.active {
+        background: white;
+        color: black;
+      }
+
+      #timer-text {
+        font-size: 30vw;
+        font-weight: 900;
+        color: white;
+        line-height: 1;
+        pointer-events: none;
+        transition: transform 0.1s ease;
+      }
+
+      #mode-label {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.8);
+        text-transform: uppercase;
+        letter-spacing: 4px;
+        pointer-events: none;
+      }
+
+      /* Footer with Reset and Wake Lock */
+      .bottom-bar {
+        position: fixed;
+        bottom: 30px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        z-index: 10;
+      }
+
+      input[type="checkbox"] {
+        cursor: pointer;
+        width: 18px;
+        height: 18px;
+      }
+
+      /* Styling when the wake lock is active */
+      wake-lock[active] button {
+        border: 2px solid green;
+        background: green;
+      }
+
+      /* Styling when inactive (default) */
+      wake-lock:not([active]) button {
+        opacity: 0.8;
+      }
+
+      @keyframes timer-pop {
+        0% {
+          transform: scale(1);
         }
 
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            width: 100vw;
-            background-color: var(--bg-dark);
-            font-family: -apple-system, system-ui, sans-serif;
-            overflow: hidden;
-            touch-action: manipulation;
+        50% {
+          transform: scale(1.08);
         }
 
-        /* Full-screen buzzer background */
-        #buzzer-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--red);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1;
-            transition: background-color 0.15s ease;
+        100% {
+          transform: scale(1);
         }
+      }
 
-        .top-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 20px 0;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            z-index: 10;
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border: 2px solid white;
-            border-radius: 8px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            cursor: pointer;
-            min-width: 120px;
-            pointer-events: auto;
-        }
-
-        .btn.active {
-            background: white;
-            color: black;
-        }
-
-        #timer-text {
-            font-size: 30vw;
-            font-weight: 900;
-            color: white;
-            line-height: 1;
-            pointer-events: none;
-        }
-
-        #mode-label {
-            font-size: 1.2rem;
-            color: rgba(255,255,255,0.8);
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            pointer-events: none;
-        }
-
-        /* Footer with Reset and Wake Lock */
-        .bottom-bar {
-            position: fixed;
-            bottom: 30px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            z-index: 10;
-        }
-
-        .wakelock-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-            background: rgba(0,0,0,0.7);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            border: 1px solid rgba(255,255,255,0.2);
-            pointer-events: auto;
-        }
-
-        input[type="checkbox"] {
-            cursor: pointer;
-            width: 18px;
-            height: 18px;
-        }
+      .timer-pop {
+        animation: timer-pop 0.1s ease;
+      }
     </style>
-</head>
-<body>
+  </head>
+
+  <body>
 
     <div id="buzzer-bg">
-        <div id="mode-label">15s RESTART</div>
-        <div id="timer-text">15</div>
+      <div id="mode-label">15s RESTART</div>
+      <div id="timer-text">15</div>
     </div>
 
     <div class="top-nav">
-        <button id="mode15" class="btn active">15s RESTART</button>
-        <button id="mode30" class="btn">30s SINGLE</button>
+      <button id="mode15" class="btn active">15s RESTART</button>
+      <button id="mode30" class="btn">30s SINGLE</button>
     </div>
 
     <div class="bottom-bar">
-        <label class="wakelock-container">
-            <input type="checkbox" id="wakelock-toggle">
-            KEEP SCREEN AWAKE
-        </label>
-        <button id="reset-btn" class="btn">RESET TIMER</button>
+      <button id="reset-btn" class="btn">RESET TIMER</button>
+      <wake-lock><button class="btn">KEEP SCREEN AWAKE</button></wake-lock>
     </div>
 
+    <script src="/wake-lock/wake-lock.js"></script>
+
     <script>
-        let timeLeft = 15;
-        let timerInterval = null;
-        let currentMode = '15s';
-        let wakeLock = null;
+      let timeLeft = 15;
+      let timerInterval = null;
+      let currentMode = '15s';
 
-        const bg = document.getElementById('buzzer-bg');
-        const timerDisplay = document.getElementById('timer-text');
-        const label = document.getElementById('mode-label');
-        const btn15 = document.getElementById('mode15');
-        const btn30 = document.getElementById('mode30');
-        const wakeToggle = document.getElementById('wakelock-toggle');
+      const bg = document.getElementById('buzzer-bg');
+      const timerDisplay = document.getElementById('timer-text');
+      const label = document.getElementById('mode-label');
+      const btn15 = document.getElementById('mode15');
+      const btn30 = document.getElementById('mode30');
 
-        function updateScreen() {
-            timerDisplay.innerText = timeLeft;
-            if (currentMode === '15s') {
-                bg.style.backgroundColor = 'var(--red)';
-                label.innerText = "15s RESTART";
-            } else {
-                bg.style.backgroundColor = 'var(--blue)';
-                label.innerText = "30s SINGLE";
-            }
+      function triggerRestartAnimation() {
+        timerDisplay.classList.remove('timer-pop');
+        void timerDisplay.offsetWidth;
+        timerDisplay.classList.add('timer-pop');
+      }
+
+      function updateScreen() {
+        timerDisplay.innerText = timeLeft;
+        if (currentMode === '15s') {
+          bg.style.backgroundColor = 'var(--red)';
+          label.innerText = "15s RESTART";
+        } else {
+          bg.style.backgroundColor = 'var(--blue)';
+          label.innerText = "30s SINGLE";
+        }
+      }
+
+      function runTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          timeLeft--;
+          timerDisplay.innerText = timeLeft;
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerDisplay.innerText = "0";
+            bg.style.backgroundColor = 'var(--green)';
+          }
+        }, 1000);
+      }
+
+
+
+      // --- Event Handling ---
+      window.addEventListener('mousedown', async (e) => {
+        const id = e.target.id;
+
+        // Mode/Reset buttons logic
+        if (id === 'mode15' || id === 'mode30' || id === 'reset-btn') {
+          if (id === 'mode15') {
+            currentMode = '15s'; timeLeft = 15;
+            btn15.classList.add('active'); btn30.classList.remove('active');
+          } else if (id === 'mode30') {
+            currentMode = '30s'; timeLeft = 30;
+            btn30.classList.add('active'); btn15.classList.remove('active');
+          } else {
+            timeLeft = (currentMode === '15s') ? 15 : 30;
+          }
+          clearInterval(timerInterval);
+          timerInterval = null;
+          updateScreen();
+          return;
         }
 
-        function runTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                timerDisplay.innerText = timeLeft;
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                    timerDisplay.innerText = "0";
-                    bg.style.backgroundColor = 'var(--green)';
-                }
-            }, 1000);
+        // Global Buzzer Logic
+        if (currentMode === '15s') {
+          timeLeft = 15;
+          updateScreen();
+          triggerRestartAnimation();
+          runTimer();
+        } else if (currentMode === '30s' && !timerInterval && timeLeft > 0) {
+          runTimer();
         }
+      });
 
-        // --- Wake Lock Logic ---
-        async function requestWakeLock() {
-            try {
-                wakeLock = await navigator.wakeLock.request('screen');
-                console.log('Wake Lock is active');
-            } catch (err) {
-                console.error(`${err.name}, ${err.message}`);
-                wakeToggle.checked = false;
-            }
-        }
-
-        function releaseWakeLock() {
-            if (wakeLock !== null) {
-                wakeLock.release().then(() => {
-                    wakeLock = null;
-                    console.log('Wake Lock released');
-                });
-            }
-        }
-
-        // --- Event Handling ---
-        window.addEventListener('mousedown', async (e) => {
-            const id = e.target.id;
-
-            // Wake Lock Toggle logic
-            if (id === 'wakelock-toggle') {
-                if (wakeToggle.checked) {
-                    await requestWakeLock();
-                } else {
-                    releaseWakeLock();
-                }
-                return;
-            }
-
-            // Mode/Reset buttons logic
-            if (id === 'mode15' || id === 'mode30' || id === 'reset-btn') {
-                if (id === 'mode15') {
-                    currentMode = '15s'; timeLeft = 15;
-                    btn15.classList.add('active'); btn30.classList.remove('active');
-                } else if (id === 'mode30') {
-                    currentMode = '30s'; timeLeft = 30;
-                    btn30.classList.add('active'); btn15.classList.remove('active');
-                } else {
-                    timeLeft = (currentMode === '15s') ? 15 : 30;
-                }
-                clearInterval(timerInterval);
-                timerInterval = null;
-                updateScreen();
-                return;
-            }
-
-            // Global Buzzer Logic
-            if (currentMode === '15s') {
-                timeLeft = 15;
-                updateScreen();
-                runTimer();
-            } else if (currentMode === '30s' && !timerInterval && timeLeft > 0) {
-                runTimer();
-            }
-        });
-
-        // Re-request wake lock if user leaves and returns to tab
-        document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                await requestWakeLock();
-            }
-        });
     </script>
-</body>
+  </body>
+
 </html>
