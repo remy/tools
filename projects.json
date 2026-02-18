@@ -1,7 +1,7 @@
 {
   "buzzer": {
     "category": "Uncategorized",
-    "title": "Fixed Multi-Buzzer"
+    "title": "Buzzer with Wake Lock"
   },
   "capcalc": {
     "category": "Utilities",
