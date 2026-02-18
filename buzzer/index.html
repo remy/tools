@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Buzzer</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --buzzer-red: #e74c3c;
+            --buzzer-blue: #3498db;
+            --buzzer-green: #27ae60;
+            --text-white: #ffffff;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background-color: var(--bg-color);
+            font-family: system-ui, sans-serif;
+            overflow: hidden;
+            user-select: none;
+            touch-action: manipulation; /* Prevents double-tap zoom delay on mobile */
+        }
+
+        /* The background that acts as the buzzer */
+        #main-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--buzzer-red);
+            transition: background-color 0.2s;
+            z-index: 1;
+        }
+
+        /* UI Overlay - things that are NOT the buzzer */
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            pointer-events: none; /* Allows clicks to pass through to the background */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Buttons must have pointer-events: auto to be clickable */
+        .interactive {
+            pointer-events: auto;
+        }
+
+        #controls {
+            position: fixed;
+            top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            padding: 12px 24px;
+            border: 2px solid white;
+            border-radius: 30px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: black;
+        }
+
+        #timer-display {
+            font-size: 15rem;
+            font-weight: 900;
+            color: var(--text-white);
+            pointer-events: none;
+        }
+
+        #status-text {
+            font-size: 1.5rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: -20px;
+            pointer-events: none;
+        }
+
+        #reset-btn {
+            position: fixed;
+            bottom: 30px;
+            padding: 10px 25px;
+            background: #000;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-canvas">
+        <div class="ui-layer">
+            <div id="status-text">15s RESTART MODE</div>
+            <div id="timer-display">15</div>
+        </div>
+    </div>
+
+    <div id="controls" class="ui-layer">
+        <button id="mode15" class="mode-btn active interactive">15s RESTART</button>
+        <button id="mode30" class="mode-btn interactive">30s SINGLE</button>
+    </div>
+
+    <button id="reset-btn" class="interactive">RESET EVERYTHING</button>
+
+    <script>
+        let timeLeft = 15;
+        let timerInterval = null;
+        let currentMode = '15s';
+
+        const canvas = document.getElementById('main-canvas');
+        const display = document.getElementById('timer-display');
+        const status = document.getElementById('status-text');
+        const btn15 = document.getElementById('mode15');
+        const btn30 = document.getElementById('mode30');
+
+        function updateUI() {
+            display.innerText = timeLeft;
+            if (currentMode === '15s') {
+                canvas.style.backgroundColor = 'var(--buzzer-red)';
+                status.innerText = "15s RESTART MODE";
+            } else {
+                canvas.style.backgroundColor = 'var(--buzzer-blue)';
+                status.innerText = "30s SINGLE MODE";
+            }
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                display.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    display.innerText = "0";
+                    canvas.style.backgroundColor = 'var(--buzzer-green)';
+                }
+            }, 1000);
+        }
+
+        // THE MASTER LISTENER
+        window.addEventListener('mousedown', (e) => {
+            // 1. Check if we clicked a specific button
+            if (e.target.id === 'mode15') {
+                currentMode = '15s';
+                timeLeft = 15;
+                btn15.classList.add('active');
+                btn30.classList.remove('active');
+                clearInterval(timerInterval);
+                timerInterval = null;
+                updateUI();
+                return;
+            }
+
+            if (e.target.id === 'mode30') {
+                currentMode = '30s';
+                timeLeft = 30;
+                btn30.classList.add('active');
+                btn15.classList.remove('active');
+                clearInterval(timerInterval);
+                timerInterval = null;
+                updateUI();
+                return;
+            }
+
+            if (e.target.id === 'reset-btn') {
+                timeLeft = (currentMode === '15s') ? 15 : 30;
+                clearInterval(timerInterval);
+                timerInterval = null;
+                updateUI();
+                return;
+            }
+
+            // 2. If we didn't click a button, it's a "Buzzer Tap"
+            if (currentMode === '15s') {
+                timeLeft = 15; // Force back to 15
+                updateUI();
+                startTimer();
+            } else if (currentMode === '30s' && !timerInterval && timeLeft > 0) {
+                // Only starts if not already running in 30s mode
+                startTimer();
+            }
+        });
+    </script>
+</body>
+</html>
