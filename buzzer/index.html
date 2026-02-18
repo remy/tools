@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fixed Multi-Buzzer</title>
+    <title>Buzzer with Wake Lock</title>
     <style>
         :root {
             --bg-dark: #121212;
@@ -18,12 +18,12 @@
             height: 100vh;
             width: 100vw;
             background-color: var(--bg-dark);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, system-ui, sans-serif;
             overflow: hidden;
             touch-action: manipulation;
         }
 
-        /* The background is the buzzer. It fills 100% of the screen. */
+        /* Full-screen buzzer background */
         #buzzer-bg {
             position: fixed;
             top: 0;
@@ -39,7 +39,6 @@
             transition: background-color 0.15s ease;
         }
 
-        /* Top Bar for Mode Selection */
         .top-nav {
             position: fixed;
             top: 0;
@@ -50,7 +49,6 @@
             justify-content: center;
             gap: 15px;
             z-index: 10;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
         }
 
         .btn {
@@ -64,7 +62,7 @@
             font-size: 0.9rem;
             cursor: pointer;
             min-width: 120px;
-            pointer-events: auto; /* Ensures buttons are clickable */
+            pointer-events: auto;
         }
 
         .btn.active {
@@ -72,13 +70,12 @@
             color: black;
         }
 
-        /* Center Content */
         #timer-text {
-            font-size: 30vw; /* Responsive font size based on width */
+            font-size: 30vw;
             font-weight: 900;
             color: white;
             line-height: 1;
-            pointer-events: none; /* Clicks pass through to background */
+            pointer-events: none;
         }
 
         #mode-label {
@@ -89,26 +86,35 @@
             pointer-events: none;
         }
 
-        /* Bottom Reset Button */
+        /* Footer with Reset and Wake Lock */
         .bottom-bar {
             position: fixed;
-            bottom: 40px;
+            bottom: 30px;
             width: 100%;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
             z-index: 10;
         }
 
-        #reset-btn {
-            background: #000;
-            border: 1px solid #444;
-            padding: 10px 30px;
+        .wakelock-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            background: rgba(0,0,0,0.7);
+            padding: 8px 15px;
+            border-radius: 20px;
             font-size: 0.8rem;
-            letter-spacing: 1px;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: auto;
         }
 
-        #reset-btn:active {
-            background: #222;
+        input[type="checkbox"] {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
         }
     </style>
 </head>
@@ -125,6 +131,10 @@
     </div>
 
     <div class="bottom-bar">
+        <label class="wakelock-container">
+            <input type="checkbox" id="wakelock-toggle">
+            KEEP SCREEN AWAKE
+        </label>
         <button id="reset-btn" class="btn">RESET TIMER</button>
     </div>
 
@@ -132,12 +142,14 @@
         let timeLeft = 15;
         let timerInterval = null;
         let currentMode = '15s';
+        let wakeLock = null;
 
         const bg = document.getElementById('buzzer-bg');
         const timerDisplay = document.getElementById('timer-text');
         const label = document.getElementById('mode-label');
         const btn15 = document.getElementById('mode15');
         const btn30 = document.getElementById('mode30');
+        const wakeToggle = document.getElementById('wakelock-toggle');
 
         function updateScreen() {
             timerDisplay.innerText = timeLeft;
@@ -155,7 +167,6 @@
             timerInterval = setInterval(() => {
                 timeLeft--;
                 timerDisplay.innerText = timeLeft;
-
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
                     timerInterval = null;
@@ -165,51 +176,71 @@
             }, 1000);
         }
 
-        // Logic for "Anywhere" click
-        window.addEventListener('mousedown', (e) => {
+        // --- Wake Lock Logic ---
+        async function requestWakeLock() {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                console.log('Wake Lock is active');
+            } catch (err) {
+                console.error(`${err.name}, ${err.message}`);
+                wakeToggle.checked = false;
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => {
+                    wakeLock = null;
+                    console.log('Wake Lock released');
+                });
+            }
+        }
+
+        // --- Event Handling ---
+        window.addEventListener('mousedown', async (e) => {
             const id = e.target.id;
 
-            // 1. If hitting a control button, do nothing else
-            if (id === 'mode15') {
-                currentMode = '15s';
-                timeLeft = 15;
-                btn15.classList.add('active');
-                btn30.classList.remove('active');
+            // Wake Lock Toggle logic
+            if (id === 'wakelock-toggle') {
+                if (wakeToggle.checked) {
+                    await requestWakeLock();
+                } else {
+                    releaseWakeLock();
+                }
+                return;
+            }
+
+            // Mode/Reset buttons logic
+            if (id === 'mode15' || id === 'mode30' || id === 'reset-btn') {
+                if (id === 'mode15') {
+                    currentMode = '15s'; timeLeft = 15;
+                    btn15.classList.add('active'); btn30.classList.remove('active');
+                } else if (id === 'mode30') {
+                    currentMode = '30s'; timeLeft = 30;
+                    btn30.classList.add('active'); btn15.classList.remove('active');
+                } else {
+                    timeLeft = (currentMode === '15s') ? 15 : 30;
+                }
                 clearInterval(timerInterval);
                 timerInterval = null;
                 updateScreen();
                 return;
             }
 
-            if (id === 'mode30') {
-                currentMode = '30s';
-                timeLeft = 30;
-                btn30.classList.add('active');
-                btn15.classList.remove('active');
-                clearInterval(timerInterval);
-                timerInterval = null;
-                updateScreen();
-                return;
-            }
-
-            if (id === 'reset-btn') {
-                timeLeft = (currentMode === '15s') ? 15 : 30;
-                clearInterval(timerInterval);
-                timerInterval = null;
-                updateScreen();
-                return;
-            }
-
-            // 2. Otherwise, it's a Buzzer Tap
+            // Global Buzzer Logic
             if (currentMode === '15s') {
                 timeLeft = 15;
                 updateScreen();
                 runTimer();
-            } else {
-                // 30s Mode: Start only if not already running
-                if (!timerInterval && timeLeft > 0) {
-                    runTimer();
-                }
+            } else if (currentMode === '30s' && !timerInterval && timeLeft > 0) {
+                runTimer();
+            }
+        });
+
+        // Re-request wake lock if user leaves and returns to tab
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
             }
         });
     </script>
