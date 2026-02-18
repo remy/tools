@@ -1,8 +1,4 @@
 {
-  "buzzer": {
-    "category": "Uncategorized",
-    "title": "Multi-Mode Buzzer"
-  },
   "capcalc": {
     "category": "Utilities",
     "description": "Decode capacitor codes and calculate values from ceramic capacitor markings",
