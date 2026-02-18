@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Buzzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fixed Multi-Buzzer</title>
     <style>
         :root {
-            --bg-color: #1a1a1a;
-            --buzzer-red: #e74c3c;
-            --buzzer-blue: #3498db;
-            --buzzer-green: #27ae60;
-            --text-white: #ffffff;
+            --bg-dark: #121212;
+            --red: #d63031;
+            --blue: #0984e3;
+            --green: #00b894;
         }
 
         body, html {
@@ -18,187 +17,199 @@
             padding: 0;
             height: 100vh;
             width: 100vw;
-            background-color: var(--bg-color);
-            font-family: system-ui, sans-serif;
+            background-color: var(--bg-dark);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
-            user-select: none;
-            touch-action: manipulation; /* Prevents double-tap zoom delay on mobile */
+            touch-action: manipulation;
         }
 
-        /* The background that acts as the buzzer */
-        #main-canvas {
-            position: absolute;
+        /* The background is the buzzer. It fills 100% of the screen. */
+        #buzzer-bg {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            background-color: var(--red);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: var(--buzzer-red);
-            transition: background-color 0.2s;
             z-index: 1;
+            transition: background-color 0.15s ease;
         }
 
-        /* UI Overlay - things that are NOT the buzzer */
-        .ui-layer {
-            position: relative;
-            z-index: 10;
-            pointer-events: none; /* Allows clicks to pass through to the background */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Buttons must have pointer-events: auto to be clickable */
-        .interactive {
-            pointer-events: auto;
-        }
-
-        #controls {
+        /* Top Bar for Mode Selection */
+        .top-nav {
             position: fixed;
-            top: 20px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px 0;
             display: flex;
-            gap: 10px;
+            justify-content: center;
+            gap: 15px;
+            z-index: 10;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
         }
 
-        .mode-btn {
-            padding: 12px 24px;
+        .btn {
+            padding: 12px 20px;
             border: 2px solid white;
-            border-radius: 30px;
-            background: rgba(0,0,0,0.5);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.6);
             color: white;
             font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
             cursor: pointer;
+            min-width: 120px;
+            pointer-events: auto; /* Ensures buttons are clickable */
         }
 
-        .mode-btn.active {
+        .btn.active {
             background: white;
             color: black;
         }
 
-        #timer-display {
-            font-size: 15rem;
+        /* Center Content */
+        #timer-text {
+            font-size: 30vw; /* Responsive font size based on width */
             font-weight: 900;
-            color: var(--text-white);
+            color: white;
+            line-height: 1;
+            pointer-events: none; /* Clicks pass through to background */
+        }
+
+        #mode-label {
+            font-size: 1.2rem;
+            color: rgba(255,255,255,0.8);
+            text-transform: uppercase;
+            letter-spacing: 4px;
             pointer-events: none;
         }
 
-        #status-text {
-            font-size: 1.5rem;
-            color: rgba(255,255,255,0.8);
-            margin-bottom: -20px;
-            pointer-events: none;
+        /* Bottom Reset Button */
+        .bottom-bar {
+            position: fixed;
+            bottom: 40px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            z-index: 10;
         }
 
         #reset-btn {
-            position: fixed;
-            bottom: 30px;
-            padding: 10px 25px;
             background: #000;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 5px;
-            cursor: pointer;
+            border: 1px solid #444;
+            padding: 10px 30px;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        #reset-btn:active {
+            background: #222;
         }
     </style>
 </head>
 <body>
 
-    <div id="main-canvas">
-        <div class="ui-layer">
-            <div id="status-text">15s RESTART MODE</div>
-            <div id="timer-display">15</div>
-        </div>
+    <div id="buzzer-bg">
+        <div id="mode-label">15s RESTART</div>
+        <div id="timer-text">15</div>
     </div>
 
-    <div id="controls" class="ui-layer">
-        <button id="mode15" class="mode-btn active interactive">15s RESTART</button>
-        <button id="mode30" class="mode-btn interactive">30s SINGLE</button>
+    <div class="top-nav">
+        <button id="mode15" class="btn active">15s RESTART</button>
+        <button id="mode30" class="btn">30s SINGLE</button>
     </div>
 
-    <button id="reset-btn" class="interactive">RESET EVERYTHING</button>
+    <div class="bottom-bar">
+        <button id="reset-btn" class="btn">RESET TIMER</button>
+    </div>
 
     <script>
         let timeLeft = 15;
         let timerInterval = null;
         let currentMode = '15s';
 
-        const canvas = document.getElementById('main-canvas');
-        const display = document.getElementById('timer-display');
-        const status = document.getElementById('status-text');
+        const bg = document.getElementById('buzzer-bg');
+        const timerDisplay = document.getElementById('timer-text');
+        const label = document.getElementById('mode-label');
         const btn15 = document.getElementById('mode15');
         const btn30 = document.getElementById('mode30');
 
-        function updateUI() {
-            display.innerText = timeLeft;
+        function updateScreen() {
+            timerDisplay.innerText = timeLeft;
             if (currentMode === '15s') {
-                canvas.style.backgroundColor = 'var(--buzzer-red)';
-                status.innerText = "15s RESTART MODE";
+                bg.style.backgroundColor = 'var(--red)';
+                label.innerText = "15s RESTART";
             } else {
-                canvas.style.backgroundColor = 'var(--buzzer-blue)';
-                status.innerText = "30s SINGLE MODE";
+                bg.style.backgroundColor = 'var(--blue)';
+                label.innerText = "30s SINGLE";
             }
         }
 
-        function startTimer() {
+        function runTimer() {
             if (timerInterval) clearInterval(timerInterval);
-            
             timerInterval = setInterval(() => {
                 timeLeft--;
-                display.innerText = timeLeft;
+                timerDisplay.innerText = timeLeft;
 
                 if (timeLeft <= 0) {
                     clearInterval(timerInterval);
                     timerInterval = null;
-                    display.innerText = "0";
-                    canvas.style.backgroundColor = 'var(--buzzer-green)';
+                    timerDisplay.innerText = "0";
+                    bg.style.backgroundColor = 'var(--green)';
                 }
             }, 1000);
         }
 
-        // THE MASTER LISTENER
+        // Logic for "Anywhere" click
         window.addEventListener('mousedown', (e) => {
-            // 1. Check if we clicked a specific button
-            if (e.target.id === 'mode15') {
+            const id = e.target.id;
+
+            // 1. If hitting a control button, do nothing else
+            if (id === 'mode15') {
                 currentMode = '15s';
                 timeLeft = 15;
                 btn15.classList.add('active');
                 btn30.classList.remove('active');
                 clearInterval(timerInterval);
                 timerInterval = null;
-                updateUI();
+                updateScreen();
                 return;
             }
 
-            if (e.target.id === 'mode30') {
+            if (id === 'mode30') {
                 currentMode = '30s';
                 timeLeft = 30;
                 btn30.classList.add('active');
                 btn15.classList.remove('active');
                 clearInterval(timerInterval);
                 timerInterval = null;
-                updateUI();
+                updateScreen();
                 return;
             }
 
-            if (e.target.id === 'reset-btn') {
+            if (id === 'reset-btn') {
                 timeLeft = (currentMode === '15s') ? 15 : 30;
                 clearInterval(timerInterval);
                 timerInterval = null;
-                updateUI();
+                updateScreen();
                 return;
             }
 
-            // 2. If we didn't click a button, it's a "Buzzer Tap"
+            // 2. Otherwise, it's a Buzzer Tap
             if (currentMode === '15s') {
-                timeLeft = 15; // Force back to 15
-                updateUI();
-                startTimer();
-            } else if (currentMode === '30s' && !timerInterval && timeLeft > 0) {
-                // Only starts if not already running in 30s mode
-                startTimer();
+                timeLeft = 15;
+                updateScreen();
+                runTimer();
+            } else {
+                // 30s Mode: Start only if not already running
+                if (!timerInterval && timeLeft > 0) {
+                    runTimer();
+                }
             }
         });
     </script>
