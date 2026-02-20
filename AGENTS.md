@@ -204,6 +204,56 @@ See `style-guide.md` for the full design system (colours, typography, spacing, c
 
 ---
 
+## Code Snippet Blocks
+
+When a project needs to show example code (e.g. a demo or reference page), use a `<pre class="code-hint"><code>` combo. The `<pre>` preserves whitespace and newlines natively; the inner `<code>` is purely semantic.
+
+**HTML pattern:**
+
+```html
+<pre class="code-hint"><code><span class="tag">&lt;button</span> <span class="attr">popovertarget</span>=<span class="val">"my-pop"</span><span class="tag">&gt;</span>Open<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="val">"my-pop"</span> <span class="attr">popover</span><span class="tag">&gt;</span>Hello<span class="tag">&lt;/div&gt;</span></code></pre>
+```
+
+- Start content **immediately** after `<code>` — no newline, or a blank line will appear at the top.
+- End content **immediately** before `</code></pre>` — same reason.
+- Inline `<span>` classes for syntax colouring: `.tag`, `.attr`, `.val`, `.kw`, `.cm`.
+
+**Required CSS** (include in the project's `<style>`):
+
+```css
+.code-hint {
+  margin-top: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-family: 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+  overflow-x: auto;
+  line-height: 1.7;
+
+  /* Reset inline <code> styling so it doesn't inherit borders/padding */
+  & code {
+    background: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: inherit;
+    color: inherit;
+  }
+
+  & .tag  { color: #f87171; }
+  & .attr { color: #60a5fa; }
+  & .val  { color: #86efac; }
+  & .kw   { color: #a78bfa; }
+  & .cm   { color: #6b7280; }
+}
+```
+
+---
+
 ## Adding a Project to the Index
 
 The index is maintained automatically. After creating `my-new-tool/index.html` with the required meta tags, run:
