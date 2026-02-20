@@ -272,16 +272,20 @@
 
       /* ─── Popover 2: manual ─── */
       #pop-manual {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-
         & strong { display: block; }
 
         & .close-row {
           display: flex;
           justify-content: flex-end;
           margin-top: 0.25rem;
+        }
+
+        /* Only set display when open — avoids overriding the UA's
+           [popover]:not(:popover-open) { display: none } rule */
+        &:popover-open {
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
         }
       }
 
