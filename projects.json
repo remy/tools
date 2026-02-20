@@ -54,6 +54,11 @@
     "description": "Compare showtimes across Brighton cinemas (Odeon, Cineworld, Duke of York's) and plan your movie outings",
     "title": "Brighton Cinema Planner"
   },
+  "native-popover": {
+    "category": "Demos",
+    "description": "Interactive demo of the native HTML Popover API — no libraries, no JavaScript required for basic use",
+    "title": "Native Popover API Demo"
+  },
   "org-notifications": {
     "category": "Utilities",
     "description": "View and manage GitHub organization notifications in a clean interface",

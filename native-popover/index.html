@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive demo of the native HTML Popover API — no JavaScript required for basic use">
+    <meta name="category" content="Demos">
+    <title>Native Popover API Demo</title>
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0f1117;
+        --surface: #1a1d27;
+        --surface-2: #242736;
+        --border: #2e3248;
+        --accent: #6c63ff;
+        --accent-dim: #6c63ff33;
+        --text: #e8e9f0;
+        --text-dim: #8b8fa8;
+        --green: #22c55e;
+        --orange: #f97316;
+        --red: #ef4444;
+        --radius: 10px;
+        --shadow: 0 8px 32px #0009;
+      }
+
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        padding: 2rem 1rem 4rem;
+        min-height: 100vh;
+      }
+
+      .page-header {
+        text-align: center;
+        max-width: 640px;
+        margin: 0 auto 3rem;
+      }
+
+      .page-header h1 {
+        font-size: clamp(1.75rem, 5vw, 2.5rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+      }
+
+      .page-header h1 span {
+        color: var(--accent);
+      }
+
+      .page-header p {
+        color: var(--text-dim);
+        font-size: 1.05rem;
+      }
+
+      .badge {
+        display: inline-block;
+        background: var(--accent-dim);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2em 0.75em;
+        margin-bottom: 1rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .sections {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.75rem;
+      }
+
+      .card-header {
+        margin-bottom: 1.25rem;
+      }
+
+      .card-header h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      .card-header p {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+      }
+
+      .demo-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4em;
+        padding: 0.55em 1.25em;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+        font-family: inherit;
+        white-space: nowrap;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
+
+      .btn-primary:hover {
+        opacity: 0.85;
+      }
+
+      .btn-outline {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--border);
+      }
+
+      .btn-outline:hover {
+        background: var(--surface-2);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .btn-ghost {
+        background: var(--surface-2);
+        color: var(--text);
+        border-color: var(--border);
+      }
+
+      .btn-ghost:hover {
+        border-color: var(--accent);
+      }
+
+      .btn-danger {
+        background: var(--red);
+        color: #fff;
+        border-color: var(--red);
+      }
+
+      .btn-danger:hover {
+        opacity: 0.85;
+      }
+
+      /* ─── Code block ─── */
+      .code-hint {
+        margin-top: 1rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.82rem;
+        color: var(--text-dim);
+        font-family: 'Cascadia Code', 'Fira Code', monospace;
+        overflow-x: auto;
+      }
+
+      .code-hint .kw { color: #c792ea; }
+      .code-hint .attr { color: #82aaff; }
+      .code-hint .val { color: #c3e88d; }
+      .code-hint .tag { color: #f07178; }
+      .code-hint .cm { color: #546e7a; }
+
+      /* ─── Popovers ─── */
+      [popover] {
+        padding: 1rem 1.25rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text);
+        box-shadow: var(--shadow);
+        max-width: min(360px, 90vw);
+        font-family: inherit;
+        font-size: 0.95rem;
+      }
+
+      /* ─── Popover 1: basic auto ─── */
+      #pop-auto {
+        text-align: center;
+      }
+
+      #pop-auto p {
+        color: var(--text-dim);
+        font-size: 0.875rem;
+        margin-top: 0.4rem;
+      }
+
+      /* ─── Popover 2: manual ─── */
+      #pop-manual {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      #pop-manual strong {
+        display: block;
+        margin-bottom: 0.1rem;
+      }
+
+      #pop-manual .close-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 0.25rem;
+      }
+
+      /* ─── Popover 3: tooltip-style ─── */
+      #pop-tooltip {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.85rem;
+        border-radius: 6px;
+      }
+
+      #pop-tooltip::before {
+        content: "ℹ️ ";
+      }
+
+      /* ─── Popover 4: menu ─── */
+      #pop-menu {
+        padding: 0.4rem;
+        min-width: 180px;
+      }
+
+      #pop-menu ul {
+        list-style: none;
+      }
+
+      #pop-menu li a, #pop-menu li button {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        width: 100%;
+        padding: 0.55em 0.85em;
+        border-radius: 6px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.9rem;
+        text-align: left;
+        transition: background 0.1s;
+        text-decoration: none;
+      }
+
+      #pop-menu li a:hover, #pop-menu li button:hover {
+        background: var(--accent-dim);
+        color: var(--accent);
+      }
+
+      #pop-menu hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 0.35rem 0;
+      }
+
+      /* ─── Popover 5: notification ─── */
+      #pop-notify {
+        border-left: 3px solid var(--green);
+        min-width: 220px;
+      }
+
+      #pop-notify .notify-title {
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+        color: var(--green);
+      }
+
+      #pop-notify .notify-body {
+        font-size: 0.875rem;
+        color: var(--text-dim);
+      }
+
+      /* ─── CSS :popover-open demo ─── */
+      #pop-styled {
+        transition: opacity 0.2s;
+      }
+
+      #pop-styled:not(:popover-open) {
+        opacity: 0;
+      }
+
+      #pop-styled:popover-open {
+        opacity: 1;
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+      }
+
+      /* ─── Backdrop styling ─── */
+      #pop-backdrop::backdrop {
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+
+      #pop-backdrop {
+        max-width: min(440px, 90vw);
+        border-color: var(--accent);
+      }
+
+      #pop-backdrop h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      #pop-backdrop p {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+      }
+
+      #pop-backdrop .actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+      }
+
+      /* ─── JS Events log ─── */
+      .event-log {
+        margin-top: 1rem;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-family: monospace;
+        font-size: 0.82rem;
+        min-height: 80px;
+        max-height: 150px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+
+      .event-log .entry {
+        display: flex;
+        gap: 0.75em;
+      }
+
+      .event-log .time {
+        color: var(--text-dim);
+        flex-shrink: 0;
+      }
+
+      .event-log .evt-name {
+        color: var(--accent);
+      }
+
+      .event-log .evt-state {
+        color: var(--green);
+      }
+
+      .event-log .empty {
+        color: var(--text-dim);
+        font-style: italic;
+      }
+
+      /* ─── Support callout ─── */
+      .support-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        color: var(--text-dim);
+      }
+
+      .support-box .icon {
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+      }
+
+      .support-box.supported {
+        border-color: var(--green);
+      }
+
+      .support-box.unsupported {
+        border-color: var(--orange);
+      }
+
+      .support-label {
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+      }
+
+      .support-label.yes { color: var(--green); }
+      .support-label.no  { color: var(--orange); }
+
+      /* ─── Feature table ─── */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+        margin-top: 1rem;
+      }
+
+      th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        color: var(--text-dim);
+        font-weight: 600;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      td {
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      td code {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.1em 0.4em;
+        font-size: 0.85em;
+        font-family: monospace;
+        color: #c3e88d;
+      }
+
+      td.dim {
+        color: var(--text-dim);
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <header class="page-header">
+      <div class="badge">Web Platform</div>
+      <h1>Native <span>Popover</span> API</h1>
+      <p>Browser-native popovers — no libraries, no JavaScript required for basic use.</p>
+    </header>
+
+    <div class="sections">
+
+      <!-- ─── 1: Basic auto popover ─── -->
+      <div class="card">
+        <div class="card-header">
+          <h2>1. Auto Popover <code style="font-size:0.8em;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.1em 0.4em">popover="auto"</code></h2>
+          <p>Closes automatically when you click outside or press <kbd style="background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.1em 0.35em;font-size:0.85em">Esc</kbd>. Only one auto popover can be open at a time.</p>
+        </div>
+        <div class="demo-row">
+          <button class="btn btn-primary" popovertarget="pop-auto">Open Popover</button>
+        </div>
+
+        <div id="pop-auto" popover="auto">
+          <strong>Auto Popover</strong>
+          <p>Click outside or press Esc to close.</p>
+        </div>
+
+        <div class="code-hint">
+<span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="val">"my-pop"</span> <span class="attr">popover</span><span class="tag">&gt;</span>Content<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;button</span> <span class="attr">popovertarget</span>=<span class="val">"my-pop"</span><span class="tag">&gt;</span>Open<span class="tag">&lt;/button&gt;</span>
+        </div>
+      </div>
+
+      <!-- ─── 2: Manual popover ─── -->
+      <div class="card">
+        <div class="card-header">
+          <h2>2. Manual Popover <code style="font-size:0.8em;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.1em 0.4em">popover="manual"</code></h2>
+          <p>Does not close on outside click or Esc — you control visibility explicitly.</p>
+        </div>
+        <div class="demo-row">
+          <button class="btn btn-outline" popovertarget="pop-manual" popovertargetaction="show">Show</button>
+          <button class="btn btn-outline" popovertarget="pop-manual" popovertargetaction="hide">Hide</button>
+          <button class="btn btn-ghost"   popovertarget="pop-manual" popovertargetaction="toggle">Toggle</button>
+        </div>
+
+        <div id="pop-manual" popover="manual">
+          <strong>Manual Popover</strong>
+          Clicking outside won't close me. Use the buttons or the close button below.
+          <div class="close-row">
+            <button class="btn btn-danger" popovertarget="pop-manual" popovertargetaction="hide">Close</button>
+          </div>
+        </div>
+
+        <div class="code-hint">
+<span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="val">"pop"</span> <span class="attr">popover</span>=<span class="val">"manual"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;button</span> <span class="attr">popovertarget</span>=<span class="val">"pop"</span> <span class="attr">popovertargetaction</span>=<span class="val">"show"</span><span class="tag">&gt;</span>Show<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;button</span> <span class="attr">popovertarget</span>=<span class="val">"pop"</span> <span class="attr">popovertargetaction</span>=<span class="val">"hide"</span><span class="tag">&gt;</span>Hide<span class="tag">&lt;/button&gt;</span>
+        </div>
+      </div>
+
+      <!-- ─── 3: Use cases ─── -->
+      <div class="card">
+        <div class="card-header">
+          <h2>3. Common Use Cases</h2>
+          <p>Popovers can replace custom tooltips, menus, and toast notifications.</p>
+        </div>
+        <div class="demo-row">
+          <button class="btn btn-outline" popovertarget="pop-tooltip">Tooltip</button>
+          <button class="btn btn-outline" popovertarget="pop-menu">Context Menu</button>
+          <button class="btn btn-outline" id="btn-notify">Notification</button>
+        </div>
+
+        <div id="pop-tooltip" popover="auto">
+          The <code style="background:var(--bg);padding:0.1em 0.3em;border-radius:4px;font-size:0.9em">popover</code> attribute puts elements in the top layer, above all other content.
+        </div>
+
+        <div id="pop-menu" popover="auto" role="menu">
+          <ul>
+            <li><a href="#">Edit</a></li>
+            <li><a href="#">Duplicate</a></li>
+            <hr>
+            <li><a href="#">Share</a></li>
+            <li><a href="#" style="color:var(--red)">Delete</a></li>
+          </ul>
+        </div>
+
+        <div id="pop-notify" popover="manual">
+          <div class="notify-title">Saved successfully</div>
+          <div class="notify-body">Your changes have been saved to the cloud.</div>
+        </div>
+      </div>
+
+      <!-- ─── 4: CSS :popover-open ─── -->
+      <div class="card">
+        <div class="card-header">
+          <h2>4. CSS <code style="font-size:0.85em;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.1em 0.4em">:popover-open</code> Pseudo-class</h2>
+          <p>Style the popover differently based on its open/closed state.</p>
+        </div>
+        <div class="demo-row">
+          <button class="btn btn-primary" popovertarget="pop-styled">Toggle Styled Popover</button>
+        </div>
+
+        <div id="pop-styled" popover="auto">
+          <strong>Styled with <code style="font-size:0.9em;color:#c3e88d">:popover-open</code></strong>
+          <br><br>
+          This popover has a purple tint and border applied only when open via:
+          <br>
+          <code style="font-size:0.85em;color:#c3e88d">#pop-styled:popover-open { border-color: var(--accent); }</code>
+        </div>
+
+        <div class="code-hint">
+<span class="cm">/* Animate in */</span>
+<span class="attr">#my-pop</span>:not(<span class="kw">:popover-open</span>) { opacity: 0; }
+<span class="attr">#my-pop</span>:<span class="kw">:popover-open</span>       { opacity: 1; transition: opacity 0.2s; }
+        </div>
+      </div>
+
+      <!-- ─── 5: ::backdrop ─── -->
+      <div class="card">
+        <div class="card-header">
+          <h2>5. <code style="font-size:0.85em;color:var(--text-dim);background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.1em 0.4em">::backdrop</code> Pseudo-element</h2>
+          <p>Style the backdrop layer behind the popover using the <code style="font-size:0.85em;color:#c3e88d;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.1em 0.35em">::backdrop</code> pseudo-element.</p>
+        </div>
+        <div class="demo-row">
+          <button class="btn btn-primary" popovertarget="pop-backdrop">Open with Backdrop</button>
+        </div>
+
+        <div id="pop-backdrop" popover="auto">
+          <h3>Styled Backdrop</h3>
+          <p>The blurred, darkened background is a CSS <code style="font-size:0.9em;color:#c3e88d">::backdrop</code> on the popover itself — no overlay div needed.</p>
+          <div class="actions">
+            <button class="btn btn-outline" popovertarget="pop-backdrop" popovertargetaction="hide">Close</button>
+          </div>
+        </div>
+
+        <div class="code-hint">
+<span class="attr">#my-pop</span>::<span class="kw">backdrop</span> {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+        </div>
+      </div>
+
+      <!-- ─── 6: JavaScript API ─── -->
+      <div class="card">
+        <div class="card-header">
+          <h2>6. JavaScript API &amp; Events</h2>
+          <p>Control popovers and listen for <code style="font-size:0.85em;color:#c3e88d;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.1em 0.35em">toggle</code> / <code style="font-size:0.85em;color:#c3e88d;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:0.1em 0.35em">beforetoggle</code> events.</p>
+        </div>
+        <div class="demo-row">
+          <button class="btn btn-ghost" id="js-show">showPopover()</button>
+          <button class="btn btn-ghost" id="js-hide">hidePopover()</button>
+          <button class="btn btn-ghost" id="js-toggle">togglePopover()</button>
+          <button class="btn btn-outline" id="js-clear" style="margin-left:auto">Clear log</button>
+        </div>
+
+        <div id="pop-js" popover="manual">
+          <strong>Controlled by JS</strong>
+          <br>
+          Use the buttons to call <code style="font-size:0.9em;color:#c3e88d">showPopover()</code>, <code style="font-size:0.9em;color:#c3e88d">hidePopover()</code>, or <code style="font-size:0.9em;color:#c3e88d">togglePopover()</code>.
+        </div>
+
+        <div class="event-log" id="event-log">
+          <span class="empty">Events will appear here…</span>
+        </div>
+
+        <div class="code-hint">
+<span class="kw">const</span> pop = document.querySelector(<span class="val">'[popover]'</span>);
+pop.showPopover();
+pop.hidePopover();
+pop.togglePopover();
+
+pop.addEventListener(<span class="val">'toggle'</span>, (e) => {
+  console.log(e.oldState, <span class="val">'→'</span>, e.newState);
+});
+        </div>
+      </div>
+
+      <!-- ─── 7: Feature overview ─── -->
+      <div class="card">
+        <div class="card-header">
+          <h2>7. Quick Reference</h2>
+          <p>Everything the Popover API gives you out of the box.</p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>How</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Declare a popover</td>
+              <td><code>popover</code> or <code>popover="auto"</code></td>
+              <td class="dim">Hidden by default; lives in top layer when open</td>
+            </tr>
+            <tr>
+              <td>Manual control</td>
+              <td><code>popover="manual"</code></td>
+              <td class="dim">No light-dismiss; stays open until explicitly closed</td>
+            </tr>
+            <tr>
+              <td>Trigger (HTML only)</td>
+              <td><code>popovertarget="id"</code></td>
+              <td class="dim">Works on <code>&lt;button&gt;</code> and <code>&lt;input type="button"&gt;</code></td>
+            </tr>
+            <tr>
+              <td>Action</td>
+              <td><code>popovertargetaction</code></td>
+              <td class="dim"><code>toggle</code> (default), <code>show</code>, <code>hide</code></td>
+            </tr>
+            <tr>
+              <td>Open state style</td>
+              <td><code>:popover-open</code></td>
+              <td class="dim">CSS pseudo-class for when popover is visible</td>
+            </tr>
+            <tr>
+              <td>Backdrop</td>
+              <td><code>::backdrop</code></td>
+              <td class="dim">Pseudo-element behind the popover in the top layer</td>
+            </tr>
+            <tr>
+              <td>JS show</td>
+              <td><code>.showPopover()</code></td>
+              <td class="dim">Throws if already open (auto type)</td>
+            </tr>
+            <tr>
+              <td>JS hide</td>
+              <td><code>.hidePopover()</code></td>
+              <td class="dim">Throws if already closed</td>
+            </tr>
+            <tr>
+              <td>JS toggle</td>
+              <td><code>.togglePopover()</code></td>
+              <td class="dim">Optional boolean argument to force state</td>
+            </tr>
+            <tr>
+              <td>Events</td>
+              <td><code>toggle</code>, <code>beforetoggle</code></td>
+              <td class="dim"><code>oldState</code> and <code>newState</code>: <code>"open"</code> / <code>"closed"</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="support-box" id="support-box">
+          <span class="icon" id="support-icon">🔍</span>
+          <div>
+            <div class="support-label" id="support-label">Checking browser support…</div>
+            <div id="support-detail"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.sections -->
+
+    <script>
+      // ─── Notification demo ───────────────────────────────────────────────
+      const notifyPop = document.getElementById('pop-notify');
+      document.getElementById('btn-notify').addEventListener('click', () => {
+        notifyPop.showPopover();
+        setTimeout(() => {
+          if (notifyPop.matches(':popover-open')) notifyPop.hidePopover();
+        }, 3000);
+      });
+
+      // ─── JS API demo ────────────────────────────────────────────────────
+      const jsPop  = document.getElementById('pop-js');
+      const logEl  = document.getElementById('event-log');
+      let logEmpty = true;
+
+      function addLog(eventName, oldState, newState) {
+        if (logEmpty) { logEl.innerHTML = ''; logEmpty = false; }
+        const time  = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        const entry = document.createElement('div');
+        entry.className = 'entry';
+        entry.innerHTML =
+          `<span class="time">${time}</span>` +
+          `<span class="evt-name">${eventName}</span>` +
+          `<span class="evt-state">${oldState} → ${newState}</span>`;
+        logEl.appendChild(entry);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      jsPop.addEventListener('beforetoggle', (e) => addLog('beforetoggle', e.oldState, e.newState));
+      jsPop.addEventListener('toggle',       (e) => addLog('toggle      ', e.oldState, e.newState));
+
+      document.getElementById('js-show').addEventListener('click', () => {
+        try { jsPop.showPopover(); } catch {}
+      });
+      document.getElementById('js-hide').addEventListener('click', () => {
+        try { jsPop.hidePopover(); } catch {}
+      });
+      document.getElementById('js-toggle').addEventListener('click', () => {
+        jsPop.togglePopover();
+      });
+      document.getElementById('js-clear').addEventListener('click', () => {
+        logEl.innerHTML = '<span class="empty">Events will appear here…</span>';
+        logEmpty = true;
+      });
+
+      // ─── Browser support detection ───────────────────────────────────────
+      const box    = document.getElementById('support-box');
+      const icon   = document.getElementById('support-icon');
+      const label  = document.getElementById('support-label');
+      const detail = document.getElementById('support-detail');
+      const supported = HTMLElement.prototype.hasOwnProperty('popover');
+
+      if (supported) {
+        box.classList.add('supported');
+        icon.textContent  = '✓';
+        label.textContent = 'Popover API supported in this browser';
+        label.className   = 'support-label yes';
+        detail.textContent = 'All demos on this page should work correctly.';
+      } else {
+        box.classList.add('unsupported');
+        icon.textContent  = '⚠';
+        label.textContent = 'Popover API not supported in this browser';
+        label.className   = 'support-label no';
+        detail.textContent = 'Upgrade to Chrome 114+, Firefox 125+, or Safari 17+ to use the Popover API.';
+      }
+    </script>
+
+  </body>
+
+</html>
