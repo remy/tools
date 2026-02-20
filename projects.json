@@ -56,7 +56,7 @@
   },
   "native-popover": {
     "category": "Demos",
-    "description": "Interactive demo of the native HTML Popover API — no libraries, no JavaScript required for basic use",
+    "description": "Interactive demo of the native HTML Popover API \u2014 no libraries, no JavaScript required for basic use",
     "title": "Native Popover API Demo"
   },
   "org-notifications": {
