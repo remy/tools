@@ -64,6 +64,11 @@
     "description": "View and manage GitHub organization notifications in a clean interface",
     "title": "Org Notifications"
   },
+  "package-browser": {
+    "category": "Utilities",
+    "description": "Load package-lock.json or pnpm-lock.yaml from a local file or GitHub URL and browse the dependency tree with search and filtering.",
+    "title": "Package Browser"
+  },
   "page-count": {
     "category": "Utilities",
     "description": "Track your daily reading progress and visualize pages read over time",
