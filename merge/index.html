@@ -469,17 +469,19 @@
       const b = text2.split('\n');
       const m = a.length, n = b.length;
 
-      if (m * n > 2_000_000) {
-        return { error: `Files too large (${m} × ${n} lines). Try files under ~1000 lines each.` };
+      if (m * n > 50_000_000) {
+        return { error: `Files too large (${m} × ${n} lines). Try files under ~7000 lines each.` };
       }
 
-      // Build LCS table using Uint32Array for performance
-      const dp = new Array(m + 1);
-      for (let i = 0; i <= m; i++) dp[i] = new Uint32Array(n + 1);
+      // Flat Uint32Array DP table — far faster than array-of-arrays
+      const W = n + 1;
+      const dp = new Uint32Array((m + 1) * W);
       for (let i = 1; i <= m; i++) {
+        const row  = i * W;
+        const prev = row - W;
         for (let j = 1; j <= n; j++) {
-          if (a[i - 1] === b[j - 1]) dp[i][j] = dp[i - 1][j - 1] + 1;
-          else dp[i][j] = dp[i - 1][j] > dp[i][j - 1] ? dp[i - 1][j] : dp[i][j - 1];
+          if (a[i - 1] === b[j - 1]) dp[row + j] = dp[prev + j - 1] + 1;
+          else dp[row + j] = dp[prev + j] > dp[row + j - 1] ? dp[prev + j] : dp[row + j - 1];
         }
       }
 
@@ -490,7 +492,7 @@
         if (i > 0 && j > 0 && a[i - 1] === b[j - 1]) {
           ops.push({ type: 'equal', val: a[i - 1] });
           i--; j--;
-        } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+        } else if (j > 0 && (i === 0 || dp[i * W + j - 1] >= dp[(i - 1) * W + j])) {
           ops.push({ type: 'insert', val: b[j - 1] });
           j--;
         } else {
