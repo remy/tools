@@ -49,6 +49,11 @@
     "description": "Validate JSON against a schema with real-time error reporting and syntax highlighting",
     "title": "VS Code JSON Validator"
   },
+  "merge": {
+    "category": "Utilities",
+    "description": "Upload two text files, view a colour-coded diff, and selectively apply individual changes from file 1 into file 2 with live re-diffing.",
+    "title": "Merge"
+  },
   "movies": {
     "category": "Utilities",
     "description": "Compare showtimes across Brighton cinemas (Odeon, Cineworld, Duke of York's) and plan your movie outings",

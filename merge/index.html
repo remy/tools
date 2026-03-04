@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Upload two text files, view a colour-coded diff, and selectively apply individual changes from file 1 into file 2 with live re-diffing.">
+  <meta name="category" content="Utilities">
+  <title>Merge</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7,3A3,3 0 0,1 10,6C10,7.29 9.19,8.39 8.04,8.81C8.58,13.81 13.08,14.77 15.19,14.96C15.61,13.81 16.71,13 18,13A3,3 0 0,1 21,16A3,3 0 0,1 18,19C16.69,19 15.57,18.16 15.16,17C10.91,16.8 9.44,15.19 8,13.39V15.17C9.17,15.58 10,16.69 10,18A3,3 0 0,1 7,21A3,3 0 0,1 4,18C4,16.69 4.83,15.58 6,15.17V8.83C4.83,8.42 4,7.31 4,6A3,3 0 0,1 7,3M7,5A1,1 0 0,0 6,6A1,1 0 0,0 7,7A1,1 0 0,0 8,6A1,1 0 0,0 7,5M7,17A1,1 0 0,0 6,18A1,1 0 0,0 7,19A1,1 0 0,0 8,18A1,1 0 0,0 7,17M18,15A1,1 0 0,0 17,16A1,1 0 0,0 18,17A1,1 0 0,0 19,16A1,1 0 0,0 18,15Z' /%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Merge</h1>
+      <button class="btn-icon" id="theme-btn" title="Toggle theme" aria-label="Toggle theme">
+        <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+          <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+        </svg>
+        <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </header>
+
+    <details class="files-panel" id="files-panel" open>
+      <summary>
+        <span id="files-summary-label">Files</span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </summary>
+      <div class="files-body">
+        <div class="file-panel">
+          <span class="file-label">Main file</span>
+          <div class="drop-zone" id="drop1">Drop a file here or click to browse</div>
+          <input type="file" id="file-input-1" style="display:none">
+          <textarea class="file-text" id="text1" spellcheck="false"
+                    placeholder="Paste or drop file 1 content here…"></textarea>
+        </div>
+        <div class="file-panel">
+          <span class="file-label">Changes</span>
+          <div class="drop-zone" id="drop2">Drop a file here or click to browse</div>
+          <input type="file" id="file-input-2" style="display:none">
+          <textarea class="file-text" id="text2" spellcheck="false"
+                    placeholder="Paste or drop file 2 content here…"></textarea>
+        </div>
+      </div>
+    </details>
+
+    <div class="diff-toolbar" id="diff-toolbar" style="display:none">
+      <div class="diff-stats" id="diff-stats"></div>
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn btn-download" id="download-btn" title="Download the main file with all applied changes">&#x2193; Download main file</button>
+        <button class="btn" id="clear-btn">Clear all</button>
+      </div>
+    </div>
+
+    <div id="diff-view">
+      <div class="empty-state">Upload or paste two files above to see the diff.</div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
