@@ -432,14 +432,14 @@
       </summary>
       <div class="files-body">
         <div class="file-panel">
-          <span class="file-label">File 1 — source</span>
+          <span class="file-label">Main file</span>
           <div class="drop-zone" id="drop1">Drop a file here or click to browse</div>
           <input type="file" id="file-input-1" style="display:none">
           <textarea class="file-text" id="text1" spellcheck="false"
                     placeholder="Paste or drop file 1 content here…"></textarea>
         </div>
         <div class="file-panel">
-          <span class="file-label">File 2 — target</span>
+          <span class="file-label">Changes</span>
           <div class="drop-zone" id="drop2">Drop a file here or click to browse</div>
           <input type="file" id="file-input-2" style="display:none">
           <textarea class="file-text" id="text2" spellcheck="false"
@@ -450,7 +450,10 @@
 
     <div class="diff-toolbar" id="diff-toolbar" style="display:none">
       <div class="diff-stats" id="diff-stats"></div>
-      <button class="btn" id="clear-btn">Clear all</button>
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn btn-download" id="download-btn" title="Download the main file with all applied changes">&#x2193; Download main file</button>
+        <button class="btn" id="clear-btn">Clear all</button>
+      </div>
     </div>
 
     <div id="diff-view">
@@ -605,7 +608,7 @@
       const parts = [
         '<div class="diff-wrap">',
         '<div class="diff-col-header">',
-        '<div>File 1 — source</div><div></div><div>File 2 — target</div>',
+        '<div>Main file</div><div></div><div>Changes</div>',
         '</div>',
       ];
 
@@ -771,6 +774,20 @@
     document.getElementById('text2').addEventListener('input', scheduleUpdate);
 
     // ── CLEAR ─────────────────────────────────────────────────
+    document.getElementById('download-btn').addEventListener('click', () => {
+      const content = document.getElementById('text2').value;
+      if (!content) return;
+      const drop1Text = document.getElementById('drop1').textContent.trim();
+      const name = (drop1Text === 'Drop a file here or click to browse')
+        ? 'merged.txt'
+        : drop1Text;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
     document.getElementById('clear-btn').addEventListener('click', () => {
       document.getElementById('text1').value = '';
       document.getElementById('text2').value = '';
