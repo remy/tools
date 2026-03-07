@@ -148,6 +148,15 @@ h2 {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
+.project-item.focused a {
+    background-color: #eff6ff;
+    box-shadow: inset 3px 0 0 #3b82f6;
+}
+
+.project-item.focused .project-title {
+    color: #3b82f6;
+}
+
 .project-item.hidden {
     display: none;
 }
