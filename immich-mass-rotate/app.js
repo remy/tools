@@ -121,6 +121,9 @@ class ImmichMassRotate {
   }
 
   handleKeyShortcuts(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
     const key = e.key.toLowerCase();
 
     if (e.code === 'KeyF') {
@@ -406,7 +409,7 @@ class ImmichMassRotate {
           const img = item.querySelector('img');
           if (img) {
             // this.reloadAsset(img, assetId);
-            await new Promise((resolve) => setTimeout(resolve, 400));
+            await new Promise((resolve) => setTimeout(resolve, 100));
             img.src = `${this.host}/api/assets/${assetId}/thumbnail?edited=true&apiKey=${this.apiKey}&t=${Date.now()}`;
           }
         }

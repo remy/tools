@@ -1,938 +1,39 @@
 {
   "source": "cineworld-film-events",
-  "generatedAt": "2026-02-17T10:17:58.502Z",
+  "generatedAt": "2026-03-07T19:30:43.958Z",
   "requestedDates": [
-    "2026-02-17",
-    "2026-02-18",
-    "2026-02-19",
-    "2026-02-20",
-    "2026-02-21",
-    "2026-02-22",
-    "2026-02-23"
+    "2026-03-07",
+    "2026-03-08",
+    "2026-03-09",
+    "2026-03-10",
+    "2026-03-11",
+    "2026-03-12",
+    "2026-03-13"
   ],
   "body": {
     "films": [
       {
-        "id": "ho00014270",
-        "name": "£2 Family Films : Madagascar (2004)",
-        "length": 86,
-        "posterLink": "https://regalcdn.azureedge.net/CW/2FamilyFilmsMadagascar2004/HO00014270/TV_SmallPosterImage/20260129-051758427.jpg",
+        "id": "156255",
+        "name": "",
+        "length": null,
+        "posterLink": "",
         "videoLink": "",
-        "link": "https://www.cineworld.co.uk/films/2-family-films-madagascar-2004/ho00014270",
+        "link": "",
         "weight": 0,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-13T00:00:00",
+        "releaseYear": "",
+        "releaseDate": "",
         "attributeIds": [
+          "15",
           "2d",
-          "animation",
-          "classicfilm",
-          "comedy",
+          "audio-described",
+          "crime",
           "laser",
-          "movies-for-juniors",
           "reserved-selected",
-          "u"
+          "subbed"
         ]
       },
       {
-        "id": "ho00014271",
-        "name": "£2 Family Films : Sing (2016)",
-        "length": 108,
-        "posterLink": "https://regalcdn.azureedge.net/CW/2FamilyFilmsSing2016/HO00014271/TV_SmallPosterImage/20260129-070659671.jpg",
-        "videoLink": "",
-        "link": "https://www.cineworld.co.uk/films/2-family-films-sing-2016/ho00014271",
-        "weight": 0,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-13T00:00:00",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "155734",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155735",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155736",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155737",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155738",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155739",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155740",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155741",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155742",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155755",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155756",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155757",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155758",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155759",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155760",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155761",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155762",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "155763",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156211",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156212",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156213",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156214",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156215",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156218",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156219",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156220",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156221",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156222",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156223",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156224",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156225",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156226",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156227",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156228",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156229",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156230",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156231",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156235",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156236",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156237",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156241",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156242",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156243",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156247",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "adventure",
-          "audio-described",
-          "classicfilm",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156248",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "classicfilm",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156249",
+        "id": "156256",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -944,337 +45,14 @@
         "attributeIds": [
           "12a",
           "2d",
-          "classicfilm",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156250",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "classicfilm",
-          "crime",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156271",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156272",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156273",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156286",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156287",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156288",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156289",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156290",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156291",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156292",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156293",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156294",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156501",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
           "audio-described",
           "drama",
           "laser",
-          "reserved-selected",
-          "tbc"
-        ]
-      },
-      {
-        "id": "156502",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected",
-          "tbc"
-        ]
-      },
-      {
-        "id": "156503",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected",
-          "tbc"
-        ]
-      },
-      {
-        "id": "156507",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "laser",
-          "pg",
           "reserved-selected"
         ]
       },
       {
-        "id": "156515",
+        "id": "156257",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -1288,282 +66,13 @@
           "2d",
           "action",
           "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156516",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156517",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156524",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "action",
-          "animation",
-          "audio-described",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156525",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "action",
-          "animation",
-          "audio-described",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156527",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "action",
-          "animation",
-          "audio-described",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156532",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156533",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156537",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156544",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156557",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "action",
-          "animation",
-          "laser",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156558",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "action",
-          "animation",
-          "laser",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156571",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156572",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156578",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
           "horror",
           "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "156579",
+        "id": "156258",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -1575,1596 +84,8 @@
         "attributeIds": [
           "15",
           "2d",
-          "horror",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156584",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "horror",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156585",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "horror",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156586",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "horror",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156588",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "12a",
-          "2d",
-          "action",
-          "adventure",
-          "audio-described",
-          "classicfilm",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156590",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156591",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156608",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156609",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156610",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156611",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156612",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156674",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156675",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156676",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156677",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156678",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156679",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156680",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156681",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156682",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156683",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
           "audio-described",
           "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156684",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156685",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156686",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156687",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156688",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156689",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156690",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156691",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156692",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156693",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156694",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156695",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156696",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156697",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156698",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156699",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156700",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156701",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156702",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156703",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "comedy",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156704",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156705",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156706",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156707",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156708",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156709",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156710",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156711",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156712",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156759",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156760",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156761",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156768",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156772",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156773",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156780",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156781",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156782",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "subbed",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156783",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156793",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156794",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156795",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156796",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected",
-          "tbc"
-        ]
-      },
-      {
-        "id": "156797",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected",
-          "tbc"
-        ]
-      },
-      {
-        "id": "156798",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected",
-          "tbc"
-        ]
-      },
-      {
-        "id": "156799",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156803",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156804",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156805",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "classicfilm",
-          "comedy",
-          "laser",
-          "movies-for-juniors",
-          "reserved-selected",
-          "u"
-        ]
-      },
-      {
-        "id": "156807",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156808",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156809",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "crime",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156828",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "156833",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "18",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156834",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "18",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156835",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "18",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156842",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156843",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156844",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156845",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156846",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
           "drama",
           "laser",
           "reserved-selected",
@@ -3172,7 +93,7 @@
         ]
       },
       {
-        "id": "156847",
+        "id": "156259",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3184,13 +105,14 @@
         "attributeIds": [
           "15",
           "2d",
+          "audio-described",
           "drama",
           "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "156848",
+        "id": "156260",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3202,13 +124,14 @@
         "attributeIds": [
           "15",
           "2d",
-          "drama",
+          "audio-described",
+          "comedy",
           "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "156849",
+        "id": "156263",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3218,15 +141,17 @@
         "releaseYear": "",
         "releaseDate": "",
         "attributeIds": [
-          "15",
+          "12a",
           "2d",
+          "audio-described",
+          "comedy",
           "drama",
           "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "156856",
+        "id": "156619",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3239,14 +164,14 @@
           "2d",
           "animation",
           "audio-described",
+          "autism-friendly",
           "comedy",
           "laser",
-          "pg",
-          "reserved-selected"
+          "pg"
         ]
       },
       {
-        "id": "156857",
+        "id": "156947",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3257,16 +182,657 @@
         "releaseDate": "",
         "attributeIds": [
           "2d",
+          "adventure",
           "animation",
           "audio-described",
-          "comedy",
           "laser",
-          "pg",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156954",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156955",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156956",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156957",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156958",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156959",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156960",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "laser",
+          "reserved-selected",
+          "subbed",
+          "u"
+        ]
+      },
+      {
+        "id": "156961",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156962",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156963",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "156987",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "156864",
+        "id": "156988",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "156989",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "156990",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "156991",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "156995",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "156996",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157024",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157025",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157026",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157027",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157028",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157029",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157030",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157031",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157032",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157033",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157034",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157035",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157036",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157335",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157336",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157337",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157357",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3280,13 +846,33 @@
           "2d",
           "action",
           "audio-described",
+          "classicfilm",
           "laser",
-          "reserved-selected",
-          "suspense"
+          "reserved-selected"
         ]
       },
       {
-        "id": "156869",
+        "id": "157358",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "classicfilm",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157360",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3299,13 +885,94 @@
           "15",
           "2d",
           "audio-described",
+          "classicfilm",
+          "crime",
           "laser",
           "reserved-selected",
-          "suspense"
+          "subbed"
         ]
       },
       {
-        "id": "156874",
+        "id": "157361",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "documentary",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157362",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157363",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157364",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157365",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3318,13 +985,32 @@
           "15",
           "2d",
           "audio-described",
+          "drama",
           "laser",
-          "reserved-selected",
-          "suspense"
+          "reserved-selected"
         ]
       },
       {
-        "id": "156877",
+        "id": "157366",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "documentary",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157367",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3335,15 +1021,16 @@
         "releaseDate": "",
         "attributeIds": [
           "2d",
+          "adventure",
+          "animation",
           "audio-described",
-          "drama",
           "laser",
           "reserved-selected",
-          "tbc"
+          "u"
         ]
       },
       {
-        "id": "156878",
+        "id": "157368",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3354,15 +1041,216 @@
         "releaseDate": "",
         "attributeIds": [
           "2d",
+          "adventure",
+          "animation",
           "audio-described",
-          "drama",
           "laser",
           "reserved-selected",
-          "tbc"
+          "u"
         ]
       },
       {
-        "id": "156883",
+        "id": "157369",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157370",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157371",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157372",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157373",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157374",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157375",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157376",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157377",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157378",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "adventure",
+          "animation",
+          "audio-described",
+          "laser",
+          "reserved-selected",
+          "u"
+        ]
+      },
+      {
+        "id": "157381",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3375,273 +1263,14 @@
           "18",
           "2d",
           "audio-described",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156887",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156888",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156889",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156890",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156891",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156892",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156893",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156894",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156895",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "crime",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156896",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156897",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156898",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "156909",
-        "name": "",
-        "length": null,
-        "posterLink": "",
-        "videoLink": "",
-        "link": "",
-        "weight": 0,
-        "releaseYear": "",
-        "releaseDate": "",
-        "attributeIds": [
-          "2d",
-          "action",
-          "animation",
-          "audio-described",
+          "horror",
           "laser",
           "reserved-selected",
-          "u"
+          "screenx"
         ]
       },
       {
-        "id": "156910",
+        "id": "157382",
         "name": "",
         "length": null,
         "posterLink": "",
@@ -3651,151 +1280,1894 @@
         "releaseYear": "",
         "releaseDate": "",
         "attributeIds": [
+          "18",
           "2d",
-          "action",
-          "animation",
           "audio-described",
+          "horror",
           "laser",
           "reserved-selected",
-          "u"
+          "screenx"
         ]
       },
       {
-        "id": "ho00014294",
-        "name": "A Knight's Tale (25th Anniversary) 4K Restoration",
-        "length": 132,
-        "posterLink": "https://regalcdn.azureedge.net/CW/AKnightsTale25thAnniversary4KRestoration/HO00014294/TV_SmallPosterImage/20260202-050931607.jpg",
+        "id": "157383",
+        "name": "",
+        "length": null,
+        "posterLink": "",
         "videoLink": "",
-        "link": "https://www.cineworld.co.uk/films/a-knights-tale-25th-anniversary-4k-restoration/ho00014294",
+        "link": "",
         "weight": 0,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-13T00:00:00",
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected",
+          "screenx"
+        ]
+      },
+      {
+        "id": "157384",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected",
+          "screenx"
+        ]
+      },
+      {
+        "id": "157385",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected",
+          "screenx"
+        ]
+      },
+      {
+        "id": "157386",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected",
+          "screenx"
+        ]
+      },
+      {
+        "id": "157387",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected",
+          "screenx"
+        ]
+      },
+      {
+        "id": "157388",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
         "attributeIds": [
           "12a",
           "2d",
-          "action",
-          "adventure",
           "audio-described",
-          "classicfilm",
+          "documentary",
           "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "ho00014263",
-        "name": "Awards Season: 1917 (2019)",
-        "length": 119,
-        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeason19172019/HO00014263/TV_SmallPosterImage/20260129-062535047.jpg",
+        "id": "157390",
+        "name": "",
+        "length": null,
+        "posterLink": "",
         "videoLink": "",
-        "link": "https://www.cineworld.co.uk/films/awards-season-1917-2019/ho00014263",
+        "link": "",
         "weight": 0,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-19T00:00:00",
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157391",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157392",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157394",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
         "attributeIds": [
           "15",
           "2d",
           "audio-described",
-          "classicfilm",
           "drama",
           "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "ho00014260",
-        "name": "Awards Season: La La Land (2016)",
-        "length": 128,
-        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonLaLaLand2016/HO00014260/TV_SmallPosterImage/20260129-062959278.jpg",
+        "id": "157395",
+        "name": "",
+        "length": null,
+        "posterLink": "",
         "videoLink": "",
-        "link": "https://www.cineworld.co.uk/films/awards-season-la-la-land-2016/ho00014260",
+        "link": "",
         "weight": 0,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-21T00:00:00",
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157396",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157397",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "animation",
+          "audio-described",
+          "crime",
+          "laser",
+          "pg",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157398",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "classicfilm",
+          "crime",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157401",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
         "attributeIds": [
           "12a",
           "2d",
-          "classicfilm",
-          "drama",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "ho00014258",
-        "name": "Awards Season: No Country For Old Men (2007)",
-        "length": 122,
-        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonNoCountryForOldMen2007/HO00014258/TV_SmallPosterImage/20260129-062243548.jpg",
-        "videoLink": "",
-        "link": "https://www.cineworld.co.uk/films/awards-season-no-country-for-old-men-2007/ho00014258",
-        "weight": 0,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-17T00:00:00",
-        "attributeIds": [
-          "15",
-          "2d",
-          "adventure",
           "audio-described",
-          "classicfilm",
-          "drama",
+          "documentary",
           "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "ho00014255",
-        "name": "Awards Season: The Godfather (1972)",
-        "length": 175,
-        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonTheGodfather1972/HO00014255/TV_SmallPosterImage/20260129-063310452.jpg",
-        "videoLink": "https://youtu.be/rqGJyUB1Q3s",
-        "link": "https://www.cineworld.co.uk/films/awards-season-the-godfather-1972/ho00014255",
+        "id": "157402",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
         "weight": 0,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-22T00:00:00",
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "documentary",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157403",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "documentary",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157404",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "documentary",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157405",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "documentary",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157406",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "documentary",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157409",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "animation",
+          "audio-described",
+          "comedy",
+          "laser",
+          "pg",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157410",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "animation",
+          "audio-described",
+          "comedy",
+          "laser",
+          "pg",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157411",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "crime",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157412",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "crime",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157413",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "crime",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157414",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "crime",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157415",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "crime",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157416",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "crime",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157417",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "crime",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157418",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "2d",
+          "audio-described",
+          "crime",
+          "laser",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "157420",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
         "attributeIds": [
           "15",
           "2d",
-          "classicfilm",
-          "crime",
+          "audio-described",
           "drama",
           "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "ho00014247",
-        "name": "Cold Storage",
-        "length": 99,
-        "posterLink": "https://regalcdn.azureedge.net/CW/ColdStorage/HO00014247/TV_SmallPosterImage/20260127-114057380.jpg",
-        "videoLink": "https://youtu.be/46vHhmOrHVg",
-        "link": "https://www.cineworld.co.uk/films/cold-storage/ho00014247",
+        "id": "157424",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157425",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157426",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157427",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157428",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157429",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157430",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157431",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157432",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157433",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157434",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157435",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157436",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157437",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157438",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157439",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157440",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected",
+          "subbed"
+        ]
+      },
+      {
+        "id": "157445",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157446",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157447",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157448",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157449",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157450",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157451",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157452",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157453",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157454",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157455",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157456",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157457",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157460",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157462",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157463",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157464",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157465",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157470",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157471",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157472",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157473",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157474",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157475",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157476",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157477",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157478",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157479",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157480",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157481",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157482",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157483",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157484",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157485",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157486",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157487",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157488",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157491",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "18",
+          "2d",
+          "audio-described",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "157496",
+        "name": "",
+        "length": null,
+        "posterLink": "",
+        "videoLink": "",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "",
+        "releaseDate": "",
+        "attributeIds": [
+          "15",
+          "2d",
+          "action",
+          "classicfilm",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "ho00014169",
+        "name": "Autism Friendly Screening : GOAT",
+        "length": 100,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AutismFriendlyScreeningGOAT/HO00014169/TV_SmallPosterImage/20260211-081603904.jpg",
+        "videoLink": "https://youtu.be/kmY-rYS7yng",
+        "link": "https://www.cineworld.co.uk/films/autism-friendly-screening-goat/ho00014169",
         "weight": 0,
         "releaseYear": "2026",
-        "releaseDate": "2026-02-20T00:00:00",
+        "releaseDate": "2026-03-08T00:00:00",
+        "attributeIds": [
+          "2d",
+          "animation",
+          "audio-described",
+          "autism-friendly",
+          "comedy",
+          "laser",
+          "pg"
+        ]
+      },
+      {
+        "id": "ho00014285",
+        "name": "Awards Season: Bugonia",
+        "length": 118,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonBugonia/HO00014285/TV_SmallPosterImage/20260129-071521921.jpg",
+        "videoLink": "https://youtu.be/GYanIV0BNyY",
+        "link": "https://www.cineworld.co.uk/films/awards-season-bugonia/ho00014285",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-03-10T00:00:00",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "ho00014281",
+        "name": "Awards Season: Frankenstein (2025)",
+        "length": 149,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonFrankenstein2025/HO00014281/TV_SmallPosterImage/20260129-064752389.jpg",
+        "videoLink": "https://youtu.be/8aulMPhE12g",
+        "link": "https://www.cineworld.co.uk/films/awards-season-frankenstein-2025/ho00014281",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-03-05T00:00:00",
         "attributeIds": [
           "15",
           "2d",
           "action",
           "audio-described",
+          "classicfilm",
           "laser",
-          "reserved-selected",
-          "suspense"
+          "reserved-selected"
         ]
       },
       {
-        "id": "ho00014265",
-        "name": "Crime 101",
-        "length": 140,
-        "posterLink": "https://regalcdn.azureedge.net/CW/Crime101/HO00014265/TV_SmallPosterImage/20260127-112512075.jpg",
-        "videoLink": "https://youtu.be/dHXHoq99dQE",
-        "link": "https://www.cineworld.co.uk/films/crime-101/ho00014265",
-        "weight": -16,
+        "id": "ho00014288",
+        "name": "Awards Season: Hamnet",
+        "length": 126,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonHamnet/HO00014288/TV_SmallPosterImage/20260129-071954338.jpg",
+        "videoLink": "https://youtu.be/Y9Tv9wGPxIw",
+        "link": "https://www.cineworld.co.uk/films/awards-season-hamnet/ho00014288",
+        "weight": 0,
         "releaseYear": "2026",
-        "releaseDate": "2026-02-11T00:00:00",
+        "releaseDate": "2026-03-12T00:00:00",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "classicfilm",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "ho00014284",
+        "name": "Awards Season: Marty Supreme",
+        "length": 150,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonMartySupreme/HO00014284/TV_SmallPosterImage/20260129-070223090.jpg",
+        "videoLink": "https://youtu.be/PNDVyJU99M0",
+        "link": "https://www.cineworld.co.uk/films/awards-season-marty-supreme/ho00014284",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-03-09T00:00:00",
         "attributeIds": [
           "15",
           "2d",
           "audio-described",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "ho00014293",
+        "name": "Awards Season: One Battle After Another",
+        "length": 162,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonOneBattleAfterAnother/HO00014293/TV_SmallPosterImage/20260129-073017920.jpg",
+        "videoLink": "https://youtu.be/feOQFKv2Lw4",
+        "link": "https://www.cineworld.co.uk/films/awards-season-one-battle-after-another/ho00014293",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-03-15T00:00:00",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "classicfilm",
           "crime",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "ho00014283",
+        "name": "Awards Season: Sentimental Value",
+        "length": 133,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonSentimentalValue/HO00014283/TV_SmallPosterImage/20260129-065927307.jpg",
+        "videoLink": "https://youtu.be/Gb1sSfWb1Og",
+        "link": "https://www.cineworld.co.uk/films/awards-season-sentimental-value/ho00014283",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-03-08T00:00:00",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "comedy",
+          "drama",
+          "laser",
+          "reserved-selected",
+          "subbed"
+        ]
+      },
+      {
+        "id": "ho00014282",
+        "name": "Awards Season: Sinners",
+        "length": 138,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonSinners/HO00014282/TV_SmallPosterImage/20260129-065547743.jpg",
+        "videoLink": "https://youtu.be/4oqCwr_bzHI",
+        "link": "https://www.cineworld.co.uk/films/awards-season-sinners/ho00014282",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-03-07T00:00:00",
+        "attributeIds": [
+          "15",
+          "2d",
+          "action",
+          "audio-described",
+          "classicfilm",
+          "horror",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "ho00014286",
+        "name": "Awards Season: The Secret Agent",
+        "length": 161,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonTheSecretAgent/HO00014286/TV_SmallPosterImage/20260129-071720360.jpg",
+        "videoLink": "https://youtu.be/WsE1PLxfPnU",
+        "link": "https://www.cineworld.co.uk/films/awards-season-the-secret-agent/ho00014286",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-03-11T00:00:00",
+        "attributeIds": [
+          "15",
+          "2d",
+          "audio-described",
+          "classicfilm",
+          "crime",
+          "laser",
+          "reserved-selected",
+          "subbed"
+        ]
+      },
+      {
+        "id": "ho00014290",
+        "name": "Awards Season: Train Dreams",
+        "length": 102,
+        "posterLink": "https://regalcdn.azureedge.net/CW/AwardsSeasonTrainDreams/HO00014290/TV_SmallPosterImage/20260129-072405583.jpg",
+        "videoLink": "",
+        "link": "https://www.cineworld.co.uk/films/awards-season-train-dreams/ho00014290",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-03-13T00:00:00",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "drama",
+          "laser",
+          "reserved-selected"
+        ]
+      },
+      {
+        "id": "ho00014171",
+        "name": "EPiC: Elvis Presley in Concert",
+        "length": 97,
+        "posterLink": "https://regalcdn.azureedge.net/CW/EPiCElvisPresleyinConcert/HO00014171/TV_SmallPosterImage/20260108-080016012.jpg",
+        "videoLink": "https://youtu.be/V4rLM1k1nKY",
+        "link": "https://www.cineworld.co.uk/films/epic-elvis-presley-in-concert/ho00014171",
+        "weight": -7,
+        "releaseYear": "2026",
+        "releaseDate": "2026-02-27T00:00:00",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "documentary",
           "laser",
           "reserved-selected"
         ]
@@ -3807,7 +3179,7 @@
         "posterLink": "https://regalcdn.azureedge.net/CW/GOAT/HO00014156/TV_SmallPosterImage/20260202-094732169.jpg",
         "videoLink": "https://youtu.be/kmY-rYS7yng",
         "link": "https://www.cineworld.co.uk/films/goat/ho00014156",
-        "weight": -17,
+        "weight": -11,
         "releaseYear": "2026",
         "releaseDate": "2026-02-13T00:00:00",
         "attributeIds": [
@@ -3821,150 +3193,73 @@
         ]
       },
       {
-        "id": "ho00014250",
-        "name": "Good Luck, Have Fun, Don't Die",
-        "length": 134,
-        "posterLink": "https://regalcdn.azureedge.net/CW/GoodLuckHaveFunDontDie/HO00014250/TV_SmallPosterImage/20260127-114418106.jpg",
-        "videoLink": "https://youtu.be/83BISbOTQrs",
-        "link": "https://www.cineworld.co.uk/films/good-luck-have-fun-dont-die/ho00014250",
-        "weight": 0,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-20T00:00:00",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "comedy",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "ho00014072",
-        "name": "Iron Lung",
-        "length": 127,
-        "posterLink": "https://regalcdn.azureedge.net/CW/IronLung/HO00014072/TV_SmallPosterImage/20260109-100517680.jpg",
-        "videoLink": "https://youtu.be/x8E8Ryx49so",
-        "link": "https://www.cineworld.co.uk/films/iron-lung/ho00014072",
-        "weight": -4,
-        "releaseYear": "2026",
-        "releaseDate": "2026-01-29T00:00:00",
-        "attributeIds": [
-          "15",
-          "2d",
-          "horror",
-          "laser",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "ho00014302",
-        "name": "Little Amelie (Dubbed)",
-        "length": 77,
-        "posterLink": "https://regalcdn.azureedge.net/CW/LittleAmelieDubbed/HO00014302/TV_SmallPosterImage/20260203-110859268.jpg",
-        "videoLink": "https://youtu.be/m13IU6IKc30",
-        "link": "https://www.cineworld.co.uk/films/little-amelie-dubbed/ho00014302",
-        "weight": 0,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-07T00:00:00",
-        "attributeIds": [
-          "2d",
-          "animation",
-          "audio-described",
-          "laser",
-          "pg",
-          "reserved-selected"
-        ]
-      },
-      {
-        "id": "ho00014093",
-        "name": "Send Help",
-        "length": 113,
-        "posterLink": "https://regalcdn.azureedge.net/CW/SendHelp/HO00014093/TV_SmallPosterImage/20251217-120816897.jpg",
-        "videoLink": "https://youtu.be/NwR6J0W4XN0",
-        "link": "https://www.cineworld.co.uk/films/send-help/ho00014093",
+        "id": "ho00014186",
+        "name": "Hoppers",
+        "length": 104,
+        "posterLink": "https://regalcdn.azureedge.net/CW/Hoppers/HO00014186/TV_SmallPosterImage/20260120-115329299.jpg",
+        "videoLink": "https://youtu.be/iDeClbsnThE",
+        "link": "https://www.cineworld.co.uk/films/hoppers/ho00014186",
         "weight": -15,
         "releaseYear": "2026",
-        "releaseDate": "2026-02-05T00:00:00",
-        "attributeIds": [
-          "15",
-          "2d",
-          "action",
-          "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "ho00014144",
-        "name": "Stitch Head",
-        "length": 92,
-        "posterLink": "https://regalcdn.azureedge.net/CW/StitchHead/HO00014144/TV_SmallPosterImage/20260120-045213054.jpg",
-        "videoLink": "https://youtu.be/SlHrSRmobKQ",
-        "link": "https://www.cineworld.co.uk/films/stitch-head/ho00014144",
-        "weight": -8,
-        "releaseYear": "2026",
-        "releaseDate": "2026-02-13T00:00:00",
+        "releaseDate": "2026-02-28T00:00:00",
         "attributeIds": [
           "2d",
-          "action",
+          "adventure",
           "animation",
+          "audio-described",
           "laser",
           "reserved-selected",
           "u"
         ]
       },
       {
-        "id": "ho00014232",
-        "name": "The Day The Earth Blew Up: A Looney Tunes Movie",
-        "length": 91,
-        "posterLink": "https://regalcdn.azureedge.net/CW/LooneyTunesTheDayTheEarthBlewUp/HO00014232/TV_SmallPosterImage/20260120-113115295.jpg",
-        "videoLink": "https://youtu.be/BtHUWHXfDyU",
-        "link": "https://www.cineworld.co.uk/films/the-day-the-earth-blew-up-a-looney-tunes-movie/ho00014232",
-        "weight": -11,
+        "id": "ho00014345",
+        "name": "How To Make A Killing",
+        "length": 105,
+        "posterLink": "https://regalcdn.azureedge.net/CW/HowToMakeAKilling/HO00014345/TV_SmallPosterImage/20260212-071659517.jpg",
+        "videoLink": "https://youtu.be/zMKGDTY5Vwo",
+        "link": "https://www.cineworld.co.uk/films/how-to-make-a-killing/ho00014345",
+        "weight": -8,
         "releaseYear": "2026",
-        "releaseDate": "2026-02-13T00:00:00",
+        "releaseDate": "2026-03-13T00:00:00",
         "attributeIds": [
           "2d",
-          "action",
-          "animation",
           "audio-described",
+          "crime",
           "laser",
-          "pg",
+          "reserved-selected",
+          "tbc"
+        ]
+      },
+      {
+        "id": "ho00012890",
+        "name": "Mother's Pride",
+        "length": 93,
+        "posterLink": "https://regalcdn.azureedge.net/CW/MothersPride/HO00012890/TV_SmallPosterImage/20260210-095434367.jpg",
+        "videoLink": "https://youtu.be/NyDJXrMhwSI",
+        "link": "https://www.cineworld.co.uk/films/mothers-pride/ho00012890",
+        "weight": -10,
+        "releaseYear": "2026",
+        "releaseDate": "2026-03-06T00:00:00",
+        "attributeIds": [
+          "12a",
+          "2d",
+          "audio-described",
+          "comedy",
+          "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "ho00013888",
-        "name": "The Housemaid",
-        "length": 131,
-        "posterLink": "https://regalcdn.azureedge.net/CW/TheHousemaid/HO00013888/TV_SmallPosterImage/20251208-101642541.jpg",
-        "videoLink": "https://youtu.be/kdDdlY2VPxw",
-        "link": "https://www.cineworld.co.uk/films/the-housemaid/ho00013888",
-        "weight": -14,
-        "releaseYear": "2025",
-        "releaseDate": "2025-12-22T00:00:00",
-        "attributeIds": [
-          "15",
-          "2d",
-          "audio-described",
-          "laser",
-          "reserved-selected",
-          "suspense"
-        ]
-      },
-      {
-        "id": "ho00014295",
-        "name": "The Moment",
-        "length": 103,
-        "posterLink": "https://regalcdn.azureedge.net/CW/TheMoment/HO00014295/TV_SmallPosterImage/20260205-080950263.jpg",
-        "videoLink": "https://youtu.be/giZgMna0qRM",
-        "link": "https://www.cineworld.co.uk/films/the-moment/ho00014295",
-        "weight": -1,
+        "id": "ho00014189",
+        "name": "Reminders Of Him",
+        "length": 114,
+        "posterLink": "https://regalcdn.azureedge.net/CW/RemindersOfHim/HO00014189/TV_SmallPosterImage/20260116-074700798.jpg",
+        "videoLink": "https://youtu.be/nOghaBnCUy4",
+        "link": "https://www.cineworld.co.uk/films/reminders-of-him/ho00014189",
+        "weight": -6,
         "releaseYear": "2026",
-        "releaseDate": "2026-02-20T00:00:00",
+        "releaseDate": "2026-03-13T00:00:00",
         "attributeIds": [
           "2d",
           "audio-described",
@@ -3975,40 +3270,42 @@
         ]
       },
       {
-        "id": "ho00014272",
-        "name": "Wasteman",
-        "length": 90,
-        "posterLink": "https://regalcdn.azureedge.net/CW/Wasteman/HO00014272/TV_SmallPosterImage/20260127-110219024.jpg",
-        "videoLink": "https://youtu.be/uaOextY7REM",
-        "link": "https://www.cineworld.co.uk/films/wasteman/ho00014272",
-        "weight": 0,
+        "id": "ho00014190",
+        "name": "Scream 7",
+        "length": 114,
+        "posterLink": "https://regalcdn.azureedge.net/CW/Scream7/HO00014190/TV_SmallPosterImage/20260212-102420251.jpg",
+        "videoLink": "https://youtu.be/LD8EVk9T91M",
+        "link": "https://www.cineworld.co.uk/films/scream-7/ho00014190",
+        "weight": -13,
         "releaseYear": "2026",
-        "releaseDate": "2026-02-20T00:00:00",
+        "releaseDate": "2026-02-26T00:00:00",
         "attributeIds": [
           "18",
           "2d",
-          "drama",
+          "audio-described",
+          "horror",
           "laser",
           "reserved-selected"
         ]
       },
       {
-        "id": "ho00014243",
-        "name": "Whistle",
-        "length": 108,
-        "posterLink": "https://regalcdn.azureedge.net/CW/Whistle/HO00014243/TV_SmallPosterImage/20260205-063230967.jpg",
-        "videoLink": "https://youtu.be/BTD5S9GFy34",
-        "link": "https://www.cineworld.co.uk/films/whistle/ho00014243",
-        "weight": -10,
+        "id": "ho00014214",
+        "name": "The Bride!",
+        "length": 126,
+        "posterLink": "https://regalcdn.azureedge.net/CW/TheBride/HO00014214/TV_SmallPosterImage/20260210-094836345.jpg",
+        "videoLink": "https://youtu.be/cIlfAS8DMmo",
+        "link": "https://www.cineworld.co.uk/films/the-bride/ho00014214",
+        "weight": -14,
         "releaseYear": "2026",
-        "releaseDate": "2026-02-13T00:00:00",
+        "releaseDate": "2026-03-06T00:00:00",
         "attributeIds": [
           "15",
           "2d",
+          "audio-described",
+          "comedy",
           "horror",
           "laser",
-          "reserved-selected",
-          "suspense"
+          "reserved-selected"
         ]
       },
       {
@@ -4018,7 +3315,7 @@
         "posterLink": "https://regalcdn.azureedge.net/CW/WutheringHeights2026/HO00014177/TV_SmallPosterImage/20260205-050845368.jpg",
         "videoLink": "https://youtu.be/ID0rqEWrN44",
         "link": "https://www.cineworld.co.uk/films/wuthering-heights/ho00014177",
-        "weight": -18,
+        "weight": -12,
         "releaseYear": "2026",
         "releaseDate": "2026-02-13T00:00:00",
         "attributeIds": [
@@ -4037,7 +3334,7 @@
         "posterLink": "https://regalcdn.azureedge.net/CW/Zootropolis2/HO00013458/TV_SmallPosterImage/20251020-063518832.jpg",
         "videoLink": "https://youtu.be/BadraArc1nQ",
         "link": "https://www.cineworld.co.uk/films/zootropolis-2/ho00013458",
-        "weight": -12,
+        "weight": -10,
         "releaseYear": "2025",
         "releaseDate": "2025-11-28T00:00:00",
         "attributeIds": [
@@ -4052,235 +3349,197 @@
       }
     ],
     "eventsDatesByFilmId": {
+      "ho00012890": [
+        "2026-03-07T19:30:00",
+        "2026-03-08T12:30:00",
+        "2026-03-08T14:50:00",
+        "2026-03-08T17:10:00",
+        "2026-03-08T19:30:00",
+        "2026-03-09T12:30:00",
+        "2026-03-09T14:50:00",
+        "2026-03-09T17:10:00",
+        "2026-03-09T19:30:00",
+        "2026-03-10T12:30:00",
+        "2026-03-10T14:50:00",
+        "2026-03-10T17:10:00",
+        "2026-03-10T19:30:00",
+        "2026-03-11T12:20:00",
+        "2026-03-11T14:50:00",
+        "2026-03-11T17:10:00",
+        "2026-03-11T19:30:00",
+        "2026-03-12T12:30:00",
+        "2026-03-12T14:50:00",
+        "2026-03-12T17:10:00",
+        "2026-03-12T19:30:00"
+      ],
       "ho00013458": [
-        "2026-02-17T15:00:00",
-        "2026-02-17T16:30:00",
-        "2026-02-18T14:20:00",
-        "2026-02-18T17:00:00",
-        "2026-02-19T11:20:00",
-        "2026-02-19T16:30:00",
-        "2026-02-20T10:10:00",
-        "2026-02-20T11:40:00",
-        "2026-02-20T14:20:00",
-        "2026-02-20T17:00:00",
-        "2026-02-21T10:10:00",
-        "2026-02-21T11:40:00",
-        "2026-02-21T14:20:00",
-        "2026-02-21T17:00:00",
-        "2026-02-22T11:40:00",
-        "2026-02-22T14:20:00",
-        "2026-02-22T17:00:00"
-      ],
-      "ho00013888": [
-        "2026-02-17T20:10:00",
-        "2026-02-18T20:10:00",
-        "2026-02-19T14:40:00",
-        "2026-02-19T17:40:00",
-        "2026-02-23T12:30:00",
-        "2026-02-23T17:00:00"
-      ],
-      "ho00014072": [
-        "2026-02-18T20:40:00",
-        "2026-02-19T20:40:00"
-      ],
-      "ho00014093": [
-        "2026-02-17T17:30:00",
-        "2026-02-18T14:50:00",
-        "2026-02-18T17:30:00",
-        "2026-02-19T20:50:00",
-        "2026-02-20T20:20:00",
-        "2026-02-21T20:20:00",
-        "2026-02-22T20:20:00",
-        "2026-02-23T20:30:00"
-      ],
-      "ho00014144": [
-        "2026-02-19T10:00:00",
-        "2026-02-19T12:20:00",
-        "2026-02-21T11:50:00",
-        "2026-02-22T11:50:00"
+        "2026-03-08T10:40:00"
       ],
       "ho00014156": [
-        "2026-02-17T10:30:00",
-        "2026-02-17T11:30:00",
-        "2026-02-17T13:00:00",
-        "2026-02-17T14:00:00",
-        "2026-02-17T16:30:00",
-        "2026-02-18T10:30:00",
-        "2026-02-18T11:30:00",
-        "2026-02-18T13:00:00",
-        "2026-02-18T14:00:00",
-        "2026-02-18T15:30:00",
-        "2026-02-18T16:30:00",
-        "2026-02-18T18:00:00",
-        "2026-02-19T10:30:00",
-        "2026-02-19T11:30:00",
-        "2026-02-19T13:00:00",
-        "2026-02-19T14:00:00",
-        "2026-02-19T15:30:00",
-        "2026-02-19T16:30:00",
-        "2026-02-19T18:00:00",
-        "2026-02-20T10:30:00",
-        "2026-02-20T13:00:00",
-        "2026-02-20T15:30:00",
-        "2026-02-20T18:00:00",
-        "2026-02-21T10:30:00",
-        "2026-02-21T13:00:00",
-        "2026-02-21T15:30:00",
-        "2026-02-21T18:00:00",
-        "2026-02-22T10:30:00",
-        "2026-02-22T13:00:00",
-        "2026-02-22T15:30:00",
-        "2026-02-22T18:00:00",
-        "2026-02-23T15:30:00",
-        "2026-02-23T18:00:00"
+        "2026-03-08T11:40:00",
+        "2026-03-08T14:10:00"
+      ],
+      "ho00014169": [
+        "2026-03-08T11:00:00"
+      ],
+      "ho00014171": [
+        "2026-03-08T16:50:00",
+        "2026-03-09T12:00:00",
+        "2026-03-09T17:30:00",
+        "2026-03-09T19:50:00",
+        "2026-03-10T12:00:00",
+        "2026-03-10T17:30:00",
+        "2026-03-10T19:50:00",
+        "2026-03-11T16:50:00",
+        "2026-03-12T16:40:00"
       ],
       "ho00014177": [
-        "2026-02-17T11:40:00",
-        "2026-02-17T13:10:00",
-        "2026-02-17T14:50:00",
-        "2026-02-17T16:20:00",
-        "2026-02-17T18:00:00",
-        "2026-02-17T19:30:00",
-        "2026-02-18T11:40:00",
-        "2026-02-18T13:10:00",
-        "2026-02-18T14:50:00",
-        "2026-02-18T16:20:00",
-        "2026-02-18T18:00:00",
-        "2026-02-18T19:30:00",
-        "2026-02-19T11:40:00",
-        "2026-02-19T13:10:00",
-        "2026-02-19T14:50:00",
-        "2026-02-19T16:20:00",
-        "2026-02-19T18:00:00",
-        "2026-02-19T19:30:00",
-        "2026-02-20T13:10:00",
-        "2026-02-20T16:20:00",
-        "2026-02-20T19:30:00",
-        "2026-02-21T11:40:00",
-        "2026-02-21T13:10:00",
-        "2026-02-21T14:50:00",
-        "2026-02-21T16:20:00",
-        "2026-02-21T18:00:00",
-        "2026-02-21T19:30:00",
-        "2026-02-22T11:40:00",
-        "2026-02-22T13:10:00",
-        "2026-02-22T14:50:00",
-        "2026-02-22T16:20:00",
-        "2026-02-22T18:00:00",
-        "2026-02-22T19:30:00",
-        "2026-02-23T12:10:00",
-        "2026-02-23T14:50:00",
-        "2026-02-23T16:20:00",
-        "2026-02-23T18:00:00",
-        "2026-02-23T19:30:00"
+        "2026-03-07T19:00:00",
+        "2026-03-08T13:20:00",
+        "2026-03-08T16:10:00",
+        "2026-03-08T19:20:00",
+        "2026-03-09T13:00:00",
+        "2026-03-09T15:50:00",
+        "2026-03-09T19:00:00",
+        "2026-03-10T14:20:00",
+        "2026-03-10T15:50:00",
+        "2026-03-10T19:00:00",
+        "2026-03-11T13:40:00",
+        "2026-03-11T15:50:00",
+        "2026-03-11T19:00:00",
+        "2026-03-12T13:00:00",
+        "2026-03-12T15:50:00",
+        "2026-03-12T19:00:00"
       ],
-      "ho00014232": [
-        "2026-02-17T10:10:00",
-        "2026-02-18T10:10:00",
-        "2026-02-18T12:30:00"
+      "ho00014186": [
+        "2026-03-07T19:40:00",
+        "2026-03-08T10:00:00",
+        "2026-03-08T10:50:00",
+        "2026-03-08T11:40:00",
+        "2026-03-08T12:40:00",
+        "2026-03-08T13:30:00",
+        "2026-03-08T14:20:00",
+        "2026-03-08T15:20:00",
+        "2026-03-08T16:15:00",
+        "2026-03-08T17:00:00",
+        "2026-03-08T19:40:00",
+        "2026-03-09T14:20:00",
+        "2026-03-09T16:10:00",
+        "2026-03-09T17:00:00",
+        "2026-03-09T19:40:00",
+        "2026-03-10T14:20:00",
+        "2026-03-10T16:10:00",
+        "2026-03-10T17:00:00",
+        "2026-03-10T19:40:00",
+        "2026-03-11T14:20:00",
+        "2026-03-11T16:00:00",
+        "2026-03-11T17:00:00",
+        "2026-03-11T19:40:00",
+        "2026-03-12T14:20:00",
+        "2026-03-12T17:00:00",
+        "2026-03-12T19:40:00"
       ],
-      "ho00014243": [
-        "2026-02-17T21:10:00",
-        "2026-02-18T21:10:00",
-        "2026-02-19T21:10:00"
+      "ho00014189": [
+        "2026-03-13T14:10:00",
+        "2026-03-13T17:00:00",
+        "2026-03-13T19:50:00"
       ],
-      "ho00014247": [
-        "2026-02-20T15:20:00",
-        "2026-02-20T17:50:00",
-        "2026-02-20T20:30:00",
-        "2026-02-21T15:20:00",
-        "2026-02-21T17:50:00",
-        "2026-02-21T20:30:00",
-        "2026-02-22T15:20:00",
-        "2026-02-22T17:50:00",
-        "2026-02-22T20:30:00",
-        "2026-02-23T12:20:00",
-        "2026-02-23T15:20:00",
-        "2026-02-23T17:50:00",
-        "2026-02-23T20:20:00"
+      "ho00014190": [
+        "2026-03-07T19:20:00",
+        "2026-03-08T13:30:00",
+        "2026-03-08T16:30:00",
+        "2026-03-08T18:00:00",
+        "2026-03-08T19:20:00",
+        "2026-03-08T20:40:00",
+        "2026-03-09T12:30:00",
+        "2026-03-09T13:50:00",
+        "2026-03-09T15:10:00",
+        "2026-03-09T16:30:00",
+        "2026-03-09T17:50:00",
+        "2026-03-09T19:10:00",
+        "2026-03-09T20:30:00",
+        "2026-03-10T12:30:00",
+        "2026-03-10T13:50:00",
+        "2026-03-10T15:10:00",
+        "2026-03-10T16:30:00",
+        "2026-03-10T17:50:00",
+        "2026-03-10T19:10:00",
+        "2026-03-10T20:30:00",
+        "2026-03-11T12:40:00",
+        "2026-03-11T15:20:00",
+        "2026-03-11T18:00:00",
+        "2026-03-11T19:20:00",
+        "2026-03-11T20:40:00",
+        "2026-03-12T12:40:00",
+        "2026-03-12T15:20:00",
+        "2026-03-12T18:00:00",
+        "2026-03-12T19:20:00",
+        "2026-03-12T20:40:00"
       ],
-      "ho00014250": [
-        "2026-02-20T14:10:00",
-        "2026-02-20T17:10:00",
-        "2026-02-20T20:10:00",
-        "2026-02-21T14:10:00",
-        "2026-02-21T17:10:00",
-        "2026-02-21T20:10:00",
-        "2026-02-22T14:10:00",
-        "2026-02-22T17:10:00",
-        "2026-02-22T20:10:00",
-        "2026-02-23T14:10:00",
-        "2026-02-23T17:10:00",
-        "2026-02-23T20:10:00"
+      "ho00014214": [
+        "2026-03-07T19:10:00",
+        "2026-03-07T20:30:00",
+        "2026-03-08T11:30:00",
+        "2026-03-08T14:30:00",
+        "2026-03-08T17:30:00",
+        "2026-03-08T19:10:00",
+        "2026-03-08T20:30:00",
+        "2026-03-09T12:50:00",
+        "2026-03-09T14:00:00",
+        "2026-03-09T17:00:00",
+        "2026-03-09T20:00:00",
+        "2026-03-10T12:40:00",
+        "2026-03-10T14:00:00",
+        "2026-03-10T17:00:00",
+        "2026-03-10T20:00:00",
+        "2026-03-11T12:50:00",
+        "2026-03-11T14:00:00",
+        "2026-03-11T17:00:00",
+        "2026-03-11T20:00:00",
+        "2026-03-12T12:50:00",
+        "2026-03-12T14:00:00",
+        "2026-03-12T17:00:00",
+        "2026-03-12T20:00:00"
       ],
-      "ho00014255": [
-        "2026-02-22T19:00:00"
+      "ho00014281": [
+        "2026-03-10T12:50:00"
       ],
-      "ho00014258": [
-        "2026-02-17T19:00:00"
+      "ho00014282": [
+        "2026-03-07T19:00:00",
+        "2026-03-07T20:40:00"
       ],
-      "ho00014260": [
-        "2026-02-21T19:00:00"
+      "ho00014283": [
+        "2026-03-08T19:00:00"
       ],
-      "ho00014263": [
-        "2026-02-19T19:00:00"
+      "ho00014284": [
+        "2026-03-09T19:00:00"
       ],
-      "ho00014265": [
-        "2026-02-17T13:50:00",
-        "2026-02-17T17:10:00",
-        "2026-02-17T19:10:00",
-        "2026-02-17T20:30:00",
-        "2026-02-18T13:50:00",
-        "2026-02-18T17:10:00",
-        "2026-02-18T19:10:00",
-        "2026-02-18T20:30:00",
-        "2026-02-19T13:50:00",
-        "2026-02-19T17:10:00",
-        "2026-02-19T19:10:00",
-        "2026-02-19T20:30:00",
-        "2026-02-20T13:30:00",
-        "2026-02-20T16:40:00",
-        "2026-02-20T19:50:00",
-        "2026-02-23T13:10:00"
+      "ho00014285": [
+        "2026-03-10T19:00:00"
       ],
-      "ho00014270": [
-        "2026-02-17T10:30:00",
-        "2026-02-18T10:30:00",
-        "2026-02-19T10:30:00",
-        "2026-02-20T11:00:00",
-        "2026-02-22T10:20:00"
+      "ho00014286": [
+        "2026-03-11T12:30:00",
+        "2026-03-11T19:00:00"
       ],
-      "ho00014271": [
-        "2026-02-17T11:00:00",
-        "2026-02-18T11:00:00",
-        "2026-02-19T11:00:00",
-        "2026-02-20T10:30:00",
-        "2026-02-21T10:30:00",
-        "2026-02-22T10:30:00"
+      "ho00014288": [
+        "2026-03-12T13:30:00",
+        "2026-03-12T19:00:00"
       ],
-      "ho00014272": [
-        "2026-02-21T21:00:00",
-        "2026-02-22T21:00:00",
-        "2026-02-23T12:10:00",
-        "2026-02-23T21:00:00"
+      "ho00014290": [
+        "2026-03-13T19:00:00"
       ],
-      "ho00014294": [
-        "2026-02-18T19:40:00"
+      "ho00014293": [
+        "2026-03-09T13:30:00"
       ],
-      "ho00014295": [
-        "2026-02-20T12:50:00",
-        "2026-02-20T19:40:00",
-        "2026-02-21T12:50:00",
-        "2026-02-21T19:40:00",
-        "2026-02-22T12:50:00",
-        "2026-02-22T19:40:00",
-        "2026-02-23T14:30:00",
-        "2026-02-23T20:00:00"
-      ],
-      "ho00014302": [
-        "2026-02-17T12:40:00",
-        "2026-02-18T10:00:00",
-        "2026-02-18T12:10:00"
+      "ho00014345": [
+        "2026-03-11T12:10:00",
+        "2026-03-11T14:50:00",
+        "2026-03-11T17:30:00",
+        "2026-03-11T20:10:00",
+        "2026-03-12T12:10:00",
+        "2026-03-12T14:50:00",
+        "2026-03-12T17:30:00",
+        "2026-03-12T20:10:00"
       ]
     }
   }
