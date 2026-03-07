@@ -5,12 +5,13 @@
     const categorySections = document.querySelectorAll('.category-section');
 
     let isFilterActive = false;
+    let focusedIndex = -1;
 
     // Ensure clean state on page load (handles browser back button)
     filterContainer.classList.remove('active');
     filterInput.value = '';
     filterInput.blur();
-    projectItems.forEach(item => item.classList.remove('hidden'));
+    projectItems.forEach(item => item.classList.remove('hidden', 'focused'));
     categorySections.forEach(section => section.classList.remove('hidden'));
 
     // Build searchable data for each project
@@ -49,11 +50,40 @@
         }
     }
 
+    function clearFocus() {
+        projects.forEach(p => p.element.classList.remove('focused'));
+        focusedIndex = -1;
+    }
+
+    function getVisibleProjects() {
+        return projects.filter(p => !p.element.classList.contains('hidden'));
+    }
+
+    function setFocus(index, visibleProjects) {
+        const visible = visibleProjects || getVisibleProjects();
+        projects.forEach(p => p.element.classList.remove('focused'));
+        if (visible.length === 0) {
+            focusedIndex = -1;
+            return;
+        }
+        focusedIndex = ((index % visible.length) + visible.length) % visible.length;
+        visible[focusedIndex].element.classList.add('focused');
+        visible[focusedIndex].element.scrollIntoView({ block: 'nearest' });
+    }
+
+    function cycleFocus(direction) {
+        const visible = getVisibleProjects();
+        if (visible.length === 0) return;
+        if (focusedIndex === -1) {
+            setFocus(direction > 0 ? 0 : visible.length - 1, visible);
+        } else {
+            setFocus(focusedIndex + direction, visible);
+        }
+    }
+
     function filterProjects(query) {
         const lowerQuery = query.toLowerCase();
-        let visibleCount = 0;
 
-        // Filter projects
         const visibleProjects = projects.filter(project => {
             const matches = query === '' ||
                 project.title.includes(lowerQuery) ||
@@ -62,7 +92,6 @@
 
             if (matches) {
                 project.element.classList.remove('hidden');
-                visibleCount++;
             } else {
                 project.element.classList.add('hidden');
             }
@@ -82,46 +111,69 @@
             }
         });
 
+        // Reset focus when filter changes
+        clearFocus();
+
         return visibleProjects;
     }
 
-    function navigateToFirstVisible() {
-        const visibleProjects = projects.filter(p => !p.element.classList.contains('hidden'));
-        if (visibleProjects.length === 1) {
-            window.location.href = visibleProjects[0].href;
+    function navigateToFocused() {
+        const visible = getVisibleProjects();
+        if (focusedIndex >= 0 && focusedIndex < visible.length) {
+            window.location.href = visible[focusedIndex].href;
+        } else if (visible.length === 1) {
+            window.location.href = visible[0].href;
         }
     }
 
     // Listen for keyboard events on document
     document.addEventListener('keydown', (e) => {
-        // Handle ESC key - check DOM state instead of JS variable
-        if (e.key === 'Escape' && filterContainer.classList.contains('active')) {
+        // Tab always cycles through visible tools (Shift+Tab goes backwards)
+        if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) {
             e.preventDefault();
-            hideFilter();
+            cycleFocus(e.shiftKey ? -1 : 1);
             return;
         }
 
-        // Ignore if user is typing in an input/textarea
+        // Escape closes filter and/or clears focus
+        if (e.key === 'Escape') {
+            if (filterContainer.classList.contains('active')) {
+                e.preventDefault();
+                hideFilter();
+            }
+            clearFocus();
+            return;
+        }
+
+        // Enter navigates to focused tool (when not typing in filter)
+        if (e.key === 'Enter' && focusedIndex >= 0 &&
+            document.activeElement !== filterInput) {
+            e.preventDefault();
+            navigateToFocused();
+            return;
+        }
+
+        // Ignore remaining keys if typing in an input/textarea
         if (document.activeElement.tagName === 'INPUT' ||
             document.activeElement.tagName === 'TEXTAREA') {
 
-            // Handle special keys in filter input
-            if (document.activeElement === filterInput) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    navigateToFirstVisible();
-                } else if (e.key === 'Tab') {
-                    e.preventDefault();
-                    navigateToFirstVisible();
-                }
+            if (document.activeElement === filterInput && e.key === 'Enter') {
+                e.preventDefault();
+                navigateToFocused();
             }
             return;
         }
 
-        // Show filter on any printable character (except space)
+        // "/" opens the search without populating it
+        if (e.key === '/') {
+            e.preventDefault();
+            showFilter();
+            return;
+        }
+
+        // Any other printable character opens the filter and lets it populate
         if (e.key.length === 1 && e.key !== ' ' && !e.ctrlKey && !e.metaKey && !e.altKey) {
             showFilter();
-            // Let the character be typed into the input
         }
     });
 
@@ -130,9 +182,8 @@
         filterProjects(e.target.value);
     });
 
-    // Prevent filter input from losing focus when clicking outside
+    // Close filter on blur if input is empty
     filterInput.addEventListener('blur', () => {
-        // Small delay to allow click events to process
         setTimeout(() => {
             if (isFilterActive && filterInput.value === '') {
                 hideFilter();
