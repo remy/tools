@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Load package-lock.json or pnpm-lock.yaml from a local file or GitHub URL and browse the dependency tree with search and filtering.">
+  <meta name="category" content="Utilities">
+  <title>Package Browser</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <h1>Package Browser</h1>
+      <p>Load a lockfile and explore the dependency tree.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="loadTitle">
+      <h2 id="loadTitle">Load Source</h2>
+
+      <div class="loader-grid">
+        <label class="field" for="fileInput">
+          <span>Upload file</span>
+          <input id="fileInput" type="file" accept=".json,.yaml,.yml,application/json,text/yaml,text/x-yaml">
+        </label>
+
+        <label class="field" for="urlInput">
+          <span>GitHub or raw URL</span>
+          <div class="url-row">
+            <input id="urlInput" type="url" placeholder="https://github.com/org/repo/blob/main/pnpm-lock.yaml">
+            <button id="loadUrlBtn" type="button">Load URL</button>
+          </div>
+        </label>
+      </div>
+
+      <p class="hint">Supports `package-lock.json`, `npm ls --all --json`, and `pnpm-lock.yaml`.</p>
+      <p id="status" class="status" role="status" aria-live="polite">Waiting for input.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="viewTitle">
+      <h2 id="viewTitle">View</h2>
+
+      <div class="controls">
+        <label class="field search-field" for="searchInput">
+          <span>Search</span>
+          <input id="searchInput" type="search" placeholder="Package name or version">
+        </label>
+
+        <div class="filters" role="toolbar" aria-label="Dependency type filter">
+          <button class="filter-chip active" data-filter="all" type="button">All</button>
+          <button class="filter-chip" data-filter="prod" type="button">Production</button>
+          <button class="filter-chip" data-filter="dev" type="button">Development</button>
+          <button class="filter-chip" data-filter="optional" type="button">Optional</button>
+        </div>
+
+        <div class="stats" aria-live="polite">
+          <span id="directCount">0 direct</span>
+          <span id="totalCount">0 total</span>
+          <span id="visibleCount">0 visible</span>
+        </div>
+      </div>
+
+      <p id="sourceInfo" class="source-info">No lockfile loaded.</p>
+
+      <div id="treeContainer" class="tree" role="tree" aria-label="Dependency tree">
+        <div class="empty-state">
+          <h3>No dependency tree yet</h3>
+          <p>Upload a lockfile or load one from a URL.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
