@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Drop a PNG or JPG, trace it into black-and-white SVG paths, inspect with pan/zoom, then copy or download the SVG.">
+  <meta name="category" content="Utilities">
+  <title>Trace SVG</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="workspace">
+      <div class="stack panel controls-panel">
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+        <h2 class="section-title">Source</h2>
+        <div class="canvas-wrap" id="sourceDropTarget">
+          <canvas id="sourceCanvas" width="640" height="480"></canvas>
+        </div>
+
+        <h2 class="section-title">Tracing Controls</h2>
+        <div class="controls" id="controls">
+          <div class="control">
+            <label for="threshold">
+              <span>Threshold</span>
+              <span class="value" id="thresholdValue">128</span>
+            </label>
+            <input id="threshold" type="range" min="0" max="255" value="128">
+          </div>
+
+          <div class="control">
+            <label for="detail">
+              <span>Detail Size</span>
+              <span class="value" id="detailValue">720 px</span>
+            </label>
+            <input id="detail" type="range" min="256" max="1600" step="16" value="720">
+          </div>
+
+          <div class="control">
+            <label for="simplify">
+              <span>Simplify</span>
+              <span class="value" id="simplifyValue">1.2</span>
+            </label>
+            <input id="simplify" type="range" min="0" max="5" step="0.1" value="1.2">
+          </div>
+
+          <div class="control">
+            <label for="smooth">
+              <span>Smoothing Passes</span>
+              <span class="value" id="smoothValue">2</span>
+            </label>
+            <input id="smooth" type="range" min="0" max="4" step="1" value="2">
+          </div>
+
+          <div class="control">
+            <label for="minArea">
+              <span>Min Shape Area</span>
+              <span class="value" id="minAreaValue">24</span>
+            </label>
+            <input id="minArea" type="range" min="1" max="600" step="1" value="24">
+          </div>
+
+          <label class="checkbox" for="invert">
+            <input id="invert" type="checkbox">
+            Invert (trace light shapes instead of dark)
+          </label>
+        </div>
+
+        <h2 class="section-title">Edit Mode</h2>
+        <div class="mode-toggle" role="tablist" aria-label="Tracing mode">
+          <button id="modeTraceBtn" type="button" class="active" aria-pressed="true">Global Trace</button>
+          <button id="modePathBtn" type="button" aria-pressed="false">Path Edit</button>
+        </div>
+
+        <div id="pathEditor" class="path-editor is-hidden">
+          <p class="path-editor-hint">Pick a path from the preview or list, then override its module and smoothing rules.</p>
+
+          <div id="pathList" class="path-list" aria-label="Detected paths"></div>
+
+          <div class="controls compact">
+            <div class="control">
+              <label for="pathModule">
+                <span>Path Module</span>
+              </label>
+              <select id="pathModule">
+                <option value="auto">Auto (detector)</option>
+                <option value="path">Complex path</option>
+                <option value="custom">Custom (editable)</option>
+                <option value="line">Line</option>
+                <option value="rect">Rectangle</option>
+                <option value="rounded-rect">Rounded rectangle</option>
+                <option value="circle">Circle</option>
+                <option value="ellipse">Ellipse</option>
+              </select>
+            </div>
+
+            <label class="checkbox" for="pathSimplifyEnabled">
+              <input id="pathSimplifyEnabled" type="checkbox">
+              Override simplify
+            </label>
+            <div class="control">
+              <label for="pathSimplify">
+                <span>Path Simplify</span>
+                <span class="value" id="pathSimplifyValue">1.2</span>
+              </label>
+              <input id="pathSimplify" type="range" min="0" max="5" step="0.1" value="1.2">
+            </div>
+
+            <label class="checkbox" for="pathSmoothEnabled">
+              <input id="pathSmoothEnabled" type="checkbox">
+              Override smoothing
+            </label>
+            <div class="control">
+              <label for="pathSmooth">
+                <span>Path Smoothing</span>
+                <span class="value" id="pathSmoothValue">2</span>
+              </label>
+              <input id="pathSmooth" type="range" min="0" max="4" step="1" value="2">
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button id="resetPathBtn" type="button">Reset Selected Path</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack panel">
+        <h2 class="section-title">SVG Preview</h2>
+
+        <div class="preview-toolbar">
+          <button id="resetViewBtn" type="button" disabled>Reset View</button>
+          <label class="toolbar-slider" for="onionOpacity">
+            <span>Opacity</span>
+            <input id="onionOpacity" type="range" min="0" max="100" step="1" value="30">
+          </label>
+          <div class="preview-actions">
+            <button id="copyBtn" type="button" disabled>Copy SVG</button>
+            <button id="downloadBtn" type="button" disabled>Download SVG</button>
+          </div>
+        </div>
+
+        <div id="previewWrap" class="preview-wrap">
+          <div id="previewViewport">
+            <img id="onionImage" class="onion-image" alt="">
+            <div id="previewStage">
+              <div class="placeholder">Trace an image to preview the SVG here.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="pathContextMenu" class="path-context-menu is-hidden" role="menu" aria-label="Custom path menu">
+    <button id="addNodeBtn" type="button">Add Node</button>
+    <button id="deleteNodeBtn" type="button">Delete Node</button>
+    <button id="toggleCurveBtn" type="button">Set Node to Corner</button>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

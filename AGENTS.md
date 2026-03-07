@@ -63,11 +63,13 @@ Create a subdirectory at the repo root named after the tool, using kebab-case:
 repo-root/
 └── my-new-tool/
     ├── index.html      ← required
-    ├── style.css       ← optional (can be inline)
-    └── script.js       ← optional (can be inline)
+    ├── style.css       ← preferred default
+    └── script.js       ← preferred when JS is used
 ```
 
 Keep the tool self-contained. Avoid referencing files outside the tool's directory.
+Prefer smaller, focused files over one large file. Default to splitting HTML, CSS, and JS into separate files.
+Inline `<style>`/`<script>` blocks should be treated as exceptions for very small throwaway prototypes only.
 
 ### 4. Required Meta Tags in `index.html`
 
@@ -105,63 +107,71 @@ Use this as the starting point for a new `index.html`:
   <meta name="description" content="Short description of this tool.">
   <meta name="category" content="Utilities">
   <title>Tool Name</title>
-  <style>
-    :root {
-      --bg: #fafafa;
-      --bg-secondary: #f4f4f5;
-      --border: #d4d4d8;
-      --text: #18181b;
-      --text-secondary: #52525b;
-      --accent: #2563eb;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #09090b;
-        --bg-secondary: #18181b;
-        --border: #3f3f46;
-        --text: #fafafa;
-        --text-secondary: #a1a1aa;
-        --accent: #60a5fa;
-      }
-    }
-
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100dvh;
-      padding: 1rem;
-    }
-
-    /* Mobile-first layout — wider styles below */
-    .container {
-      width: 100%;
-      max-width: 48rem;
-      margin-inline: auto;
-    }
-
-    @media (min-width: 640px) {
-      body { padding: 2rem; }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="container">
     <h1>Tool Name</h1>
     <!-- content -->
   </div>
-  <script>
-    // vanilla JS only
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
+```
+
+**Companion `style.css` starter:**
+
+```css
+:root {
+  --bg: #fafafa;
+  --bg-secondary: #f4f4f5;
+  --border: #d4d4d8;
+  --text: #18181b;
+  --text-secondary: #52525b;
+  --accent: #2563eb;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b;
+    --bg-secondary: #18181b;
+    --border: #3f3f46;
+    --text: #fafafa;
+    --text-secondary: #a1a1aa;
+    --accent: #60a5fa;
+  }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding: 1rem;
+}
+
+/* Mobile-first layout — wider styles below */
+.container {
+  width: 100%;
+  max-width: 48rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+  body { padding: 2rem; }
+}
+```
+
+**Companion `script.js` starter:**
+
+```js
+// vanilla JS only
 ```
 
 ---
@@ -219,7 +229,7 @@ When a project needs to show example code (e.g. a demo or reference page), use a
 - End content **immediately** before `</code></pre>` — same reason.
 - Inline `<span>` classes for syntax colouring: `.tag`, `.attr`, `.val`, `.kw`, `.cm`.
 
-**Required CSS** (include in the project's `<style>`):
+**Required CSS** (include in `style.css`; inline `<style>` only if truly necessary):
 
 ```css
 .code-hint {
@@ -274,8 +284,10 @@ Commit both the new tool directory and the updated `projects.json` / root `index
 
 ## File Size & Dependency Policy
 
-- Keep tools small and focused. A single `index.html` under 50 KB is the target.
-- If a separate CSS or JS file genuinely improves maintainability (e.g. a complex module), that's fine — but do not split files just for the sake of it.
+- Keep tools small and focused.
+- Prefer many smaller files with clear responsibilities over one large file.
+- Default structure is `index.html` + `style.css` + `script.js`; split further (for example, `trace.js`, `ui.js`) when complexity grows.
+- As a guideline, keep individual files compact and readable (roughly up to ~20 KB where practical) rather than allowing one file to balloon.
 - External network requests from the tool itself (APIs, data fetches) are fine. External CSS/JS CDN dependencies are not.
 
 ---
@@ -284,6 +296,8 @@ Commit both the new tool directory and the updated `projects.json` / root `index
 
 - [ ] Directory created at repo root using kebab-case
 - [ ] `index.html` present in the directory
+- [ ] `style.css` present in the directory (preferred default)
+- [ ] `script.js` present when JavaScript is needed
 - [ ] `<meta name="description">` present with a clear description
 - [ ] `<meta name="category">` present with a valid category
 - [ ] Dark **and** light mode implemented (via `prefers-color-scheme`)
