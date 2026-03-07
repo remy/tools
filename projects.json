@@ -5,12 +5,12 @@
     "title": "15s countdown"
   },
   "capcalc": {
-    "category": "Utilities",
+    "category": "Calculators",
     "description": "Decode capacitor codes and calculate values from ceramic capacitor markings",
     "title": "Capacitor Value Calculator"
   },
   "contract-rate": {
-    "category": "Utilities",
+    "category": "Calculators",
     "description": "Calculate contract rates and earnings based on working days and hourly rates",
     "title": "Contract Rate Calculator"
   },
@@ -20,7 +20,7 @@
     "title": "Countdown: The Number Experience"
   },
   "esp-compare": {
-    "category": "Utilities",
+    "category": "Developer Tools",
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
     "title": "ESP32 Supermini Comparison"
   },
@@ -45,37 +45,37 @@
     "title": "Immich Mass Rotate"
   },
   "json-schema": {
-    "category": "Utilities",
+    "category": "Developer Tools",
     "description": "Validate JSON against a schema with real-time error reporting and syntax highlighting",
     "title": "VS Code JSON Validator"
   },
   "merge": {
-    "category": "Utilities",
+    "category": "Developer Tools",
     "description": "Upload two text files, view a colour-coded diff, and selectively apply individual changes from file 1 into file 2 with live re-diffing.",
     "title": "Merge"
   },
   "movies": {
-    "category": "Utilities",
+    "category": "Productivity",
     "description": "Compare showtimes across Brighton cinemas (Odeon, Cineworld, Duke of York's) and plan your movie outings",
     "title": "Brighton Cinema Planner"
   },
   "native-popover": {
-    "category": "Demos",
+    "category": "Web Demos",
     "description": "Interactive demo of the native HTML Popover API \u2014 no libraries, no JavaScript required for basic use",
     "title": "Native Popover API Demo"
   },
   "org-notifications": {
-    "category": "Utilities",
+    "category": "Developer Tools",
     "description": "View and manage GitHub organization notifications in a clean interface",
     "title": "Org Notifications"
   },
   "package-browser": {
-    "category": "Utilities",
+    "category": "Developer Tools",
     "description": "Load package-lock.json or pnpm-lock.yaml from a local file or GitHub URL and browse the dependency tree with search and filtering.",
     "title": "Package Browser"
   },
   "page-count": {
-    "category": "Utilities",
+    "category": "Productivity",
     "description": "Track your daily reading progress and visualize pages read over time",
     "title": "My Pages Read"
   },
@@ -85,27 +85,27 @@
     "title": "AFI Quote Master"
   },
   "tax": {
-    "category": "Utilities",
+    "category": "Calculators",
     "description": "Calculate tax-inclusive (gross) and tax-exclusive (net) values with customizable tax rates and real-time conversion",
     "title": "Dynamic Tax Calculator"
   },
   "time-add": {
-    "category": "Utilities",
+    "category": "Calculators",
     "description": "Add and subtract time durations with hours, minutes, and seconds",
     "title": "Time Calculator"
   },
   "trace-svg": {
-    "category": "Utilities",
+    "category": "Developer Tools",
     "description": "Drop a PNG or JPG, trace it into black-and-white SVG paths, inspect with pan/zoom, then copy or download the SVG.",
     "title": "Trace SVG"
   },
   "url-to-meta": {
-    "category": "Utilities",
+    "category": "Developer Tools",
     "description": "Extract metadata and Open Graph information from any URL",
     "title": "URL to Meta"
   },
   "wake-lock": {
-    "category": "Demos",
+    "category": "Web Demos",
     "description": "Demonstration of the Screen Wake Lock API to prevent device screen from dimming",
     "title": "Wake Lock Demo"
   }
