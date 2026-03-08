@@ -12,7 +12,6 @@
   <main class="app">
     <section class="workspace">
       <div class="stack panel controls-panel">
-        <p id="status" class="status" role="status" aria-live="polite"></p>
         <h2 class="section-title">Source</h2>
         <div class="canvas-wrap" id="sourceDropTarget">
           <canvas id="sourceCanvas" width="640" height="480"></canvas>
@@ -30,7 +29,7 @@
 
           <div class="control">
             <label for="detail">
-              <span>Detail Size</span>
+              <span>ViewBox Size</span>
               <span class="value" id="detailValue">720 px</span>
             </label>
             <input id="detail" type="range" min="256" max="1600" step="16" value="720">
@@ -64,6 +63,21 @@
             <input id="invert" type="checkbox">
             Invert (trace light shapes instead of dark)
           </label>
+
+          <div class="control">
+            <label for="colorCount">
+              <span>Palette Colors</span>
+              <span class="value" id="colorCountValue">6</span>
+            </label>
+            <input id="colorCount" type="range" min="1" max="16" step="1" value="6">
+          </div>
+          <div class="control palette-control">
+            <label>
+              <span>Palette Picker</span>
+            </label>
+            <div id="paletteSwatches" class="palette-swatches" aria-label="Palette colors"></div>
+            <color-input id="palettePicker" class="palette-picker" value="#000000" no-alpha></color-input>
+          </div>
         </div>
 
         <h2 class="section-title">Edit Mode</h2>
@@ -85,13 +99,25 @@
               <select id="pathModule">
                 <option value="auto">Auto (detector)</option>
                 <option value="path">Complex path</option>
-                <option value="custom">Custom (editable)</option>
                 <option value="line">Line</option>
                 <option value="rect">Rectangle</option>
                 <option value="rounded-rect">Rounded rectangle</option>
                 <option value="circle">Circle</option>
                 <option value="ellipse">Ellipse</option>
               </select>
+            </div>
+
+            <label class="checkbox" for="pathNodeEdit">
+              <input id="pathNodeEdit" type="checkbox">
+              Node Edit Mode
+            </label>
+
+            <div class="control">
+              <label for="pathColor">
+                <span>Path Color</span>
+                <span class="value" id="pathColorValue">#000000</span>
+              </label>
+              <color-input id="pathColor" value="#000000" no-alpha></color-input>
             </div>
 
             <label class="checkbox" for="pathSimplifyEnabled">
@@ -120,7 +146,9 @@
           </div>
 
           <div class="button-row">
+            <button id="simplifyPathNodesBtn" type="button">Simplify Nodes</button>
             <button id="resetPathBtn" type="button">Reset Selected Path</button>
+            <button id="deletePathBtn" type="button">Delete Selected Path</button>
           </div>
         </div>
       </div>
@@ -135,6 +163,7 @@
             <input id="onionOpacity" type="range" min="0" max="100" step="1" value="30">
           </label>
           <div class="preview-actions">
+            <span id="svgSize" class="svg-size" aria-live="polite">0 B</span>
             <button id="copyBtn" type="button" disabled>Copy SVG</button>
             <button id="downloadBtn" type="button" disabled>Download SVG</button>
           </div>
@@ -156,6 +185,8 @@
     <button id="deleteNodeBtn" type="button">Delete Node</button>
     <button id="toggleCurveBtn" type="button">Set Node to Corner</button>
   </div>
+  <div id="toastRoot" class="toast-root" aria-live="polite" aria-atomic="false"></div>
+  <script type="module" src="https://unpkg.com/hdr-color-input"></script>
   <script src="script.js"></script>
 </body>
 </html>
