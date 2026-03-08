@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Convert distances between km, miles, yards, feet, meters and more. Optionally set a travel speed to calculate how long a journey will take.">
+  <meta name="category" content="Utilities">
+  <title>Distance &amp; Time Converter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Distance &amp; Time Converter</h1>
+      <p class="subtitle">Convert distances and calculate travel time</p>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <span class="theme-icon">☀</span>
+      </button>
+    </header>
+
+    <section class="input-section card">
+      <h2>Distance</h2>
+      <div class="input-row">
+        <input
+          type="number"
+          id="distanceInput"
+          class="distance-input"
+          placeholder="Enter distance"
+          min="0"
+          step="any"
+          value=""
+        />
+        <select id="unitSelect" class="unit-select">
+          <option value="m">Meters (m)</option>
+          <option value="km" selected>Kilometers (km)</option>
+          <option value="mi">Miles (mi)</option>
+          <option value="yd">Yards (yd)</option>
+          <option value="ft">Feet (ft)</option>
+          <option value="in">Inches (in)</option>
+          <option value="cm">Centimeters (cm)</option>
+          <option value="mm">Millimeters (mm)</option>
+          <option value="nmi">Nautical Miles (nmi)</option>
+          <option value="ly">Light Years (ly)</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="speed-section card">
+      <div class="speed-header">
+        <h2>Travel Speed <span class="optional">(optional)</span></h2>
+        <label class="toggle-label">
+          <input type="checkbox" id="speedEnabled" />
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+        </label>
+      </div>
+      <div class="speed-controls" id="speedControls" aria-hidden="true">
+        <div class="input-row">
+          <input
+            type="number"
+            id="speedInput"
+            class="distance-input"
+            placeholder="Enter speed"
+            min="0"
+            step="any"
+          />
+          <select id="speedUnitSelect" class="unit-select">
+            <option value="m">m / hour</option>
+            <option value="km" selected>km / hour</option>
+            <option value="mi">miles / hour</option>
+            <option value="yd">yards / hour</option>
+            <option value="ft">feet / hour</option>
+            <option value="nmi">knots (nmi / hour)</option>
+          </select>
+        </div>
+        <div class="presets">
+          <span class="presets-label">Presets:</span>
+          <button class="preset-btn" data-speed="5" data-unit="km">Walking (5 km/h)</button>
+          <button class="preset-btn" data-speed="20" data-unit="km">Cycling (20 km/h)</button>
+          <button class="preset-btn" data-speed="100" data-unit="km">Driving (100 km/h)</button>
+          <button class="preset-btn" data-speed="900" data-unit="km">Flying (900 km/h)</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="results-section" id="resultsSection" aria-live="polite">
+      <div class="results-empty" id="resultsEmpty">
+        <p>Enter a distance above to see conversions</p>
+      </div>
+
+      <div class="results-content hidden" id="resultsContent">
+        <h2>Conversions</h2>
+        <div class="results-grid" id="resultsGrid"></div>
+
+        <div class="time-results hidden" id="timeResults">
+          <h2>Travel Time</h2>
+          <div class="time-display" id="timeDisplay"></div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
