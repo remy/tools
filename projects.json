@@ -19,6 +19,11 @@
     "description": "Play the classic numbers round from Countdown - reach the target using arithmetic operations",
     "title": "Countdown: The Number Experience"
   },
+  "distance-time-converter": {
+    "category": "Utilities",
+    "description": "Convert distances between km, miles, yards, feet, meters and more. Optionally set a travel speed to calculate how long a journey will take.",
+    "title": "Distance & Time Converter"
+  },
   "esp-compare": {
     "category": "Developer Tools",
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
