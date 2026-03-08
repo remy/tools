@@ -86,11 +86,12 @@ Without these the tool will appear as "Uncategorized" and may have no descriptio
 
 | Category | Used for |
 |---|---|
+| `Calculators` | Tools that perform calculations or conversions |
 | `Demos` | API demonstrations, proof-of-concept pages |
 | `Game` | Interactive games |
 | `Home Assistant` | Tools that integrate with Home Assistant |
 | `Immich` | Tools that integrate with Immich |
-| `Utilities` | General-purpose tools and calculators |
+| `Utilities` | General-purpose tools |
 
 ---
 
