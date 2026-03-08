@@ -1171,6 +1171,7 @@ class MovieScheduleApp extends HTMLElement {
           movie.cinemaLabel = cinemaNames.join(', ');
           return movie;
         })
+        .filter((movie) => movie.showtimes.length > 0)
         .sort(
           (a, b) =>
             a.showtimes[0].startsAt - b.showtimes[0].startsAt ||
