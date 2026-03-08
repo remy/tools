@@ -84,13 +84,19 @@ Without these the tool will appear as "Uncategorized" and may have no descriptio
 
 **Valid categories** (match existing ones or add a new one consistently):
 
-| Category | Used for |
+| Category | Good fit when… |
 |---|---|
-| `Demos` | API demonstrations, proof-of-concept pages |
-| `Game` | Interactive games |
-| `Home Assistant` | Tools that integrate with Home Assistant |
-| `Immich` | Tools that integrate with Immich |
-| `Utilities` | General-purpose tools and calculators |
+| `Developer Tools` | The primary user is a developer; the tool helps with code, data formats, APIs, dependencies, diffs, or hardware specs (e.g. JSON validator, package browser, merge tool, ESP32 comparison) |
+| `Calculators` | The tool takes numeric inputs and produces a computed result — rates, values, durations, or unit conversions (e.g. capacitor decoder, tax calculator, time adder) |
+| `Game` | The tool is an interactive game with scoring, winning, or challenge mechanics (e.g. quiz, puzzle, countdown numbers) |
+| `Home Assistant` | The tool queries, debugs, or integrates with a Home Assistant instance or its config format |
+| `Immich` | The tool queries, manages, or integrates with an Immich photo library via its API |
+| `Productivity` | The tool helps organise personal tasks, track progress, or plan real-world activities — not primarily a calculator or developer aid (e.g. cinema planner, reading tracker) |
+| `Web Demos` | The tool's main purpose is demonstrating a browser API or web platform feature, rather than solving a user problem (e.g. Popover API demo, Wake Lock demo) |
+
+**If you cannot confidently determine the category** from the tool's description and functionality during the agentic process, do not guess — ask the author:
+
+> "Which category should I use for this tool? The options are: Developer Tools, Calculators, Game, Home Assistant, Immich, Productivity, Web Demos."
 
 ---
 
@@ -105,7 +111,7 @@ Use this as the starting point for a new `index.html`:
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Short description of this tool.">
-  <meta name="category" content="Utilities">
+  <meta name="category" content="Developer Tools">
   <title>Tool Name</title>
   <link rel="stylesheet" href="style.css">
 </head>
