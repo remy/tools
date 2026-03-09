@@ -216,6 +216,8 @@ button:disabled {
   }
 
   & label {
+    cursor: pointer;
+    user-select: none;
     display: flex;
     gap: 0.75rem;
     font-size: 0.9rem;
@@ -230,10 +232,14 @@ button:disabled {
     width: 100%;
   }
 
-  & color-input {
+  & input[type="color"] {
     width: 100%;
     min-height: 2rem;
     display: block;
+    border: 1px solid var(--border);
+    border-radius: 0.625rem;
+    background: var(--surface-2);
+    padding: 0.15rem;
   }
 
   & .checkbox {
@@ -296,38 +302,13 @@ button:disabled {
   opacity: 0.65;
 }
 
-.palette-picker {
+.palette-picker-input {
   position: absolute;
-  z-index: 30;
-  left: 0;
-  top: 0;
-  width: min(16.5rem, calc(100% - 0.5rem));
-  display: none;
-  pointer-events: auto;
-  border: 1px solid var(--border);
-  border-radius: 0.625rem;
-  background: color-mix(in oklab, var(--surface) 96%, transparent);
-  box-shadow: 0 14px 26px color-mix(in oklab, var(--text) 22%, transparent);
-}
-
-.palette-picker.is-open {
-  display: block;
-}
-
-.mode-toggle {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-
-  & button {
-    padding: 0.45rem 0.6rem;
-  }
-
-  & button.active {
-    border-color: var(--accent);
-    background: color-mix(in oklab, var(--accent) 20%, var(--surface-2));
-    color: color-mix(in oklab, var(--accent) 80%, var(--text));
-  }
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  pointer-events: none;
+  inset: auto auto 0 0;
 }
 
 .path-editor {
@@ -335,7 +316,12 @@ button:disabled {
   gap: 0.65rem;
 }
 
-.path-editor.is-hidden {
+.path-editor-content {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.path-editor-content.is-hidden {
   display: none;
 }
 
@@ -343,6 +329,40 @@ button:disabled {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.84rem;
+}
+
+.path-editor-hint.is-hidden {
+  display: none;
+}
+
+.smooth-node-hint {
+  font-variant-numeric: tabular-nums;
+}
+
+.control-group {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  padding: 0.55rem;
+  background: color-mix(in oklab, var(--surface-2) 54%, transparent);
+}
+
+.control-group.is-hidden {
+  display: none;
+}
+
+.group-title {
+  margin: 0;
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.button-row.compact {
+  margin-top: 0;
+  gap: 0.4rem;
 }
 
 .path-list {
@@ -491,6 +511,40 @@ button:disabled {
   }
 }
 
+.preview-wrap.is-space-pan,
+.preview-wrap.is-space-pan * {
+  cursor: grab;
+}
+
+.preview-wrap.is-space-pan:active,
+.preview-wrap.is-space-pan:active *,
+.preview-wrap.is-panning,
+.preview-wrap.is-panning * {
+  cursor: grabbing;
+}
+
+.preview-wrap.use-light-bg {
+  background: linear-gradient(
+    45deg,
+    #f1f5f9 25%,
+    transparent 25%,
+    transparent 50%,
+    #f1f5f9 50%,
+    #f1f5f9 75%,
+    transparent 75%,
+    transparent
+  ) 0 0 / 16px 16px,
+  #ffffff;
+}
+
+body.is-node-dragging #previewWrap,
+body.is-node-dragging #previewWrap *,
+body.is-node-dragging #previewStage,
+body.is-node-dragging #previewStage *,
+body.is-node-dragging #previewStage .trace-node {
+  cursor: none;
+}
+
 #previewViewport {
   position: relative;
   width: 100%;
@@ -592,6 +646,18 @@ button:disabled {
     stroke-width: 1.6;
   }
 
+  & .trace-node.is-smooth-selected:not(.is-dragging) {
+    fill: #34d399;
+    stroke: #047857;
+    stroke-width: 1.65;
+  }
+
+  & .trace-node.is-dragging {
+    fill: #f59e0b;
+    stroke: #b45309;
+    stroke-width: 1.8;
+  }
+
   & .placeholder {
     height: 100%;
     min-height: 20rem;
@@ -670,8 +736,4 @@ button:disabled {
     min-height: 0;
   }
 
-}
-
-color-input::part(input) {
-  display: none;
 }
