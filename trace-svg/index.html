@@ -12,7 +12,6 @@
   <main class="app">
     <section class="workspace">
       <div class="stack panel controls-panel">
-        <p id="status" class="status" role="status" aria-live="polite"></p>
         <h2 class="section-title">Source</h2>
         <div class="canvas-wrap" id="sourceDropTarget">
           <canvas id="sourceCanvas" width="640" height="480"></canvas>
@@ -22,7 +21,7 @@
         <div class="controls" id="controls">
           <div class="control">
             <label for="threshold">
-              <span>Threshold</span>
+              <span title="Brightness cutoff for binarizing luminance during trace. Lower captures more dark pixels; higher captures fewer.">Threshold</span>
               <span class="value" id="thresholdValue">128</span>
             </label>
             <input id="threshold" type="range" min="0" max="255" value="128">
@@ -30,7 +29,7 @@
 
           <div class="control">
             <label for="detail">
-              <span>Detail Size</span>
+              <span title="Output SVG viewBox edge target. Higher values keep more coordinate precision in exports.">ViewBox Size</span>
               <span class="value" id="detailValue">720 px</span>
             </label>
             <input id="detail" type="range" min="256" max="1600" step="16" value="720">
@@ -38,23 +37,51 @@
 
           <div class="control">
             <label for="simplify">
-              <span>Simplify</span>
-              <span class="value" id="simplifyValue">1.2</span>
+              <span title="Douglas-Peucker point reduction tolerance in pixels. Higher values remove more points.">Simplify</span>
+              <span class="value" id="simplifyValue">0.0</span>
             </label>
-            <input id="simplify" type="range" min="0" max="5" step="0.1" value="1.2">
+            <input id="simplify" type="range" min="0" max="5" step="0.1" value="0">
           </div>
 
           <div class="control">
             <label for="smooth">
-              <span>Smoothing Passes</span>
-              <span class="value" id="smoothValue">2</span>
+              <span title="Chaikin smoothing passes before shape detection. Higher values smooth jagged edges more aggressively.">Smoothing Passes</span>
+              <span class="value" id="smoothValue">0</span>
             </label>
-            <input id="smooth" type="range" min="0" max="4" step="1" value="2">
+            <input id="smooth" type="range" min="0" max="4" step="1" value="0">
           </div>
 
           <div class="control">
+            <label for="edgeCleanup">
+              <span title="Pre-quantization anti-alias cleanup passes to reduce jagged bitmap stair-steps.">Edge Cleanup</span>
+              <span class="value" id="edgeCleanupValue">1 pass</span>
+            </label>
+            <input id="edgeCleanup" type="range" min="0" max="4" step="1" value="1">
+          </div>
+
+          <label class="checkbox" for="smartPassEnabled">
+            <input id="smartPassEnabled" type="checkbox" checked>
+            <span>Smart second pass (phase 1/2)</span>
+          </label>
+
+          <div class="control">
+            <label for="smartLineTolerance">
+              <span title="Maximum perpendicular deviation from a fitted line for smart straight-line reduction.">Line Deviation Tolerance</span>
+              <span class="value" id="smartLineToleranceValue">0.9 px</span>
+            </label>
+            <input id="smartLineTolerance" type="range" min="0.2" max="3.5" step="0.1" value="0.9">
+          </div>
+
+          <div class="control">
+            <label for="smartLineWindow">
+              <span title="Rolling point window size used by the smart straight-line pass. Larger windows prefer longer straight segments.">Smart Line Window</span>
+              <span class="value" id="smartLineWindowValue">5 pts</span>
+            </label>
+            <input id="smartLineWindow" type="range" min="5" max="15" step="1" value="5">
+          </div>
+          <div class="control">
             <label for="minArea">
-              <span>Min Shape Area</span>
+              <span title="Minimum enclosed pixel area for keeping a detected contour. Smaller values keep more tiny shapes/noise.">Min Shape Area</span>
               <span class="value" id="minAreaValue">24</span>
             </label>
             <input id="minArea" type="range" min="1" max="600" step="1" value="24">
@@ -62,65 +89,138 @@
 
           <label class="checkbox" for="invert">
             <input id="invert" type="checkbox">
-            Invert (trace light shapes instead of dark)
+            <span>Invert (trace light shapes instead of dark)</span>
           </label>
+
+          <div class="control">
+            <label for="colorCount">
+              <span title="Number of sampled palette buckets used for color contour extraction.">Palette Colors</span>
+              <span class="value" id="colorCountValue">6</span>
+            </label>
+            <input id="colorCount" type="range" min="1" max="16" step="1" value="6">
+          </div>
+          <div class="control palette-control">
+            <label>
+              <span>Palette Picker</span>
+            </label>
+            <div id="paletteSwatches" class="palette-swatches" aria-label="Palette colors"></div>
+            <input id="palettePicker" class="palette-picker-input" type="color" value="#000000">
+          </div>
         </div>
 
         <h2 class="section-title">Edit Mode</h2>
-        <div class="mode-toggle" role="tablist" aria-label="Tracing mode">
-          <button id="modeTraceBtn" type="button" class="active" aria-pressed="true">Global Trace</button>
-          <button id="modePathBtn" type="button" aria-pressed="false">Path Edit</button>
-        </div>
+        <div id="pathEditor" class="path-editor">
+          <p id="pathEditorWaiting" class="path-editor-hint">Waiting for source… drop a PNG or JPG to trace and edit paths.</p>
+          <div id="pathEditorContent" class="path-editor-content is-hidden">
+            <p class="path-editor-hint">Pick a path from the preview or list, then adjust module, node edits, and per-path rules.</p>
 
-        <div id="pathEditor" class="path-editor is-hidden">
-          <p class="path-editor-hint">Pick a path from the preview or list, then override its module and smoothing rules.</p>
+            <div id="pathList" class="path-list" aria-label="Detected paths"></div>
 
-          <div id="pathList" class="path-list" aria-label="Detected paths"></div>
+            <div class="controls compact">
+              <div class="control">
+                <label for="pathModule">
+                  <span>Path Module</span>
+                </label>
+                <select id="pathModule">
+                  <option value="auto">Auto (detector)</option>
+                  <option value="path">Complex path</option>
+                  <option value="line">Line</option>
+                  <option value="rect">Rectangle</option>
+                  <option value="rounded-rect">Rounded rectangle</option>
+                  <option value="circle">Circle</option>
+                  <option value="ellipse">Ellipse</option>
+                </select>
+              </div>
 
-          <div class="controls compact">
-            <div class="control">
-              <label for="pathModule">
-                <span>Path Module</span>
+              <div class="control">
+                <label for="pathFillMode">
+                  <span>Fill Mode</span>
+                </label>
+                <select id="pathFillMode">
+                  <option value="auto">Auto</option>
+                  <option value="solid">Solid</option>
+                  <option value="cutout">Cutout</option>
+                </select>
+              </div>
+
+              <label class="checkbox" for="pathNodeEdit">
+                <input id="pathNodeEdit" type="checkbox">
+                <span>Node Edit Mode</span>
               </label>
-              <select id="pathModule">
-                <option value="auto">Auto (detector)</option>
-                <option value="path">Complex path</option>
-                <option value="custom">Custom (editable)</option>
-                <option value="line">Line</option>
-                <option value="rect">Rectangle</option>
-                <option value="rounded-rect">Rounded rectangle</option>
-                <option value="circle">Circle</option>
-                <option value="ellipse">Ellipse</option>
-              </select>
+
+              <div class="control">
+                <label for="pathColor">
+                  <span>Path Color</span>
+                  <span class="value" id="pathColorValue">#000000</span>
+                </label>
+                <input id="pathColor" type="color" value="#000000">
+              </div>
+
+              <div class="control-group smooth-group">
+                <h3 class="group-title">Smooth Nodes</h3>
+                <label class="checkbox" for="pathNodeSmoothMode">
+                  <input id="pathNodeSmoothMode" type="checkbox">
+                  <span>Smooth Nodes Mode</span>
+                </label>
+                <p id="pathNodeSmoothInfo" class="path-editor-hint smooth-node-hint">Smooth mode off.</p>
+                <div class="button-row compact">
+                  <button id="completeSmoothNodesBtn" type="button">Complete Smoothing</button>
+                  <button id="clearSmoothNodesBtn" type="button">Clear Smooth Selection</button>
+                </div>
+              </div>
+
+              <div id="pathOverrideControls" class="control-group override-group">
+                <h3 class="group-title">Per-Path Overrides</h3>
+                <label class="checkbox" for="pathSimplifyEnabled">
+                  <input id="pathSimplifyEnabled" type="checkbox">
+                  <span>Override simplify</span>
+                </label>
+                <div class="control">
+                  <label for="pathSimplify">
+                    <span title="Per-path simplify tolerance in pixels.">Path Simplify</span>
+                    <span class="value" id="pathSimplifyValue">0.0</span>
+                  </label>
+                  <input id="pathSimplify" type="range" min="0" max="5" step="0.1" value="0">
+                </div>
+
+                <label class="checkbox" for="pathSmoothEnabled">
+                  <input id="pathSmoothEnabled" type="checkbox">
+                  <span>Override smoothing</span>
+                </label>
+                <div class="control">
+                  <label for="pathSmooth">
+                    <span title="Per-path smoothing passes before module fitting.">Path Smoothing</span>
+                    <span class="value" id="pathSmoothValue">0</span>
+                  </label>
+                  <input id="pathSmooth" type="range" min="0" max="4" step="1" value="0">
+                </div>
+
+                <label class="checkbox" for="pathSmartEnabled">
+                  <input id="pathSmartEnabled" type="checkbox">
+                  <span>Override smart pass</span>
+                </label>
+
+                <label class="checkbox" for="pathSmartPass">
+                  <input id="pathSmartPass" type="checkbox" checked>
+                  <span>Smart line simplification</span>
+                </label>
+
+                <div class="control">
+                  <label for="pathSmartTolerance">
+                    <span title="Per-path line deviation tolerance for smart straight-line simplification.">Line Deviation Tolerance</span>
+                    <span class="value" id="pathSmartToleranceValue">0.9 px</span>
+                  </label>
+                  <input id="pathSmartTolerance" type="range" min="0.2" max="3.5" step="0.1" value="0.9">
+                </div>
+              </div>
+
             </div>
 
-            <label class="checkbox" for="pathSimplifyEnabled">
-              <input id="pathSimplifyEnabled" type="checkbox">
-              Override simplify
-            </label>
-            <div class="control">
-              <label for="pathSimplify">
-                <span>Path Simplify</span>
-                <span class="value" id="pathSimplifyValue">1.2</span>
-              </label>
-              <input id="pathSimplify" type="range" min="0" max="5" step="0.1" value="1.2">
+            <div class="button-row">
+              <button id="simplifyPathNodesBtn" type="button">Simplify Nodes</button>
+              <button id="resetPathBtn" type="button">Reset Selected Path</button>
+              <button id="deletePathBtn" type="button">Delete Selected Path</button>
             </div>
-
-            <label class="checkbox" for="pathSmoothEnabled">
-              <input id="pathSmoothEnabled" type="checkbox">
-              Override smoothing
-            </label>
-            <div class="control">
-              <label for="pathSmooth">
-                <span>Path Smoothing</span>
-                <span class="value" id="pathSmoothValue">2</span>
-              </label>
-              <input id="pathSmooth" type="range" min="0" max="4" step="1" value="2">
-            </div>
-          </div>
-
-          <div class="button-row">
-            <button id="resetPathBtn" type="button">Reset Selected Path</button>
           </div>
         </div>
       </div>
@@ -129,12 +229,14 @@
         <h2 class="section-title">SVG Preview</h2>
 
         <div class="preview-toolbar">
+          <button id="undoBtn" type="button" disabled>Undo</button>
           <button id="resetViewBtn" type="button" disabled>Reset View</button>
           <label class="toolbar-slider" for="onionOpacity">
-            <span>Opacity</span>
+            <span title="Blend between traced SVG and source image: 0 = SVG only, 50 = both visible, 100 = source only.">Opacity</span>
             <input id="onionOpacity" type="range" min="0" max="100" step="1" value="30">
           </label>
           <div class="preview-actions">
+            <span id="svgSize" class="svg-size" aria-live="polite">0 B</span>
             <button id="copyBtn" type="button" disabled>Copy SVG</button>
             <button id="downloadBtn" type="button" disabled>Download SVG</button>
           </div>
@@ -156,6 +258,7 @@
     <button id="deleteNodeBtn" type="button">Delete Node</button>
     <button id="toggleCurveBtn" type="button">Set Node to Corner</button>
   </div>
+  <div id="toastRoot" class="toast-root" aria-live="polite" aria-atomic="false"></div>
   <script src="script.js"></script>
 </body>
 </html>
