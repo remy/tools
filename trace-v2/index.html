@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI-enhanced bitmap to SVG tracer. Upload a PNG, JPG, or WebP image; Gemini Vision picks the optimal tracing settings; ImageTracerJS converts it; then Gemini cleans up the SVG output.">
+  <meta name="category" content="Developer Tools">
+  <title>Trace v2 — AI Bitmap to SVG</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Settings modal -->
+  <dialog id="settingsDialog" class="settings-dialog">
+    <form method="dialog" class="settings-form">
+      <h2 class="dialog-title">API Settings</h2>
+      <p class="dialog-hint">Your key is stored only in <code>localStorage</code> and is never sent anywhere except directly to the Gemini API.</p>
+      <label class="field">
+        <span class="field-label">Gemini API Key</span>
+        <input id="apiKeyInput" type="password" placeholder="AIza…" autocomplete="off" spellcheck="false">
+      </label>
+      <label class="field">
+        <span class="field-label">Model</span>
+        <select id="modelSelect">
+          <option value="gemini-1.5-pro">gemini-1.5-pro (recommended)</option>
+          <option value="gemini-1.5-flash">gemini-1.5-flash (faster, cheaper)</option>
+          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+        </select>
+      </label>
+      <div class="dialog-actions">
+        <button type="submit" class="btn btn-primary">Save &amp; Close</button>
+      </div>
+    </form>
+  </dialog>
+
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <span class="header-icon" aria-hidden="true">◈</span>
+        <h1 class="header-title">Trace v2</h1>
+        <span class="header-sub">AI Bitmap → SVG</span>
+      </div>
+      <button id="settingsBtn" class="btn btn-ghost" type="button" title="API Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- Left column: upload + controls -->
+    <aside class="sidebar">
+
+      <!-- Drop zone -->
+      <section class="panel" id="uploadPanel">
+        <h2 class="panel-title">Source Image</h2>
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Upload image by clicking or dropping a file">
+          <input type="file" id="fileInput" accept="image/png,image/jpeg,image/webp" class="visually-hidden">
+          <div class="dropzone-content" id="dropzoneContent">
+            <svg class="dropzone-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9l4-4 4 4 4-6 4 6"/><circle cx="8.5" cy="13.5" r="1.5"/></svg>
+            <p class="dropzone-label">Drop PNG, JPG, or WebP here</p>
+            <span class="dropzone-sub">or click to browse</span>
+          </div>
+          <canvas id="sourceCanvas" class="source-canvas is-hidden"></canvas>
+        </div>
+        <p id="imageMeta" class="image-meta"></p>
+      </section>
+
+      <!-- AI status -->
+      <section class="panel ai-panel" id="aiPanel">
+        <h2 class="panel-title">
+          AI Analysis
+          <span class="ai-badge" id="aiBadge"></span>
+        </h2>
+        <div id="aiStatus" class="ai-status">
+          <p class="ai-hint">Upload an image and set a Gemini API key to enable AI parameter tuning.</p>
+        </div>
+        <div id="aiReasoning" class="ai-reasoning is-hidden"></div>
+      </section>
+
+      <!-- Tracing settings -->
+      <section class="panel" id="settingsPanel">
+        <h2 class="panel-title">
+          Tracing Settings
+          <button id="retraceBtn" class="btn btn-sm btn-primary" type="button" disabled>Re-trace</button>
+        </h2>
+
+        <div class="controls" id="controls">
+          <div class="control">
+            <label for="colorCount">
+              <span title="Number of palette colors used during quantization.">Colors</span>
+              <span class="value" id="colorCountValue">16</span>
+            </label>
+            <input id="colorCount" type="range" min="2" max="64" step="1" value="16">
+          </div>
+
+          <div class="control">
+            <label for="blurRadius">
+              <span title="Pre-processing Gaussian blur radius. Higher values reduce noise.">Blur Radius</span>
+              <span class="value" id="blurRadiusValue">0</span>
+            </label>
+            <input id="blurRadius" type="range" min="0" max="5" step="0.5" value="0">
+          </div>
+
+          <div class="control">
+            <label for="pathOmit">
+              <span title="Discard paths smaller than this pixel area.">Path Omit (px²)</span>
+              <span class="value" id="pathOmitValue">8</span>
+            </label>
+            <input id="pathOmit" type="range" min="0" max="64" step="1" value="8">
+          </div>
+
+          <div class="control">
+            <label for="curveTolerance">
+              <span title="Curve fitting tolerance. Higher = smoother but less accurate.">Curve Tolerance</span>
+              <span class="value" id="curveToleranceValue">1.0</span>
+            </label>
+            <input id="curveTolerance" type="range" min="0.1" max="10" step="0.1" value="1.0">
+          </div>
+
+          <div class="control">
+            <label for="strokeWidth">
+              <span title="Stroke width for paths in the SVG output.">Stroke Width</span>
+              <span class="value" id="strokeWidthValue">1</span>
+            </label>
+            <input id="strokeWidth" type="range" min="0" max="5" step="0.5" value="1">
+          </div>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- Right column: preview -->
+    <section class="preview-col">
+      <!-- Pipeline steps indicator -->
+      <div class="pipeline" id="pipeline">
+        <div class="pipeline-step" id="step-upload" data-step="upload">
+          <span class="step-dot"></span>
+          <span class="step-label">Upload</span>
+        </div>
+        <div class="pipeline-connector"></div>
+        <div class="pipeline-step" id="step-ai-pre" data-step="ai-pre">
+          <span class="step-dot"></span>
+          <span class="step-label">AI Pre-flight</span>
+        </div>
+        <div class="pipeline-connector"></div>
+        <div class="pipeline-step" id="step-trace" data-step="trace">
+          <span class="step-dot"></span>
+          <span class="step-label">Trace</span>
+        </div>
+        <div class="pipeline-connector"></div>
+        <div class="pipeline-step" id="step-ai-post" data-step="ai-post">
+          <span class="step-dot"></span>
+          <span class="step-label">AI Cleanup</span>
+        </div>
+        <div class="pipeline-connector"></div>
+        <div class="pipeline-step" id="step-done" data-step="done">
+          <span class="step-dot"></span>
+          <span class="step-label">Done</span>
+        </div>
+      </div>
+
+      <!-- Preview toolbar -->
+      <div class="preview-toolbar">
+        <div class="toolbar-left">
+          <label class="toggle-label" for="onionToggle">
+            <input type="checkbox" id="onionToggle" checked>
+            Overlay
+          </label>
+          <label class="toolbar-slider-label" for="onionOpacity">
+            <span class="visually-hidden">Overlay opacity</span>
+            <input id="onionOpacity" type="range" min="0" max="100" step="5" value="30">
+          </label>
+        </div>
+        <div class="toolbar-right">
+          <span id="svgSize" class="svg-size" aria-live="polite"></span>
+          <button id="aiCleanupBtn" class="btn btn-sm btn-accent" type="button" disabled>✦ AI Cleanup</button>
+          <button id="copyBtn" class="btn btn-sm" type="button" disabled>Copy SVG</button>
+          <button id="downloadBtn" class="btn btn-sm btn-primary" type="button" disabled>Download</button>
+        </div>
+      </div>
+
+      <!-- Preview area -->
+      <div class="preview-wrap" id="previewWrap">
+        <div id="previewViewport" class="preview-viewport">
+          <img id="onionImage" class="onion-image" alt="">
+          <div id="previewStage" class="preview-stage">
+            <div class="preview-placeholder">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              <p>Your SVG will appear here</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Processing overlay -->
+      <div id="processingOverlay" class="processing-overlay is-hidden" aria-live="assertive">
+        <div class="processing-card">
+          <div class="spinner" aria-hidden="true"></div>
+          <p id="processingMsg" class="processing-msg">Processing…</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toastRoot" class="toast-root" aria-live="polite" aria-atomic="false"></div>
+
+  <script src="vendor/imagetracerjs.js"></script>
+  <script src="ai.js" type="module"></script>
+  <script src="tracer.js" type="module"></script>
+  <script src="script.js" type="module"></script>
+</body>
+</html>

@@ -104,6 +104,11 @@
     "description": "Drop a PNG or JPG, trace it into black-and-white SVG paths, inspect with pan/zoom, then copy or download the SVG.",
     "title": "Trace SVG"
   },
+  "trace-v2": {
+    "category": "Developer Tools",
+    "description": "AI-enhanced bitmap to SVG tracer. Upload a PNG, JPG, or WebP image; Gemini Vision picks the optimal tracing settings; ImageTracerJS converts it; then Gemini cleans up the SVG output.",
+    "title": "Trace v2 \u2014 AI Bitmap to SVG"
+  },
   "url-to-meta": {
     "category": "Developer Tools",
     "description": "Extract metadata and Open Graph information from any URL",
