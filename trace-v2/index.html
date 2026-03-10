@@ -21,9 +21,10 @@
       <label class="field">
         <span class="field-label">Model</span>
         <select id="modelSelect">
-          <option value="gemini-1.5-pro">gemini-1.5-pro (recommended)</option>
-          <option value="gemini-1.5-flash">gemini-1.5-flash (faster, cheaper)</option>
-          <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+          <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (recommended)</option>
+          <option value="gemini-3.1-flash-lite-preview">gemini-3.1-flash-lite-preview</option>
+          <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
+          <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (highest quality)</option>
         </select>
       </label>
       <div class="dialog-actions">
@@ -170,6 +171,9 @@
             <span class="visually-hidden">Overlay opacity</span>
             <input id="onionOpacity" type="range" min="0" max="100" step="5" value="30">
           </label>
+          <span class="toolbar-sep" aria-hidden="true"></span>
+          <button id="fitBtn" class="btn btn-sm btn-ghost" type="button" title="Fit to viewport (reset zoom &amp; pan)">Fit</button>
+          <span id="zoomLabel" class="zoom-label">100%</span>
         </div>
         <div class="toolbar-right">
           <span id="svgSize" class="svg-size" aria-live="polite"></span>
@@ -181,12 +185,13 @@
 
       <!-- Preview area -->
       <div class="preview-wrap" id="previewWrap">
-        <div id="previewViewport" class="preview-viewport">
+        <div id="previewViewport" class="preview-viewport" title="Scroll to zoom · Drag to pan">
           <img id="onionImage" class="onion-image" alt="">
           <div id="previewStage" class="preview-stage">
             <div class="preview-placeholder">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.4" aria-hidden="true"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
               <p>Your SVG will appear here</p>
+              <p class="preview-hint">Scroll to zoom · drag to pan</p>
             </div>
           </div>
         </div>
