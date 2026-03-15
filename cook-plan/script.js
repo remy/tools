@@ -762,38 +762,54 @@ function renderConflicts(conflicts) {
 
 function renderTimeline(events, items) {
   const nowM = nowMins();
-  return events.map(ev => {
-    const isPast   = ev.endTime < nowM;
-    const isActive = ev.time <= nowM && ev.endTime >= nowM && ev.type !== 'serve';
-    const isServe  = ev.type === 'serve';
+
+  // Group events by time
+  const groups = [];
+  for (const ev of events) {
+    const last = groups[groups.length - 1];
+    if (last && last.time === ev.time) last.events.push(ev);
+    else groups.push({ time: ev.time, events: [ev] });
+  }
+
+  return groups.map(group => {
+    const isServeGroup = group.events.some(ev => ev.type === 'serve');
+    // A group is past if ALL events in it are past
+    const isPast   = group.events.every(ev => ev.endTime < nowM);
+    // A group is active if ANY non-serve event in it is active
+    const isActive = group.events.some(ev => ev.time <= nowM && ev.endTime >= nowM && ev.type !== 'serve');
+
     let cls = 'tl-event';
-    if (isPast)   cls += ' tl-past';
-    if (isActive) cls += ' tl-active';
-    if (isServe)  cls += ' tl-serve';
+    if (isPast)       cls += ' tl-past';
+    if (isActive)     cls += ' tl-active';
+    if (isServeGroup) cls += ' tl-serve';
 
-    // Override time input for cook_start events
-    let overrideHtml = '';
-    if (ev.canOverride && ev.itemId) {
-      const item = items.find(i => i.id === ev.itemId);
-      const override = item?.overrideCookStart || '';
-      overrideHtml = `
-        <div class="tl-override">
-          <label>Override cook start:</label>
-          <input type="time" class="override-input" data-id="${ev.itemId}" value="${override}">
-          ${override ? `<button class="btn-clear-override" data-id="${ev.itemId}" title="Clear override">✕</button>` : ''}
-        </div>
-      `;
-    }
-
-    return `
-      <div class="${cls}" data-item="${ev.itemId || ''}" data-type="${ev.type}">
-        <div class="tl-time">${formatTime(ev.time)}</div>
-        <div class="tl-dot"><span></span></div>
-        <div class="tl-content">
+    const evRows = group.events.map(ev => {
+      let overrideHtml = '';
+      if (ev.canOverride && ev.itemId) {
+        const item = items.find(i => i.id === ev.itemId);
+        const override = item?.overrideCookStart || '';
+        overrideHtml = `
+          <div class="tl-override">
+            <label>Override cook start:</label>
+            <input type="time" class="override-input" data-id="${ev.itemId}" value="${override}">
+            ${override ? `<button class="btn-clear-override" data-id="${ev.itemId}" title="Clear override">✕</button>` : ''}
+          </div>
+        `;
+      }
+      return `
+        <div class="tl-sub-event" data-item="${ev.itemId || ''}" data-type="${ev.type}">
           <div class="tl-label">${escHtml(ev.label)}</div>
           ${ev.sub ? `<div class="tl-sub">${escHtml(ev.sub)}</div>` : ''}
           ${overrideHtml}
         </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="${cls}">
+        <div class="tl-time">${formatTime(group.time)}</div>
+        <div class="tl-dot"><span></span></div>
+        <div class="tl-content">${evRows}</div>
       </div>
     `;
   }).join('');
@@ -968,15 +984,20 @@ function updateClock(events) {
     clockNextEl.innerHTML = '';
   }
 
-  // Update past/active classes on timeline
-  const tlEvents = document.querySelectorAll('.tl-event');
-  tlEvents.forEach(el => {
-    const type = el.dataset.type;
-    const itemId = el.dataset.item;
-    const matchEv = events.find(ev => ev.type === type && (ev.itemId || '') === itemId);
-    if (!matchEv) return;
-    el.classList.toggle('tl-past',   matchEv.endTime < nowM);
-    el.classList.toggle('tl-active', matchEv.time <= nowM && matchEv.endTime >= nowM && type !== 'serve');
+  // Update past/active classes on grouped timeline rows
+  const tlRows = document.querySelectorAll('.tl-event');
+  tlRows.forEach(row => {
+    // Collect the sub-events within this row
+    const subEls = row.querySelectorAll('.tl-sub-event');
+    if (subEls.length === 0) return;
+    const rowEvents = [...subEls].map(el => {
+      return events.find(ev => ev.type === el.dataset.type && (ev.itemId || '') === (el.dataset.item || ''));
+    }).filter(Boolean);
+    if (rowEvents.length === 0) return;
+    const isPast   = rowEvents.every(ev => ev.endTime < nowM);
+    const isActive = rowEvents.some(ev => ev.time <= nowM && ev.endTime >= nowM && ev.type !== 'serve');
+    row.classList.toggle('tl-past',   isPast);
+    row.classList.toggle('tl-active', isActive && !isPast);
   });
 
   // Update appliance slots (re-render just slot bars would need full re-render; skip for perf)

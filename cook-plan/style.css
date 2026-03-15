@@ -634,6 +634,12 @@ button { cursor: pointer; }
   }
 
   & .tl-content {
+    & .tl-sub-event + .tl-sub-event {
+      margin-top: var(--space-sm);
+      padding-top: var(--space-sm);
+      border-top: 1px dashed var(--colour-border);
+    }
+
     & .tl-label {
       font-size: 0.9375rem;
       font-weight: 500;
