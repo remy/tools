@@ -489,6 +489,8 @@ function buildEvents(items, target) {
 
     if (item.cookType !== 'none' && item.cookTime > 0) {
       const appLabel = applianceLabel(item._appliance, ct);
+      // applianceKey groups items that share the same destination (for merged labels)
+      const appKey = item._appliance || 'none';
       events.push({
         time: cookStart,
         endTime: cookEnd,
@@ -498,6 +500,9 @@ function buildEvents(items, target) {
         itemId: item.id,
         itemName: item.name,
         canOverride: true,
+        applianceKey: appKey,
+        applianceLabel: appLabel,
+        ct,
       });
       events.push({
         time: cookEnd,
@@ -507,6 +512,9 @@ function buildEvents(items, target) {
         sub: null,
         itemId: item.id,
         itemName: item.name,
+        applianceKey: appKey,
+        applianceLabel: appLabel,
+        ct,
       });
     }
 
@@ -519,6 +527,7 @@ function buildEvents(items, target) {
         sub: formatDuration(item.setTime),
         itemId: item.id,
         itemName: item.name,
+        applianceKey: 'set',
       });
     }
 
@@ -530,6 +539,7 @@ function buildEvents(items, target) {
       sub: null,
       itemId: item.id,
       itemName: item.name,
+      applianceKey: 'ready',
     });
   }
 
@@ -547,6 +557,51 @@ function buildEvents(items, target) {
 
   // Deduplicate adjacent ready + serve at same time
   return events;
+}
+
+function joinNames(names) {
+  if (names.length === 1) return names[0];
+  return names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
+}
+
+function mergedLabel(type, evs, names) {
+  if (names.length === 0) return evs[0]?.label || '';
+  const appLabel = evs[0]?.applianceLabel;
+  const ct = evs[0]?.ct;
+  switch (type) {
+    case 'prep':       return `Prep ${joinNames(names)}`;
+    case 'cook_start': {
+      const resource = ct?.resource;
+      if (resource === 'oven' || resource === 'combi') return `${joinNames(names)} → ${appLabel}`;
+      if (resource === 'hob') return `${joinNames(names)} on ${appLabel}`;
+      return `Start ${joinNames(names)}`;
+    }
+    case 'cook_end': {
+      const resource = ct?.resource;
+      if (resource === 'oven' || resource === 'combi') return `${joinNames(names)} out of oven`;
+      if (resource === 'hob') return `${joinNames(names)} off hob`;
+      return `${joinNames(names)} done`;
+    }
+    case 'set':   return `${joinNames(names)} — rest / set`;
+    case 'ready': return `${joinNames(names)} ready`;
+    default:      return evs[0]?.label || '';
+  }
+}
+
+function mergedSub(type, evs) {
+  if (evs.length === 1) return evs[0].sub;
+  // For cook_start: list individual durations if they differ
+  if (type === 'cook_start') {
+    const durations = evs.map(e => e.sub).filter(Boolean);
+    const unique = [...new Set(durations)];
+    if (unique.length === 1) return unique[0];
+    // Different durations — show per-item
+    return evs.map(e => `${e.itemName}: ${e.sub}`).join(' · ');
+  }
+  // For set/ready: show duration if uniform
+  const subs = evs.map(e => e.sub).filter(Boolean);
+  const unique = [...new Set(subs)];
+  return unique.length === 1 ? unique[0] : '';
 }
 
 function applianceLabel(app, ct) {
@@ -837,25 +892,49 @@ function renderTimeline(events, items) {
     if (isActive)     cls += ' tl-active';
     if (isServeGroup) cls += ' tl-serve';
 
-    const evRows = group.events.map(ev => {
-      let overrideHtml = '';
-      if (ev.canOverride && ev.itemId) {
+    // Within the time-group, merge events that share the same type+applianceKey
+    const clusters = [];
+    for (const ev of group.events) {
+      const key = `${ev.type}::${ev.applianceKey || ''}`;
+      const existing = clusters.find(c => c.key === key);
+      if (existing) existing.events.push(ev);
+      else clusters.push({ key, type: ev.type, events: [ev] });
+    }
+
+    const evRows = clusters.map(cluster => {
+      const { type, events: evs } = cluster;
+      const chip = EV_TYPE_CHIP[type] || '';
+
+      // Merged label and sub-line
+      const names = evs.map(e => e.itemName).filter(Boolean);
+      const label = mergedLabel(type, evs, names);
+      const sub   = mergedSub(type, evs);
+
+      // Override inputs (one per event in this cluster that canOverride)
+      const overrideHtml = evs.filter(e => e.canOverride && e.itemId).map(ev => {
         const item = items.find(i => i.id === ev.itemId);
         const override = item?.overrideCookStart || '';
-        overrideHtml = `
+        const namePrefix = evs.length > 1 ? `<span class="override-name">${escHtml(ev.itemName)}:</span> ` : '';
+        return `
           <div class="tl-override">
-            <label>Override cook start:</label>
+            <label>${namePrefix}Override cook start:</label>
             <input type="time" class="override-input" data-id="${ev.itemId}" value="${override}">
             ${override ? `<button class="btn-clear-override" data-id="${ev.itemId}" title="Clear override">✕</button>` : ''}
           </div>
         `;
-      }
-      const chip = EV_TYPE_CHIP[ev.type] || '';
+      }).join('');
+
+      // Hidden trackers so the clock updater can find each original event
+      const trackers = evs.map(ev =>
+        `<span class="tl-tracker" data-item="${ev.itemId || ''}" data-type="${ev.type}" aria-hidden="true"></span>`
+      ).join('');
+
       return `
-        <div class="tl-sub-event tl-type-${ev.type}" data-item="${ev.itemId || ''}" data-type="${ev.type}">
+        <div class="tl-sub-event tl-type-${type}" data-item="${evs[0].itemId || ''}" data-type="${type}">
+          ${trackers}
           ${chip ? `<span class="tl-chip">${chip}</span>` : ''}
-          <div class="tl-label">${escHtml(ev.label)}</div>
-          ${ev.sub ? `<div class="tl-sub">${escHtml(ev.sub)}</div>` : ''}
+          <div class="tl-label">${escHtml(label)}</div>
+          ${sub ? `<div class="tl-sub">${escHtml(sub)}</div>` : ''}
           ${overrideHtml}
         </div>
       `;
@@ -1041,14 +1120,13 @@ function updateClock(events) {
   }
 
   // Update past/active classes on grouped timeline rows
+  // Each row may contain .tl-tracker elements that map back to original events
   const tlRows = document.querySelectorAll('.tl-event');
   tlRows.forEach(row => {
-    // Collect the sub-events within this row
-    const subEls = row.querySelectorAll('.tl-sub-event');
-    if (subEls.length === 0) return;
-    const rowEvents = [...subEls].map(el => {
-      return events.find(ev => ev.type === el.dataset.type && (ev.itemId || '') === (el.dataset.item || ''));
-    }).filter(Boolean);
+    const trackers = row.querySelectorAll('.tl-tracker');
+    const rowEvents = [...trackers].map(el =>
+      events.find(ev => ev.type === el.dataset.type && (ev.itemId || '') === (el.dataset.item || ''))
+    ).filter(Boolean);
     if (rowEvents.length === 0) return;
     const isPast   = rowEvents.every(ev => ev.endTime < nowM);
     const isActive = rowEvents.some(ev => ev.time <= nowM && ev.endTime >= nowM && ev.type !== 'serve');

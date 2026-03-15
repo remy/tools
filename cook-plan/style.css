@@ -652,6 +652,8 @@ button { cursor: pointer; }
     & .tl-type-set        { border-left-color: #3b82f6; }
     & .tl-type-ready      { border-left-color: var(--colour-success); }
 
+    & .tl-tracker { display: none; }
+
     & .tl-chip {
       display: inline-block;
       font-size: 0.6875rem;
