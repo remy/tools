@@ -1,0 +1,731 @@
+{
+  "state": {
+    "view": "schedule",
+    "mode": "start",
+    "targetTime": "22:00",
+    "items": [
+      {
+        "id": "egelww8",
+        "name": "Chicken",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 80,
+        "setTime": 15,
+        "overrideCookStart": null
+      },
+      {
+        "id": "5xc4sze",
+        "name": "Potatoes",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 35,
+        "setTime": 0,
+        "overrideCookStart": null
+      },
+      {
+        "id": "vksilel",
+        "name": "Parsnips",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 35,
+        "setTime": 0,
+        "overrideCookStart": null
+      },
+      {
+        "id": "mpv4e5t",
+        "name": "Pigs in blankets",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 25,
+        "setTime": 0,
+        "overrideCookStart": null
+      },
+      {
+        "id": "fm7eygi",
+        "name": "Peas",
+        "cookType": "boil",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 5,
+        "setTime": 0,
+        "overrideCookStart": null
+      },
+      {
+        "id": "7cmw312",
+        "name": "Stuffing",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 15,
+        "cookTime": 30,
+        "setTime": 0,
+        "overrideCookStart": null
+      },
+      {
+        "id": "gynqpkr",
+        "name": "Cauliflower cheese",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 35,
+        "setTime": 0,
+        "overrideCookStart": null
+      },
+      {
+        "id": "wfwqj7q",
+        "name": "Red cabbage",
+        "cookType": "microwave",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 4,
+        "setTime": 0,
+        "overrideCookStart": null
+      },
+      {
+        "id": "wn92ns8",
+        "name": "Yorkshire pudding",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 6,
+        "setTime": 0,
+        "overrideCookStart": null
+      }
+    ],
+    "appliances": {
+      "mainOvenShelves": 2,
+      "hasCombi": true,
+      "hobCount": 5
+    }
+  },
+  "schedule": {
+    "items": [
+      {
+        "id": "egelww8",
+        "name": "Chicken",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 80,
+        "setTime": 15,
+        "overrideCookStart": null,
+        "_s": {
+          "cookStart": 1320,
+          "prepStart": 1320,
+          "cookEnd": 1400,
+          "setEnd": 1415
+        },
+        "_appliance": "main",
+        "_shelf": 1
+      },
+      {
+        "id": "5xc4sze",
+        "name": "Potatoes",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 35,
+        "setTime": 0,
+        "overrideCookStart": null,
+        "_s": {
+          "cookStart": 1320,
+          "prepStart": 1320,
+          "cookEnd": 1355,
+          "setEnd": 1355
+        },
+        "_appliance": "main",
+        "_shelf": 1
+      },
+      {
+        "id": "vksilel",
+        "name": "Parsnips",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 35,
+        "setTime": 0,
+        "overrideCookStart": null,
+        "_s": {
+          "cookStart": 1320,
+          "prepStart": 1320,
+          "cookEnd": 1355,
+          "setEnd": 1355
+        },
+        "_appliance": "main",
+        "_shelf": 2
+      },
+      {
+        "id": "mpv4e5t",
+        "name": "Pigs in blankets",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 25,
+        "setTime": 0,
+        "overrideCookStart": null,
+        "_s": {
+          "cookStart": 1320,
+          "prepStart": 1320,
+          "cookEnd": 1345,
+          "setEnd": 1345
+        },
+        "_appliance": "main",
+        "_shelf": 2
+      },
+      {
+        "id": "fm7eygi",
+        "name": "Peas",
+        "cookType": "boil",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 5,
+        "setTime": 0,
+        "overrideCookStart": null,
+        "_s": {
+          "cookStart": 1320,
+          "prepStart": 1320,
+          "cookEnd": 1325,
+          "setEnd": 1325
+        },
+        "_appliance": "hob1"
+      },
+      {
+        "id": "gynqpkr",
+        "name": "Cauliflower cheese",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 35,
+        "setTime": 0,
+        "overrideCookStart": null,
+        "_s": {
+          "cookStart": 1320,
+          "prepStart": 1320,
+          "cookEnd": 1355,
+          "setEnd": 1355
+        },
+        "_appliance": "combi",
+        "_shelf": 1
+      },
+      {
+        "id": "wfwqj7q",
+        "name": "Red cabbage",
+        "cookType": "microwave",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 4,
+        "setTime": 0,
+        "overrideCookStart": null,
+        "_s": {
+          "cookStart": 1320,
+          "prepStart": 1320,
+          "cookEnd": 1324,
+          "setEnd": 1324
+        },
+        "_appliance": "combi-mw",
+        "_shelf": 1
+      },
+      {
+        "id": "wn92ns8",
+        "name": "Yorkshire pudding",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 0,
+        "cookTime": 6,
+        "setTime": 0,
+        "overrideCookStart": null,
+        "_s": {
+          "cookStart": 1320,
+          "prepStart": 1320,
+          "cookEnd": 1326,
+          "setEnd": 1326
+        },
+        "_appliance": "combi",
+        "_shelf": 1
+      },
+      {
+        "id": "7cmw312",
+        "name": "Stuffing",
+        "cookType": "oven",
+        "shelfSlots": 1,
+        "appliancePref": "auto",
+        "prepTime": 15,
+        "cookTime": 30,
+        "setTime": 0,
+        "overrideCookStart": null,
+        "_s": {
+          "cookStart": 1335,
+          "prepStart": 1320,
+          "cookEnd": 1365,
+          "setEnd": 1365
+        },
+        "_appliance": "combi",
+        "_shelf": 1
+      }
+    ],
+    "conflicts": [],
+    "events": [
+      {
+        "time": 1320,
+        "endTime": 1400,
+        "type": "cook_start",
+        "label": "Chicken → Main Oven",
+        "sub": "1h 20m · Main Oven · Shelf 1",
+        "itemId": "egelww8",
+        "itemName": "Chicken",
+        "canOverride": true,
+        "applianceKey": "main",
+        "applianceLabel": "Main Oven",
+        "shelfInfo": 1,
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1320,
+        "endTime": 1355,
+        "type": "cook_start",
+        "label": "Potatoes → Main Oven",
+        "sub": "35m · Main Oven · Shelf 1",
+        "itemId": "5xc4sze",
+        "itemName": "Potatoes",
+        "canOverride": true,
+        "applianceKey": "main",
+        "applianceLabel": "Main Oven",
+        "shelfInfo": 1,
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1320,
+        "endTime": 1355,
+        "type": "cook_start",
+        "label": "Parsnips → Main Oven",
+        "sub": "35m · Main Oven · Shelf 2",
+        "itemId": "vksilel",
+        "itemName": "Parsnips",
+        "canOverride": true,
+        "applianceKey": "main",
+        "applianceLabel": "Main Oven",
+        "shelfInfo": 2,
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1320,
+        "endTime": 1345,
+        "type": "cook_start",
+        "label": "Pigs in blankets → Main Oven",
+        "sub": "25m · Main Oven · Shelf 2",
+        "itemId": "mpv4e5t",
+        "itemName": "Pigs in blankets",
+        "canOverride": true,
+        "applianceKey": "main",
+        "applianceLabel": "Main Oven",
+        "shelfInfo": 2,
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1320,
+        "endTime": 1325,
+        "type": "cook_start",
+        "label": "Peas on Hob 1",
+        "sub": "5m · Hob 1",
+        "itemId": "fm7eygi",
+        "itemName": "Peas",
+        "canOverride": true,
+        "applianceKey": "hob1",
+        "applianceLabel": "Hob 1",
+        "shelfInfo": null,
+        "ct": {
+          "id": "boil",
+          "label": "Boil",
+          "icon": "💧",
+          "resource": "hob"
+        }
+      },
+      {
+        "time": 1320,
+        "endTime": 1355,
+        "type": "cook_start",
+        "label": "Cauliflower cheese → Combi Oven",
+        "sub": "35m · Combi Oven",
+        "itemId": "gynqpkr",
+        "itemName": "Cauliflower cheese",
+        "canOverride": true,
+        "applianceKey": "combi",
+        "applianceLabel": "Combi Oven",
+        "shelfInfo": 1,
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1320,
+        "endTime": 1324,
+        "type": "cook_start",
+        "label": "Red cabbage → Microwave",
+        "sub": "4m · Microwave",
+        "itemId": "wfwqj7q",
+        "itemName": "Red cabbage",
+        "canOverride": true,
+        "applianceKey": "combi-mw",
+        "applianceLabel": "Microwave",
+        "shelfInfo": 1,
+        "ct": {
+          "id": "microwave",
+          "label": "Microwave",
+          "icon": "📡",
+          "resource": "combi"
+        }
+      },
+      {
+        "time": 1320,
+        "endTime": 1326,
+        "type": "cook_start",
+        "label": "Yorkshire pudding → Combi Oven",
+        "sub": "6m · Combi Oven",
+        "itemId": "wn92ns8",
+        "itemName": "Yorkshire pudding",
+        "canOverride": true,
+        "applianceKey": "combi",
+        "applianceLabel": "Combi Oven",
+        "shelfInfo": 1,
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1320,
+        "endTime": 1335,
+        "type": "prep",
+        "label": "Prep Stuffing",
+        "sub": "15m",
+        "itemId": "7cmw312",
+        "itemName": "Stuffing"
+      },
+      {
+        "time": 1320,
+        "endTime": 1320,
+        "type": "serve",
+        "label": "🍽 SERVE",
+        "sub": null,
+        "itemId": null
+      },
+      {
+        "time": 1324,
+        "endTime": 1324,
+        "type": "cook_end",
+        "label": "Red cabbage out of oven",
+        "sub": null,
+        "itemId": "wfwqj7q",
+        "itemName": "Red cabbage",
+        "applianceKey": "combi-mw",
+        "applianceLabel": "Microwave",
+        "ct": {
+          "id": "microwave",
+          "label": "Microwave",
+          "icon": "📡",
+          "resource": "combi"
+        }
+      },
+      {
+        "time": 1324,
+        "endTime": 1324,
+        "type": "ready",
+        "label": "Red cabbage ready",
+        "sub": null,
+        "itemId": "wfwqj7q",
+        "itemName": "Red cabbage",
+        "applianceKey": "ready"
+      },
+      {
+        "time": 1325,
+        "endTime": 1325,
+        "type": "cook_end",
+        "label": "Peas off hob",
+        "sub": null,
+        "itemId": "fm7eygi",
+        "itemName": "Peas",
+        "applianceKey": "hob1",
+        "applianceLabel": "Hob 1",
+        "ct": {
+          "id": "boil",
+          "label": "Boil",
+          "icon": "💧",
+          "resource": "hob"
+        }
+      },
+      {
+        "time": 1325,
+        "endTime": 1325,
+        "type": "ready",
+        "label": "Peas ready",
+        "sub": null,
+        "itemId": "fm7eygi",
+        "itemName": "Peas",
+        "applianceKey": "ready"
+      },
+      {
+        "time": 1326,
+        "endTime": 1326,
+        "type": "cook_end",
+        "label": "Yorkshire pudding out of oven",
+        "sub": null,
+        "itemId": "wn92ns8",
+        "itemName": "Yorkshire pudding",
+        "applianceKey": "combi",
+        "applianceLabel": "Combi Oven",
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1326,
+        "endTime": 1326,
+        "type": "ready",
+        "label": "Yorkshire pudding ready",
+        "sub": null,
+        "itemId": "wn92ns8",
+        "itemName": "Yorkshire pudding",
+        "applianceKey": "ready"
+      },
+      {
+        "time": 1335,
+        "endTime": 1365,
+        "type": "cook_start",
+        "label": "Stuffing → Combi Oven",
+        "sub": "30m · Combi Oven",
+        "itemId": "7cmw312",
+        "itemName": "Stuffing",
+        "canOverride": true,
+        "applianceKey": "combi",
+        "applianceLabel": "Combi Oven",
+        "shelfInfo": 1,
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1345,
+        "endTime": 1345,
+        "type": "cook_end",
+        "label": "Pigs in blankets out of oven",
+        "sub": null,
+        "itemId": "mpv4e5t",
+        "itemName": "Pigs in blankets",
+        "applianceKey": "main",
+        "applianceLabel": "Main Oven",
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1345,
+        "endTime": 1345,
+        "type": "ready",
+        "label": "Pigs in blankets ready",
+        "sub": null,
+        "itemId": "mpv4e5t",
+        "itemName": "Pigs in blankets",
+        "applianceKey": "ready"
+      },
+      {
+        "time": 1355,
+        "endTime": 1355,
+        "type": "cook_end",
+        "label": "Potatoes out of oven",
+        "sub": null,
+        "itemId": "5xc4sze",
+        "itemName": "Potatoes",
+        "applianceKey": "main",
+        "applianceLabel": "Main Oven",
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1355,
+        "endTime": 1355,
+        "type": "ready",
+        "label": "Potatoes ready",
+        "sub": null,
+        "itemId": "5xc4sze",
+        "itemName": "Potatoes",
+        "applianceKey": "ready"
+      },
+      {
+        "time": 1355,
+        "endTime": 1355,
+        "type": "cook_end",
+        "label": "Parsnips out of oven",
+        "sub": null,
+        "itemId": "vksilel",
+        "itemName": "Parsnips",
+        "applianceKey": "main",
+        "applianceLabel": "Main Oven",
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1355,
+        "endTime": 1355,
+        "type": "ready",
+        "label": "Parsnips ready",
+        "sub": null,
+        "itemId": "vksilel",
+        "itemName": "Parsnips",
+        "applianceKey": "ready"
+      },
+      {
+        "time": 1355,
+        "endTime": 1355,
+        "type": "cook_end",
+        "label": "Cauliflower cheese out of oven",
+        "sub": null,
+        "itemId": "gynqpkr",
+        "itemName": "Cauliflower cheese",
+        "applianceKey": "combi",
+        "applianceLabel": "Combi Oven",
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1355,
+        "endTime": 1355,
+        "type": "ready",
+        "label": "Cauliflower cheese ready",
+        "sub": null,
+        "itemId": "gynqpkr",
+        "itemName": "Cauliflower cheese",
+        "applianceKey": "ready"
+      },
+      {
+        "time": 1365,
+        "endTime": 1365,
+        "type": "cook_end",
+        "label": "Stuffing out of oven",
+        "sub": null,
+        "itemId": "7cmw312",
+        "itemName": "Stuffing",
+        "applianceKey": "combi",
+        "applianceLabel": "Combi Oven",
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1365,
+        "endTime": 1365,
+        "type": "ready",
+        "label": "Stuffing ready",
+        "sub": null,
+        "itemId": "7cmw312",
+        "itemName": "Stuffing",
+        "applianceKey": "ready"
+      },
+      {
+        "time": 1400,
+        "endTime": 1400,
+        "type": "cook_end",
+        "label": "Chicken out of oven",
+        "sub": null,
+        "itemId": "egelww8",
+        "itemName": "Chicken",
+        "applianceKey": "main",
+        "applianceLabel": "Main Oven",
+        "ct": {
+          "id": "oven",
+          "label": "Oven",
+          "icon": "🔥",
+          "resource": "oven"
+        }
+      },
+      {
+        "time": 1400,
+        "endTime": 1415,
+        "type": "set",
+        "label": "Chicken — rest / set",
+        "sub": "15m",
+        "itemId": "egelww8",
+        "itemName": "Chicken",
+        "applianceKey": "set"
+      },
+      {
+        "time": 1415,
+        "endTime": 1415,
+        "type": "ready",
+        "label": "Chicken ready",
+        "sub": null,
+        "itemId": "egelww8",
+        "itemName": "Chicken",
+        "applianceKey": "ready"
+      }
+    ]
+  }
+}
