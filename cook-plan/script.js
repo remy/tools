@@ -748,6 +748,7 @@ function renderInputView() {
             Generate Schedule →
           </button>
           ${state.items.length > 0 ? `<button class="btn btn-ghost btn-sm" id="btn-new-cook" style="text-align:center">Start a new cook</button>` : ''}
+          ${state.items.length > 0 ? `<button class="btn btn-ghost btn-sm" id="btn-export">⬇ Export JSON</button>` : ''}
         </div>
       </div>
     </div>
@@ -822,6 +823,8 @@ function bindInputEvents() {
       renderInputView();
     }
   });
+
+  document.getElementById('btn-export')?.addEventListener('click', exportJSON);
 
   document.getElementById('btn-theme-toggle')?.addEventListener('click', toggleTheme);
 
@@ -901,6 +904,7 @@ function renderScheduleView() {
           <div class="schedule-footer">
             <button class="btn btn-secondary btn-sm" id="btn-share">📋 Copy link</button>
             <button class="btn btn-secondary btn-sm" id="btn-new-cook">Start new cook</button>
+            <button class="btn btn-ghost btn-sm" id="btn-export">⬇ Export JSON</button>
             <button class="btn btn-ghost btn-sm" id="btn-print">🖨 Print</button>
           </div>
         </div>
@@ -1105,6 +1109,7 @@ function bindScheduleEvents(items, events) {
     }
   });
 
+  document.getElementById('btn-export')?.addEventListener('click', exportJSON);
   document.getElementById('btn-print')?.addEventListener('click', () => window.print());
   document.getElementById('btn-theme-toggle')?.addEventListener('click', toggleTheme);
 
@@ -1496,6 +1501,16 @@ function openItemModal(editId) {
 
 function slotsLabel(n) {
   return n === 1 ? '1 slot — half shelf' : '2 slots — full shelf';
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `cook-plan-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function initAppliancePopover() {
