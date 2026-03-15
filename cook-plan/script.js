@@ -139,6 +139,12 @@ function computeSchedule() {
   const target = parseTime(state.targetTime);
   if (target === null) return { items: [], conflicts: [], events: [] };
 
+  // In start mode, find the longest item so everything back-schedules to finish together
+  const maxDuration = state.mode === 'start'
+    ? Math.max(...state.items.map(it => (it.prepTime || 0) + (it.cookTime || 0) + (it.setTime || 0)))
+    : 0;
+  const startModeFinish = target + maxDuration;
+
   // Compute raw times for each item
   const scheduled = state.items.map(item => {
     let cookStart;
@@ -148,8 +154,8 @@ function computeSchedule() {
       const cookEnd = target - (item.setTime || 0);
       cookStart = cookEnd - (item.cookTime || 0);
     } else {
-      // start mode: all items prep together at targetTime
-      cookStart = target + (item.prepTime || 0);
+      // start mode: stagger so all items finish together when the longest item does
+      cookStart = startModeFinish - (item.setTime || 0) - (item.cookTime || 0);
     }
     const prepStart = cookStart - (item.prepTime || 0);
     const cookEnd   = cookStart + (item.cookTime || 0);
