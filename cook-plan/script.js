@@ -715,6 +715,8 @@ function renderInputView() {
         </header>
 
         <div class="setup-card">
+          <button class="btn-icon setup-gear" popovertarget="appl-popover"
+            title="Configure appliances" aria-label="Configure appliances">⚙</button>
           <div class="setup-row">
             <div class="setup-field">
               <label class="form-label">Target time</label>
@@ -728,8 +730,6 @@ function renderInputView() {
               </div>
               <span class="form-hint">${mode === 'end' ? 'When everything should be on the table' : 'When you\'ll begin cooking'}</span>
             </div>
-
-            <button class="btn-icon setup-gear" id="btn-appl-settings" title="Configure appliances" aria-label="Configure appliances">⚙</button>
           </div>
         </div>
 
@@ -797,7 +797,6 @@ function bindInputEvents() {
     saveState();
   });
 
-  document.getElementById('btn-appl-settings').addEventListener('click', () => openApplianceModal());
 
   document.getElementById('mode-toggle').addEventListener('click', e => {
     const btn = e.target.closest('button[data-mode]');
@@ -1499,67 +1498,65 @@ function slotsLabel(n) {
   return n === 1 ? '1 slot — half shelf' : '2 slots — full shelf';
 }
 
-function openApplianceModal() {
-  const overlay = document.getElementById('modal-overlay');
-  const title   = document.getElementById('modal-title');
-  const body    = document.getElementById('modal-body');
+function initAppliancePopover() {
+  const pop = document.getElementById('appl-popover');
+  if (!pop) return;
 
-  title.textContent = 'Appliances';
-  const cfg = applianceConfig();
+  pop.addEventListener('toggle', e => {
+    if (e.newState !== 'open') return;
+    const cfg = applianceConfig();
 
-  body.innerHTML = `
-    <div class="appl-settings">
-      <div class="form-group">
-        <label class="form-label">Main oven</label>
-        <div class="seg-control" id="appl-main-shelves">
-          <button data-val="1" class="${cfg.mainOvenShelves === 1 ? 'active' : ''}">1 shelf (2 slots)</button>
-          <button data-val="2" class="${cfg.mainOvenShelves === 2 ? 'active' : ''}">2 shelves (4 slots)</button>
+    pop.innerHTML = `
+      <div class="appl-pop-inner">
+        <p class="appl-pop-title">Appliances</p>
+        <div class="form-group">
+          <label class="form-label">Main oven</label>
+          <div class="seg-control" id="appl-main-shelves">
+            <button data-val="1" class="${cfg.mainOvenShelves === 1 ? 'active' : ''}">1 shelf (2 slots)</button>
+            <button data-val="2" class="${cfg.mainOvenShelves === 2 ? 'active' : ''}">2 shelves (4 slots)</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Combi oven / microwave</label>
+          <div class="seg-control" id="appl-combi-toggle">
+            <button data-val="true"  class="${cfg.hasCombi  ? 'active' : ''}">Available</button>
+            <button data-val="false" class="${!cfg.hasCombi ? 'active' : ''}">Not available</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hobs</label>
+          <div class="seg-control" id="appl-hob-count">
+            ${[2,3,4,5,6].map(n =>
+              `<button data-val="${n}" class="${cfg.hobCount === n ? 'active' : ''}">${n}</button>`
+            ).join('')}
+          </div>
         </div>
       </div>
+    `;
 
-      <div class="form-group">
-        <label class="form-label">Combi oven / microwave</label>
-        <div class="seg-control" id="appl-combi-toggle">
-          <button data-val="true"  class="${cfg.hasCombi  ? 'active' : ''}">Available</button>
-          <button data-val="false" class="${!cfg.hasCombi ? 'active' : ''}">Not available</button>
-        </div>
-      </div>
+    pop.querySelector('#appl-main-shelves').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-val]');
+      if (!btn) return;
+      state.appliances = { ...applianceConfig(), mainOvenShelves: parseInt(btn.dataset.val) };
+      saveState();
+      pop.querySelectorAll('#appl-main-shelves button').forEach(b => b.classList.toggle('active', b === btn));
+    });
 
-      <div class="form-group">
-        <label class="form-label">Number of hobs</label>
-        <div class="seg-control" id="appl-hob-count">
-          ${[2,3,4,5,6].map(n =>
-            `<button data-val="${n}" class="${cfg.hobCount === n ? 'active' : ''}">${n}</button>`
-          ).join('')}
-        </div>
-      </div>
-    </div>
-  `;
+    pop.querySelector('#appl-combi-toggle').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-val]');
+      if (!btn) return;
+      state.appliances = { ...applianceConfig(), hasCombi: btn.dataset.val === 'true' };
+      saveState();
+      pop.querySelectorAll('#appl-combi-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+    });
 
-  overlay.classList.remove('hidden');
-
-  body.querySelector('#appl-main-shelves').addEventListener('click', e => {
-    const btn = e.target.closest('button[data-val]');
-    if (!btn) return;
-    state.appliances = { ...applianceConfig(), mainOvenShelves: parseInt(btn.dataset.val) };
-    saveState();
-    body.querySelectorAll('#appl-main-shelves button').forEach(b => b.classList.toggle('active', b === btn));
-  });
-
-  body.querySelector('#appl-combi-toggle').addEventListener('click', e => {
-    const btn = e.target.closest('button[data-val]');
-    if (!btn) return;
-    state.appliances = { ...applianceConfig(), hasCombi: btn.dataset.val === 'true' };
-    saveState();
-    body.querySelectorAll('#appl-combi-toggle button').forEach(b => b.classList.toggle('active', b === btn));
-  });
-
-  body.querySelector('#appl-hob-count').addEventListener('click', e => {
-    const btn = e.target.closest('button[data-val]');
-    if (!btn) return;
-    state.appliances = { ...applianceConfig(), hobCount: parseInt(btn.dataset.val) };
-    saveState();
-    body.querySelectorAll('#appl-hob-count button').forEach(b => b.classList.toggle('active', b === btn));
+    pop.querySelector('#appl-hob-count').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-val]');
+      if (!btn) return;
+      state.appliances = { ...applianceConfig(), hobCount: parseInt(btn.dataset.val) };
+      saveState();
+      pop.querySelectorAll('#appl-hob-count button').forEach(b => b.classList.toggle('active', b === btn));
+    });
   });
 }
 
@@ -1605,6 +1602,7 @@ function escHtml(str) {
 
 function init() {
   applyTheme();
+  initAppliancePopover();
   const loaded = loadState();
   if (loaded) {
     // Migrate/merge with defaults

@@ -329,6 +329,7 @@ button { cursor: pointer; }
 
 /* ---- Setup section ---- */
 .setup-card {
+  position: relative;
   background: var(--colour-block-bg);
   border: 1px solid var(--colour-block-border);
   border-radius: 0.5rem;
@@ -357,19 +358,44 @@ button { cursor: pointer; }
   }
 
   & .setup-gear {
-    margin-left: auto;
-    align-self: center;
-    font-size: 1.1rem;
-    opacity: 0.55;
-    transition: opacity 0.15s, transform 0.25s;
-    &:hover { opacity: 1; transform: rotate(45deg); }
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
+    font-size: 0.95rem;
+    line-height: 1;
+    opacity: 0.35;
+    padding: 0.25rem;
+    transition: opacity 0.15s, transform 0.3s;
+    &:hover { opacity: 0.75; transform: rotate(60deg); }
   }
 }
 
-.appl-settings {
+/* ---- Appliance popover ---- */
+#appl-popover {
+  padding: 0;
+  border: 1px solid var(--colour-block-border);
+  border-radius: 0.5rem;
+  background: var(--colour-block-bg);
+  box-shadow: 0 6px 24px var(--colour-shadow);
+  width: min(300px, 90vw);
+
+  &::backdrop { background: transparent; }
+}
+
+.appl-pop-inner {
+  padding: var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: var(--space-md);
+}
+
+.appl-pop-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--colour-text-secondary);
+  margin: 0 0 var(--space-xs);
 }
 
 /* ---- Items section ---- */
