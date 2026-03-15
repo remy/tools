@@ -171,6 +171,11 @@ function computeSchedule() {
   const conflicts = detectConflicts(assigned);
   const events = buildEvents(assigned, target);
 
+  // If every scheduled event is more than 60 minutes in the past, the schedule
+  // must be for the next calendar day — offset all "now" comparisons by +1 day.
+  const maxEventTime = events.reduce((m, ev) => Math.max(m, ev.endTime ?? ev.time), 0);
+  nextDayOffset = nowMins() > maxEventTime + 60 ? 1440 : 0;
+
   return { items: assigned, conflicts, events };
 }
 
@@ -890,6 +895,7 @@ function bindInputEvents() {
 
 let clockInterval = null;
 let wakeLock = null;
+let nextDayOffset = 0;  // 1440 if the schedule is for the next calendar day
 
 function renderScheduleView() {
   stopClock();
@@ -980,7 +986,7 @@ function renderConflicts(conflicts) {
 }
 
 function renderTimeline(events, items) {
-  const nowM = nowMins();
+  const nowM = nowMins() - nextDayOffset;
 
   // Group events by time
   const groups = [];
@@ -1067,7 +1073,7 @@ function renderApplianceSummary(items) {
   const hobItems   = items.filter(i => i._appliance?.startsWith('hob'));
 
   // Current slot usage at nowMins
-  const now = nowMins();
+  const now = nowMins() - nextDayOffset;
   function usedSlots(arr) {
     return arr.filter(i => i._s.cookStart <= now && i._s.cookEnd > now)
               .reduce((s, i) => s + (i.shelfSlots || 1), 0);
@@ -1203,7 +1209,7 @@ function chimeKey(ev) {
 
 // Pre-seed so past events (and events right now on first load) don't trigger
 function initChimes(events) {
-  const nowM = nowMins();
+  const nowM = nowMins() - nextDayOffset;
   chimesFired = new Set(events.filter(ev => ev.time <= nowM).map(chimeKey));
 }
 
@@ -1284,7 +1290,7 @@ function updateClock(events) {
 
   const now = new Date();
   const nowS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  const nowM = Math.floor(nowS / 60);
+  const nowM = Math.floor(nowS / 60) - nextDayOffset;  // adjusted for next-day schedules
 
   // Fire chimes for events whose time has just been reached
   for (const ev of events) {
@@ -1304,7 +1310,7 @@ function updateClock(events) {
   const upcoming = events.filter(ev => ev.time > nowM && ev.type !== 'ready');
   if (upcoming.length > 0) {
     const next = upcoming[0];
-    const nextS = next.time * 60;
+    const nextS = next.time * 60 + nextDayOffset * 60;  // account for next-day offset
     const diffS = nextS - nowS;
     clockNextEl.innerHTML = `
       <div class="clock-next-label">Next:</div>
