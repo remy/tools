@@ -39,8 +39,8 @@ const DEFAULT_STATE = {
   view: 'input',
   mode: 'end',       // 'start' | 'end'
   targetTime: '17:00',
-  people: 4,
   items: [],
+  appliances: { mainOvenShelves: 2, hasCombi: true, hobCount: 5 },
 };
 
 // ---- Time helpers ----
@@ -166,6 +166,15 @@ function computeSchedule() {
 
 // ---- Appliance assignment ----
 
+function applianceConfig() {
+  const a = state.appliances || {};
+  return {
+    mainOvenShelves: a.mainOvenShelves ?? 2,   // 1 → 2 slots, 2 → 4 slots
+    hasCombi:        a.hasCombi !== false,       // default true
+    hobCount:        a.hobCount ?? 5,
+  };
+}
+
 function assignAppliances(items) {
   // Sort by cookStart for deterministic assignment
   const sorted = [...items].sort((a, b) => a._s.cookStart - b._s.cookStart);
@@ -223,15 +232,17 @@ function assignAppliances(items) {
     return Math.max(...ovenPeriods.map(u => u.end));
   }
 
-  function firstFreeHob(start, end, excludeId) {
+  function firstFreeHob(start, end, excludeId, maxHobs) {
     const usedHobs = hobUsage
       .filter(u => u.itemId !== excludeId && u.start < end && u.end > start)
       .map(u => u.hob);
-    for (let h = 1; h <= 5; h++) {
+    for (let h = 1; h <= (maxHobs ?? 5); h++) {
       if (!usedHobs.includes(h)) return h;
     }
     return null;
   }
+
+  const cfg = applianceConfig();
 
   for (const item of sorted) {
     const { cookStart, cookEnd } = item._s;
@@ -249,13 +260,13 @@ function assignAppliances(items) {
       let hob;
       if (pref.startsWith('hob')) {
         hob = parseInt(pref.replace('hob', ''), 10);
-        // verify it's free
-        const conflict = hobUsage.some(u =>
+        if (hob > cfg.hobCount) hob = null;  // preference out of range
+        const conflict = hob && hobUsage.some(u =>
           u.itemId !== item.id && u.hob === hob && u.start < cookEnd && u.end > cookStart
         );
         if (conflict) hob = null;
       }
-      if (!hob) hob = firstFreeHob(cookStart, cookEnd, item.id);
+      if (!hob) hob = firstFreeHob(cookStart, cookEnd, item.id, cfg.hobCount);
       if (hob) {
         hobUsage.push({ start: cookStart, end: cookEnd, hob, itemId: item.id });
         item._appliance = `hob${hob}`;
@@ -267,6 +278,11 @@ function assignAppliances(items) {
 
     if (ct.resource === 'combi') {
       // Microwave mode — exclusive: only one item at a time
+      if (!cfg.hasCombi) {
+        item._appliance = 'combi-mw';  // no combi; conflict will be flagged
+        item._shelf = 1;
+        continue;
+      }
       const lastOvenEnd = lastCombiOvenEndBefore(cookStart, item.id);
       const cooldownOk = (lastOvenEnd === null) || (cookStart - lastOvenEnd >= COMBI_COOLDOWN);
       const existingMode = combiModeAt(cookStart, cookEnd, item.id);
@@ -283,14 +299,14 @@ function assignAppliances(items) {
     }
 
     if (ct.resource === 'oven') {
-      const tryCombi = pref === 'combi';
+      const tryCombi = pref === 'combi' && cfg.hasCombi;
       const tryMain  = pref === 'main' || pref === 'auto';
 
       let assigned = false;
 
       if (tryMain) {
-        // Main oven: 2 shelves × 2 slots each
-        const shelf = firstFreeShelf(mainOvenUsage, cookStart, cookEnd, item.id, slots, 2, 2);
+        // Main oven: cfg.mainOvenShelves shelves × 2 slots each
+        const shelf = firstFreeShelf(mainOvenUsage, cookStart, cookEnd, item.id, slots, cfg.mainOvenShelves, 2);
         if (shelf !== null) {
           mainOvenUsage.push({ start: cookStart, end: cookEnd, shelf, slots, itemId: item.id });
           item._appliance = 'main';
@@ -299,7 +315,7 @@ function assignAppliances(items) {
         }
       }
 
-      if (!assigned && (tryCombi || pref === 'auto')) {
+      if (!assigned && (tryCombi || (pref === 'auto' && cfg.hasCombi))) {
         const existingMode = combiModeAt(cookStart, cookEnd, item.id);
         if (existingMode === null || existingMode === 'oven') {
           // Combi oven: 1 shelf × 2 slots
@@ -314,8 +330,8 @@ function assignAppliances(items) {
       }
 
       if (!assigned) {
-        // Overflow: assign to main oven anyway; shelf defaults to 1 (conflict will be detected)
-        const shelf = firstFreeShelf(mainOvenUsage, cookStart, cookEnd, item.id, slots, 2, 2) ?? 1;
+        // Overflow: assign to main oven anyway (conflict will be detected)
+        const shelf = firstFreeShelf(mainOvenUsage, cookStart, cookEnd, item.id, slots, cfg.mainOvenShelves, 2) ?? 1;
         mainOvenUsage.push({ start: cookStart, end: cookEnd, shelf, slots, itemId: item.id });
         item._appliance = 'main';
         item._shelf = shelf;
@@ -357,6 +373,8 @@ function detectConflicts(items) {
   }
 
   function checkOvenConflicts() {
+    const cfg = applianceConfig();
+    const maxSlots = cfg.mainOvenShelves * 2;
     const ovenItems = items.filter(i =>
       COOK_TYPE_MAP[i.cookType]?.resource === 'oven' && i._appliance === 'main' && i._s.cookTime > 0
     );
@@ -364,8 +382,7 @@ function detectConflicts(items) {
       start: i._s.cookStart, end: i._s.cookEnd,
       slots: i.shelfSlots || 1, itemId: i.id,
     }));
-    const over = sweepConflicts(usage, 4);
-    // Deduplicate by itemId set so we don't repeat the same group
+    const over = sweepConflicts(usage, maxSlots);
     const seen = new Set();
     for (const { time, slots, itemIds } of over) {
       const key = [...itemIds].sort().join(',');
@@ -377,7 +394,7 @@ function detectConflicts(items) {
       });
       conflicts.push({
         type: 'oven',
-        message: `Main oven overcapacity at ${formatTime(time)}: ${names.join(', ')} = ${slots}/4 slots.`,
+        message: `Main oven overcapacity at ${formatTime(time)}: ${names.join(', ')} = ${slots}/${maxSlots} slots.`,
         itemIds,
       });
     }
@@ -685,7 +702,6 @@ function cookEndLabel(item, ct) {
 
 function renderInputView() {
   const app = document.getElementById('app');
-  const people = state.people || 4;
   const mode = state.mode || 'end';
 
   app.innerHTML = `
@@ -701,16 +717,6 @@ function renderInputView() {
         <div class="setup-card">
           <div class="setup-row">
             <div class="setup-field">
-              <label class="form-label">Cooking for</label>
-              <div class="input-time-group">
-                <input class="input" id="inp-people" type="number" min="1" max="50"
-                  value="${people}" style="width:4.5rem;text-align:center">
-                <span class="time-unit">people</span>
-              </div>
-              <span class="form-hint">Base serving size: 4</span>
-            </div>
-
-            <div class="setup-field">
               <label class="form-label">Target time</label>
               <div class="time-row" style="display:flex;gap:var(--space-sm);align-items:center;flex-wrap:wrap">
                 <div class="seg-control" id="mode-toggle">
@@ -722,6 +728,8 @@ function renderInputView() {
               </div>
               <span class="form-hint">${mode === 'end' ? 'When everything should be on the table' : 'When you\'ll begin cooking'}</span>
             </div>
+
+            <button class="btn-icon setup-gear" id="btn-appl-settings" title="Configure appliances" aria-label="Configure appliances">⚙</button>
           </div>
         </div>
 
@@ -784,15 +792,12 @@ function renderItemCard(item) {
 }
 
 function bindInputEvents() {
-  document.getElementById('inp-people').addEventListener('change', e => {
-    state.people = Math.max(1, parseInt(e.target.value) || 4);
-    saveState();
-  });
-
   document.getElementById('inp-time').addEventListener('change', e => {
     state.targetTime = e.target.value;
     saveState();
   });
+
+  document.getElementById('btn-appl-settings').addEventListener('click', () => openApplianceModal());
 
   document.getElementById('mode-toggle').addEventListener('click', e => {
     const btn = e.target.closest('button[data-mode]');
@@ -868,10 +873,6 @@ function renderScheduleView() {
             <div class="serve-stat">
               <div class="serve-stat-label">${state.mode === 'end' ? 'Serving at' : 'Starting at'}</div>
               <div class="serve-stat-value">${state.targetTime}</div>
-            </div>
-            <div class="serve-stat">
-              <div class="serve-stat-label">People</div>
-              <div class="serve-stat-value">${state.people}</div>
             </div>
             <div class="serve-stat">
               <div class="serve-stat-label">Items</div>
@@ -1007,6 +1008,7 @@ function renderTimeline(events, items) {
 }
 
 function renderApplianceSummary(items) {
+  const cfg = applianceConfig();
   const ovenItems  = items.filter(i => i._appliance === 'main');
   const combiItems = items.filter(i => i._appliance === 'combi' || i._appliance === 'combi-mw');
   const hobItems   = items.filter(i => i._appliance?.startsWith('hob'));
@@ -1040,13 +1042,14 @@ function renderApplianceSummary(items) {
       <div class="appliance-grid">
         <div class="appliance-card">
           <div class="app-name">Main Oven</div>
-          <div class="app-capacity">4 slots (2 shelves × 2)</div>
-          ${slotBar(mainUsed, 4)}
+          <div class="app-capacity">${cfg.mainOvenShelves * 2} slots (${cfg.mainOvenShelves} shelf${cfg.mainOvenShelves > 1 ? ' × 2' : ''})</div>
+          ${slotBar(mainUsed, cfg.mainOvenShelves * 2)}
           <div class="app-items">
             ${ovenItems.length === 0 ? '<span style="color:var(--colour-text-tertiary)">Nothing scheduled</span>' :
               ovenItems.map(i => `<span>${escHtml(i.name)}: ${formatTime(i._s.cookStart)}–${formatTime(i._s.cookEnd)}</span>`).join('')}
           </div>
         </div>
+        ${cfg.hasCombi ? `
         <div class="appliance-card">
           <div class="app-name">Combi</div>
           <div class="app-capacity">2 slots (1 shelf), oven or MW</div>
@@ -1055,12 +1058,12 @@ function renderApplianceSummary(items) {
             ${combiItems.length === 0 ? '<span style="color:var(--colour-text-tertiary)">Nothing scheduled</span>' :
               combiItems.map(i => `<span>${escHtml(i.name)} (${i._appliance === 'combi' ? 'oven' : 'MW'}): ${formatTime(i._s.cookStart)}–${formatTime(i._s.cookEnd)}</span>`).join('')}
           </div>
-        </div>
+        </div>` : ''}
         <div class="appliance-card">
           <div class="app-name">Hobs</div>
-          <div class="app-capacity">5 independent hobs</div>
+          <div class="app-capacity">${cfg.hobCount} independent hob${cfg.hobCount !== 1 ? 's' : ''}</div>
           <div class="slot-bar">
-            ${[1,2,3,4,5].map(h => {
+            ${Array.from({length: cfg.hobCount}, (_, i) => i + 1).map(h => {
               const inUse = hobItems.some(i => i._appliance === `hob${h}` && i._s.cookStart <= now && i._s.cookEnd > now);
               return `<div class="slot${inUse ? ' used' : ''}"></div>`;
             }).join('')}
@@ -1494,6 +1497,70 @@ function openItemModal(editId) {
 
 function slotsLabel(n) {
   return n === 1 ? '1 slot — half shelf' : '2 slots — full shelf';
+}
+
+function openApplianceModal() {
+  const overlay = document.getElementById('modal-overlay');
+  const title   = document.getElementById('modal-title');
+  const body    = document.getElementById('modal-body');
+
+  title.textContent = 'Appliances';
+  const cfg = applianceConfig();
+
+  body.innerHTML = `
+    <div class="appl-settings">
+      <div class="form-group">
+        <label class="form-label">Main oven</label>
+        <div class="seg-control" id="appl-main-shelves">
+          <button data-val="1" class="${cfg.mainOvenShelves === 1 ? 'active' : ''}">1 shelf (2 slots)</button>
+          <button data-val="2" class="${cfg.mainOvenShelves === 2 ? 'active' : ''}">2 shelves (4 slots)</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Combi oven / microwave</label>
+        <div class="seg-control" id="appl-combi-toggle">
+          <button data-val="true"  class="${cfg.hasCombi  ? 'active' : ''}">Available</button>
+          <button data-val="false" class="${!cfg.hasCombi ? 'active' : ''}">Not available</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Number of hobs</label>
+        <div class="seg-control" id="appl-hob-count">
+          ${[2,3,4,5,6].map(n =>
+            `<button data-val="${n}" class="${cfg.hobCount === n ? 'active' : ''}">${n}</button>`
+          ).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  overlay.classList.remove('hidden');
+
+  body.querySelector('#appl-main-shelves').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-val]');
+    if (!btn) return;
+    state.appliances = { ...applianceConfig(), mainOvenShelves: parseInt(btn.dataset.val) };
+    saveState();
+    body.querySelectorAll('#appl-main-shelves button').forEach(b => b.classList.toggle('active', b === btn));
+  });
+
+  body.querySelector('#appl-combi-toggle').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-val]');
+    if (!btn) return;
+    state.appliances = { ...applianceConfig(), hasCombi: btn.dataset.val === 'true' };
+    saveState();
+    body.querySelectorAll('#appl-combi-toggle button').forEach(b => b.classList.toggle('active', b === btn));
+  });
+
+  body.querySelector('#appl-hob-count').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-val]');
+    if (!btn) return;
+    state.appliances = { ...applianceConfig(), hobCount: parseInt(btn.dataset.val) };
+    saveState();
+    body.querySelectorAll('#appl-hob-count button').forEach(b => b.classList.toggle('active', b === btn));
+  });
 }
 
 function closeModal() {

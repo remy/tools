@@ -351,14 +351,25 @@ button { cursor: pointer; }
     & .form-label { margin-bottom: 0; }
   }
 
-  & .setup-field-people {
-    & .input { width: 5rem; text-align: center; }
-  }
-
   & .setup-field-time {
     & .time-row { display: flex; align-items: center; gap: var(--space-sm); }
     & .input[type="time"] { width: 8rem; }
   }
+
+  & .setup-gear {
+    margin-left: auto;
+    align-self: center;
+    font-size: 1.1rem;
+    opacity: 0.55;
+    transition: opacity 0.15s, transform 0.25s;
+    &:hover { opacity: 1; transform: rotate(45deg); }
+  }
+}
+
+.appl-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
 }
 
 /* ---- Items section ---- */
