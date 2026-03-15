@@ -381,7 +381,7 @@ button { cursor: pointer; }
   border-radius: 0.5rem;
   background: var(--colour-block-bg);
   box-shadow: 0 6px 24px var(--colour-shadow);
-  width: min(60vw, 90vw);
+  width: 60vw;
   /* centre in viewport */
   inset: unset;
   top: 50%;
