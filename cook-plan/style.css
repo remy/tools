@@ -361,7 +361,11 @@ button { cursor: pointer; }
     position: absolute;
     top: var(--space-sm);
     right: var(--space-sm);
-    font-size: 0.95rem;
+    background: none;
+    height: 2rem;
+    font-size: 2rem;
+    display: flex;
+    align-items: end;
     line-height: 1;
     opacity: 0.35;
     padding: 0.25rem;
@@ -378,8 +382,13 @@ button { cursor: pointer; }
   background: var(--colour-block-bg);
   box-shadow: 0 6px 24px var(--colour-shadow);
   width: min(300px, 90vw);
+  /* centre in viewport */
+  inset: unset;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
 
-  &::backdrop { background: transparent; }
+  &::backdrop { backdrop-filter: blur(4px); }
 }
 
 .appl-pop-inner {
