@@ -26,6 +26,15 @@ const RESOURCES = {
 
 const COMBI_COOLDOWN = 5; // minutes between oven→microwave switch
 
+const EV_TYPE_CHIP = {
+  prep:       'PREP',
+  cook_start: 'IN',
+  cook_end:   'OUT',
+  set:        'REST',
+  ready:      'READY',
+  serve:      '',
+};
+
 const DEFAULT_STATE = {
   view: 'input',
   mode: 'end',       // 'start' | 'end'
@@ -166,16 +175,26 @@ function assignAppliances(items) {
   const combiUsage    = [];   // [{start, end, mode:'oven'|'microwave', slots, itemId}]
   const hobUsage      = [];   // [{start, end, hob:1-5, itemId}]
 
-  function ovenSlotsAt(time, excludeId) {
-    return mainOvenUsage
-      .filter(u => u.itemId !== excludeId && u.start < time && u.end > time)
-      .reduce((s, u) => s + u.slots, 0);
-  }
-
-  function combiSlotsAt(time, excludeId) {
-    return combiUsage
-      .filter(u => u.itemId !== excludeId && u.start < time && u.end > time)
-      .reduce((s, u) => s + u.slots, 0);
+  // Returns the maximum slot usage at any point during [start, end) from the given usage array.
+  // Checks at each interval boundary within the range, which covers all change-points.
+  function maxSlotsInRange(usage, start, end, excludeId) {
+    const overlapping = usage.filter(u =>
+      u.itemId !== excludeId && u.start < end && u.end > start
+    );
+    if (overlapping.length === 0) return 0;
+    // Check at start and at the beginning of each overlapping interval within the range
+    const pts = new Set([start]);
+    for (const u of overlapping) {
+      if (u.start >= start && u.start < end) pts.add(u.start);
+    }
+    let max = 0;
+    for (const t of pts) {
+      const total = overlapping
+        .filter(u => u.start <= t && u.end > t)
+        .reduce((s, u) => s + u.slots, 0);
+      if (total > max) max = total;
+    }
+    return max;
   }
 
   function combiModeAt(start, end, excludeId) {
@@ -242,9 +261,9 @@ function assignAppliances(items) {
       // Check cooldown: last oven end must be ≥ COMBI_COOLDOWN before our start
       const lastOvenEnd = lastCombiOvenEndBefore(cookStart, item.id);
       const cooldownOk = (lastOvenEnd === null) || (cookStart - lastOvenEnd >= COMBI_COOLDOWN);
-      // Check slot and mode availability
+      // Check slot and mode availability across the full cook duration
       const existingMode = combiModeAt(cookStart, cookEnd, item.id);
-      const existingSlots = combiSlotsAt(cookStart, item.id); // simple check at start
+      const existingSlots = maxSlotsInRange(combiUsage, cookStart, cookEnd, item.id);
       if (cooldownOk && (existingMode === null || existingMode === 'microwave') && existingSlots + slots <= 2) {
         combiUsage.push({ start: cookStart, end: cookEnd, mode: 'microwave', slots, itemId: item.id });
         item._appliance = 'combi-mw';
@@ -262,8 +281,8 @@ function assignAppliances(items) {
       let assigned = false;
 
       if (tryMain || pref === 'auto') {
-        // Check main oven capacity at cook start (simplified: check at one point)
-        const usedSlots = ovenSlotsAt(cookStart, item.id);
+        // Check main oven capacity across the full cook duration
+        const usedSlots = maxSlotsInRange(mainOvenUsage, cookStart, cookEnd, item.id);
         if (usedSlots + slots <= 4) {
           mainOvenUsage.push({ start: cookStart, end: cookEnd, slots, itemId: item.id });
           item._appliance = 'main';
@@ -273,8 +292,7 @@ function assignAppliances(items) {
 
       if (!assigned && (tryCombi || pref === 'auto')) {
         const existingMode = combiModeAt(cookStart, cookEnd, item.id);
-        const existingSlots = combiSlotsAt(cookStart, item.id);
-        // Oven→oven is fine if there's a cooldown from microwave? No, microwave→oven is fine
+        const existingSlots = maxSlotsInRange(combiUsage, cookStart, cookEnd, item.id);
         if ((existingMode === null || existingMode === 'oven') && existingSlots + slots <= 2) {
           combiUsage.push({ start: cookStart, end: cookEnd, mode: 'oven', slots, itemId: item.id });
           item._appliance = 'combi';
@@ -298,28 +316,55 @@ function assignAppliances(items) {
 function detectConflicts(items) {
   const conflicts = [];
 
-  // Helper: find all time points where usage exceeds capacity
+  // Sweep-line capacity check. Returns [{time, slots, itemIds}] for each moment usage exceeds cap.
+  function sweepConflicts(usageArr, capacity) {
+    const evts = [];
+    for (const u of usageArr) {
+      evts.push({ time: u.start, delta: u.slots,  itemId: u.itemId });
+      evts.push({ time: u.end,   delta: -u.slots, itemId: u.itemId });
+    }
+    // Process ends before starts at same time so a finishing item frees its slot first
+    evts.sort((a, b) => a.time - b.time || a.delta - b.delta);
+    let slots = 0;
+    const active = new Set();
+    const found = [];
+    for (const ev of evts) {
+      if (ev.delta > 0) {
+        active.add(ev.itemId);
+        slots += ev.delta;
+        if (slots > capacity) found.push({ time: ev.time, slots, itemIds: [...active] });
+      } else {
+        active.delete(ev.itemId);
+        slots += ev.delta;
+      }
+    }
+    return found;
+  }
+
   function checkOvenConflicts() {
     const ovenItems = items.filter(i =>
       COOK_TYPE_MAP[i.cookType]?.resource === 'oven' && i._appliance === 'main' && i._s.cookTime > 0
     );
-    // Check all pairs for overlapping usage
-    for (let i = 0; i < ovenItems.length; i++) {
-      for (let j = i + 1; j < ovenItems.length; j++) {
-        const a = ovenItems[i], b = ovenItems[j];
-        const overlapStart = Math.max(a._s.cookStart, b._s.cookStart);
-        const overlapEnd   = Math.min(a._s.cookEnd,   b._s.cookEnd);
-        if (overlapEnd > overlapStart) {
-          const totalSlots = (a.shelfSlots || 1) + (b.shelfSlots || 1);
-          if (totalSlots > 4) {
-            conflicts.push({
-              type: 'oven',
-              message: `Main oven overcapacity: "${a.name}" (${a.shelfSlots||1} slot${(a.shelfSlots||1)>1?'s':''}) and "${b.name}" (${b.shelfSlots||1} slot${(b.shelfSlots||1)>1?'s':''}) overlap ${formatTime(overlapStart)}–${formatTime(overlapEnd)} using ${totalSlots}/4 slots.`,
-              itemIds: [a.id, b.id],
-            });
-          }
-        }
-      }
+    const usage = ovenItems.map(i => ({
+      start: i._s.cookStart, end: i._s.cookEnd,
+      slots: i.shelfSlots || 1, itemId: i.id,
+    }));
+    const over = sweepConflicts(usage, 4);
+    // Deduplicate by itemId set so we don't repeat the same group
+    const seen = new Set();
+    for (const { time, slots, itemIds } of over) {
+      const key = [...itemIds].sort().join(',');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const names = itemIds.map(id => {
+        const it = ovenItems.find(i => i.id === id);
+        return it ? `"${it.name}" (${it.shelfSlots||1} slot${(it.shelfSlots||1)>1?'s':''})` : id;
+      });
+      conflicts.push({
+        type: 'oven',
+        message: `Main oven overcapacity at ${formatTime(time)}: ${names.join(', ')} = ${slots}/4 slots.`,
+        itemIds,
+      });
     }
   }
 
@@ -327,6 +372,24 @@ function detectConflicts(items) {
     const combiItems = items.filter(i =>
       (i._appliance === 'combi' || i._appliance === 'combi-mw') && i._s.cookTime > 0
     );
+    // Capacity conflicts
+    const usage = combiItems.map(i => ({
+      start: i._s.cookStart, end: i._s.cookEnd,
+      slots: i.shelfSlots || 1, itemId: i.id,
+    }));
+    const over = sweepConflicts(usage, 2);
+    const seen = new Set();
+    for (const { time, slots, itemIds } of over) {
+      const key = [...itemIds].sort().join(',');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      conflicts.push({
+        type: 'combi-capacity',
+        message: `Combi overcapacity at ${formatTime(time)}: ${itemIds.map(id => `"${combiItems.find(i=>i.id===id)?.name}"`).join(', ')} = ${slots}/2 slots.`,
+        itemIds,
+      });
+    }
+    // Mode conflicts and cooldown — still pair-wise since mode is per-item
     for (let i = 0; i < combiItems.length; i++) {
       for (let j = i + 1; j < combiItems.length; j++) {
         const a = combiItems[i], b = combiItems[j];
@@ -335,21 +398,12 @@ function detectConflicts(items) {
         const modeA = a._appliance === 'combi' ? 'oven' : 'microwave';
         const modeB = b._appliance === 'combi' ? 'oven' : 'microwave';
 
-        if (overlapEnd > overlapStart) {
-          const totalSlots = (a.shelfSlots || 1) + (b.shelfSlots || 1);
-          if (totalSlots > 2) {
-            conflicts.push({
-              type: 'combi-capacity',
-              message: `Combi overcapacity: "${a.name}" and "${b.name}" overlap ${formatTime(overlapStart)}–${formatTime(overlapEnd)} using ${totalSlots}/2 slots.`,
-              itemIds: [a.id, b.id],
-            });
-          } else if (modeA !== modeB) {
-            conflicts.push({
-              type: 'combi-mode',
-              message: `Combi mode conflict: "${a.name}" needs it as ${modeA} but "${b.name}" needs it as ${modeB} during ${formatTime(overlapStart)}–${formatTime(overlapEnd)}.`,
-              itemIds: [a.id, b.id],
-            });
-          }
+        if (overlapEnd > overlapStart && modeA !== modeB) {
+          conflicts.push({
+            type: 'combi-mode',
+            message: `Combi mode conflict: "${a.name}" needs it as ${modeA} but "${b.name}" needs it as ${modeB} during ${formatTime(overlapStart)}–${formatTime(overlapEnd)}.`,
+            itemIds: [a.id, b.id],
+          });
         }
 
         // Cooldown: oven ends, then microwave starts
@@ -796,8 +850,10 @@ function renderTimeline(events, items) {
           </div>
         `;
       }
+      const chip = EV_TYPE_CHIP[ev.type] || '';
       return `
-        <div class="tl-sub-event" data-item="${ev.itemId || ''}" data-type="${ev.type}">
+        <div class="tl-sub-event tl-type-${ev.type}" data-item="${ev.itemId || ''}" data-type="${ev.type}">
+          ${chip ? `<span class="tl-chip">${chip}</span>` : ''}
           <div class="tl-label">${escHtml(ev.label)}</div>
           ${ev.sub ? `<div class="tl-sub">${escHtml(ev.sub)}</div>` : ''}
           ${overrideHtml}

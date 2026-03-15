@@ -634,11 +634,42 @@ button { cursor: pointer; }
   }
 
   & .tl-content {
+    & .tl-sub-event {
+      padding-left: var(--space-sm);
+      border-left: 3px solid var(--colour-border);
+    }
+
     & .tl-sub-event + .tl-sub-event {
       margin-top: var(--space-sm);
       padding-top: var(--space-sm);
       border-top: 1px dashed var(--colour-border);
     }
+
+    /* Per-type left border colours */
+    & .tl-type-prep       { border-left-color: var(--colour-accent); }
+    & .tl-type-cook_start { border-left-color: var(--colour-primary); }
+    & .tl-type-cook_end   { border-left-color: var(--colour-text-tertiary); }
+    & .tl-type-set        { border-left-color: #3b82f6; }
+    & .tl-type-ready      { border-left-color: var(--colour-success); }
+
+    & .tl-chip {
+      display: inline-block;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.0625rem 0.375rem;
+      border-radius: 0.25rem;
+      margin-bottom: 0.1875rem;
+      background: var(--colour-bg-secondary);
+      color: var(--colour-text-tertiary);
+      border: 1px solid var(--colour-border);
+    }
+
+    & .tl-type-prep       .tl-chip { background: var(--colour-accent-light);  color: var(--colour-accent);   border-color: var(--colour-accent); }
+    & .tl-type-cook_start .tl-chip { background: var(--colour-primary-light); color: var(--colour-primary);  border-color: var(--colour-primary); }
+    & .tl-type-set        .tl-chip { background: #dbeafe; color: #1d4ed8; border-color: #3b82f6; }
+    & .tl-type-ready      .tl-chip { background: var(--colour-success-light); color: var(--colour-success);  border-color: var(--colour-success); }
 
     & .tl-label {
       font-size: 0.9375rem;
