@@ -41,6 +41,7 @@ const DEFAULT_STATE = {
   targetTime: '17:00',
   items: [],
   appliances: { mainOvenShelves: 2, hasCombi: true, hobCount: 5 },
+  snapMins: 0,
 };
 
 // ---- Time helpers ----
@@ -163,11 +164,54 @@ function computeSchedule() {
     return { ...item, _s: { cookStart, prepStart, cookEnd, setEnd } };
   });
 
-  const assigned = assignAppliances(scheduled);
+  // Optional: snap nearby start times together so the schedule rounds to natural clusters
+  const snapped = snapTimings(scheduled, state.snapMins || 0);
+
+  const assigned = assignAppliances(snapped);
   const conflicts = detectConflicts(assigned);
   const events = buildEvents(assigned, target);
 
   return { items: assigned, conflicts, events };
+}
+
+// Cluster items whose cookStart falls within `threshold` minutes of the cluster's anchor,
+// then snap all items in each cluster to the anchor (earliest cookStart in that cluster).
+// Items with a manual override are left untouched.
+function snapTimings(items, threshold) {
+  if (!threshold) return items;
+
+  // Work on non-overridden items only; overrides are left as-is
+  const free     = items.filter(it => !it.overrideCookStart);
+  const fixed    = items.filter(it =>  it.overrideCookStart);
+
+  // Sort by cookStart ascending
+  const sorted = [...free].sort((a, b) => a._s.cookStart - b._s.cookStart);
+
+  // Greedy clustering: each cluster snaps to its anchor (first item's cookStart)
+  const result = [];
+  let clusterAnchor = null;
+  for (const item of sorted) {
+    const cs = item._s.cookStart;
+    if (clusterAnchor === null || cs - clusterAnchor > threshold) {
+      clusterAnchor = cs;
+    }
+    if (cs !== clusterAnchor) {
+      const shift = clusterAnchor - cs;  // negative: move earlier
+      const s = item._s;
+      result.push({ ...item, _s: {
+        cookStart: clusterAnchor,
+        prepStart: s.prepStart + shift,
+        cookEnd:   s.cookEnd   + shift,
+        setEnd:    s.setEnd    + shift,
+      }});
+    } else {
+      result.push(item);
+    }
+  }
+
+  // Restore original order and re-merge fixed items
+  const byId = Object.fromEntries(result.map(it => [it.id, it]));
+  return items.map(it => byId[it.id] ?? it);
 }
 
 // ---- Appliance assignment ----
@@ -1528,6 +1572,7 @@ function initAppliancePopover() {
   pop.addEventListener('toggle', e => {
     if (e.newState !== 'open') return;
     const cfg = applianceConfig();
+    const snap = state.snapMins || 0;
 
     pop.innerHTML = `
       <div class="appl-pop-inner">
@@ -1554,6 +1599,16 @@ function initAppliancePopover() {
             ).join('')}
           </div>
         </div>
+        <div class="form-group">
+          <label class="form-label">Round timings</label>
+          <div class="seg-control" id="appl-snap">
+            <button data-val="0" class="${snap === 0 ? 'active' : ''}">Off</button>
+            <button data-val="2" class="${snap === 2 ? 'active' : ''}">2 min</button>
+            <button data-val="4" class="${snap === 4 ? 'active' : ''}">4 min</button>
+            <button data-val="8" class="${snap === 8 ? 'active' : ''}">8 min</button>
+          </div>
+          <p class="form-hint">Group items starting within this window together</p>
+        </div>
       </div>
     `;
 
@@ -1579,6 +1634,14 @@ function initAppliancePopover() {
       state.appliances = { ...applianceConfig(), hobCount: parseInt(btn.dataset.val) };
       saveState();
       pop.querySelectorAll('#appl-hob-count button').forEach(b => b.classList.toggle('active', b === btn));
+    });
+
+    pop.querySelector('#appl-snap').addEventListener('click', e => {
+      const btn = e.target.closest('button[data-val]');
+      if (!btn) return;
+      state.snapMins = parseInt(btn.dataset.val);
+      saveState();
+      pop.querySelectorAll('#appl-snap button').forEach(b => b.classList.toggle('active', b === btn));
     });
   });
 }
