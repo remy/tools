@@ -1504,7 +1504,9 @@ function slotsLabel(n) {
 }
 
 function exportJSON() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const { items: scheduledItems, conflicts, events } = computeSchedule();
+  const payload = { state, schedule: { items: scheduledItems, conflicts, events } };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
