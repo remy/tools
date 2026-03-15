@@ -170,19 +170,18 @@ function assignAppliances(items) {
   // Sort by cookStart for deterministic assignment
   const sorted = [...items].sort((a, b) => a._s.cookStart - b._s.cookStart);
 
-  // Track occupancy
-  const mainOvenUsage = [];   // [{start, end, slots, itemId}]
-  const combiUsage    = [];   // [{start, end, mode:'oven'|'microwave', slots, itemId}]
-  const hobUsage      = [];   // [{start, end, hob:1-5, itemId}]
+  // Track occupancy — entries include {start, end, shelf, slots, itemId}
+  // Main oven: 2 shelves × 2 slots each.  Combi: 1 shelf × 2 slots (oven) or exclusive (mw).
+  const mainOvenUsage = [];
+  const combiUsage    = [];   // also has mode: 'oven'|'microwave'
+  const hobUsage      = [];   // {start, end, hob:1-5, itemId}
 
-  // Returns the maximum slot usage at any point during [start, end) from the given usage array.
-  // Checks at each interval boundary within the range, which covers all change-points.
-  function maxSlotsInRange(usage, start, end, excludeId) {
+  // Max slots used on a specific shelf during [start, end), ignoring excludeId.
+  function slotsOnShelf(usage, shelf, start, end, excludeId) {
     const overlapping = usage.filter(u =>
-      u.itemId !== excludeId && u.start < end && u.end > start
+      u.itemId !== excludeId && u.shelf === shelf && u.start < end && u.end > start
     );
     if (overlapping.length === 0) return 0;
-    // Check at start and at the beginning of each overlapping interval within the range
     const pts = new Set([start]);
     for (const u of overlapping) {
       if (u.start >= start && u.start < end) pts.add(u.start);
@@ -195,6 +194,16 @@ function assignAppliances(items) {
       if (total > max) max = total;
     }
     return max;
+  }
+
+  // First shelf number that can fit `needed` more slots, or null.
+  function firstFreeShelf(usage, start, end, excludeId, needed, numShelves, slotsPerShelf) {
+    for (let shelf = 1; shelf <= numShelves; shelf++) {
+      if (slotsOnShelf(usage, shelf, start, end, excludeId) + needed <= slotsPerShelf) {
+        return shelf;
+      }
+    }
+    return null;
   }
 
   function combiModeAt(start, end, excludeId) {
@@ -257,53 +266,59 @@ function assignAppliances(items) {
     }
 
     if (ct.resource === 'combi') {
-      // microwave mode
-      // Check cooldown: last oven end must be ≥ COMBI_COOLDOWN before our start
+      // Microwave mode — exclusive: only one item at a time
       const lastOvenEnd = lastCombiOvenEndBefore(cookStart, item.id);
       const cooldownOk = (lastOvenEnd === null) || (cookStart - lastOvenEnd >= COMBI_COOLDOWN);
-      // Check slot and mode availability across the full cook duration
       const existingMode = combiModeAt(cookStart, cookEnd, item.id);
-      const existingSlots = maxSlotsInRange(combiUsage, cookStart, cookEnd, item.id);
-      if (cooldownOk && (existingMode === null || existingMode === 'microwave') && existingSlots + slots <= 2) {
-        combiUsage.push({ start: cookStart, end: cookEnd, mode: 'microwave', slots, itemId: item.id });
+      const combiFree = (existingMode === null);   // microwave needs the combi entirely free
+      if (cooldownOk && combiFree) {
+        combiUsage.push({ start: cookStart, end: cookEnd, mode: 'microwave', shelf: 1, slots: 1, itemId: item.id });
         item._appliance = 'combi-mw';
+        item._shelf = 1;
       } else {
-        item._appliance = 'combi-mw';  // still assigned, conflict will be detected
+        item._appliance = 'combi-mw';  // conflict will be detected
+        item._shelf = 1;
       }
       continue;
     }
 
     if (ct.resource === 'oven') {
-      // Try preference or auto
       const tryCombi = pref === 'combi';
       const tryMain  = pref === 'main' || pref === 'auto';
 
       let assigned = false;
 
-      if (tryMain || pref === 'auto') {
-        // Check main oven capacity across the full cook duration
-        const usedSlots = maxSlotsInRange(mainOvenUsage, cookStart, cookEnd, item.id);
-        if (usedSlots + slots <= 4) {
-          mainOvenUsage.push({ start: cookStart, end: cookEnd, slots, itemId: item.id });
+      if (tryMain) {
+        // Main oven: 2 shelves × 2 slots each
+        const shelf = firstFreeShelf(mainOvenUsage, cookStart, cookEnd, item.id, slots, 2, 2);
+        if (shelf !== null) {
+          mainOvenUsage.push({ start: cookStart, end: cookEnd, shelf, slots, itemId: item.id });
           item._appliance = 'main';
+          item._shelf = shelf;
           assigned = true;
         }
       }
 
       if (!assigned && (tryCombi || pref === 'auto')) {
         const existingMode = combiModeAt(cookStart, cookEnd, item.id);
-        const existingSlots = maxSlotsInRange(combiUsage, cookStart, cookEnd, item.id);
-        if ((existingMode === null || existingMode === 'oven') && existingSlots + slots <= 2) {
-          combiUsage.push({ start: cookStart, end: cookEnd, mode: 'oven', slots, itemId: item.id });
-          item._appliance = 'combi';
-          assigned = true;
+        if (existingMode === null || existingMode === 'oven') {
+          // Combi oven: 1 shelf × 2 slots
+          const shelf = firstFreeShelf(combiUsage, cookStart, cookEnd, item.id, slots, 1, 2);
+          if (shelf !== null) {
+            combiUsage.push({ start: cookStart, end: cookEnd, mode: 'oven', shelf: 1, slots, itemId: item.id });
+            item._appliance = 'combi';
+            item._shelf = 1;
+            assigned = true;
+          }
         }
       }
 
       if (!assigned) {
-        // Record anyway (conflict will be detected)
-        mainOvenUsage.push({ start: cookStart, end: cookEnd, slots, itemId: item.id });
+        // Overflow: assign to main oven anyway; shelf defaults to 1 (conflict will be detected)
+        const shelf = firstFreeShelf(mainOvenUsage, cookStart, cookEnd, item.id, slots, 2, 2) ?? 1;
+        mainOvenUsage.push({ start: cookStart, end: cookEnd, shelf, slots, itemId: item.id });
         item._appliance = 'main';
+        item._shelf = shelf;
       }
     }
   }
@@ -372,20 +387,41 @@ function detectConflicts(items) {
     const combiItems = items.filter(i =>
       (i._appliance === 'combi' || i._appliance === 'combi-mw') && i._s.cookTime > 0
     );
-    // Capacity conflicts
-    const usage = combiItems.map(i => ({
+    const ovenItems = combiItems.filter(i => i._appliance === 'combi');
+    const mwItems   = combiItems.filter(i => i._appliance === 'combi-mw');
+
+    // Oven mode: 2-slot capacity
+    const ovenUsage = ovenItems.map(i => ({
       start: i._s.cookStart, end: i._s.cookEnd,
       slots: i.shelfSlots || 1, itemId: i.id,
     }));
-    const over = sweepConflicts(usage, 2);
+    const ovenOver = sweepConflicts(ovenUsage, 2);
     const seen = new Set();
-    for (const { time, slots, itemIds } of over) {
+    for (const { time, slots, itemIds } of ovenOver) {
       const key = [...itemIds].sort().join(',');
       if (seen.has(key)) continue;
       seen.add(key);
       conflicts.push({
         type: 'combi-capacity',
-        message: `Combi overcapacity at ${formatTime(time)}: ${itemIds.map(id => `"${combiItems.find(i=>i.id===id)?.name}"`).join(', ')} = ${slots}/2 slots.`,
+        message: `Combi overcapacity at ${formatTime(time)}: ${itemIds.map(id => `"${ovenItems.find(i=>i.id===id)?.name}"`).join(', ')} = ${slots}/2 slots.`,
+        itemIds,
+      });
+    }
+
+    // Microwave mode: exclusive (1 item at a time)
+    const mwUsage = mwItems.map(i => ({
+      start: i._s.cookStart, end: i._s.cookEnd,
+      slots: 1, itemId: i.id,
+    }));
+    const mwOver = sweepConflicts(mwUsage, 1);
+    const mwSeen = new Set();
+    for (const { time, itemIds } of mwOver) {
+      const key = [...itemIds].sort().join(',');
+      if (mwSeen.has(key)) continue;
+      mwSeen.add(key);
+      conflicts.push({
+        type: 'combi-capacity',
+        message: `Microwave in use by multiple items at ${formatTime(time)}: ${itemIds.map(id => `"${mwItems.find(i=>i.id===id)?.name}"`).join(', ')} — microwave is exclusive (one item at a time).`,
         itemIds,
       });
     }
@@ -491,17 +527,21 @@ function buildEvents(items, target) {
       const appLabel = applianceLabel(item._appliance, ct);
       // applianceKey groups items that share the same destination (for merged labels)
       const appKey = item._appliance || 'none';
+      // Shelf label: only main oven has 2 addressable shelves worth calling out
+      const shelfLabel = (item._appliance === 'main' && item._shelf)
+        ? ` · Shelf ${item._shelf}` : '';
       events.push({
         time: cookStart,
         endTime: cookEnd,
         type: 'cook_start',
         label: cookStartLabel(item, ct, appLabel),
-        sub: `${formatDuration(item.cookTime)} · ${appLabel}`,
+        sub: `${formatDuration(item.cookTime)} · ${appLabel}${shelfLabel}`,
         itemId: item.id,
         itemName: item.name,
         canOverride: true,
         applianceKey: appKey,
         applianceLabel: appLabel,
+        shelfInfo: item._shelf ?? null,
         ct,
       });
       events.push({
@@ -590,13 +630,29 @@ function mergedLabel(type, evs, names) {
 
 function mergedSub(type, evs) {
   if (evs.length === 1) return evs[0].sub;
-  // For cook_start: list individual durations if they differ
   if (type === 'cook_start') {
-    const durations = evs.map(e => e.sub).filter(Boolean);
-    const unique = [...new Set(durations)];
-    if (unique.length === 1) return unique[0];
-    // Different durations — show per-item
-    return evs.map(e => `${e.itemName}: ${e.sub}`).join(' · ');
+    // Extract duration and shelf separately for cleaner merged formatting
+    const appLabel  = evs[0].applianceLabel || '';
+    const durParts  = evs.map(e => e.sub?.split(' · ')[0] ?? '');   // "45 min"
+    const shelfParts = evs.map(e => e.shelfInfo != null ? `Shelf ${e.shelfInfo}` : null);
+    const uniqueDurs   = [...new Set(durParts)];
+    const uniqueShelves = [...new Set(shelfParts.filter(Boolean))];
+
+    // All items have the same duration and same shelf → single compact sub
+    if (uniqueDurs.length === 1 && (uniqueShelves.length <= 1)) {
+      return [durParts[0], appLabel, uniqueShelves[0]].filter(Boolean).join(' · ');
+    }
+    // Same duration, different shelves → "45 min · Main Oven · Turkey: Shelf 1, Chicken: Shelf 2"
+    if (uniqueDurs.length === 1 && uniqueShelves.length > 1) {
+      const shelfList = evs.map(e => e.shelfInfo != null ? `${e.itemName}: Shelf ${e.shelfInfo}` : e.itemName).join(', ');
+      return [durParts[0], appLabel, shelfList].filter(Boolean).join(' · ');
+    }
+    // Different durations — show per-item (include shelf inline)
+    return evs.map(e => {
+      const dur   = e.sub?.split(' · ')[0] ?? '';
+      const shelf = e.shelfInfo != null ? ` Shelf ${e.shelfInfo}` : '';
+      return `${e.itemName}: ${dur}${shelf}`;
+    }).join(' · ') + (appLabel ? ` · ${appLabel}` : '');
   }
   // For set/ready: show duration if uniform
   const subs = evs.map(e => e.sub).filter(Boolean);
