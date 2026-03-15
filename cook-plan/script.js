@@ -1136,7 +1136,81 @@ function bindScheduleEvents(items, events) {
 
 // ---- Live clock ----
 
+// ---- Chimes ----
+
+let chimesFired = new Set();  // keys of events that have already chimed
+
+function chimeKey(ev) {
+  return `${ev.time}:${ev.type}:${ev.itemId || ''}`;
+}
+
+// Pre-seed so past events (and events right now on first load) don't trigger
+function initChimes(events) {
+  const nowM = nowMins();
+  chimesFired = new Set(events.filter(ev => ev.time <= nowM).map(chimeKey));
+}
+
+function playChime(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Bell: fundamental + a detuned partial for richness, quick attack, slow decay
+    const freqMap = {
+      prep:       392.00,  // G4 — gentle reminder
+      cook_start: 523.25,  // C5 — things going in
+      cook_end:   783.99,  // G5 — higher/urgent: things coming out
+      set:        440.00,  // A4 — soft
+      serve:      987.77,  // B5 — bright fanfare note
+    };
+    const freq  = freqMap[type] ?? 523.25;
+    const decay = type === 'serve' ? 2.5 : 1.8;
+
+    const osc1  = ctx.createOscillator();
+    const osc2  = ctx.createOscillator();  // bell overtone at ~2.76× fundamental
+    const gain  = ctx.createGain();
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.value = freq;
+    osc2.frequency.value = freq * 2.756;  // characteristic inharmonic bell partial
+
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + decay);
+
+    osc1.start(ctx.currentTime);
+    osc2.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + decay);
+    osc2.stop(ctx.currentTime + decay);
+
+    // For serve, add a quick second note a fifth up
+    if (type === 'serve') {
+      const osc3 = ctx.createOscillator();
+      const g3   = ctx.createGain();
+      osc3.connect(g3);
+      g3.connect(ctx.destination);
+      osc3.type = 'sine';
+      osc3.frequency.value = freq * 1.5;
+      g3.gain.setValueAtTime(0, ctx.currentTime + 0.18);
+      g3.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.19);
+      g3.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.19 + decay);
+      osc3.start(ctx.currentTime + 0.18);
+      osc3.stop(ctx.currentTime + 0.18 + decay);
+      osc3.onended = () => ctx.close();
+    } else {
+      osc1.onended = () => ctx.close();
+    }
+  } catch (_) {
+    // AudioContext unavailable (e.g. test environments) — fail silently
+  }
+}
+
 function startClock(events) {
+  initChimes(events);
   updateClock(events);
   clockInterval = setInterval(() => updateClock(events), 1000);
 }
@@ -1154,6 +1228,17 @@ function updateClock(events) {
   const now = new Date();
   const nowS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   const nowM = Math.floor(nowS / 60);
+
+  // Fire chimes for events whose time has just been reached
+  for (const ev of events) {
+    if (ev.time === nowM) {
+      const key = chimeKey(ev);
+      if (!chimesFired.has(key)) {
+        chimesFired.add(key);
+        playChime(ev.type);
+      }
+    }
+  }
 
   clockTimeEl.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   clockDateEl.textContent = now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
