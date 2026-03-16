@@ -49,12 +49,14 @@ function lcsDiff(text1, text2) {
 function processOps(ops) {
   const displayRows = [];
   const hunks = [];
+  let f1Pos = 0;
   let f2Pos = 0;
   let i = 0;
 
   while (i < ops.length) {
     if (ops[i].type === 'equal') {
       displayRows.push({ type: 'equal', left: ops[i].val, right: ops[i].val });
+      f1Pos++;
       f2Pos++;
       i++;
       continue;
@@ -62,12 +64,14 @@ function processOps(ops) {
 
     // Gather all consecutive non-equal ops into one hunk
     const hunkId = hunks.length;
+    const f1Start = f1Pos;
     const f2Start = f2Pos;
     const deletes = [], inserts = [];
 
     while (i < ops.length && ops[i].type !== 'equal') {
       if (ops[i].type === 'delete') {
         deletes.push(ops[i].val);
+        f1Pos++;
       } else {
         inserts.push(ops[i].val);
         f2Pos++;
@@ -89,7 +93,11 @@ function processOps(ops) {
       });
     }
 
-    hunks.push({ id: hunkId, file1Lines: deletes, file2Start: f2Start, file2Count: inserts.length });
+    hunks.push({
+      id: hunkId,
+      file1Start: f1Start, file1Lines: deletes,
+      file2Start: f2Start, file2Lines: inserts,
+    });
   }
 
   return { displayRows, hunks };
@@ -174,7 +182,7 @@ function renderDiff(displayRows, hunks) {
     const rightHtml = row.right !== null ? esc(row.right) : '';
     const gutter = row.isStart
       ? `<button class="btn-apply" data-hunk="${row.hunkId}" ` +
-        `title="Replace this section in file 2 with the file 1 version">&#x2190; Apply</button>`
+        `title="Apply this change into the main file">&#x2190; Apply</button>`
       : '';
 
     parts.push(
@@ -242,13 +250,13 @@ function updateDiff() {
 }
 
 // ── APPLY HUNK ────────────────────────────────────────────
-// Replaces the file-2 section of this hunk with the file-1 lines.
+// Applies the file-2 lines for this hunk into file-1 (the main file).
 function applyHunk(hunkId) {
   const hunk = currentHunks[hunkId];
   if (!hunk) return;
-  const ta = document.getElementById('text2');
+  const ta = document.getElementById('text1');
   const lines = ta.value.split('\n');
-  lines.splice(hunk.file2Start, hunk.file2Count, ...hunk.file1Lines);
+  lines.splice(hunk.file1Start, hunk.file1Lines.length, ...hunk.file2Lines);
   ta.value = lines.join('\n');
   updateDiff();
 }
@@ -328,7 +336,7 @@ document.getElementById('text2').addEventListener('input', scheduleUpdate);
 
 // ── DOWNLOAD ──────────────────────────────────────────────
 document.getElementById('download-btn').addEventListener('click', () => {
-  const content = document.getElementById('text2').value;
+  const content = document.getElementById('text1').value;
   if (!content) return;
   const drop1Text = document.getElementById('drop1').textContent.trim();
   const name = (drop1Text === 'Drop a file here or click to browse') ? 'merged.txt' : drop1Text;
