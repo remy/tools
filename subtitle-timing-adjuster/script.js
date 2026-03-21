@@ -161,12 +161,14 @@ function renderPreview() {
     const item = document.createElement('div');
     item.className = 'preview-item';
 
-    const s = msToTs(start + offsetMs);
-    const e = msToTs(end   + offsetMs);
+    const origTime = `${msToTs(start)} → ${msToTs(end)}`;
+    const adjTime  = `${msToTs(start + offsetMs)} → ${msToTs(end + offsetMs)}`;
+    const changed  = offsetMs !== 0;
 
     item.innerHTML = `
       <span class="preview-seq">#${seq}</span>
-      <span class="preview-time">${s} → ${e}</span>
+      <span class="preview-time preview-time--orig${changed ? ' preview-time--stale' : ''}">${origTime}</span>
+      ${changed ? `<span class="preview-time preview-time--adj">${adjTime}</span>` : ''}
       <span class="preview-text">${escHtml(text)}</span>
     `;
     previewList.appendChild(item);

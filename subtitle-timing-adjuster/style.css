@@ -369,7 +369,20 @@ input[type="range"] {
 .preview-time {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.82rem;
-  color: var(--accent);
+
+  &--orig {
+    color: var(--accent);
+  }
+
+  &--stale {
+    color: var(--text-secondary);
+    text-decoration: line-through;
+    font-size: 0.76rem;
+  }
+
+  &--adj {
+    color: var(--accent);
+  }
 }
 
 .preview-text {
