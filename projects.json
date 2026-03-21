@@ -99,6 +99,11 @@
     "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
     "title": "AFI Quote Master"
   },
+  "subtitle-timing-adjuster": {
+    "category": "Productivity",
+    "description": "Upload an SRT subtitle file, shift all timings forward or backward with millisecond precision, then download the adjusted file.",
+    "title": "Subtitle Timing Adjuster"
+  },
   "tax": {
     "category": "Calculators",
     "description": "Calculate tax-inclusive (gross) and tax-exclusive (net) values with customizable tax rates and real-time conversion",

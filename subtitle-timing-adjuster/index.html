@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Upload an SRT subtitle file, shift all timings forward or backward with millisecond precision, then download the adjusted file.">
+  <meta name="category" content="Productivity">
+  <title>Subtitle Timing Adjuster</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Subtitle Timing Adjuster</h1>
+    <p class="subtitle">Upload an <code>.srt</code> file, shift all timings, download the result.</p>
+
+    <section class="upload-zone" id="uploadZone">
+      <div class="upload-inner">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+          <polyline points="8 12 12 8 16 12"/>
+          <line x1="12" y1="8" x2="12" y2="20"/>
+        </svg>
+        <p>Drop an <strong>.srt</strong> file here or <label class="file-label" for="fileInput">browse</label></p>
+        <p class="hint">All processing happens locally in your browser</p>
+      </div>
+      <input type="file" id="fileInput" accept=".srt,text/plain" hidden>
+    </section>
+
+    <section class="tool-panel" id="toolPanel" hidden>
+      <div class="file-info">
+        <span class="file-name" id="fileName"></span>
+        <span class="file-meta" id="fileMeta"></span>
+        <button class="btn btn-ghost btn-sm" id="clearBtn">Change file</button>
+      </div>
+
+      <div class="adjustment-panel">
+        <div class="offset-display">
+          <span class="offset-label">Offset</span>
+          <span class="offset-value" id="offsetDisplay">0.000 s</span>
+        </div>
+
+        <div class="slider-row">
+          <span class="slider-bound">−60 s</span>
+          <input type="range" id="coarseSlider" min="-60000" max="60000" value="0" step="100">
+          <span class="slider-bound">+60 s</span>
+        </div>
+
+        <div class="presets">
+          <span class="presets-label">Quick</span>
+          <div class="preset-btns">
+            <button class="btn btn-sm preset" data-delta="-5000">−5 s</button>
+            <button class="btn btn-sm preset" data-delta="-1000">−1 s</button>
+            <button class="btn btn-sm preset" data-delta="-500">−0.5 s</button>
+            <button class="btn btn-sm" id="resetBtn">Reset</button>
+            <button class="btn btn-sm preset" data-delta="500">+0.5 s</button>
+            <button class="btn btn-sm preset" data-delta="1000">+1 s</button>
+            <button class="btn btn-sm preset" data-delta="5000">+5 s</button>
+          </div>
+        </div>
+
+        <div class="fine-tune">
+          <span class="fine-label">Fine-tune</span>
+          <div class="fine-btns">
+            <button class="btn btn-sm fine" data-delta="-1000">−1 s</button>
+            <button class="btn btn-sm fine" data-delta="-100">−100 ms</button>
+            <button class="btn btn-sm fine" data-delta="-10">−10 ms</button>
+            <button class="btn btn-sm fine" data-delta="-1">−1 ms</button>
+            <button class="btn btn-sm fine" data-delta="1">+1 ms</button>
+            <button class="btn btn-sm fine" data-delta="10">+10 ms</button>
+            <button class="btn btn-sm fine" data-delta="100">+100 ms</button>
+            <button class="btn btn-sm fine" data-delta="1000">+1 s</button>
+          </div>
+        </div>
+
+        <div class="exact-row">
+          <label for="exactInput">Exact offset (seconds)</label>
+          <input type="number" id="exactInput" value="0" step="0.001" placeholder="e.g. -2.5">
+        </div>
+      </div>
+
+      <div class="preview-panel">
+        <h2>Preview <span class="preview-count" id="previewCount"></span></h2>
+        <div class="preview-list" id="previewList"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="downloadBtn">Download adjusted .srt</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
