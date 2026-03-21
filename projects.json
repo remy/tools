@@ -1,7 +1,7 @@
 {
   "beat-loop-generator": {
     "category": "Music",
-    "description": "Mobile-first beat sequencer with predefined instruments (kick, snare, hi-hats, toms, clap, bass) and genre style presets. Uses Web Audio API synthesis — no external files required.",
+    "description": "Mobile-first beat sequencer with predefined instruments and genre style presets. Synthesises kicks, snares, hi-hats, toms, claps and bass using the Web Audio API.",
     "title": "Beat Loop Generator"
   },
   "buzzer": {
