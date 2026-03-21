@@ -1,4 +1,9 @@
 {
+  "beat-loop-generator": {
+    "category": "Music",
+    "description": "Mobile-first beat sequencer with predefined instruments (kick, snare, hi-hats, toms, clap, bass) and genre style presets. Uses Web Audio API synthesis — no external files required.",
+    "title": "Beat Loop Generator"
+  },
   "buzzer": {
     "category": "Game",
     "description": "A simple game timer with 15s restart and 30s single modes, featuring a wake lock option to keep the screen awake during use.",
