@@ -373,21 +373,21 @@ input[type="range"] {
 .preview-time {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.82rem;
+}
 
-  &--orig {
-    color: var(--time-orig);
-  }
+.preview-time--orig {
+  color: var(--time-orig);
+}
 
-  &--stale {
-    color: var(--time-orig);
-    text-decoration: line-through;
-    opacity: 0.6;
-    font-size: 0.76rem;
-  }
+.preview-time--stale {
+  color: var(--time-orig);
+  text-decoration: line-through;
+  opacity: 0.6;
+  font-size: 0.76rem;
+}
 
-  &--adj {
-    color: var(--time-adj);
-  }
+.preview-time--adj {
+  color: var(--time-adj);
 }
 
 .preview-text {
