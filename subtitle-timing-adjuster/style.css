@@ -9,6 +9,8 @@
   --accent-subtle: #eff6ff;
   --danger: #dc2626;
   --success: #16a34a;
+  --time-orig: #d97706;
+  --time-adj: #16a34a;
   --radius: 0.5rem;
   --radius-lg: 0.75rem;
 }
@@ -25,6 +27,8 @@
     --accent-subtle: #1e3a5f;
     --danger: #f87171;
     --success: #4ade80;
+    --time-orig: #fbbf24;
+    --time-adj: #4ade80;
   }
 }
 
@@ -371,17 +375,18 @@ input[type="range"] {
   font-size: 0.82rem;
 
   &--orig {
-    color: var(--accent);
+    color: var(--time-orig);
   }
 
   &--stale {
-    color: var(--text-secondary);
+    color: var(--time-orig);
     text-decoration: line-through;
+    opacity: 0.6;
     font-size: 0.76rem;
   }
 
   &--adj {
-    color: var(--accent);
+    color: var(--time-adj);
   }
 }
 
