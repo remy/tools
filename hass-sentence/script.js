@@ -13,11 +13,11 @@ import { COMMON_EXPANSION_RULES, COMMON_LISTS } from './common-rules.js';
 const sentenceInput = document.getElementById('sentenceInput');
 const templatesContainer = document.getElementById('templatesContainer');
 const tracesContainer = document.getElementById('tracesContainer');
-const addTemplateBtn = document.getElementById('addTemplateBtn');
 
 let templates = [];
 let nextId = 1;
 let templateResults = new Map(); // Store results for each template
+let textareaRawValue = ''; // Raw textarea content (preserves blank lines)
 
 // Initialize from URL parameters
 function initFromURL() {
@@ -42,6 +42,7 @@ function initFromURL() {
       { id: nextId++, value: '[the] (light|lights) in {area} [is] (on;now)' },
     ];
   }
+  textareaRawValue = templates.map((t) => t.value).join('\n');
 }
 
 // Update URL with current state
@@ -60,88 +61,29 @@ function updateURL() {
 
 function renderTemplates() {
   templatesContainer.innerHTML = '';
-  templates.forEach((template, index) => {
-    const result = templateResults.get(template.id);
-    const statusClass = result ? (result.hasFailure ? 'fail' : 'success') : '';
 
-    const div = document.createElement('div');
-    div.className = 'template-entry';
-    div.innerHTML = `
-      <div class="template-header">
-        <a href="#trace-${template.id}" class="template-number-link">
-          <span class="template-number">Template ${index + 1}</span>
-          ${
-            statusClass
-              ? `<span class="status-pill ${statusClass}">${
-                  result.hasFailure ? 'FAILED' : 'MATCHED'
-                }</span>`
-              : ''
-          }
-        </a>
-        ${
-          templates.length > 1
-            ? `<button class="btn-remove" data-id="${template.id}">Remove</button>`
-            : ''
-        }
-      </div>
-      <input class="template-input" data-id="${
-        template.id
-      }" type="text" value="${template.value}">
-    `;
-    templatesContainer.appendChild(div);
+  const textarea = document.createElement('textarea');
+  textarea.className = 'templates-textarea';
+  textarea.value = textareaRawValue;
+  textarea.placeholder = 'Enter one template per line…';
+  textarea.rows = Math.max(4, textareaRawValue.split('\n').length + 1);
+
+  textarea.addEventListener('input', (e) => {
+    textareaRawValue = e.target.value;
+    const lines = textareaRawValue.split('\n');
+    nextId = 1;
+    templates = lines
+      .filter((line) => line.trim())
+      .map((value) => ({ id: nextId++, value: value.trim() }));
+    updateURL();
+    update();
   });
 
-  // Attach event listeners
-  document.querySelectorAll('.template-input').forEach((input) => {
-    input.addEventListener('input', (e) => {
-      const id = parseInt(e.target.dataset.id);
-      const template = templates.find((t) => t.id === id);
-      if (template) {
-        template.value = e.target.value;
-        updateURL();
-        update();
-      }
-    });
-  });
-
-  document.querySelectorAll('.btn-remove').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const id = parseInt(e.target.dataset.id);
-      templates = templates.filter((t) => t.id !== id);
-      updateURL();
-      renderTemplates();
-      update();
-    });
-  });
+  templatesContainer.appendChild(textarea);
 }
 
 function updateTemplateStatuses() {
-  templates.forEach((template, index) => {
-    const result = templateResults.get(template.id);
-    const link = document
-      .querySelector(`.template-input[data-id="${template.id}"]`)
-      ?.closest('.template-entry')
-      ?.querySelector('.template-number-link');
-
-    if (!link) return;
-
-    const statusClass = result ? (result.hasFailure ? 'fail' : 'success') : '';
-    const existingPill = link.querySelector('.status-pill');
-
-    if (statusClass && result) {
-      const pillHTML = `<span class="status-pill ${statusClass}">${
-        result.hasFailure ? 'FAILED' : 'MATCHED'
-      }</span>`;
-
-      if (existingPill) {
-        existingPill.outerHTML = pillHTML;
-      } else {
-        link.insertAdjacentHTML('beforeend', pillHTML);
-      }
-    } else if (existingPill) {
-      existingPill.remove();
-    }
-  });
+  // Status is shown in the trace section; no per-line pills needed.
 }
 
 const ruleCache = new Map();
@@ -717,20 +659,11 @@ function update() {
   // Update template status indicators only
   updateTemplateStatuses();
 
-  // Add this inside your render() function to make the favicon reactive!
   const favicon = document.querySelector('link[rel="icon"]');
-  const isSuccess = !document.querySelector('.status-pill.fail');
   const iconColor = ok ? '%23059669' : '%23dc2626'; // Green or Red
 
   favicon.href = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22${iconColor}%22/><path d=%22M30 45v10m10-20v30m10-40v50m10-40v30m10-20v10%22 stroke=%22white%22 stroke-width=%228%22 stroke-linecap=%22round%22/></svg>`;
 }
-
-addTemplateBtn.addEventListener('click', () => {
-  templates.push({ id: nextId++, value: '' });
-  updateURL();
-  renderTemplates();
-  update();
-});
 
 sentenceInput.addEventListener('input', () => {
   updateURL();

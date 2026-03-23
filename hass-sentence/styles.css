@@ -251,48 +251,29 @@ footer a:hover {
   text-decoration: underline;
 }
 
-.template-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+.templates-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: -0.5rem 0 0.75rem;
 }
 
-.template-header-row h2 {
-  margin: 0;
-}
-
-.template-entry {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 8px;
+.templates-textarea {
+  width: 100%;
+  padding: 0.75rem;
   border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.2s;
+  line-height: 1.6;
 }
 
-.template-entry:last-child {
-  margin-bottom: 0;
-}
-
-.template-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-
-.template-number-link {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-  transition: opacity 0.2s;
-}
-
-.template-number-link:hover {
-  opacity: 0.7;
+.templates-textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .template-number {
@@ -301,56 +282,6 @@ footer a:hover {
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-}
-
-.status-pill {
-  font-size: 0.65rem;
-  font-weight: bold;
-  padding: 0.15rem 0.5rem;
-  border-radius: 4px;
-  text-transform: uppercase;
-}
-
-.status-pill.success {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-pill.fail {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.btn-remove {
-  background: transparent;
-  border: 1px solid var(--error);
-  color: var(--error);
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-remove:hover {
-  background: var(--error);
-  color: white;
-}
-
-.btn-add {
-  background: var(--primary);
-  border: none;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-add:hover {
-  background: #1d4ed8;
 }
 
 .trace-section {
