@@ -1,0 +1,58 @@
+{
+  "workouts": [
+    {
+      "id": "A",
+      "label": "Push",
+      "focus": "PUSH + CORE",
+      "exercises": [
+        { "name": "Barbell Bench Press", "sets": "4", "reps": "6–8" },
+        { "name": "Incline Dumbbell Press", "sets": "3", "reps": "10–12" },
+        { "name": "Seated Overhead Press (DB)", "sets": "3", "reps": "8–10" },
+        { "name": "Cable Lateral Raises", "sets": "3", "reps": "12–15" },
+        { "name": "Tricep Pushdowns (cable)", "sets": "3", "reps": "10–12" },
+        { "name": "Pallof Press (cable)", "sets": "3", "reps": "12 / side" }
+      ],
+      "cardio": {
+        "icon": "🚴",
+        "title": "CARDIO FINISHER",
+        "description": "10–15 min · Bike or elliptical · Zone 2 pace"
+      }
+    },
+    {
+      "id": "B",
+      "label": "Pull",
+      "focus": "PULL + ARMS",
+      "exercises": [
+        { "name": "Chest-Supported DB Row", "sets": "4", "reps": "8–10" },
+        { "name": "Lat Pulldown", "sets": "3", "reps": "10–12" },
+        { "name": "Seated Cable Row", "sets": "3", "reps": "10–12" },
+        { "name": "Face Pulls", "sets": "3", "reps": "15" },
+        { "name": "Barbell or DB Curl", "sets": "3", "reps": "10–12" },
+        { "name": "Hammer Curls", "sets": "3", "reps": "12" }
+      ],
+      "cardio": {
+        "icon": "🚣",
+        "title": "CARDIO FINISHER",
+        "description": "10–15 min · Rowing machine · Steady Zone 2 pace"
+      }
+    },
+    {
+      "id": "C",
+      "label": "Legs",
+      "focus": "LEGS + CORE",
+      "exercises": [
+        { "name": "Leg Press", "sets": "4", "reps": "10–12" },
+        { "name": "Bulgarian Split Squat (DBs)", "sets": "3", "reps": "10 / side" },
+        { "name": "Leg Curl (machine)", "sets": "3", "reps": "12" },
+        { "name": "Leg Extension", "sets": "3", "reps": "12" },
+        { "name": "Calf Raises", "sets": "3", "reps": "15–20" },
+        { "name": "Ab Wheel or Cable Crunch", "sets": "3", "reps": "12–15" }
+      ],
+      "cardio": {
+        "icon": "🚴",
+        "title": "CARDIO FINISHER",
+        "description": "10–15 min · Bike · Zone 2 pace"
+      }
+    }
+  ]
+}

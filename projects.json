@@ -128,5 +128,10 @@
     "category": "Web Demos",
     "description": "Demonstration of the Screen Wake Lock API to prevent device screen from dimming",
     "title": "Wake Lock Demo"
+  },
+  "workout": {
+    "category": "Productivity",
+    "description": "A simple, data-driven workout tracker for tracking daily splits and exercises.",
+    "title": "Workout Plan"
   }
 }
