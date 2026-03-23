@@ -657,7 +657,7 @@ function update() {
     templateResults.set(template.id, { hasFailure, traceItems, debugInfo });
 
     const section = document.createElement('div');
-    section.className = 'trace-section';
+    section.className = 'trace-section' + (hasFailure ? ' collapsed' : '');
     section.id = `trace-${template.id}`;
 
     const header = document.createElement('div');
@@ -667,12 +667,16 @@ function update() {
         <div class="template-number">Template ${index + 1}</div>
         <div class="trace-template-display">${escapeHTML(template.value)}</div>
       </div>
-      <div class="trace-overall-status ${
-        hasFailure ? 'overall-fail' : 'overall-success'
-      }">
-        ${hasFailure ? 'FAILED' : 'MATCHED'}
+      <div class="trace-header-right">
+        <div class="trace-overall-status ${
+          hasFailure ? 'overall-fail' : 'overall-success'
+        }">
+          ${hasFailure ? 'FAILED' : 'MATCHED'}
+        </div>
+        <span class="trace-chevron">▾</span>
       </div>
     `;
+    header.addEventListener('click', () => section.classList.toggle('collapsed'));
 
     const traceList = document.createElement('div');
     traceList.className = 'trace-list';

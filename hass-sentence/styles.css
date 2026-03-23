@@ -301,6 +301,37 @@ footer a:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.trace-header:hover {
+  background: #f8fafc;
+}
+
+.trace-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.trace-chevron {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  line-height: 1;
+}
+
+.trace-section.collapsed .trace-chevron {
+  transform: rotate(-90deg);
+}
+
+.trace-section.collapsed .trace-header {
+  border-radius: 12px;
+}
+
+.trace-section.collapsed .trace-list {
+  display: none;
 }
 
 .trace-template-display {
