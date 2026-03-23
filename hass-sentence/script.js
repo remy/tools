@@ -189,24 +189,63 @@ function matchExpression(expr, words, wordIndex, traceItems) {
   }
 
   if (expr instanceof Sequence) {
-    let totalConsumed = 0;
-    let allMatched = true;
-
-    for (const item of expr.items) {
-      const result = matchExpression(
-        item,
-        words,
-        wordIndex + totalConsumed,
-        traceItems
-      );
-      if (!result.matched) {
-        allMatched = false;
-        break;
+    // Recursive backtracking matcher for sequence items.
+    // When a greedy slot (wildcard or unknown list) is followed by more items,
+    // we try consuming 1…N words for the slot until the remainder matches —
+    // this is how HASSIL handles multi-word slot values like {task} in
+    // "(remind me) to {task} at {time}".
+    const matchItems = (itemIndex, wordIdx, trace) => {
+      if (itemIndex >= expr.items.length) {
+        return { matched: true, wordsConsumed: 0 };
       }
-      totalConsumed += result.wordsConsumed;
-    }
 
-    return { matched: allMatched, wordsConsumed: totalConsumed };
+      const item = expr.items[itemIndex];
+      const hasMore = itemIndex < expr.items.length - 1;
+
+      if (item instanceof ListReference && hasMore) {
+        const matcher = getSlotMatcher(item.listName);
+        const isGreedy = !matcher || matcher.type === 'wildcard';
+
+        if (isGreedy) {
+          const remaining = words.length - wordIdx;
+          for (let n = 1; n <= remaining; n++) {
+            const restTrace = [];
+            const restResult = matchItems(itemIndex + 1, wordIdx + n, restTrace);
+            if (restResult.matched) {
+              const matchedWords = words.slice(wordIdx, wordIdx + n).join(' ');
+              trace.push({
+                raw: `{${item.listName}}`,
+                type: 'slot',
+                status: !matcher ? 'Extracted' : 'Extracted (Common)',
+                statusClass: 'status-matched',
+                note: `Assigned <strong>${matchedWords}</strong> to {${item.listName}}${!matcher ? ' (no list def)' : ' (wildcard)'}`,
+              });
+              trace.push(...restTrace);
+              return { matched: true, wordsConsumed: n + restResult.wordsConsumed };
+            }
+          }
+          trace.push({
+            raw: `{${item.listName}}`,
+            type: 'slot',
+            status: 'Fail',
+            statusClass: 'status-fail',
+            note: `Could not match slot {${item.listName}} with the remaining pattern`,
+          });
+          return { matched: false, wordsConsumed: 0 };
+        }
+      }
+
+      // Non-greedy item: match normally then recurse.
+      const result = matchExpression(item, words, wordIdx, trace);
+      if (!result.matched) return { matched: false, wordsConsumed: 0 };
+
+      const restResult = matchItems(itemIndex + 1, wordIdx + result.wordsConsumed, trace);
+      if (!restResult.matched) return { matched: false, wordsConsumed: 0 };
+
+      return { matched: true, wordsConsumed: result.wordsConsumed + restResult.wordsConsumed };
+    };
+
+    return matchItems(0, wordIndex, traceItems);
   }
 
   if (expr instanceof Alternative) {
