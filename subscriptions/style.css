@@ -871,6 +871,10 @@ body {
   overflow-y: auto;
 }
 
+.year-filter {
+  padding-bottom: 0.5rem;
+}
+
 .year-header {
   display: flex;
   align-items: center;

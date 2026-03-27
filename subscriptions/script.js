@@ -337,12 +337,23 @@ function renderYearView() {
 
   const maxTotal = Math.max(...totals, 1);
 
-  // Heat colors: low = green, mid = amber, high = red
+  // Smooth heatmap: interpolate green → amber → red based on ratio
   function heatColor(ratio) {
     if (ratio < 0.01) return 'var(--bg-input)';
-    if (ratio < 0.33) return 'var(--green)';
-    if (ratio < 0.66) return '#f0a030';
-    return 'var(--danger)';
+    // Green (120,200,100) → Amber (240,160,50) → Red (230,75,60)
+    let r, g, b;
+    if (ratio <= 0.5) {
+      const t = ratio / 0.5;
+      r = Math.round(120 + (240 - 120) * t);
+      g = Math.round(200 + (160 - 200) * t);
+      b = Math.round(100 + (50 - 100) * t);
+    } else {
+      const t = (ratio - 0.5) / 0.5;
+      r = Math.round(240 + (230 - 240) * t);
+      g = Math.round(160 + (75 - 160) * t);
+      b = Math.round(50 + (60 - 50) * t);
+    }
+    return `rgb(${r},${g},${b})`;
   }
 
   let html = '';
@@ -377,6 +388,7 @@ function toggleYearView() {
   const yearViewEl = document.getElementById('year-view');
   const totalBar = document.getElementById('monthly-total');
   const monthNav = document.querySelector('.month-nav');
+  const filterBar = document.querySelector('.filter-bar');
 
   if (viewMode === 'month') {
     viewMode = 'year';
@@ -384,7 +396,8 @@ function toggleYearView() {
     btn.classList.add('active');
     calendarEl.hidden = true;
     totalBar.hidden = true;
-    monthNav.style.visibility = 'hidden';
+    monthNav.hidden = true;
+    filterBar.hidden = true;
     yearViewEl.hidden = false;
     renderYearView();
   } else {
@@ -392,7 +405,8 @@ function toggleYearView() {
     btn.classList.remove('active');
     calendarEl.hidden = false;
     totalBar.hidden = false;
-    monthNav.style.visibility = '';
+    monthNav.hidden = false;
+    filterBar.hidden = false;
     yearViewEl.hidden = true;
     render();
   }
@@ -727,13 +741,22 @@ function bindEvents() {
     }
   });
 
-  // Category filter
+  // Category filter — keep both filter groups in sync
+  function syncFilters(source) {
+    categoryFilter = source.value;
+    // Sync the other filter group
+    const mainRadio = document.querySelector(`input[name="category-filter"][value="${categoryFilter}"]`);
+    const yearRadio = document.querySelector(`input[name="year-category-filter"][value="${categoryFilter}"]`);
+    if (mainRadio) mainRadio.checked = true;
+    if (yearRadio) yearRadio.checked = true;
+    if (viewMode === 'year') renderYearView();
+    else render();
+  }
   for (const radio of document.querySelectorAll('input[name="category-filter"]')) {
-    radio.addEventListener('change', () => {
-      categoryFilter = document.querySelector('input[name="category-filter"]:checked').value;
-      if (viewMode === 'year') renderYearView();
-      else render();
-    });
+    radio.addEventListener('change', (e) => syncFilters(e.target));
+  }
+  for (const radio of document.querySelectorAll('input[name="year-category-filter"]')) {
+    radio.addEventListener('change', (e) => syncFilters(e.target));
   }
 
   // Monthly total → breakdown

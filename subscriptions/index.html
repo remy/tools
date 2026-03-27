@@ -62,6 +62,16 @@
     </main>
 
     <div class="year-view" id="year-view" hidden>
+      <div class="year-filter">
+        <div class="toggle-group toggle-filter">
+          <input type="radio" name="year-category-filter" id="yf-all" value="all" checked>
+          <label for="yf-all">All</label>
+          <input type="radio" name="year-category-filter" id="yf-personal" value="personal">
+          <label for="yf-personal">Personal</label>
+          <input type="radio" name="year-category-filter" id="yf-business" value="business">
+          <label for="yf-business">Business</label>
+        </div>
+      </div>
       <div class="year-header">
         <button class="nav-btn" id="year-prev" aria-label="Previous year">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
