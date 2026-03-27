@@ -72,6 +72,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Ensure hidden attribute works on flex containers */
+.calendar[hidden],
+.year-view[hidden],
+.month-chrome[hidden],
+.month-nav[hidden] {
+  display: none;
+}
+
 /* ── App Shell ── */
 .app {
   display: flex;
