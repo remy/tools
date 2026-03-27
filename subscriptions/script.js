@@ -9,6 +9,7 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
 let currentYear, currentMonth;
 let subscriptions = [];
 let settings = { displayCurrency: 'GBP', exchangeRate: DEFAULT_RATE };
+let categoryFilter = 'all'; // 'all' | 'personal' | 'business'
 
 // ── IndexedDB ──
 class SubscriptionDB {
@@ -201,6 +202,11 @@ function subsForMonth(subs, year, month) {
   return byDay;
 }
 
+function filteredSubs() {
+  if (categoryFilter === 'all') return subscriptions;
+  return subscriptions.filter(s => (s.category || 'personal') === categoryFilter);
+}
+
 function escapeHtml(str) {
   const d = document.createElement('div');
   d.textContent = str;
@@ -223,7 +229,7 @@ function renderGrid() {
   const grid = document.getElementById('calendar-grid');
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
   const firstDay = getFirstDayOfWeek(currentYear, currentMonth);
-  const byDay = subsForMonth(subscriptions, currentYear, currentMonth);
+  const byDay = subsForMonth(filteredSubs(), currentYear, currentMonth);
   const today = new Date();
   const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth;
   const todayDate = today.getDate();
@@ -286,7 +292,7 @@ function renderGrid() {
 
 function renderTotal() {
   let total = 0;
-  for (const sub of subscriptions) {
+  for (const sub of filteredSubs()) {
     const monthly = monthlyEquivalent(sub.amount, sub.cycle);
     total += convertAmount(monthly, sub.currency, settings.displayCurrency, settings.exchangeRate);
   }
@@ -299,7 +305,8 @@ function openBreakdown() {
   const list = document.getElementById('breakdown-list');
   const emptyEl = document.getElementById('breakdown-empty');
 
-  if (subscriptions.length === 0) {
+  const visible = filteredSubs();
+  if (visible.length === 0) {
     list.innerHTML = '';
     emptyEl.hidden = false;
     document.getElementById('breakdown-total').innerHTML = formatCurrency(0, settings.displayCurrency) + '<span>/mo</span>';
@@ -308,7 +315,7 @@ function openBreakdown() {
   }
 
   emptyEl.hidden = true;
-  const items = subscriptions.map(sub => {
+  const items = visible.map(sub => {
     const monthly = monthlyEquivalent(sub.amount, sub.cycle);
     const converted = convertAmount(monthly, sub.currency, settings.displayCurrency, settings.exchangeRate);
     return { ...sub, monthlyConverted: converted };
@@ -335,9 +342,11 @@ function openBreakdown() {
       html += `<img src="${escapeHtml(favSrc)}" alt="" width="20" height="20" loading="lazy">`;
     }
     html += `</div>`;
+    const cat = item.category || 'personal';
+    const catClass = cat === 'business' ? 'cat-business' : 'cat-personal';
     html += `<div class="breakdown-info">
       <div class="breakdown-name">${escapeHtml(item.name)}</div>
-      <span class="breakdown-cycle ${cycleClass}">${item.cycle}</span>
+      <span class="breakdown-cycle ${cycleClass}">${item.cycle}</span><span class="cat-badge ${catClass}">${cat}</span>
     </div>`;
     html += `<div class="breakdown-price">
       <div class="breakdown-converted">${formatCurrency(item.monthlyConverted, settings.displayCurrency)}</div>
@@ -403,6 +412,8 @@ function openSubPopover(day, editSub) {
     if (editSub.recurringMonth !== undefined) {
       document.getElementById('sub-month').value = editSub.recurringMonth;
     }
+    const catRadio = document.querySelector(`input[name="sub-category-radio"][value="${editSub.category || 'personal'}"]`);
+    if (catRadio) catRadio.checked = true;
     document.getElementById('sub-edit-id').value = editSub.id;
     deleteBtn.hidden = false;
     if (editSub.favicon) {
@@ -438,6 +449,7 @@ async function handleSubFormSubmit(e) {
     cycle,
     recurringDay: parseInt(document.getElementById('sub-day').value, 10),
     recurringMonth: cycle === 'yearly' ? parseInt(document.getElementById('sub-month').value, 10) : undefined,
+    category: document.querySelector('input[name="sub-category-radio"]:checked').value,
     createdAt: Date.now()
   };
 
@@ -483,6 +495,7 @@ function buildQuickAddSub() {
     cycle,
     recurringDay: parseInt(document.getElementById('qa-day').value, 10),
     recurringMonth: cycle === 'yearly' ? parseInt(document.getElementById('qa-month').value, 10) : undefined,
+    category: document.querySelector('input[name="qa-category-radio"]:checked').value,
     createdAt: Date.now()
   };
 }
@@ -507,6 +520,7 @@ async function handleSaveAndAddMore() {
   document.getElementById('qa-favicon-preview').hidden = true;
   document.getElementById('qa-favicon-preview').src = '';
   document.getElementById('qa-cycle-monthly').checked = true;
+  document.getElementById('qa-cat-personal').checked = true;
   updateRenewalVisibility('qa-cycle-radio', 'qa-month');
   document.getElementById('qa-name').focus();
 }
@@ -594,6 +608,14 @@ function bindEvents() {
     if (currentMonth > 11) { currentMonth = 0; currentYear++; }
     render();
   });
+
+  // Category filter
+  for (const radio of document.querySelectorAll('input[name="category-filter"]')) {
+    radio.addEventListener('change', () => {
+      categoryFilter = document.querySelector('input[name="category-filter"]:checked').value;
+      render();
+    });
+  }
 
   // Monthly total → breakdown
   document.getElementById('monthly-total').addEventListener('click', openBreakdown);

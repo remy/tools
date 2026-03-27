@@ -30,6 +30,16 @@
           </button>
         </div>
       </div>
+      <div class="filter-bar">
+        <div class="toggle-group toggle-filter">
+          <input type="radio" name="category-filter" id="filter-all" value="all" checked>
+          <label for="filter-all">All</label>
+          <input type="radio" name="category-filter" id="filter-personal" value="personal">
+          <label for="filter-personal">Personal</label>
+          <input type="radio" name="category-filter" id="filter-business" value="business">
+          <label for="filter-business">Business</label>
+        </div>
+      </div>
       <button class="total-bar" id="monthly-total">
         <div class="total-content">
           <span class="total-amount" id="total-amount">£0.00</span>
@@ -109,6 +119,15 @@
           </div>
         </div>
       </div>
+      <div class="field">
+        <span class="field-label">Category</span>
+        <div class="toggle-group">
+          <input type="radio" name="sub-category-radio" id="sub-cat-personal" value="personal" checked>
+          <label for="sub-cat-personal">Personal</label>
+          <input type="radio" name="sub-category-radio" id="sub-cat-business" value="business">
+          <label for="sub-cat-business">Business</label>
+        </div>
+      </div>
       <input type="hidden" id="sub-edit-id">
       <div class="pop-actions">
         <button type="button" class="btn btn-danger" id="sub-delete" hidden>Delete</button>
@@ -176,6 +195,15 @@
             </select>
             <input type="number" id="qa-day" min="1" max="31" required placeholder="1">
           </div>
+        </div>
+      </div>
+      <div class="field">
+        <span class="field-label">Category</span>
+        <div class="toggle-group">
+          <input type="radio" name="qa-category-radio" id="qa-cat-personal" value="personal" checked>
+          <label for="qa-cat-personal">Personal</label>
+          <input type="radio" name="qa-category-radio" id="qa-cat-business" value="business">
+          <label for="qa-cat-business">Business</label>
         </div>
       </div>
       <div class="pop-actions">

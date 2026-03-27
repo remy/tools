@@ -145,6 +145,15 @@ body {
   }
 }
 
+/* ── Filter Bar ── */
+.filter-bar {
+  margin-bottom: 0.5rem;
+}
+
+.toggle-filter {
+  max-width: 100%;
+}
+
 /* ── Total Bar ── */
 .total-bar {
   display: flex;
@@ -762,6 +771,26 @@ body {
 .cycle-yearly {
   background: var(--pill-yearly);
   color: var(--pill-yearly-text);
+}
+
+.cat-badge {
+  display: inline-flex;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 0.125rem 0.4rem;
+  border-radius: 4px;
+  margin-top: 0.125rem;
+  margin-left: 0.25rem;
+}
+
+.cat-personal {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.cat-business {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .breakdown-price {
