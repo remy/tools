@@ -1,4 +1,4 @@
-const VERSION = '__GIT_SHA__';
+const VERSION = '306c09ace8b670d19c1683414bee8bc21be27e80';
 const CACHE_NAME = `tools-${VERSION}`;
 
 self.addEventListener('install', () => {
