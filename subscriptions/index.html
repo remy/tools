@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Track recurring subscription costs with a monthly calendar view, currency conversion, and export/import support.">
+  <meta name="category" content="Productivity">
+  <title>Subscription Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-top">
+      <div class="month-nav">
+        <button class="btn-icon" id="prev-month" aria-label="Previous month">&lsaquo;</button>
+        <h1 class="month-title" id="month-title">March 2026</h1>
+        <button class="btn-icon" id="next-month" aria-label="Next month">&rsaquo;</button>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon" id="btn-quick-add" aria-label="Quick add">+</button>
+        <button class="btn-icon" id="btn-settings" aria-label="Settings">&#9881;</button>
+      </div>
+    </div>
+    <button class="monthly-total" id="monthly-total">
+      <span class="total-label">Monthly total</span>
+      <span class="total-amount" id="total-amount">£0.00</span>
+    </button>
+  </header>
+
+  <main class="calendar" id="calendar">
+    <div class="weekday-header">
+      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+    </div>
+    <div class="calendar-grid" id="calendar-grid"></div>
+  </main>
+
+  <!-- Add/Edit Subscription Popover -->
+  <div id="sub-popover" popover="manual">
+    <div class="popover-header">
+      <h2 id="sub-popover-title">Add Subscription</h2>
+      <button class="btn-icon popover-close" id="sub-popover-close">&times;</button>
+    </div>
+    <form id="sub-form" class="popover-body">
+      <div class="form-group">
+        <label for="sub-name">Product name</label>
+        <input type="text" id="sub-name" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="sub-url">URL</label>
+        <div class="url-input-row">
+          <img class="favicon-preview" id="favicon-preview" src="" alt="" width="20" height="20" hidden>
+          <input type="url" id="sub-url" placeholder="https://example.com" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sub-amount">Amount</label>
+          <input type="number" id="sub-amount" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="sub-currency">Currency</label>
+          <select id="sub-currency">
+            <option value="GBP">GBP (£)</option>
+            <option value="USD">USD ($)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sub-cycle">Billing cycle</label>
+          <select id="sub-cycle">
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="sub-day">Day of month</label>
+          <input type="number" id="sub-day" min="1" max="31" required>
+        </div>
+      </div>
+      <input type="hidden" id="sub-edit-id">
+      <div class="form-actions">
+        <button type="button" class="btn btn-danger" id="sub-delete" hidden>Delete</button>
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Quick/Mass Add Popover -->
+  <div id="quick-add-popover" popover="manual">
+    <div class="popover-header">
+      <h2>Quick Add</h2>
+      <button class="btn-icon popover-close" id="quick-add-close">&times;</button>
+    </div>
+    <form id="quick-add-form" class="popover-body">
+      <div class="form-group">
+        <label for="qa-name">Product name</label>
+        <input type="text" id="qa-name" required autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="qa-url">URL</label>
+        <div class="url-input-row">
+          <img class="favicon-preview" id="qa-favicon-preview" src="" alt="" width="20" height="20" hidden>
+          <input type="url" id="qa-url" placeholder="https://example.com" autocomplete="off">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="qa-amount">Amount</label>
+          <input type="number" id="qa-amount" step="0.01" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="qa-currency">Currency</label>
+          <select id="qa-currency">
+            <option value="GBP">GBP (£)</option>
+            <option value="USD">USD ($)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="qa-cycle">Billing cycle</label>
+          <select id="qa-cycle">
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="qa-day">Day of month</label>
+          <input type="number" id="qa-day" min="1" max="31" required>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="qa-save-more">Save &amp; Add More</button>
+        <button type="submit" class="btn btn-primary">Save &amp; Close</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Breakdown Popover -->
+  <div id="breakdown-popover" popover="manual">
+    <div class="popover-header">
+      <h2>Monthly Breakdown</h2>
+      <button class="btn-icon popover-close" id="breakdown-close">&times;</button>
+    </div>
+    <div class="popover-body">
+      <div class="breakdown-total" id="breakdown-total">£0.00/mo</div>
+      <ul class="breakdown-list" id="breakdown-list"></ul>
+    </div>
+  </div>
+
+  <!-- Settings Popover -->
+  <div id="settings-popover" popover="manual">
+    <div class="popover-header">
+      <h2>Settings</h2>
+      <button class="btn-icon popover-close" id="settings-close">&times;</button>
+    </div>
+    <div class="popover-body">
+      <div class="form-group">
+        <label>Display currency</label>
+        <div class="radio-group">
+          <label class="radio-label"><input type="radio" name="display-currency" value="GBP" checked> GBP (£)</label>
+          <label class="radio-label"><input type="radio" name="display-currency" value="USD"> USD ($)</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="exchange-rate">1 USD = ? GBP</label>
+        <input type="number" id="exchange-rate" step="0.001" min="0" value="0.79">
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="settings-save">Save Settings</button>
+      </div>
+      <hr class="settings-divider">
+      <div class="form-group">
+        <label>Data</label>
+        <div class="data-actions">
+          <button class="btn btn-secondary" id="btn-export">Export</button>
+          <label class="btn btn-secondary import-label">
+            Import
+            <input type="file" id="btn-import" accept=".json" hidden>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

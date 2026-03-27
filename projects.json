@@ -99,6 +99,11 @@
     "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
     "title": "AFI Quote Master"
   },
+  "subscriptions": {
+    "category": "Productivity",
+    "description": "Track recurring subscription costs with a monthly calendar view, currency conversion, and export/import support.",
+    "title": "Subscription Tracker"
+  },
   "subtitle-timing-adjuster": {
     "category": "Productivity",
     "description": "Upload an SRT subtitle file, shift all timings forward or backward with millisecond precision, then download the adjusted file.",
