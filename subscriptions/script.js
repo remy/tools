@@ -310,8 +310,6 @@ function renderTotal() {
   }
   document.getElementById('total-amount').textContent =
     formatCurrency(total, settings.displayCurrency);
-  const SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('total-suffix').textContent = SHORT[currentMonth];
 }
 
 // ── Year View ──
