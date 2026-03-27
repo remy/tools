@@ -32,7 +32,7 @@ body.light {
   --cardio-text: #666;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
 
 body {
   background: var(--bg);
@@ -41,8 +41,6 @@ body {
   min-height: 100dvh;
   max-width: 600px;
   margin: 0 auto;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 .theme-toggle {
