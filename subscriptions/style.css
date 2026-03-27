@@ -543,6 +543,19 @@ body {
   }
 }
 
+/* ── Renewal date ── */
+.renewal-row {
+  display: flex;
+  gap: 0.5rem;
+
+  & input { flex: 1; }
+  & select { flex: 1.2; }
+}
+
+.renewal-month {
+  transition: opacity 0.15s, max-width 0.2s;
+}
+
 /* ── Toggle Group (segmented control) ── */
 .toggle-group {
   display: flex;

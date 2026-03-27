@@ -190,6 +190,10 @@ function effectiveDay(recurringDay, year, month) {
 function subsForMonth(subs, year, month) {
   const byDay = {};
   for (const sub of subs) {
+    // Yearly subs only appear in their renewal month
+    if (sub.cycle === 'yearly' && sub.recurringMonth !== undefined && sub.recurringMonth !== month) {
+      continue;
+    }
     const day = effectiveDay(sub.recurringDay, year, month);
     if (!byDay[day]) byDay[day] = [];
     byDay[day].push(sub);
@@ -315,9 +319,14 @@ function openBreakdown() {
   for (const item of items) {
     total += item.monthlyConverted;
     const favSrc = item.favicon || '';
-    const originalLabel = item.cycle === 'yearly'
-      ? `${formatCurrency(item.amount, item.currency)}/yr`
-      : `${formatCurrency(item.amount, item.currency)}/mo`;
+    const SHORT_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let originalLabel;
+    if (item.cycle === 'yearly') {
+      const monthLabel = item.recurringMonth !== undefined ? SHORT_MONTHS[item.recurringMonth] + ' ' : '';
+      originalLabel = `${formatCurrency(item.amount, item.currency)}/yr · ${monthLabel}${item.recurringDay}`;
+    } else {
+      originalLabel = `${formatCurrency(item.amount, item.currency)}/mo · day ${item.recurringDay}`;
+    }
     const cycleClass = item.cycle === 'yearly' ? 'cycle-yearly' : 'cycle-monthly';
 
     html += `<li class="breakdown-item">`;
@@ -356,10 +365,16 @@ function syncToggleToSelect(radioName, selectId) {
   }
 }
 
-function syncSelectToToggle(selectId, radioName) {
-  const val = document.getElementById(selectId).value;
-  const radio = document.querySelector(`input[name="${radioName}"][value="${val}"]`);
-  if (radio) radio.checked = true;
+function updateRenewalVisibility(radioName, monthSelectId) {
+  const checked = document.querySelector(`input[name="${radioName}"]:checked`);
+  const monthSelect = document.getElementById(monthSelectId);
+  if (checked && checked.value === 'yearly') {
+    monthSelect.hidden = false;
+    monthSelect.required = true;
+  } else {
+    monthSelect.hidden = true;
+    monthSelect.required = false;
+  }
 }
 
 // ── Sub Popover (Add/Edit) ──
@@ -373,7 +388,6 @@ function openSubPopover(day, editSub) {
   form.reset();
   faviconPreview.hidden = true;
   faviconPreview.src = '';
-  // Reset toggle to monthly
   document.getElementById('sub-cycle-monthly').checked = true;
 
   if (editSub) {
@@ -383,10 +397,12 @@ function openSubPopover(day, editSub) {
     document.getElementById('sub-amount').value = editSub.amount;
     document.getElementById('sub-currency').value = editSub.currency;
     document.getElementById('sub-cycle').value = editSub.cycle;
-    // Sync toggle
     const radio = document.querySelector(`input[name="sub-cycle-radio"][value="${editSub.cycle}"]`);
     if (radio) radio.checked = true;
     document.getElementById('sub-day').value = editSub.recurringDay;
+    if (editSub.recurringMonth !== undefined) {
+      document.getElementById('sub-month').value = editSub.recurringMonth;
+    }
     document.getElementById('sub-edit-id').value = editSub.id;
     deleteBtn.hidden = false;
     if (editSub.favicon) {
@@ -396,9 +412,11 @@ function openSubPopover(day, editSub) {
   } else {
     title.textContent = 'Add Subscription';
     document.getElementById('sub-day').value = day || 1;
+    document.getElementById('sub-month').value = currentMonth;
     document.getElementById('sub-edit-id').value = '';
     deleteBtn.hidden = true;
   }
+  updateRenewalVisibility('sub-cycle-radio', 'sub-month');
 
   popover.showPopover();
   setTimeout(() => document.getElementById('sub-name').focus(), 50);
@@ -409,6 +427,7 @@ async function handleSubFormSubmit(e) {
   syncToggleToSelect('sub-cycle-radio', 'sub-cycle');
   const id = document.getElementById('sub-edit-id').value || crypto.randomUUID();
   const url = document.getElementById('sub-url').value.trim();
+  const cycle = document.getElementById('sub-cycle').value;
   const sub = {
     id,
     name: document.getElementById('sub-name').value.trim(),
@@ -416,8 +435,9 @@ async function handleSubFormSubmit(e) {
     favicon: faviconUrl(url),
     amount: parseFloat(document.getElementById('sub-amount').value),
     currency: document.getElementById('sub-currency').value,
-    cycle: document.getElementById('sub-cycle').value,
+    cycle,
     recurringDay: parseInt(document.getElementById('sub-day').value, 10),
+    recurringMonth: cycle === 'yearly' ? parseInt(document.getElementById('sub-month').value, 10) : undefined,
     createdAt: Date.now()
   };
 
@@ -443,6 +463,8 @@ function openQuickAdd() {
   document.getElementById('qa-favicon-preview').hidden = true;
   document.getElementById('qa-favicon-preview').src = '';
   document.getElementById('qa-cycle-monthly').checked = true;
+  document.getElementById('qa-month').value = currentMonth;
+  updateRenewalVisibility('qa-cycle-radio', 'qa-month');
   document.getElementById('quick-add-popover').showPopover();
   setTimeout(() => document.getElementById('qa-name').focus(), 50);
 }
@@ -450,6 +472,7 @@ function openQuickAdd() {
 function buildQuickAddSub() {
   syncToggleToSelect('qa-cycle-radio', 'qa-cycle');
   const url = document.getElementById('qa-url').value.trim();
+  const cycle = document.getElementById('qa-cycle').value;
   return {
     id: crypto.randomUUID(),
     name: document.getElementById('qa-name').value.trim(),
@@ -457,8 +480,9 @@ function buildQuickAddSub() {
     favicon: faviconUrl(url),
     amount: parseFloat(document.getElementById('qa-amount').value),
     currency: document.getElementById('qa-currency').value,
-    cycle: document.getElementById('qa-cycle').value,
+    cycle,
     recurringDay: parseInt(document.getElementById('qa-day').value, 10),
+    recurringMonth: cycle === 'yearly' ? parseInt(document.getElementById('qa-month').value, 10) : undefined,
     createdAt: Date.now()
   };
 }
@@ -483,6 +507,7 @@ async function handleSaveAndAddMore() {
   document.getElementById('qa-favicon-preview').hidden = true;
   document.getElementById('qa-favicon-preview').src = '';
   document.getElementById('qa-cycle-monthly').checked = true;
+  updateRenewalVisibility('qa-cycle-radio', 'qa-month');
   document.getElementById('qa-name').focus();
 }
 
@@ -593,12 +618,18 @@ function bindEvents() {
   document.getElementById('sub-form').addEventListener('submit', handleSubFormSubmit);
   document.getElementById('sub-delete').addEventListener('click', handleSubDelete);
 
-  // Toggle group sync for sub form
+  // Toggle group sync for sub form — also show/hide month select
   for (const radio of document.querySelectorAll('input[name="sub-cycle-radio"]')) {
-    radio.addEventListener('change', () => syncToggleToSelect('sub-cycle-radio', 'sub-cycle'));
+    radio.addEventListener('change', () => {
+      syncToggleToSelect('sub-cycle-radio', 'sub-cycle');
+      updateRenewalVisibility('sub-cycle-radio', 'sub-month');
+    });
   }
   for (const radio of document.querySelectorAll('input[name="qa-cycle-radio"]')) {
-    radio.addEventListener('change', () => syncToggleToSelect('qa-cycle-radio', 'qa-cycle'));
+    radio.addEventListener('change', () => {
+      syncToggleToSelect('qa-cycle-radio', 'qa-cycle');
+      updateRenewalVisibility('qa-cycle-radio', 'qa-month');
+    });
   }
 
   // Quick add form
