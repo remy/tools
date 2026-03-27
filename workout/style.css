@@ -149,6 +149,10 @@ body.light .theme-toggle {
   transition: all 0.15s;
 }
 
+.exercise-row[data-completed-sets]:not([data-completed-sets="0"]):not(.done) .ex-name::before {
+  border-color: var(--accent);
+}
+
 .exercise-row.done .ex-name::before {
   background: var(--accent);
   border-color: var(--accent);
@@ -164,9 +168,17 @@ body.light .theme-toggle {
 .ex-sets {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 26px;
-  color: var(--accent);
+  color: var(--muted);
   text-align: center;
   letter-spacing: 1px;
+}
+
+.exercise-row[data-completed-sets]:not([data-completed-sets="0"]):not(.done) .ex-sets {
+  color: var(--accent);
+}
+
+.exercise-row.done .ex-sets {
+  color: var(--accent);
 }
 
 .ex-sets-label {
