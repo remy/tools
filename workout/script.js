@@ -35,9 +35,9 @@ function renderWorkouts(workouts) {
       </div>
       <div class="exercise-list">
         ${workout.exercises.map(ex => `
-          <div class="exercise-row">
+          <div class="exercise-row" data-total-sets="${ex.sets}" data-completed-sets="0">
             <div class="ex-name">${ex.name}</div>
-            <div class="ex-sets">${ex.sets}<span class="ex-sets-label">sets</span></div>
+            <div class="ex-sets"><span class="ex-sets-current">0</span>/<span class="ex-sets-total">${ex.sets}</span><span class="ex-sets-label">sets</span></div>
             <div class="ex-reps">${ex.reps}<span class="ex-reps-label">reps</span></div>
           </div>
         `).join('')}
@@ -92,14 +92,35 @@ function restoreTheme() {
 
 function switchTab(index) {
   // Reset ticks on previous tab
-  document.querySelectorAll('.day-panel.active .exercise-row').forEach(r => r.classList.remove('done'));
+  document.querySelectorAll('.day-panel.active .exercise-row').forEach(r => {
+    r.classList.remove('done');
+    r.dataset.completedSets = 0;
+    r.querySelector('.ex-sets-current').textContent = '0';
+  });
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === index));
   document.querySelectorAll('.day-panel').forEach((p, i) => p.classList.toggle('active', i === index));
 }
 
 document.addEventListener('click', function(e) {
   const row = e.target.closest('.exercise-row');
-  if (row) row.classList.toggle('done');
+  if (!row) return;
+
+  const total = parseInt(row.dataset.totalSets, 10);
+  let completed = parseInt(row.dataset.completedSets, 10);
+
+  if (row.classList.contains('done')) {
+    // Reset if already done
+    completed = 0;
+    row.classList.remove('done');
+  } else {
+    completed++;
+    if (completed >= total) {
+      row.classList.add('done');
+    }
+  }
+
+  row.dataset.completedSets = completed;
+  row.querySelector('.ex-sets-current').textContent = completed;
 });
 
 init();
