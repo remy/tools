@@ -111,6 +111,7 @@ class CommandPalette extends HTMLElement {
       command-palette .palette-item[aria-selected="true"] {
         background: var(--accent, #4f46e5);
         color: #fff;
+        white-space: preserve-spaces;
       }
 
       command-palette .palette-item[aria-selected="true"] mark {
