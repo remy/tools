@@ -290,7 +290,7 @@
         <div class="card">
           <div class="card-header">
             <h2>Try It</h2>
-            <p>Press <kbd>&#8984;</kbd><kbd>K</kbd> (Mac) or <kbd>Ctrl</kbd><kbd>K</kbd> to open the palette, or use the button below. Type to filter, use arrow keys to navigate, and press <kbd>Enter</kbd> to select.</p>
+            <p>Press <kbd>&#8984;</kbd><kbd>K</kbd> (Mac) or <kbd>Ctrl</kbd><kbd>K</kbd> to open the palette, or use the button below. Type to filter, use arrow keys to navigate, and press <kbd>Enter</kbd> to select. Try "Pick DOM elements" for a drill-down demo.</p>
           </div>
           <div class="demo-row">
             <button class="btn btn-primary" id="btn-open">Open Palette</button>
@@ -313,7 +313,7 @@
 <span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"application/json"</span> <span class="attr">data-palette</span><span class="tag">&gt;</span>
 [
   { <span class="val">"name"</span>: <span class="val">"save"</span>, <span class="val">"description"</span>: <span class="val">"Save document"</span> },
-  { <span class="val">"name"</span>: <span class="val">"open-settings"</span>, <span class="val">"description"</span>: <span class="val">"Open settings"</span> }
+  { <span class="val">"name"</span>: <span class="val">"pick-thing"</span>, <span class="val">"description"</span>: <span class="val">"Pick a thing"</span>, <span class="val">"keepOpen"</span>: <span class="kw">true</span> }
 ]
 <span class="tag">&lt;/script&gt;</span>
 
@@ -330,7 +330,32 @@ palette.addEventListener(<span class="val">'save'</span>, () =&gt; {
 <span class="tag">&lt;/script&gt;</span></code></pre>
         </div>
 
-        <!-- 3: API reference -->
+        <!-- 3: Dynamic data / drill-down -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Dynamic Data &amp; Drill-down</h2>
+            <p>Use <code>keepOpen</code> to prevent closing on selection, then <code>setCommands()</code> to swap in new items. Press <kbd>Backspace</kbd> on an empty input to go back.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="cm">// Command with keepOpen stays open on select</span>
+{ <span class="val">"name"</span>: <span class="val">"pick-dom"</span>, <span class="val">"description"</span>: <span class="val">"Pick DOM elements"</span>, <span class="val">"keepOpen"</span>: <span class="kw">true</span> }
+
+<span class="cm">// Handle the event: swap in dynamic data</span>
+palette.addEventListener(<span class="val">'pick-dom'</span>, () =&gt; {
+  <span class="kw">const</span> elements = [...document.querySelectorAll(<span class="val">'[class]'</span>)].map(el =&gt; ({
+    name: <span class="val">'element-picked'</span>,
+    description: <span class="val">`&lt;${el.tagName.toLowerCase()}&gt; .${[...el.classList].join('.')}`</span>
+  }));
+  palette.<span class="attr">setCommands</span>(elements, {
+    placeholder: <span class="val">'Pick an element...'</span>
+  });
+});
+
+<span class="cm">// The palette auto-resets to the original</span>
+<span class="cm">// commands when closed or dismissed</span></code></pre>
+        </div>
+
+        <!-- 4: API reference -->
         <div class="card">
           <div class="card-header">
             <h2>API</h2>
@@ -340,6 +365,12 @@ palette.addEventListener(<span class="val">'save'</span>, () =&gt; {
           <pre class="code-hint"><code><span class="cm">// Open / close programmatically</span>
 palette.<span class="attr">open</span>();
 palette.<span class="attr">close</span>();
+
+<span class="cm">// Replace commands dynamically (resets on close)</span>
+palette.<span class="attr">setCommands</span>(commands, {
+  placeholder: <span class="val">'Pick something...'</span>,  <span class="cm">// optional</span>
+  label: <span class="val">'Elements'</span>               <span class="cm">// optional aria-label</span>
+});
 
 <span class="cm">// Each selected command fires a CustomEvent</span>
 <span class="cm">// where event.type === command.name</span>
@@ -368,7 +399,8 @@ palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
       { "name": "format-document", "description": "Format the current document" },
       { "name": "toggle-word-wrap", "description": "Toggle word wrap" },
       { "name": "clear-console", "description": "Clear the console output" },
-      { "name": "run-task", "description": "Run a build task" }
+      { "name": "run-task", "description": "Run a build task" },
+      { "name": "pick-dom", "description": "Pick DOM elements", "keepOpen": true }
     ]
     </script>
 
@@ -385,8 +417,31 @@ palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
 
       commands.forEach((cmd) => {
         palette.addEventListener(cmd.name, (e) => {
-          addLogEntry(cmd.name, cmd.description);
+          addLogEntry(cmd.name, e.detail.command.description);
         });
+      });
+
+      // Drill-down demo: "Pick DOM elements" swaps in page elements
+      palette.addEventListener('pick-dom', () => {
+        const elements = [...document.querySelectorAll('[class]')]
+          .filter(el => !el.closest('command-palette'))
+          .map(el => {
+            const tag = el.tagName.toLowerCase();
+            const classes = [...el.classList].join('.');
+            return {
+              name: 'element-picked',
+              description: `<${tag}> .${classes}`,
+            };
+          });
+        palette.setCommands(elements, {
+          placeholder: 'Pick an element...',
+          label: 'DOM elements',
+        });
+      });
+
+      // Handle the secondary selection
+      palette.addEventListener('element-picked', (e) => {
+        addLogEntry('element-picked', e.detail.command.description);
       });
 
       document.getElementById('btn-open').addEventListener('click', () => {

@@ -1,9 +1,12 @@
 class CommandPalette extends HTMLElement {
   constructor() {
     super();
+    this._baseCommands = [];
     this._commands = [];
     this._filtered = [];
     this._selectedIndex = 0;
+    this._isDrillDown = false;
+    this._defaultPlaceholder = 'Type a command...';
     this._handleGlobalKeydown = this._handleGlobalKeydown.bind(this);
     this._handlePanelKeydown = this._handlePanelKeydown.bind(this);
     this._handleInput = this._handleInput.bind(this);
@@ -58,6 +61,24 @@ class CommandPalette extends HTMLElement {
         color: var(--text-dim, #71717a);
         font-size: 1rem;
         line-height: 1;
+      }
+
+      command-palette .palette-back {
+        flex-shrink: 0;
+        background: var(--accent-dim, rgba(79, 70, 229, 0.1));
+        color: var(--accent, #4f46e5);
+        border: 1px solid var(--accent, #4f46e5);
+        border-radius: 4px;
+        padding: 0.1em 0.5em;
+        font-size: 0.75rem;
+        font-family: inherit;
+        cursor: pointer;
+        line-height: 1.4;
+        display: none;
+      }
+
+      command-palette .palette-back[data-visible] {
+        display: inline-block;
       }
 
       command-palette .palette-input {
@@ -134,6 +155,16 @@ class CommandPalette extends HTMLElement {
         border-radius: 2px;
         padding: 0 1px;
       }
+
+      command-palette .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
     `;
     this.appendChild(style);
 
@@ -142,22 +173,29 @@ class CommandPalette extends HTMLElement {
     this._panel.innerHTML = `
       <div class="palette-input-wrap">
         <span class="palette-icon">&rsaquo;</span>
-        <input class="palette-input" type="text" placeholder="Type a command..." autocomplete="off" spellcheck="false">
+        <button class="palette-back" type="button" aria-label="Back to commands">&larr; back</button>
+        <input class="palette-input" type="text" placeholder="${this._defaultPlaceholder}" autocomplete="off" spellcheck="false">
         <kbd class="palette-kbd">esc</kbd>
       </div>
-      <div class="palette-list" role="listbox"></div>
+      <div class="palette-list" role="listbox" aria-label="Commands"></div>
+      <span class="sr-only" aria-live="polite"></span>
     `;
     this.appendChild(this._panel);
 
     this._input = this._panel.querySelector('.palette-input');
     this._list = this._panel.querySelector('.palette-list');
+    this._liveRegion = this._panel.querySelector('.sr-only');
+    this._backBtn = this._panel.querySelector('.palette-back');
 
     this._input.addEventListener('input', this._handleInput);
     this._panel.addEventListener('keydown', this._handlePanelKeydown);
     this._list.addEventListener('click', this._handleClick);
+    this._backBtn.addEventListener('click', () => this._resetToBase());
+
     this._panel.addEventListener('toggle', (e) => {
       if (e.newState === 'closed') {
         this._input.value = '';
+        this._resetState();
       }
     });
   }
@@ -166,10 +204,33 @@ class CommandPalette extends HTMLElement {
     const script = document.querySelector('script[type="application/json"][data-palette]');
     if (!script) return;
     try {
-      this._commands = JSON.parse(script.textContent);
+      this._baseCommands = JSON.parse(script.textContent);
+      this._commands = [...this._baseCommands];
     } catch (e) {
       console.error('command-palette: invalid JSON in <script data-palette>', e);
     }
+  }
+
+  setCommands(commands, options = {}) {
+    this._commands = commands;
+    this._filtered = [...commands];
+    this._selectedIndex = 0;
+    this._isDrillDown = true;
+    this._input.value = '';
+
+    if (options.placeholder) {
+      this._input.placeholder = options.placeholder;
+    }
+
+    this._backBtn.setAttribute('data-visible', '');
+
+    if (options.label) {
+      this._list.setAttribute('aria-label', options.label);
+    }
+
+    this._render();
+    this._input.focus();
+    this._liveRegion.textContent = `${commands.length} items`;
   }
 
   open() {
@@ -187,6 +248,24 @@ class CommandPalette extends HTMLElement {
     this._panel.hidePopover();
   }
 
+  _resetState() {
+    this._commands = [...this._baseCommands];
+    this._isDrillDown = false;
+    this._input.placeholder = this._defaultPlaceholder;
+    this._backBtn.removeAttribute('data-visible');
+    this._list.setAttribute('aria-label', 'Commands');
+  }
+
+  _resetToBase() {
+    this._resetState();
+    this._input.value = '';
+    this._filtered = [...this._commands];
+    this._selectedIndex = 0;
+    this._render();
+    this._input.focus();
+    this._liveRegion.textContent = `${this._commands.length} commands`;
+  }
+
   _handleGlobalKeydown(e) {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
@@ -200,6 +279,12 @@ class CommandPalette extends HTMLElement {
   }
 
   _handlePanelKeydown(e) {
+    if (e.key === 'Backspace' && this._isDrillDown && this._input.value === '') {
+      e.preventDefault();
+      this._resetToBase();
+      return;
+    }
+
     const len = this._filtered.length;
     if (!len) return;
 
@@ -240,13 +325,23 @@ class CommandPalette extends HTMLElement {
   }
 
   _select(command) {
-    this.close();
-    this.dispatchEvent(
-      new CustomEvent(command.name, {
-        bubbles: true,
-        detail: { command },
-      })
-    );
+    if (command.keepOpen) {
+      this._input.value = '';
+      this.dispatchEvent(
+        new CustomEvent(command.name, {
+          bubbles: true,
+          detail: { command },
+        })
+      );
+    } else {
+      this.close();
+      this.dispatchEvent(
+        new CustomEvent(command.name, {
+          bubbles: true,
+          detail: { command },
+        })
+      );
+    }
   }
 
   _render() {
