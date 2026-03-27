@@ -12,7 +12,7 @@
   <div class="app">
     <header class="header">
       <div class="header-row">
-        <div class="month-nav">
+        <div class="month-nav" id="month-nav">
           <button class="nav-btn" id="prev-month" aria-label="Previous month">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
@@ -33,6 +33,9 @@
           </button>
         </div>
       </div>
+    </header>
+
+    <div class="month-chrome" id="month-chrome">
       <div class="filter-bar">
         <div class="toggle-group toggle-filter">
           <input type="radio" name="category-filter" id="filter-all" value="all" checked>
@@ -52,7 +55,7 @@
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.25 3.5L8.75 7L5.25 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
       </button>
-    </header>
+    </div>
 
     <main class="calendar">
       <div class="weekday-header">

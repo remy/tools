@@ -386,27 +386,24 @@ function toggleYearView() {
   const btn = document.getElementById('btn-year-view');
   const calendarEl = document.querySelector('.calendar');
   const yearViewEl = document.getElementById('year-view');
-  const totalBar = document.getElementById('monthly-total');
-  const monthNav = document.querySelector('.month-nav');
-  const filterBar = document.querySelector('.filter-bar');
+  const monthChrome = document.getElementById('month-chrome');
+  const monthNav = document.getElementById('month-nav');
 
   if (viewMode === 'month') {
     viewMode = 'year';
     yearViewYear = currentYear;
     btn.classList.add('active');
     calendarEl.hidden = true;
-    totalBar.hidden = true;
+    monthChrome.hidden = true;
     monthNav.hidden = true;
-    filterBar.hidden = true;
     yearViewEl.hidden = false;
     renderYearView();
   } else {
     viewMode = 'month';
     btn.classList.remove('active');
     calendarEl.hidden = false;
-    totalBar.hidden = false;
+    monthChrome.hidden = false;
     monthNav.hidden = false;
-    filterBar.hidden = false;
     yearViewEl.hidden = true;
     render();
   }
