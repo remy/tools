@@ -223,8 +223,12 @@ function render() {
 }
 
 function renderHeader() {
-  document.getElementById('month-title').textContent =
-    `${MONTH_NAMES[currentMonth]} ${currentYear}`;
+  if (viewMode === 'year') {
+    document.getElementById('month-title').textContent = yearViewYear;
+  } else {
+    document.getElementById('month-title').textContent =
+      `${MONTH_NAMES[currentMonth]} ${currentYear}`;
+  }
 }
 
 function renderGrid() {
@@ -321,8 +325,6 @@ function renderYearView() {
   const now = new Date();
   const isThisYear = yearViewYear === now.getFullYear();
 
-  document.getElementById('year-title').textContent = yearViewYear;
-
   // Compute each month's total
   const totals = [];
   let yearTotal = 0;
@@ -387,7 +389,6 @@ function toggleYearView() {
   const calendarEl = document.querySelector('.calendar');
   const yearViewEl = document.getElementById('year-view');
   const monthChrome = document.getElementById('month-chrome');
-  const monthNav = document.getElementById('month-nav');
 
   if (viewMode === 'month') {
     viewMode = 'year';
@@ -395,15 +396,14 @@ function toggleYearView() {
     btn.classList.add('active');
     calendarEl.classList.add('is-hidden');
     monthChrome.classList.add('is-hidden');
-    monthNav.classList.add('is-hidden');
     yearViewEl.classList.remove('is-hidden');
+    renderHeader();
     renderYearView();
   } else {
     viewMode = 'month';
     btn.classList.remove('active');
     calendarEl.classList.remove('is-hidden');
     monthChrome.classList.remove('is-hidden');
-    monthNav.classList.remove('is-hidden');
     yearViewEl.classList.add('is-hidden');
     render();
   }
@@ -455,7 +455,6 @@ function openBreakdown() {
     const catClass = cat === 'business' ? 'cat-business' : 'cat-personal';
     html += `<div class="breakdown-info">
       <div class="breakdown-name">${escapeHtml(item.name)}</div>
-      <span class="breakdown-cycle ${cycleClass}">${item.cycle}</span><span class="cat-badge ${catClass}">${cat}</span>
     </div>`;
     html += `<div class="breakdown-price">
       <div class="breakdown-converted">${formatCurrency(item.monthlyConverted, settings.displayCurrency)}</div>
@@ -464,6 +463,10 @@ function openBreakdown() {
     html += `<div class="breakdown-actions">
       <button data-edit-id="${item.id}" aria-label="Edit">&#9998;</button>
       <button data-delete-id="${item.id}" aria-label="Delete">&times;</button>
+    </div>`;
+    html += `<div class="breakdown-tags">
+      <span class="breakdown-cycle ${cycleClass}">${item.cycle}</span>
+      <span class="cat-badge ${catClass}">${cat}</span>
     </div>`;
     html += `</li>`;
   }
@@ -704,30 +707,39 @@ function setupFaviconPreview(inputId, previewId) {
   });
 }
 
-// ── Event binding ──
-function bindEvents() {
-  // Month navigation
-  document.getElementById('prev-month').addEventListener('click', () => {
+// ── Navigation (shared between month and year views) ──
+function navPrev() {
+  if (viewMode === 'year') {
+    yearViewYear--;
+    document.getElementById('month-title').textContent = yearViewYear;
+    renderYearView();
+  } else {
     currentMonth--;
     if (currentMonth < 0) { currentMonth = 11; currentYear--; }
     render();
-  });
-  document.getElementById('next-month').addEventListener('click', () => {
+  }
+}
+
+function navNext() {
+  if (viewMode === 'year') {
+    yearViewYear++;
+    document.getElementById('month-title').textContent = yearViewYear;
+    renderYearView();
+  } else {
     currentMonth++;
     if (currentMonth > 11) { currentMonth = 0; currentYear++; }
     render();
-  });
+  }
+}
+
+// ── Event binding ──
+function bindEvents() {
+  // Shared prev/next navigation
+  document.getElementById('prev-month').addEventListener('click', navPrev);
+  document.getElementById('next-month').addEventListener('click', navNext);
 
   // Year view toggle
   document.getElementById('btn-year-view').addEventListener('click', toggleYearView);
-  document.getElementById('year-prev').addEventListener('click', () => {
-    yearViewYear--;
-    renderYearView();
-  });
-  document.getElementById('year-next').addEventListener('click', () => {
-    yearViewYear++;
-    renderYearView();
-  });
   // Click month row to jump to that month view
   document.getElementById('year-grid').addEventListener('click', (e) => {
     const row = e.target.closest('.year-month');
@@ -737,6 +749,24 @@ function bindEvents() {
       toggleYearView(); // switch back to month view
     }
   });
+
+  // Swipe on calendar for month navigation
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const calendarEl = document.querySelector('.calendar');
+  calendarEl.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  calendarEl.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    // Only trigger if horizontal swipe is dominant and > 50px
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) navNext();
+      else navPrev();
+    }
+  }, { passive: true });
 
   // Category filter — keep both filter groups in sync
   function syncFilters(source) {
