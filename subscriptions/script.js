@@ -468,9 +468,11 @@ function openBreakdown() {
       <button data-edit-id="${item.id}" aria-label="Edit">&#9998;</button>
       <button data-delete-id="${item.id}" aria-label="Delete">&times;</button>
     </div>`;
+    const renewsThisMonth = item.cycle === 'yearly' && item.recurringMonth === currentMonth;
     html += `<div class="breakdown-tags">
       <span class="breakdown-cycle ${cycleClass}">${item.cycle}</span>
       <span class="cat-badge ${catClass}">${cat}</span>
+      ${renewsThisMonth ? '<span class="tag-renews">renews</span>' : ''}
     </div>`;
     html += `</li>`;
   }
