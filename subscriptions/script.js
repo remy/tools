@@ -179,7 +179,7 @@ function getDaysInMonth(year, month) {
 
 function getFirstDayOfWeek(year, month) {
   const day = new Date(year, month, 1).getDay();
-  return day === 0 ? 6 : day - 1; // Convert to Mon=0
+  return day === 0 ? 6 : day - 1;
 }
 
 function effectiveDay(recurringDay, year, month) {
@@ -224,13 +224,12 @@ function renderGrid() {
   const isCurrentMonth = today.getFullYear() === currentYear && today.getMonth() === currentMonth;
   const todayDate = today.getDate();
 
-  // Previous month days
   const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
   const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
   const prevDays = getDaysInMonth(prevYear, prevMonth);
 
   let html = '';
-  const totalCells = 42; // 6 rows × 7 cols
+  const totalCells = 42;
 
   for (let i = 0; i < totalCells; i++) {
     const dayIndex = i - firstDay + 1;
@@ -247,14 +246,16 @@ function renderGrid() {
       isTodayCell = isCurrentMonth && dayNum === todayDate;
     }
 
+    const hasSubs = !isOutside && byDay[dayNum];
     const classes = ['day-cell'];
     if (isOutside) classes.push('outside');
     if (isTodayCell) classes.push('today');
+    if (hasSubs) classes.push('has-subs');
 
     html += `<div class="${classes.join(' ')}" data-day="${isOutside ? '' : dayNum}">`;
     html += `<span class="day-number">${dayNum}</span>`;
 
-    if (!isOutside && byDay[dayNum]) {
+    if (hasSubs) {
       const daySubs = byDay[dayNum];
       const maxVisible = 3;
       html += '<div class="day-subs">';
@@ -286,12 +287,23 @@ function renderTotal() {
     total += convertAmount(monthly, sub.currency, settings.displayCurrency, settings.exchangeRate);
   }
   document.getElementById('total-amount').textContent =
-    formatCurrency(total, settings.displayCurrency) + '/mo';
+    formatCurrency(total, settings.displayCurrency);
 }
 
 // ── Breakdown ──
 function openBreakdown() {
   const list = document.getElementById('breakdown-list');
+  const emptyEl = document.getElementById('breakdown-empty');
+
+  if (subscriptions.length === 0) {
+    list.innerHTML = '';
+    emptyEl.hidden = false;
+    document.getElementById('breakdown-total').innerHTML = formatCurrency(0, settings.displayCurrency) + '<span>/mo</span>';
+    document.getElementById('breakdown-popover').showPopover();
+    return;
+  }
+
+  emptyEl.hidden = true;
   const items = subscriptions.map(sub => {
     const monthly = monthlyEquivalent(sub.amount, sub.cycle);
     const converted = convertAmount(monthly, sub.currency, settings.displayCurrency, settings.exchangeRate);
@@ -303,32 +315,51 @@ function openBreakdown() {
   for (const item of items) {
     total += item.monthlyConverted;
     const favSrc = item.favicon || '';
-    const cycleLabel = item.cycle === 'yearly'
+    const originalLabel = item.cycle === 'yearly'
       ? `${formatCurrency(item.amount, item.currency)}/yr`
       : `${formatCurrency(item.amount, item.currency)}/mo`;
+    const cycleClass = item.cycle === 'yearly' ? 'cycle-yearly' : 'cycle-monthly';
+
     html += `<li class="breakdown-item">`;
+    html += `<div class="breakdown-favicon">`;
     if (favSrc) {
-      html += `<img src="${escapeHtml(favSrc)}" alt="" width="24" height="24" loading="lazy">`;
-    } else {
-      html += `<div style="width:24px;height:24px;background:var(--bg-secondary);border-radius:4px"></div>`;
+      html += `<img src="${escapeHtml(favSrc)}" alt="" width="20" height="20" loading="lazy">`;
     }
-    html += `<div class="breakdown-name">
-      <div class="name">${escapeHtml(item.name)}</div>
-      <div class="cycle">${cycleLabel}</div>
+    html += `</div>`;
+    html += `<div class="breakdown-info">
+      <div class="breakdown-name">${escapeHtml(item.name)}</div>
+      <span class="breakdown-cycle ${cycleClass}">${item.cycle}</span>
     </div>`;
-    html += `<span class="breakdown-amount">${formatCurrency(item.monthlyConverted, settings.displayCurrency)}</span>`;
+    html += `<div class="breakdown-price">
+      <div class="breakdown-converted">${formatCurrency(item.monthlyConverted, settings.displayCurrency)}</div>
+      <div class="breakdown-original">${originalLabel}</div>
+    </div>`;
     html += `<div class="breakdown-actions">
-      <button class="btn-icon" data-edit-id="${item.id}" aria-label="Edit">&#9998;</button>
-      <button class="btn-icon" data-delete-id="${item.id}" aria-label="Delete">&times;</button>
+      <button data-edit-id="${item.id}" aria-label="Edit">&#9998;</button>
+      <button data-delete-id="${item.id}" aria-label="Delete">&times;</button>
     </div>`;
     html += `</li>`;
   }
 
   list.innerHTML = html;
-  document.getElementById('breakdown-total').textContent =
-    formatCurrency(total, settings.displayCurrency) + '/mo';
+  document.getElementById('breakdown-total').innerHTML =
+    formatCurrency(total, settings.displayCurrency) + '<span>/mo</span>';
 
   document.getElementById('breakdown-popover').showPopover();
+}
+
+// ── Toggle group sync ──
+function syncToggleToSelect(radioName, selectId) {
+  const checked = document.querySelector(`input[name="${radioName}"]:checked`);
+  if (checked) {
+    document.getElementById(selectId).value = checked.value;
+  }
+}
+
+function syncSelectToToggle(selectId, radioName) {
+  const val = document.getElementById(selectId).value;
+  const radio = document.querySelector(`input[name="${radioName}"][value="${val}"]`);
+  if (radio) radio.checked = true;
 }
 
 // ── Sub Popover (Add/Edit) ──
@@ -342,6 +373,8 @@ function openSubPopover(day, editSub) {
   form.reset();
   faviconPreview.hidden = true;
   faviconPreview.src = '';
+  // Reset toggle to monthly
+  document.getElementById('sub-cycle-monthly').checked = true;
 
   if (editSub) {
     title.textContent = 'Edit Subscription';
@@ -350,6 +383,9 @@ function openSubPopover(day, editSub) {
     document.getElementById('sub-amount').value = editSub.amount;
     document.getElementById('sub-currency').value = editSub.currency;
     document.getElementById('sub-cycle').value = editSub.cycle;
+    // Sync toggle
+    const radio = document.querySelector(`input[name="sub-cycle-radio"][value="${editSub.cycle}"]`);
+    if (radio) radio.checked = true;
     document.getElementById('sub-day').value = editSub.recurringDay;
     document.getElementById('sub-edit-id').value = editSub.id;
     deleteBtn.hidden = false;
@@ -365,11 +401,12 @@ function openSubPopover(day, editSub) {
   }
 
   popover.showPopover();
-  document.getElementById('sub-name').focus();
+  setTimeout(() => document.getElementById('sub-name').focus(), 50);
 }
 
 async function handleSubFormSubmit(e) {
   e.preventDefault();
+  syncToggleToSelect('sub-cycle-radio', 'sub-cycle');
   const id = document.getElementById('sub-edit-id').value || crypto.randomUUID();
   const url = document.getElementById('sub-url').value.trim();
   const sub = {
@@ -405,11 +442,13 @@ function openQuickAdd() {
   form.reset();
   document.getElementById('qa-favicon-preview').hidden = true;
   document.getElementById('qa-favicon-preview').src = '';
+  document.getElementById('qa-cycle-monthly').checked = true;
   document.getElementById('quick-add-popover').showPopover();
-  document.getElementById('qa-name').focus();
+  setTimeout(() => document.getElementById('qa-name').focus(), 50);
 }
 
 function buildQuickAddSub() {
+  syncToggleToSelect('qa-cycle-radio', 'qa-cycle');
   const url = document.getElementById('qa-url').value.trim();
   return {
     id: crypto.randomUUID(),
@@ -443,12 +482,15 @@ async function handleSaveAndAddMore() {
   form.reset();
   document.getElementById('qa-favicon-preview').hidden = true;
   document.getElementById('qa-favicon-preview').src = '';
+  document.getElementById('qa-cycle-monthly').checked = true;
   document.getElementById('qa-name').focus();
 }
 
 // ── Settings ──
 function openSettings() {
-  document.querySelector(`input[name="display-currency"][value="${settings.displayCurrency}"]`).checked = true;
+  const ccy = settings.displayCurrency;
+  const radio = document.querySelector(`input[name="display-currency"][value="${ccy}"]`);
+  if (radio) radio.checked = true;
   document.getElementById('exchange-rate').value = settings.exchangeRate;
   document.getElementById('settings-popover').showPopover();
 }
@@ -488,7 +530,7 @@ async function handleImport(file) {
     settings.exchangeRate = saved.exchangeRate || DEFAULT_RATE;
     subscriptions = await db.getAll();
     render();
-    openSettings(); // refresh settings UI
+    document.getElementById('settings-popover').hidePopover();
   } catch (err) {
     alert('Import failed: ' + err.message);
   }
@@ -551,6 +593,14 @@ function bindEvents() {
   document.getElementById('sub-form').addEventListener('submit', handleSubFormSubmit);
   document.getElementById('sub-delete').addEventListener('click', handleSubDelete);
 
+  // Toggle group sync for sub form
+  for (const radio of document.querySelectorAll('input[name="sub-cycle-radio"]')) {
+    radio.addEventListener('change', () => syncToggleToSelect('sub-cycle-radio', 'sub-cycle'));
+  }
+  for (const radio of document.querySelectorAll('input[name="qa-cycle-radio"]')) {
+    radio.addEventListener('change', () => syncToggleToSelect('qa-cycle-radio', 'qa-cycle'));
+  }
+
   // Quick add form
   document.getElementById('quick-add-form').addEventListener('submit', handleQuickAddSubmit);
   document.getElementById('qa-save-more').addEventListener('click', handleSaveAndAddMore);
@@ -565,7 +615,6 @@ function bindEvents() {
 
   // Calendar grid — delegate clicks
   document.getElementById('calendar-grid').addEventListener('click', (e) => {
-    // Click on a subscription item
     const subItem = e.target.closest('.day-sub-item');
     if (subItem) {
       const subId = subItem.dataset.subId;
@@ -573,7 +622,6 @@ function bindEvents() {
       if (sub) openSubPopover(null, sub);
       return;
     }
-    // Click on day cell
     const cell = e.target.closest('.day-cell');
     if (cell && cell.dataset.day) {
       openSubPopover(parseInt(cell.dataset.day, 10));
@@ -586,7 +634,7 @@ function bindEvents() {
     if (editBtn) {
       document.getElementById('breakdown-popover').hidePopover();
       const sub = subscriptions.find(s => s.id === editBtn.dataset.editId);
-      if (sub) openSubPopover(null, sub);
+      if (sub) setTimeout(() => openSubPopover(null, sub), 200);
       return;
     }
     const deleteBtn = e.target.closest('[data-delete-id]');
@@ -594,7 +642,7 @@ function bindEvents() {
       await db.delete(deleteBtn.dataset.deleteId);
       subscriptions = await db.getAll();
       render();
-      openBreakdown(); // refresh breakdown
+      openBreakdown();
     }
   });
 

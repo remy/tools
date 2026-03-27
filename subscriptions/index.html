@@ -2,181 +2,223 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Track recurring subscription costs with a monthly calendar view, currency conversion, and export/import support.">
   <meta name="category" content="Productivity">
   <title>Subscription Tracker</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="app-header">
-    <div class="header-top">
-      <div class="month-nav">
-        <button class="btn-icon" id="prev-month" aria-label="Previous month">&lsaquo;</button>
-        <h1 class="month-title" id="month-title">March 2026</h1>
-        <button class="btn-icon" id="next-month" aria-label="Next month">&rsaquo;</button>
+  <div class="app">
+    <header class="header">
+      <div class="header-row">
+        <div class="month-nav">
+          <button class="nav-btn" id="prev-month" aria-label="Previous month">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <h1 class="month-title" id="month-title">March 2026</h1>
+          <button class="nav-btn" id="next-month" aria-label="Next month">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="header-actions">
+          <button class="action-btn" id="btn-quick-add" aria-label="Quick add">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <button class="action-btn" id="btn-settings" aria-label="Settings">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 11.25C10.2426 11.25 11.25 10.2426 11.25 9C11.25 7.75736 10.2426 6.75 9 6.75C7.75736 6.75 6.75 7.75736 6.75 9C6.75 10.2426 7.75736 11.25 9 11.25Z" stroke="currentColor" stroke-width="1.5"/><path d="M14.7 11.1C14.5167 11.4917 14.5017 11.9417 14.6583 12.345L14.9583 13.1033C15.1833 13.6683 15.0417 14.31 14.6 14.7517L14.7517 14.6C14.31 15.0417 13.6683 15.1833 13.1033 14.9583L12.345 14.6583C11.9417 14.5017 11.4917 14.5167 11.1 14.7L10.395 15.06C10.0133 15.2533 9.735 15.6033 9.63 16.02L9.435 16.8C9.285 17.3883 8.75333 17.8 8.145 17.8H7.855C7.24667 17.8 6.715 17.3883 6.565 16.8L6.37 16.02C6.265 15.6033 5.98667 15.2533 5.605 15.06L4.9 14.7C4.50833 14.5167 4.05833 14.5017 3.655 14.6583L2.89667 14.9583C2.33167 15.1833 1.69 15.0417 1.24833 14.6L1.4 14.7517C0.958333 14.31 0.816667 13.6683 1.04167 13.1033L1.34167 12.345C1.49833 11.9417 1.48333 11.4917 1.3 11.1L0.94 10.395C0.746667 10.0133 0.396667 9.735 -0.02 9.63L-0.8 9.435C-1.38833 9.285 -1.8 8.75333 -1.8 8.145V7.855" stroke="currentColor" stroke-width="1.2" transform="translate(2 1) scale(0.85)"/></svg>
+          </button>
+        </div>
       </div>
-      <div class="header-actions">
-        <button class="btn-icon" id="btn-quick-add" aria-label="Quick add">+</button>
-        <button class="btn-icon" id="btn-settings" aria-label="Settings">&#9881;</button>
+      <button class="total-bar" id="monthly-total">
+        <div class="total-content">
+          <span class="total-amount" id="total-amount">£0.00</span>
+          <span class="total-suffix">/mo</span>
+        </div>
+        <span class="total-hint">Tap for breakdown
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5.25 3.5L8.75 7L5.25 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </button>
+    </header>
+
+    <main class="calendar">
+      <div class="weekday-header">
+        <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
       </div>
-    </div>
-    <button class="monthly-total" id="monthly-total">
-      <span class="total-label">Monthly total</span>
-      <span class="total-amount" id="total-amount">£0.00</span>
-    </button>
-  </header>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </main>
+  </div>
 
-  <main class="calendar" id="calendar">
-    <div class="weekday-header">
-      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-    </div>
-    <div class="calendar-grid" id="calendar-grid"></div>
-  </main>
-
-  <!-- Add/Edit Subscription Popover -->
+  <!-- Add/Edit Subscription -->
   <div id="sub-popover" popover="manual">
-    <div class="popover-header">
+    <div class="pop-header">
       <h2 id="sub-popover-title">Add Subscription</h2>
-      <button class="btn-icon popover-close" id="sub-popover-close">&times;</button>
+      <button class="pop-close" id="sub-popover-close" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
     </div>
-    <form id="sub-form" class="popover-body">
-      <div class="form-group">
-        <label for="sub-name">Product name</label>
-        <input type="text" id="sub-name" required autocomplete="off">
-      </div>
-      <div class="form-group">
-        <label for="sub-url">URL</label>
-        <div class="url-input-row">
-          <img class="favicon-preview" id="favicon-preview" src="" alt="" width="20" height="20" hidden>
+    <form id="sub-form" class="pop-body">
+      <label class="field">
+        <span class="field-label">Product name</span>
+        <input type="text" id="sub-name" required autocomplete="off" placeholder="Netflix, Spotify...">
+      </label>
+      <label class="field">
+        <span class="field-label">URL</span>
+        <div class="url-row">
+          <img class="favicon-preview" id="favicon-preview" src="" alt="" width="24" height="24" hidden>
           <input type="url" id="sub-url" placeholder="https://example.com" autocomplete="off">
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="sub-amount">Amount</label>
-          <input type="number" id="sub-amount" step="0.01" min="0" required>
-        </div>
-        <div class="form-group">
-          <label for="sub-currency">Currency</label>
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">Amount</span>
+          <input type="number" id="sub-amount" step="0.01" min="0" required placeholder="9.99">
+        </label>
+        <label class="field">
+          <span class="field-label">Currency</span>
           <select id="sub-currency">
             <option value="GBP">GBP (£)</option>
             <option value="USD">USD ($)</option>
           </select>
-        </div>
+        </label>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="sub-cycle">Billing cycle</label>
-          <select id="sub-cycle">
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">Billing cycle</span>
+          <div class="toggle-group">
+            <input type="radio" name="sub-cycle-radio" id="sub-cycle-monthly" value="monthly" checked>
+            <label for="sub-cycle-monthly">Monthly</label>
+            <input type="radio" name="sub-cycle-radio" id="sub-cycle-yearly" value="yearly">
+            <label for="sub-cycle-yearly">Yearly</label>
+          </div>
+          <select id="sub-cycle" hidden>
             <option value="monthly">Monthly</option>
             <option value="yearly">Yearly</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label for="sub-day">Day of month</label>
-          <input type="number" id="sub-day" min="1" max="31" required>
-        </div>
+        </label>
+        <label class="field">
+          <span class="field-label">Day of month</span>
+          <input type="number" id="sub-day" min="1" max="31" required placeholder="1">
+        </label>
       </div>
       <input type="hidden" id="sub-edit-id">
-      <div class="form-actions">
+      <div class="pop-actions">
         <button type="button" class="btn btn-danger" id="sub-delete" hidden>Delete</button>
+        <span class="spacer"></span>
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
     </form>
   </div>
 
-  <!-- Quick/Mass Add Popover -->
+  <!-- Quick/Mass Add -->
   <div id="quick-add-popover" popover="manual">
-    <div class="popover-header">
+    <div class="pop-header">
       <h2>Quick Add</h2>
-      <button class="btn-icon popover-close" id="quick-add-close">&times;</button>
+      <button class="pop-close" id="quick-add-close" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
     </div>
-    <form id="quick-add-form" class="popover-body">
-      <div class="form-group">
-        <label for="qa-name">Product name</label>
-        <input type="text" id="qa-name" required autocomplete="off">
-      </div>
-      <div class="form-group">
-        <label for="qa-url">URL</label>
-        <div class="url-input-row">
-          <img class="favicon-preview" id="qa-favicon-preview" src="" alt="" width="20" height="20" hidden>
+    <form id="quick-add-form" class="pop-body">
+      <label class="field">
+        <span class="field-label">Product name</span>
+        <input type="text" id="qa-name" required autocomplete="off" placeholder="Netflix, Spotify...">
+      </label>
+      <label class="field">
+        <span class="field-label">URL</span>
+        <div class="url-row">
+          <img class="favicon-preview" id="qa-favicon-preview" src="" alt="" width="24" height="24" hidden>
           <input type="url" id="qa-url" placeholder="https://example.com" autocomplete="off">
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="qa-amount">Amount</label>
-          <input type="number" id="qa-amount" step="0.01" min="0" required>
-        </div>
-        <div class="form-group">
-          <label for="qa-currency">Currency</label>
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">Amount</span>
+          <input type="number" id="qa-amount" step="0.01" min="0" required placeholder="9.99">
+        </label>
+        <label class="field">
+          <span class="field-label">Currency</span>
           <select id="qa-currency">
             <option value="GBP">GBP (£)</option>
             <option value="USD">USD ($)</option>
           </select>
-        </div>
+        </label>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="qa-cycle">Billing cycle</label>
-          <select id="qa-cycle">
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">Billing cycle</span>
+          <div class="toggle-group">
+            <input type="radio" name="qa-cycle-radio" id="qa-cycle-monthly" value="monthly" checked>
+            <label for="qa-cycle-monthly">Monthly</label>
+            <input type="radio" name="qa-cycle-radio" id="qa-cycle-yearly" value="yearly">
+            <label for="qa-cycle-yearly">Yearly</label>
+          </div>
+          <select id="qa-cycle" hidden>
             <option value="monthly">Monthly</option>
             <option value="yearly">Yearly</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label for="qa-day">Day of month</label>
-          <input type="number" id="qa-day" min="1" max="31" required>
-        </div>
+        </label>
+        <label class="field">
+          <span class="field-label">Day of month</span>
+          <input type="number" id="qa-day" min="1" max="31" required placeholder="1">
+        </label>
       </div>
-      <div class="form-actions">
-        <button type="button" class="btn btn-secondary" id="qa-save-more">Save &amp; Add More</button>
+      <div class="pop-actions">
+        <button type="button" class="btn btn-ghost" id="qa-save-more">Save &amp; Add More</button>
         <button type="submit" class="btn btn-primary">Save &amp; Close</button>
       </div>
     </form>
   </div>
 
-  <!-- Breakdown Popover -->
+  <!-- Breakdown -->
   <div id="breakdown-popover" popover="manual">
-    <div class="popover-header">
+    <div class="pop-header">
       <h2>Monthly Breakdown</h2>
-      <button class="btn-icon popover-close" id="breakdown-close">&times;</button>
+      <button class="pop-close" id="breakdown-close" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
     </div>
-    <div class="popover-body">
-      <div class="breakdown-total" id="breakdown-total">£0.00/mo</div>
+    <div class="pop-body">
+      <div class="breakdown-hero" id="breakdown-total">£0.00<span>/mo</span></div>
       <ul class="breakdown-list" id="breakdown-list"></ul>
+      <div class="breakdown-empty" id="breakdown-empty" hidden>No subscriptions yet. Tap a day or the + button to add one.</div>
     </div>
   </div>
 
-  <!-- Settings Popover -->
+  <!-- Settings -->
   <div id="settings-popover" popover="manual">
-    <div class="popover-header">
+    <div class="pop-header">
       <h2>Settings</h2>
-      <button class="btn-icon popover-close" id="settings-close">&times;</button>
+      <button class="pop-close" id="settings-close" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
     </div>
-    <div class="popover-body">
-      <div class="form-group">
-        <label>Display currency</label>
-        <div class="radio-group">
-          <label class="radio-label"><input type="radio" name="display-currency" value="GBP" checked> GBP (£)</label>
-          <label class="radio-label"><input type="radio" name="display-currency" value="USD"> USD ($)</label>
+    <div class="pop-body">
+      <div class="settings-section">
+        <h3 class="settings-heading">Display currency</h3>
+        <div class="toggle-group toggle-wide">
+          <input type="radio" name="display-currency" id="ccy-gbp" value="GBP" checked>
+          <label for="ccy-gbp">GBP (£)</label>
+          <input type="radio" name="display-currency" id="ccy-usd" value="USD">
+          <label for="ccy-usd">USD ($)</label>
         </div>
       </div>
-      <div class="form-group">
-        <label for="exchange-rate">1 USD = ? GBP</label>
+      <label class="field">
+        <span class="field-label">Exchange rate (1 USD = ? GBP)</span>
         <input type="number" id="exchange-rate" step="0.001" min="0" value="0.79">
-      </div>
-      <div class="form-actions">
+      </label>
+      <div class="pop-actions">
         <button class="btn btn-primary" id="settings-save">Save Settings</button>
       </div>
-      <hr class="settings-divider">
-      <div class="form-group">
-        <label>Data</label>
-        <div class="data-actions">
-          <button class="btn btn-secondary" id="btn-export">Export</button>
-          <label class="btn btn-secondary import-label">
-            Import
+      <div class="settings-section" style="margin-top: 0.5rem">
+        <h3 class="settings-heading">Data</h3>
+        <div class="data-row">
+          <button class="btn btn-ghost" id="btn-export">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 10V13H14V10M8 2V10M8 10L4.5 6.5M8 10L11.5 6.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 8 8)"/></svg>
+            Export JSON
+          </button>
+          <label class="btn btn-ghost import-label">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 10V13H14V10M8 2V10M8 10L4.5 6.5M8 10L11.5 6.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Import JSON
             <input type="file" id="btn-import" accept=".json" hidden>
           </label>
         </div>
