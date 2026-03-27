@@ -10,6 +10,8 @@ let currentYear, currentMonth;
 let subscriptions = [];
 let settings = { displayCurrency: 'GBP', exchangeRate: DEFAULT_RATE };
 let categoryFilter = 'all'; // 'all' | 'personal' | 'business'
+let viewMode = 'month'; // 'month' | 'year'
+let yearViewYear;
 
 // ── IndexedDB ──
 class SubscriptionDB {
@@ -298,6 +300,102 @@ function renderTotal() {
   }
   document.getElementById('total-amount').textContent =
     formatCurrency(total, settings.displayCurrency);
+}
+
+// ── Year View ──
+function computeMonthTotal(subs, year, month, displayCurrency, rate) {
+  let total = 0;
+  for (const sub of subs) {
+    if (sub.cycle === 'yearly' && sub.recurringMonth !== undefined && sub.recurringMonth !== month) {
+      continue;
+    }
+    const monthly = monthlyEquivalent(sub.amount, sub.cycle);
+    total += convertAmount(monthly, sub.currency, displayCurrency, rate);
+  }
+  return total;
+}
+
+function renderYearView() {
+  const subs = filteredSubs();
+  const SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date();
+  const isThisYear = yearViewYear === now.getFullYear();
+
+  document.getElementById('year-title').textContent = yearViewYear;
+
+  // Compute each month's total
+  const totals = [];
+  let yearTotal = 0;
+  for (let m = 0; m < 12; m++) {
+    const t = computeMonthTotal(subs, yearViewYear, m, settings.displayCurrency, settings.exchangeRate);
+    totals.push(t);
+    yearTotal += t;
+  }
+
+  document.getElementById('year-total').textContent =
+    `Annual total: ${formatCurrency(yearTotal, settings.displayCurrency)}`;
+
+  const maxTotal = Math.max(...totals, 1);
+
+  // Heat colors: low = green, mid = amber, high = red
+  function heatColor(ratio) {
+    if (ratio < 0.01) return 'var(--bg-input)';
+    if (ratio < 0.33) return 'var(--green)';
+    if (ratio < 0.66) return '#f0a030';
+    return 'var(--danger)';
+  }
+
+  let html = '';
+  for (let m = 0; m < 12; m++) {
+    const ratio = totals[m] / maxTotal;
+    const pct = Math.round(ratio * 100);
+    const color = heatColor(ratio);
+    const isCurrent = isThisYear && m === now.getMonth();
+
+    // Count subs active this month
+    let count = 0;
+    for (const sub of subs) {
+      if (sub.cycle === 'yearly' && sub.recurringMonth !== undefined && sub.recurringMonth !== m) continue;
+      count++;
+    }
+
+    html += `<div class="year-month${isCurrent ? ' current-month' : ''}" data-month="${m}">`;
+    html += `<div class="year-month-heat" style="background:${color}"></div>`;
+    html += `<span class="year-month-name">${SHORT[m]}</span>`;
+    html += `<div class="year-month-bar"><div class="year-month-bar-fill" style="width:${pct}%;background:${color}"></div></div>`;
+    html += `<span class="year-month-amount">${formatCurrency(totals[m], settings.displayCurrency)}</span>`;
+    html += `<span class="year-month-count">${count}</span>`;
+    html += `</div>`;
+  }
+
+  document.getElementById('year-grid').innerHTML = html;
+}
+
+function toggleYearView() {
+  const btn = document.getElementById('btn-year-view');
+  const calendarEl = document.querySelector('.calendar');
+  const yearViewEl = document.getElementById('year-view');
+  const totalBar = document.getElementById('monthly-total');
+  const monthNav = document.querySelector('.month-nav');
+
+  if (viewMode === 'month') {
+    viewMode = 'year';
+    yearViewYear = currentYear;
+    btn.classList.add('active');
+    calendarEl.hidden = true;
+    totalBar.hidden = true;
+    monthNav.style.visibility = 'hidden';
+    yearViewEl.hidden = false;
+    renderYearView();
+  } else {
+    viewMode = 'month';
+    btn.classList.remove('active');
+    calendarEl.hidden = false;
+    totalBar.hidden = false;
+    monthNav.style.visibility = '';
+    yearViewEl.hidden = true;
+    render();
+  }
 }
 
 // ── Breakdown ──
@@ -609,11 +707,32 @@ function bindEvents() {
     render();
   });
 
+  // Year view toggle
+  document.getElementById('btn-year-view').addEventListener('click', toggleYearView);
+  document.getElementById('year-prev').addEventListener('click', () => {
+    yearViewYear--;
+    renderYearView();
+  });
+  document.getElementById('year-next').addEventListener('click', () => {
+    yearViewYear++;
+    renderYearView();
+  });
+  // Click month row to jump to that month view
+  document.getElementById('year-grid').addEventListener('click', (e) => {
+    const row = e.target.closest('.year-month');
+    if (row) {
+      currentMonth = parseInt(row.dataset.month, 10);
+      currentYear = yearViewYear;
+      toggleYearView(); // switch back to month view
+    }
+  });
+
   // Category filter
   for (const radio of document.querySelectorAll('input[name="category-filter"]')) {
     radio.addEventListener('change', () => {
       categoryFilter = document.querySelector('input[name="category-filter"]:checked').value;
-      render();
+      if (viewMode === 'year') renderYearView();
+      else render();
     });
   }
 

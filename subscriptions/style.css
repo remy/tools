@@ -861,6 +861,117 @@ body {
   padding: 2rem 1rem;
 }
 
+/* ── Year View ── */
+.year-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.5rem 0.5rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.year-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.year-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  text-align: center;
+  min-width: 4rem;
+}
+
+.year-total {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-3);
+  font-weight: 600;
+  padding-bottom: 0.625rem;
+}
+
+.year-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.year-month {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.12s, box-shadow 0.12s;
+
+  &:hover {
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+
+  &.current-month {
+    box-shadow: inset 0 0 0 1.5px var(--accent);
+  }
+}
+
+.year-month-heat {
+  width: 6px;
+  height: 28px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.year-month-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  width: 2.5rem;
+  flex-shrink: 0;
+}
+
+.year-month-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-input);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.year-month-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.year-month-amount {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  min-width: 4rem;
+  text-align: right;
+}
+
+.year-month-count {
+  font-size: 0.6875rem;
+  color: var(--text-3);
+  flex-shrink: 0;
+  min-width: 1.5rem;
+  text-align: right;
+}
+
+/* Active year view button */
+#btn-year-view.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 /* ── Desktop ── */
 @media (min-width: 640px) {
   .header {
