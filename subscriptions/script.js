@@ -299,8 +299,14 @@ function renderGrid() {
 function renderTotal() {
   let total = 0;
   for (const sub of filteredSubs()) {
-    const monthly = monthlyEquivalent(sub.amount, sub.cycle);
-    total += convertAmount(monthly, sub.currency, settings.displayCurrency, settings.exchangeRate);
+    if (sub.cycle === 'yearly') {
+      // Only count in the renewal month, at full price
+      if (sub.recurringMonth === currentMonth) {
+        total += convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate);
+      }
+    } else {
+      total += convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate);
+    }
   }
   document.getElementById('total-amount').textContent =
     formatCurrency(total, settings.displayCurrency);
@@ -310,11 +316,14 @@ function renderTotal() {
 function computeMonthTotal(subs, year, month, displayCurrency, rate) {
   let total = 0;
   for (const sub of subs) {
-    if (sub.cycle === 'yearly' && sub.recurringMonth !== undefined && sub.recurringMonth !== month) {
-      continue;
+    if (sub.cycle === 'yearly') {
+      // Full price only in the renewal month
+      if (sub.recurringMonth === month) {
+        total += convertAmount(sub.amount, sub.currency, displayCurrency, rate);
+      }
+    } else {
+      total += convertAmount(sub.amount, sub.currency, displayCurrency, rate);
     }
-    const monthly = monthlyEquivalent(sub.amount, sub.cycle);
-    total += convertAmount(monthly, sub.currency, displayCurrency, rate);
   }
   return total;
 }
@@ -429,9 +438,15 @@ function openBreakdown() {
 
   emptyEl.hidden = true;
   const items = visible.map(sub => {
-    const monthly = monthlyEquivalent(sub.amount, sub.cycle);
-    const converted = convertAmount(monthly, sub.currency, settings.displayCurrency, settings.exchangeRate);
-    return { ...sub, monthlyConverted: converted };
+    let thisMonthCost;
+    if (sub.cycle === 'yearly') {
+      thisMonthCost = sub.recurringMonth === currentMonth
+        ? convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate)
+        : 0;
+    } else {
+      thisMonthCost = convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate);
+    }
+    return { ...sub, monthlyConverted: thisMonthCost };
   }).sort((a, b) => b.monthlyConverted - a.monthlyConverted);
 
   let total = 0;
