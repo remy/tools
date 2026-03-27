@@ -32,11 +32,15 @@ jobs:
         run: |
           python3 scripts/generate_index.py
 
+      - name: Stamp service worker version
+        run: |
+          sed -i "s/__GIT_SHA__/${{ github.sha }}/" sw.js
+
       - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html projects.json style.css script.js
+          git add index.html projects.json style.css script.js sw.js
           # Check if there are changes
           if git diff --staged --quiet; then
             echo "No changes to commit"

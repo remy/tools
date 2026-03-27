@@ -121,6 +121,7 @@ Use this as the starting point for a new `index.html`:
     <!-- content -->
   </div>
   <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
 </body>
 </html>
 ```
@@ -311,5 +312,6 @@ Commit both the new tool directory and the updated `projects.json` / root `index
 - [ ] No React, Vue, Svelte, or other UI frameworks
 - [ ] No Tailwind, Bootstrap, or utility CSS libraries
 - [ ] No external font or icon CDN imports
+- [ ] Service worker registration added before `</body>`: `<script>navigator.serviceWorker?.register("/sw.js")</script>`
 - [ ] `python scripts/generate_index.py` run before committing
 - [ ] Root `index.html` and `projects.json` updated and committed
