@@ -310,6 +310,8 @@ function renderTotal() {
   }
   document.getElementById('total-amount').textContent =
     formatCurrency(total, settings.displayCurrency);
+  const SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('total-suffix').textContent = SHORT[currentMonth];
 }
 
 // ── Year View ──
@@ -427,7 +429,11 @@ function openBreakdown() {
   const list = document.getElementById('breakdown-list');
   const emptyEl = document.getElementById('breakdown-empty');
 
-  const visible = filteredSubs();
+  // Only show subs that cost something this month
+  const visible = filteredSubs().filter(sub => {
+    if (sub.cycle === 'yearly' && sub.recurringMonth !== currentMonth) return false;
+    return true;
+  });
   if (visible.length === 0) {
     list.innerHTML = '';
     emptyEl.hidden = false;
