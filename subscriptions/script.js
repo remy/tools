@@ -337,11 +337,16 @@ function renderYearView() {
   document.getElementById('year-total').textContent =
     `Annual total: ${formatCurrency(yearTotal, settings.displayCurrency)}`;
 
-  const maxTotal = Math.max(...totals, 1);
+  const nonZeroTotals = totals.filter(t => t > 0);
+  const minTotal = nonZeroTotals.length ? Math.min(...nonZeroTotals) : 0;
+  const maxTotal = nonZeroTotals.length ? Math.max(...nonZeroTotals) : 1;
+  const range = maxTotal - minTotal;
 
-  // Smooth heatmap: interpolate green → amber → red based on ratio
-  function heatColor(ratio) {
-    if (ratio < 0.01) return 'var(--bg-input)';
+  // Smooth heatmap: interpolate green → amber → red based on
+  // where the value sits between the min and max of all months
+  function heatColor(value) {
+    if (value < 0.01) return 'var(--bg-input)';
+    const ratio = range > 0 ? (value - minTotal) / range : 0;
     // Green (120,200,100) → Amber (240,160,50) → Red (230,75,60)
     let r, g, b;
     if (ratio <= 0.5) {
@@ -360,9 +365,8 @@ function renderYearView() {
 
   let html = '';
   for (let m = 0; m < 12; m++) {
-    const ratio = totals[m] / maxTotal;
-    const pct = Math.round(ratio * 100);
-    const color = heatColor(ratio);
+    const pct = maxTotal > 0 ? Math.round((totals[m] / maxTotal) * 100) : 0;
+    const color = heatColor(totals[m]);
     const isCurrent = isThisYear && m === now.getMonth();
 
     // Count subs active this month
