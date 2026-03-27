@@ -5,7 +5,7 @@ class CommandPalette extends HTMLElement {
     this._filtered = [];
     this._selectedIndex = 0;
     this._handleGlobalKeydown = this._handleGlobalKeydown.bind(this);
-    this._handleDialogKeydown = this._handleDialogKeydown.bind(this);
+    this._handlePanelKeydown = this._handlePanelKeydown.bind(this);
     this._handleInput = this._handleInput.bind(this);
     this._handleClick = this._handleClick.bind(this);
   }
@@ -23,19 +23,23 @@ class CommandPalette extends HTMLElement {
   _buildDOM() {
     const style = document.createElement('style');
     style.textContent = `
-      command-palette dialog {
-        border: none;
-        border-radius: 12px;
-        padding: 0;
+      command-palette [popover] {
+        position: fixed;
+        inset: 0;
+        margin: 15vh auto auto;
         width: 90vw;
         max-width: 520px;
+        height: fit-content;
+        border: 1px solid var(--border, #d4d4d8);
+        border-radius: 12px;
+        padding: 0;
         background: var(--surface, #ffffff);
         color: var(--text, #18181b);
         box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
         overflow: hidden;
       }
 
-      command-palette dialog::backdrop {
+      command-palette [popover]::backdrop {
         background: rgba(0, 0, 0, 0.5);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
@@ -132,8 +136,9 @@ class CommandPalette extends HTMLElement {
     `;
     this.appendChild(style);
 
-    this._dialog = document.createElement('dialog');
-    this._dialog.innerHTML = `
+    this._panel = document.createElement('div');
+    this._panel.setAttribute('popover', 'auto');
+    this._panel.innerHTML = `
       <div class="palette-input-wrap">
         <span class="palette-icon">&rsaquo;</span>
         <input class="palette-input" type="text" placeholder="Type a command..." autocomplete="off" spellcheck="false">
@@ -141,16 +146,18 @@ class CommandPalette extends HTMLElement {
       </div>
       <div class="palette-list" role="listbox"></div>
     `;
-    this.appendChild(this._dialog);
+    this.appendChild(this._panel);
 
-    this._input = this._dialog.querySelector('.palette-input');
-    this._list = this._dialog.querySelector('.palette-list');
+    this._input = this._panel.querySelector('.palette-input');
+    this._list = this._panel.querySelector('.palette-list');
 
     this._input.addEventListener('input', this._handleInput);
-    this._dialog.addEventListener('keydown', this._handleDialogKeydown);
+    this._panel.addEventListener('keydown', this._handlePanelKeydown);
     this._list.addEventListener('click', this._handleClick);
-    this._dialog.addEventListener('close', () => {
-      this._input.value = '';
+    this._panel.addEventListener('toggle', (e) => {
+      if (e.newState === 'closed') {
+        this._input.value = '';
+      }
     });
   }
 
@@ -165,25 +172,25 @@ class CommandPalette extends HTMLElement {
   }
 
   open() {
-    if (this._dialog.open) return;
+    if (this._panel.matches(':popover-open')) return;
     this._input.value = '';
     this._filtered = [...this._commands];
     this._selectedIndex = 0;
     this._render();
-    this._dialog.showModal();
+    this._panel.showPopover();
     this._input.focus();
   }
 
   close() {
-    if (!this._dialog.open) return;
-    this._dialog.close();
+    if (!this._panel.matches(':popover-open')) return;
+    this._panel.hidePopover();
   }
 
   _handleGlobalKeydown(e) {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
       e.stopPropagation();
-      if (this._dialog.open) {
+      if (this._panel.matches(':popover-open')) {
         this.close();
       } else {
         this.open();
@@ -191,7 +198,7 @@ class CommandPalette extends HTMLElement {
     }
   }
 
-  _handleDialogKeydown(e) {
+  _handlePanelKeydown(e) {
     const len = this._filtered.length;
     if (!len) return;
 
