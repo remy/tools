@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A VS Code-style command palette web component with keyboard navigation, filtering, and custom event dispatching">
+    <meta name="category" content="Web Demos">
+    <title>Command Palette</title>
+    <style>
+      :root {
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --surface-2: #f4f4f5;
+        --border: #d4d4d8;
+        --text: #18181b;
+        --text-dim: #71717a;
+        --accent: #4f46e5;
+        --accent-dim: #4f46e51a;
+        --green: #16a34a;
+        --radius: 10px;
+        --shadow: 0 8px 32px #0000001a;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1117;
+          --surface: #1a1d27;
+          --surface-2: #242736;
+          --border: #2e3248;
+          --text: #e8e9f0;
+          --text-dim: #8b8fa8;
+          --accent: #6c63ff;
+          --accent-dim: #6c63ff33;
+          --green: #22c55e;
+          --shadow: 0 8px 32px #0009;
+        }
+      }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        padding: 1rem;
+        min-height: 100dvh;
+      }
+
+      @media (min-width: 640px) {
+        body { padding: 2rem 1rem 4rem; }
+      }
+
+      .container {
+        width: 100%;
+        max-width: 900px;
+        margin-inline: auto;
+      }
+
+      .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      @media (min-width: 640px) {
+        .page-header { margin-bottom: 3rem; }
+      }
+
+      .page-header h1 {
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+
+        & span { color: var(--accent); }
+      }
+
+      .page-header p {
+        color: var(--text-dim);
+        font-size: 1rem;
+      }
+
+      @media (min-width: 640px) {
+        .page-header p { font-size: 1.05rem; }
+      }
+
+      kbd {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.1em 0.35em;
+        font-size: 0.85em;
+        font-family: inherit;
+      }
+
+      .badge {
+        display: inline-block;
+        background: var(--accent-dim);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2em 0.75em;
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .sections {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      @media (min-width: 640px) {
+        .sections { gap: 2rem; }
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+
+        @media (min-width: 640px) {
+          padding: 1.75rem;
+        }
+      }
+
+      .card-header {
+        margin-bottom: 1rem;
+
+        & h2 {
+          font-size: 1rem;
+          font-weight: 600;
+          margin-bottom: 0.25rem;
+
+          @media (min-width: 640px) {
+            font-size: 1.1rem;
+          }
+        }
+
+        & p {
+          color: var(--text-dim);
+          font-size: 0.875rem;
+        }
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4em;
+        padding: 0.5em 1em;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+        font-family: inherit;
+        white-space: nowrap;
+        line-height: 1.4;
+
+        @media (min-width: 640px) {
+          padding: 0.55em 1.25em;
+          font-size: 0.95rem;
+        }
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+
+        &:hover { opacity: 0.85; }
+      }
+
+      .btn-outline {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--border);
+
+        &:hover {
+          background: var(--surface-2);
+          border-color: var(--accent);
+          color: var(--accent);
+        }
+      }
+
+      code {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0.1em 0.4em;
+        font-size: 0.85em;
+        font-family: 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+        color: var(--accent);
+      }
+
+      .code-hint {
+        margin-top: 1rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.78rem;
+        color: var(--text-dim);
+        font-family: 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+        overflow-x: auto;
+        line-height: 1.7;
+        white-space: pre;
+
+        @media (min-width: 640px) {
+          font-size: 0.82rem;
+        }
+
+        & .kw  { color: #a78bfa; }
+        & .attr { color: #60a5fa; }
+        & .val  { color: #86efac; }
+        & .tag  { color: #f87171; }
+        & .cm   { color: #6b7280; }
+
+        & code {
+          background: none;
+          border: none;
+          border-radius: 0;
+          padding: 0;
+          font-size: inherit;
+          color: inherit;
+        }
+      }
+
+      .event-log {
+        margin-top: 1rem;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.78rem;
+        min-height: 80px;
+        max-height: 200px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+
+        @media (min-width: 640px) {
+          font-size: 0.82rem;
+        }
+
+        & .entry {
+          display: flex;
+          gap: 0.75em;
+        }
+
+        & .time { color: var(--text-dim); flex-shrink: 0; }
+        & .evt-name { color: var(--accent); }
+        & .evt-desc { color: var(--green); }
+        & .empty { color: var(--text-dim); font-style: italic; }
+      }
+
+      .demo-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+
+      <header class="page-header">
+        <div class="badge">Web Component</div>
+        <h1>Command <span>Palette</span></h1>
+        <p>A keyboard-driven command palette. Press <kbd>&#8984;</kbd><kbd>K</kbd> or <kbd>Ctrl</kbd><kbd>K</kbd> to open.</p>
+      </header>
+
+      <div class="sections">
+
+        <!-- 1: Live demo -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Try It</h2>
+            <p>Press <kbd>&#8984;</kbd><kbd>K</kbd> (Mac) or <kbd>Ctrl</kbd><kbd>K</kbd> to open the palette, or use the button below. Type to filter, use arrow keys to navigate, and press <kbd>Enter</kbd> to select. Try "Pick DOM elements" for a drill-down demo.</p>
+          </div>
+          <div class="demo-row">
+            <button class="btn btn-primary" id="btn-open">Open Palette</button>
+            <button class="btn btn-outline" id="btn-clear">Clear Log</button>
+          </div>
+
+          <div class="event-log" id="event-log">
+            <span class="empty">Select a command to see events here...</span>
+          </div>
+        </div>
+
+        <!-- 2: Usage -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Usage</h2>
+            <p>Define commands as JSON in a script tag, then drop in the component.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="cm">&lt;!-- 1. Define your commands --&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"application/json"</span> <span class="attr">data-palette</span><span class="tag">&gt;</span>
+[
+  { <span class="val">"name"</span>: <span class="val">"save"</span>, <span class="val">"description"</span>: <span class="val">"Save document"</span> },
+  { <span class="val">"name"</span>: <span class="val">"pick-thing"</span>, <span class="val">"description"</span>: <span class="val">"Pick a thing"</span>, <span class="val">"keepOpen"</span>: <span class="kw">true</span> }
+]
+<span class="tag">&lt;/script&gt;</span>
+
+<span class="cm">&lt;!-- 2. Add the component --&gt;</span>
+<span class="tag">&lt;command-palette&gt;&lt;/command-palette&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"command-palette.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="cm">&lt;!-- 3. Listen for events --&gt;</span>
+<span class="tag">&lt;script&gt;</span>
+<span class="kw">const</span> palette = document.querySelector(<span class="val">'command-palette'</span>);
+palette.addEventListener(<span class="val">'save'</span>, () =&gt; {
+  console.log(<span class="val">'Save triggered!'</span>);
+});
+<span class="tag">&lt;/script&gt;</span></code></pre>
+        </div>
+
+        <!-- 3: Dynamic data / drill-down -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Dynamic Data &amp; Drill-down</h2>
+            <p>Use <code>keepOpen</code> to prevent closing on selection, then <code>setCommands()</code> to swap in new items. Press <kbd>Backspace</kbd> on an empty input to go back.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="cm">// Command with keepOpen stays open on select</span>
+{ <span class="val">"name"</span>: <span class="val">"pick-dom"</span>, <span class="val">"description"</span>: <span class="val">"Pick DOM elements"</span>, <span class="val">"keepOpen"</span>: <span class="kw">true</span> }
+
+<span class="cm">// Handle the event: swap in dynamic data</span>
+palette.addEventListener(<span class="val">'pick-dom'</span>, () =&gt; {
+  <span class="kw">const</span> elements = [...document.querySelectorAll(<span class="val">'[class]'</span>)].map(el =&gt; ({
+    name: <span class="val">'element-picked'</span>,
+    description: <span class="val">`&lt;${el.tagName.toLowerCase()}&gt; .${[...el.classList].join('.')}`</span>
+  }));
+  palette.<span class="attr">setCommands</span>(elements, {
+    placeholder: <span class="val">'Pick an element...'</span>
+  });
+});
+
+<span class="cm">// The palette auto-resets to the original</span>
+<span class="cm">// commands when closed or dismissed</span></code></pre>
+        </div>
+
+        <!-- 4: API reference -->
+        <div class="card">
+          <div class="card-header">
+            <h2>API</h2>
+            <p>Methods, events, and keyboard shortcuts.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="cm">// Open / close programmatically</span>
+palette.<span class="attr">open</span>();
+palette.<span class="attr">close</span>();
+
+<span class="cm">// Replace commands dynamically (resets on close)</span>
+palette.<span class="attr">setCommands</span>(commands, {
+  placeholder: <span class="val">'Pick something...'</span>,  <span class="cm">// optional</span>
+  label: <span class="val">'Elements'</span>               <span class="cm">// optional aria-label</span>
+});
+
+<span class="cm">// Each selected command fires a CustomEvent</span>
+<span class="cm">// where event.type === command.name</span>
+palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
+  console.log(e.detail.command);
+  <span class="cm">// { name: "theme-toggle", description: "Toggle theme" }</span>
+});</code></pre>
+        </div>
+
+      </div>
+    </div>
+
+    <script type="application/json" data-palette>
+    [
+      { "name": "theme-toggle", "description": "Toggle dark / light theme" },
+      { "name": "new-document", "description": "Create a new document" },
+      { "name": "save-document", "description": "Save current document" },
+      { "name": "open-settings", "description": "Open application settings" },
+      { "name": "show-shortcuts", "description": "Show keyboard shortcuts" },
+      { "name": "zoom-in", "description": "Zoom in" },
+      { "name": "zoom-out", "description": "Zoom out" },
+      { "name": "reset-zoom", "description": "Reset zoom to 100%" },
+      { "name": "toggle-sidebar", "description": "Toggle sidebar visibility" },
+      { "name": "search-files", "description": "Search across all files" },
+      { "name": "go-to-line", "description": "Go to a specific line number" },
+      { "name": "format-document", "description": "Format the current document" },
+      { "name": "toggle-word-wrap", "description": "Toggle word wrap" },
+      { "name": "clear-console", "description": "Clear the console output" },
+      { "name": "run-task", "description": "Run a build task" },
+      { "name": "pick-dom", "description": "Pick DOM elements", "keepOpen": true }
+    ]
+    </script>
+
+    <command-palette></command-palette>
+    <script src="./command-palette.js"></script>
+
+    <script>
+      const palette = document.querySelector('command-palette');
+      const logEl = document.getElementById('event-log');
+
+      const commands = JSON.parse(
+        document.querySelector('script[data-palette]').textContent
+      );
+
+      commands.forEach((cmd) => {
+        palette.addEventListener(cmd.name, (e) => {
+          addLogEntry(cmd.name, e.detail.command.description);
+        });
+      });
+
+      // Drill-down demo: "Pick DOM elements" swaps in page elements
+      palette.addEventListener('pick-dom', () => {
+        const elements = [...document.querySelectorAll('[class]')]
+          .filter(el => !el.closest('command-palette'))
+          .map(el => {
+            const tag = el.tagName.toLowerCase();
+            const classes = [...el.classList].join('.');
+            return {
+              name: 'element-picked',
+              description: `<${tag}> .${classes}`,
+            };
+          });
+        palette.setCommands(elements, {
+          placeholder: 'Pick an element...',
+          label: 'DOM elements',
+        });
+      });
+
+      // Handle the secondary selection
+      palette.addEventListener('element-picked', (e) => {
+        addLogEntry('element-picked', e.detail.command.description);
+      });
+
+      document.getElementById('btn-open').addEventListener('click', () => {
+        palette.open();
+      });
+
+      document.getElementById('btn-clear').addEventListener('click', () => {
+        logEl.innerHTML = '<span class="empty">Select a command to see events here...</span>';
+      });
+
+      function addLogEntry(name, description) {
+        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        const entry = document.createElement('div');
+        entry.className = 'entry';
+        entry.innerHTML =
+          `<span class="time">${time}</span>` +
+          `<span class="evt-name">${name}</span>` +
+          `<span class="evt-desc">${description}</span>`;
+        logEl.querySelector('.empty')?.remove();
+        logEl.appendChild(entry);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+    </script>
+
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
