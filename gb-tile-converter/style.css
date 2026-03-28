@@ -448,3 +448,28 @@ body {
   white-space: pre;
   tab-size: 2;
 }
+
+.code-output:focus {
+  outline: none;
+  border-color: var(--colour-input-focus);
+  box-shadow: 0 0 0 3px var(--colour-primary-light);
+}
+
+.code-output.parse-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.parse-status {
+  font-size: 0.75rem;
+  min-height: 1.25rem;
+  margin-top: var(--space-xs);
+}
+
+.parse-status.error {
+  color: #ef4444;
+}
+
+.parse-status.ok {
+  color: var(--colour-text-secondary);
+}

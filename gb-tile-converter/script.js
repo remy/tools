@@ -36,6 +36,7 @@
     varName: document.getElementById('varName'),
     copyOutputBtn: document.getElementById('copyOutputBtn'),
     headerOutput: document.getElementById('headerOutput'),
+    parseStatus: document.getElementById('parseStatus'),
   };
 
   const ovCtx = el.overviewCanvas.getContext('2d', { willReadFrequently: true });
@@ -114,9 +115,85 @@
     return `const unsigned char ${name}[] = {\n${lines.join(',\n')}\n};\n// ${state.tileData.length} tile${state.tileData.length !== 1 ? 's' : ''}, ${allBytes.length} bytes`;
   }
 
+  let updatingFromCode = false;
+
   function updateOutput() {
+    if (updatingFromCode) return;
     el.headerOutput.textContent = generateHeader();
+    el.headerOutput.classList.remove('parse-error');
+    el.parseStatus.textContent = '';
+    el.parseStatus.className = 'parse-status';
   }
+
+  // ---- Parse header back to tiles ----
+
+  function decodeTile(bytes, offset) {
+    const tile = [];
+    for (let row = 0; row < 8; row++) {
+      const tileRow = [];
+      const lo = bytes[offset + row * 2];
+      const hi = bytes[offset + row * 2 + 1];
+      for (let col = 0; col < 8; col++) {
+        const bit = 7 - col;
+        const color = ((hi >> bit) & 1) << 1 | ((lo >> bit) & 1);
+        tileRow.push(color);
+      }
+      tile.push(tileRow);
+    }
+    return tile;
+  }
+
+  function parseHeader(text) {
+    // Extract hex bytes from the text: match 0xNN patterns
+    const hexMatches = text.match(/0x[0-9a-fA-F]{1,2}/g);
+    if (!hexMatches || hexMatches.length === 0) {
+      return { error: 'No hex bytes found' };
+    }
+    const bytes = hexMatches.map(h => parseInt(h, 16));
+    if (bytes.length % 16 !== 0) {
+      return { error: `${bytes.length} bytes found — must be a multiple of 16 (16 bytes per tile)` };
+    }
+    const tiles = [];
+    for (let i = 0; i < bytes.length; i += 16) {
+      tiles.push(decodeTile(bytes, i));
+    }
+    // Try to extract variable name
+    const nameMatch = text.match(/(?:const\s+)?(?:unsigned\s+)?(?:char\s+)(\w+)\s*\[/);
+    return { tiles, varName: nameMatch ? nameMatch[1] : null };
+  }
+
+  function onHeaderInput() {
+    const text = el.headerOutput.textContent;
+    const result = parseHeader(text);
+    if (result.error) {
+      el.headerOutput.classList.add('parse-error');
+      el.parseStatus.textContent = result.error;
+      el.parseStatus.className = 'parse-status error';
+      return;
+    }
+    el.headerOutput.classList.remove('parse-error');
+    el.parseStatus.textContent = `Parsed ${result.tiles.length} tile${result.tiles.length !== 1 ? 's' : ''}`;
+    el.parseStatus.className = 'parse-status ok';
+
+    updatingFromCode = true;
+    state.tileData = result.tiles;
+    if (result.varName) {
+      state.varName = result.varName;
+      el.varName.value = result.varName;
+    }
+    if (state.selectedTile >= state.tileData.length) {
+      state.selectedTile = Math.max(0, state.tileData.length - 1);
+    }
+    if (state.mode === 'editor') {
+      renderTileGrid();
+      if (state.tileData.length) renderTileZoom();
+      updateTileNav();
+    }
+    el.tileEditModeBtn.disabled = !state.tileData.length;
+    updatingFromCode = false;
+  }
+
+  el.headerOutput.addEventListener('input', onHeaderInput);
 
   // ---- Overview rendering ----
 
@@ -686,7 +763,7 @@
   // ---- Copy ----
 
   el.copyOutputBtn.addEventListener('click', async () => {
-    const text = el.headerOutput.textContent;
+    const text = el.headerOutput.innerText;
     try {
       await navigator.clipboard.writeText(text);
       el.copyOutputBtn.textContent = 'Copied!';
