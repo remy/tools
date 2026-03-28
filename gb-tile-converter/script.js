@@ -34,6 +34,7 @@
     tileIndex: document.getElementById('tileIndex'),
     paletteButtons: document.querySelectorAll('.palette-btn'),
     varName: document.getElementById('varName'),
+    formatToggleBtn: document.getElementById('formatToggleBtn'),
     copyOutputBtn: document.getElementById('copyOutputBtn'),
     headerOutput: document.getElementById('headerOutput'),
     parseStatus: document.getElementById('parseStatus'),
@@ -63,6 +64,7 @@
     selectedTile: 0,
     selectedColor: 3,
     varName: 'tile_data',
+    outputFormat: 'grouped',  // 'grouped' or 'flat'
     painting: false,
     zoom: 1,
     imageScale: 1,
@@ -102,20 +104,37 @@
   function generateHeader() {
     if (!state.tileData.length) return '// Upload an image to generate tile data';
     const name = state.varName || 'tile_data';
+    const totalBytes = state.tileData.length * 16;
+    const comment = `// ${state.tileData.length} tile${state.tileData.length !== 1 ? 's' : ''}, ${totalBytes} bytes`;
+
+    if (state.outputFormat === 'grouped') {
+      const tileLines = [];
+      for (let t = 0; t < state.tileData.length; t++) {
+        const enc = encodeTile(state.tileData[t]);
+        const rows = [];
+        for (let r = 0; r < 2; r++) {
+          const row = [];
+          for (let i = r * 8; i < r * 8 + 8; i++) {
+            row.push('0x' + enc[i].toString(16).toUpperCase().padStart(2, '0'));
+          }
+          rows.push('    {' + row.join(',') + '}');
+        }
+        tileLines.push(`    /* tile ${t} */\n${rows.join(',\n')}`);
+      }
+      return `static const uint8_t ${name}[][8] = {\n${tileLines.join(',\n')}\n};\n${comment}`;
+    }
+
+    // Flat format
     const tileLines = [];
     for (let t = 0; t < state.tileData.length; t++) {
       const enc = encodeTile(state.tileData[t]);
-      const rows = [];
-      for (let r = 0; r < 2; r++) {
-        const row = [];
-        for (let i = r * 8; i < r * 8 + 8; i++) {
-          row.push('0x' + enc[i].toString(16).toUpperCase().padStart(2, '0'));
-        }
-        rows.push('    {' + row.join(',') + '}');
+      const hex = [];
+      for (let i = 0; i < 16; i++) {
+        hex.push('0x' + enc[i].toString(16).toUpperCase().padStart(2, '0'));
       }
-      tileLines.push(`    /* tile ${t} */\n${rows.join(',\n')}`);
+      tileLines.push(`    /* tile ${t} */\n    ${hex.join(', ')}`);
     }
-    return `static const uint8_t ${name}[][8] = {\n${tileLines.join(',\n')}\n};\n// ${state.tileData.length} tile${state.tileData.length !== 1 ? 's' : ''}, ${state.tileData.length * 16} bytes`;
+    return `static const uint8_t ${name}[] = {\n${tileLines.join(',\n')}\n};\n${comment}`;
   }
 
   let updatingFromCode = false;
@@ -792,6 +811,20 @@
     updateOutput();
   });
 
+  // ---- Format toggle ----
+
+  function updateFormatToggle() {
+    el.formatToggleBtn.textContent = state.outputFormat === 'grouped' ? 'Flat' : 'Grouped';
+  }
+
+  el.formatToggleBtn.addEventListener('click', () => {
+    state.outputFormat = state.outputFormat === 'grouped' ? 'flat' : 'grouped';
+    updateFormatToggle();
+    updateOutput();
+  });
+
+  updateFormatToggle();
+
   // ---- Copy ----
 
   el.copyOutputBtn.addEventListener('click', async () => {
@@ -828,6 +861,7 @@
         offsetY: state.offsetY,
         imageScale: state.imageScale,
         zoom: state.zoom,
+        outputFormat: state.outputFormat,
         tilesX: state.tilesX,
         tilesY: state.tilesY,
         canvasW: state.canvasW,
@@ -863,6 +897,8 @@
       state.offsetY = data.offsetY || 0;
       state.imageScale = data.imageScale || 1;
       state.zoom = data.zoom || 1;
+      state.outputFormat = data.outputFormat || 'grouped';
+      updateFormatToggle();
       state.tilesX = data.tilesX || 0;
       state.tilesY = data.tilesY || 0;
       state.canvasW = data.canvasW || 256;
