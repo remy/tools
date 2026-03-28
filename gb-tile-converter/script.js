@@ -101,18 +101,21 @@
 
   function generateHeader() {
     if (!state.tileData.length) return '// Upload an image to generate tile data';
-    const allBytes = [];
-    for (const tile of state.tileData) {
-      const enc = encodeTile(tile);
-      for (let i = 0; i < enc.length; i++) allBytes.push(enc[i]);
-    }
-    const hex = allBytes.map(b => '0x' + b.toString(16).toUpperCase().padStart(2, '0'));
-    const lines = [];
-    for (let i = 0; i < hex.length; i += 16) {
-      lines.push('  ' + hex.slice(i, i + 16).join(', '));
-    }
     const name = state.varName || 'tile_data';
-    return `const unsigned char ${name}[] = {\n${lines.join(',\n')}\n};\n// ${state.tileData.length} tile${state.tileData.length !== 1 ? 's' : ''}, ${allBytes.length} bytes`;
+    const tileLines = [];
+    for (let t = 0; t < state.tileData.length; t++) {
+      const enc = encodeTile(state.tileData[t]);
+      const rows = [];
+      for (let r = 0; r < 2; r++) {
+        const row = [];
+        for (let i = r * 8; i < r * 8 + 8; i++) {
+          row.push('0x' + enc[i].toString(16).toUpperCase().padStart(2, '0'));
+        }
+        rows.push('    {' + row.join(',') + '}');
+      }
+      tileLines.push(rows.join(',\n'));
+    }
+    return `static const uint8_t ${name}[][8] = {\n${tileLines.join(',\n')}\n};\n// ${state.tileData.length} tile${state.tileData.length !== 1 ? 's' : ''}, ${state.tileData.length * 16} bytes`;
   }
 
   let updatingFromCode = false;
@@ -157,8 +160,8 @@
     for (let i = 0; i < bytes.length; i += 16) {
       tiles.push(decodeTile(bytes, i));
     }
-    // Try to extract variable name
-    const nameMatch = text.match(/(?:const\s+)?(?:unsigned\s+)?(?:char\s+)(\w+)\s*\[/);
+    // Try to extract variable name from various C declarations
+    const nameMatch = text.match(/(?:static\s+)?(?:const\s+)?(?:unsigned\s+char|uint8_t)\s+(\w+)\s*\[/);
     return { tiles, varName: nameMatch ? nameMatch[1] : null };
   }
 
