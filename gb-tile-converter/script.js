@@ -30,6 +30,7 @@
     tileZoomCanvas: document.getElementById('tileZoomCanvas'),
     prevTileBtn: document.getElementById('prevTileBtn'),
     nextTileBtn: document.getElementById('nextTileBtn'),
+    addTileBtn: document.getElementById('addTileBtn'),
     deleteTileBtn: document.getElementById('deleteTileBtn'),
     tileIndex: document.getElementById('tileIndex'),
     paletteButtons: document.querySelectorAll('.palette-btn'),
@@ -645,12 +646,28 @@
     el.deleteTileBtn.disabled = !total;
   }
 
+  function addTile() {
+    const blank = Array.from({ length: 8 }, () => new Array(8).fill(0));
+    const insertAt = state.tileData.length ? state.selectedTile + 1 : 0;
+    state.tileData.splice(insertAt, 0, blank);
+    if (state.tilesX === 0) state.tilesX = 1;
+    state.tilesY = Math.ceil(state.tileData.length / state.tilesX);
+    state.selectedTile = insertAt;
+    renderTileGrid();
+    renderTileZoom();
+    updateTileNav();
+    updateOutput();
+  }
+
+  el.addTileBtn.addEventListener('click', addTile);
+
   function deleteTile() {
     if (!state.tileData.length) return;
     state.tileData.splice(state.selectedTile, 1);
     if (state.selectedTile >= state.tileData.length) {
       state.selectedTile = Math.max(0, state.tileData.length - 1);
     }
+    state.tilesY = state.tilesX ? Math.ceil(state.tileData.length / state.tilesX) : 0;
     renderTileGrid();
     if (state.tileData.length) {
       renderTileZoom();
@@ -750,6 +767,12 @@
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();
       deleteTile();
+      return;
+    }
+
+    if (e.key === 'i') {
+      e.preventDefault();
+      addTile();
       return;
     }
 
