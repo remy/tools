@@ -30,6 +30,7 @@
     tileZoomCanvas: document.getElementById('tileZoomCanvas'),
     prevTileBtn: document.getElementById('prevTileBtn'),
     nextTileBtn: document.getElementById('nextTileBtn'),
+    deleteTileBtn: document.getElementById('deleteTileBtn'),
     tileIndex: document.getElementById('tileIndex'),
     paletteButtons: document.querySelectorAll('.palette-btn'),
     varName: document.getElementById('varName'),
@@ -539,10 +540,29 @@
 
   function updateTileNav() {
     const total = state.tileData.length;
-    el.tileIndex.textContent = total ? `Tile ${state.selectedTile + 1} / ${total}` : 'Tile 0 / 0';
+    el.tileIndex.textContent = total ? `Tile ${state.selectedTile + 1} / ${total}` : 'No tiles';
     el.prevTileBtn.disabled = state.selectedTile <= 0;
-    el.nextTileBtn.disabled = state.selectedTile >= total - 1;
+    el.nextTileBtn.disabled = !total || state.selectedTile >= total - 1;
+    el.deleteTileBtn.disabled = !total;
   }
+
+  function deleteTile() {
+    if (!state.tileData.length) return;
+    state.tileData.splice(state.selectedTile, 1);
+    if (state.selectedTile >= state.tileData.length) {
+      state.selectedTile = Math.max(0, state.tileData.length - 1);
+    }
+    renderTileGrid();
+    if (state.tileData.length) {
+      renderTileZoom();
+    } else {
+      zoomCtx.clearRect(0, 0, el.tileZoomCanvas.width, el.tileZoomCanvas.height);
+    }
+    updateTileNav();
+    updateOutput();
+  }
+
+  el.deleteTileBtn.addEventListener('click', deleteTile);
 
   el.prevTileBtn.addEventListener('click', () => {
     if (state.selectedTile > 0) {
@@ -606,7 +626,15 @@
     }
 
     // Tile editor mode
-    if (state.mode !== 'editor' || !state.tileData.length) return;
+    if (state.mode !== 'editor') return;
+
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      deleteTile();
+      return;
+    }
+
+    if (!state.tileData.length) return;
 
     const cols = state.tilesX;
     const cur = state.selectedTile;

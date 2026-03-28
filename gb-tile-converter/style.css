@@ -304,10 +304,25 @@ body {
 .tile-nav {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: var(--space-sm);
   margin-bottom: var(--space-sm);
   font-size: 0.875rem;
+}
+
+.tile-nav #tileIndex {
+  flex: 1;
+  text-align: center;
+}
+
+.btn-delete {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.btn-delete:hover {
+  background: #ef4444;
+  color: #fff;
 }
 
 .tile-nav-hint {
