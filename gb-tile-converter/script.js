@@ -63,6 +63,7 @@
     varName: 'tile_data',
     painting: false,
     zoom: 1,
+    imageScale: 1,
   };
 
   // ---- Helpers ----
@@ -152,7 +153,10 @@
     ovCtx.fillRect(0, 0, w, h);
 
     if (state.image) {
-      ovCtx.drawImage(state.image, state.offsetX, state.offsetY);
+      const s = state.imageScale;
+      const sw = state.image.naturalWidth * s;
+      const sh = state.image.naturalHeight * s;
+      ovCtx.drawImage(state.image, state.offsetX, state.offsetY, sw, sh);
     }
 
     // Grid overlay
@@ -183,7 +187,8 @@
     const tmpCtx = tmpCanvas.getContext('2d', { willReadFrequently: true });
     tmpCtx.fillStyle = DMG_CSS[0];
     tmpCtx.fillRect(0, 0, w, h);
-    tmpCtx.drawImage(state.image, state.offsetX, state.offsetY);
+    const sc = state.imageScale;
+    tmpCtx.drawImage(state.image, state.offsetX, state.offsetY, state.image.naturalWidth * sc, state.image.naturalHeight * sc);
     const imgData = tmpCtx.getImageData(0, 0, w, h);
     const pixels = imgData.data;
 
@@ -225,6 +230,7 @@
       state.imageFileName = file.name.replace(/\.\w+$/, '');
       state.offsetX = 0;
       state.offsetY = 0;
+      state.imageScale = 1;
       el.varName.value = state.imageFileName.replace(/[^a-zA-Z0-9_]/g, '_') || 'tile_data';
       state.varName = el.varName.value;
       resizeOverviewCanvas();
@@ -256,6 +262,7 @@
   function onDragStart(e) {
     if (!state.image) return;
     e.preventDefault();
+    el.dropTarget.focus();
     const pos = getPointerPos(e);
     state.dragging = true;
     state.dragStartX = pos.x;
@@ -329,6 +336,7 @@
   el.resetPositionBtn.addEventListener('click', () => {
     state.offsetX = 0;
     state.offsetY = 0;
+    state.imageScale = 1;
     renderOverview();
     quantize();
     if (state.mode === 'editor') {
@@ -565,9 +573,40 @@
   }
 
   document.addEventListener('keydown', e => {
-    if (state.mode !== 'editor' || !state.tileData.length) return;
-    // Don't capture when typing in an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    // Overview mode: arrow keys nudge image, =/- scale image in canvas
+    if (state.mode === 'overview' && state.image && document.activeElement === el.dropTarget) {
+      const step = e.shiftKey ? 4 : 1;
+      let handled = true;
+      switch (e.key) {
+        case 'ArrowLeft':  state.offsetX -= step; break;
+        case 'ArrowRight': state.offsetX += step; break;
+        case 'ArrowUp':    state.offsetY -= step; break;
+        case 'ArrowDown':  state.offsetY += step; break;
+        case '=': case '+':
+          state.imageScale = Math.round((state.imageScale + 0.2) * 100) / 100;
+          break;
+        case '-':
+          state.imageScale = Math.max(0.2, Math.round((state.imageScale - 0.2) * 100) / 100);
+          break;
+        case '0':
+          state.imageScale = 1;
+          break;
+        default: handled = false;
+      }
+      if (handled) {
+        e.preventDefault();
+        renderOverview();
+        quantize();
+        el.imageInfo.textContent = `${state.image.naturalWidth}×${state.image.naturalHeight}px — ${state.tilesX}×${state.tilesY} tiles` +
+          (state.imageScale !== 1 ? ` — scale ${state.imageScale.toFixed(1)}x` : '');
+        return;
+      }
+    }
+
+    // Tile editor mode
+    if (state.mode !== 'editor' || !state.tileData.length) return;
 
     const cols = state.tilesX;
     const cur = state.selectedTile;
@@ -591,7 +630,6 @@
         e.preventDefault();
         if (curY < state.tilesY - 1) selectTile(cur + cols);
         break;
-      // Number keys 1-4 for quick palette selection
       case '1': case '2': case '3': case '4': {
         const c = parseInt(e.key) - 1;
         state.selectedColor = c;

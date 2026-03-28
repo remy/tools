@@ -219,6 +219,11 @@ body {
   cursor: default;
 }
 
+.canvas-wrap:focus {
+  outline: 2px solid var(--colour-primary);
+  outline-offset: 2px;
+}
+
 .canvas-wrap canvas {
   display: block;
   image-rendering: pixelated;
@@ -315,6 +320,7 @@ body {
 .tile-nav-hint kbd {
   display: inline-block;
   padding: 0.1em 0.4em;
+  margin-right: 2px;
   font-family: inherit;
   font-size: 0.75rem;
   background: var(--colour-bg-secondary);
