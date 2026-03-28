@@ -113,7 +113,7 @@
         }
         rows.push('    {' + row.join(',') + '}');
       }
-      tileLines.push(rows.join(',\n'));
+      tileLines.push(`    /* tile ${t} */\n${rows.join(',\n')}`);
     }
     return `static const uint8_t ${name}[][8] = {\n${tileLines.join(',\n')}\n};\n// ${state.tileData.length} tile${state.tileData.length !== 1 ? 's' : ''}, ${state.tileData.length * 16} bytes`;
   }
