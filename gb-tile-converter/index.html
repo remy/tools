@@ -26,6 +26,12 @@
       <input type="file" id="fileInput" accept="image/png,image/webp,image/avif" hidden>
       <div class="overview-controls">
         <button id="resetPositionBtn" class="btn btn-sm btn-secondary" hidden>Reset Position</button>
+        <div class="zoom-controls" id="zoomControls" hidden>
+          <button id="zoomOutBtn" class="btn btn-sm btn-secondary" aria-label="Zoom out">&minus;</button>
+          <span id="zoomLevel">1x</span>
+          <button id="zoomInBtn" class="btn btn-sm btn-secondary" aria-label="Zoom in">+</button>
+          <button id="zoomFitBtn" class="btn btn-sm btn-secondary">Fit</button>
+        </div>
         <span id="imageInfo" class="text-secondary"></span>
       </div>
     </section>
@@ -38,6 +44,7 @@
             <span id="tileIndex">Tile 0 / 0</span>
             <button id="nextTileBtn" class="btn btn-sm btn-secondary">Next &raquo;</button>
           </div>
+          <div class="tile-nav-hint"><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate tiles &middot; <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd> select colour</div>
           <div class="tile-grid-wrap">
             <canvas id="tileGridCanvas"></canvas>
           </div>

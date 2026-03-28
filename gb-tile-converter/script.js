@@ -20,6 +20,11 @@
     fileInput: document.getElementById('fileInput'),
     overviewCanvas: document.getElementById('overviewCanvas'),
     resetPositionBtn: document.getElementById('resetPositionBtn'),
+    zoomControls: document.getElementById('zoomControls'),
+    zoomInBtn: document.getElementById('zoomInBtn'),
+    zoomOutBtn: document.getElementById('zoomOutBtn'),
+    zoomFitBtn: document.getElementById('zoomFitBtn'),
+    zoomLevel: document.getElementById('zoomLevel'),
     imageInfo: document.getElementById('imageInfo'),
     tileGridCanvas: document.getElementById('tileGridCanvas'),
     tileZoomCanvas: document.getElementById('tileZoomCanvas'),
@@ -57,6 +62,7 @@
     selectedColor: 3,
     varName: 'tile_data',
     painting: false,
+    zoom: 1,
   };
 
   // ---- Helpers ----
@@ -115,24 +121,27 @@
   function resizeOverviewCanvas() {
     if (!state.image) return;
     const img = state.image;
-    // Canvas matches image size, clamped to reasonable bounds
     const maxDim = 512;
     let w = img.naturalWidth;
     let h = img.naturalHeight;
-    // Ensure dimensions are multiples of 8 (round up to cover full tiles)
     w = Math.ceil(w / 8) * 8;
     h = Math.ceil(h / 8) * 8;
     if (w > maxDim) w = maxDim;
     if (h > maxDim) h = maxDim;
-    // Ensure at least 8
     w = Math.max(w, 8);
     h = Math.max(h, 8);
     state.canvasW = w;
     state.canvasH = h;
     el.overviewCanvas.width = w;
     el.overviewCanvas.height = h;
-    el.overviewCanvas.style.width = w + 'px';
-    el.overviewCanvas.style.height = h + 'px';
+    applyZoom();
+  }
+
+  function applyZoom() {
+    const z = state.zoom;
+    el.overviewCanvas.style.width = (state.canvasW * z) + 'px';
+    el.overviewCanvas.style.height = (state.canvasH * z) + 'px';
+    el.zoomLevel.textContent = z + 'x';
   }
 
   function renderOverview() {
@@ -223,6 +232,7 @@
       quantize();
       el.dropOverlay.classList.add('loaded');
       el.resetPositionBtn.hidden = false;
+      el.zoomControls.hidden = false;
       el.tileEditModeBtn.disabled = false;
       el.imageInfo.textContent = `${img.naturalWidth}×${img.naturalHeight}px — ${state.tilesX}×${state.tilesY} tiles`;
     };
@@ -327,6 +337,38 @@
     }
   });
 
+  // ---- Zoom ----
+
+  const ZOOM_STEPS = [1, 2, 3, 4, 6, 8];
+
+  function setZoom(z) {
+    state.zoom = Math.max(1, Math.min(8, z));
+    applyZoom();
+  }
+
+  el.zoomInBtn.addEventListener('click', () => {
+    const idx = ZOOM_STEPS.indexOf(state.zoom);
+    if (idx < ZOOM_STEPS.length - 1) setZoom(ZOOM_STEPS[idx + 1]);
+    else setZoom(state.zoom + 1);
+  });
+
+  el.zoomOutBtn.addEventListener('click', () => {
+    const idx = ZOOM_STEPS.indexOf(state.zoom);
+    if (idx > 0) setZoom(ZOOM_STEPS[idx - 1]);
+    else setZoom(state.zoom - 1);
+  });
+
+  el.zoomFitBtn.addEventListener('click', () => {
+    setZoom(1);
+  });
+
+  el.dropTarget.addEventListener('wheel', e => {
+    if (!state.image) return;
+    e.preventDefault();
+    if (e.deltaY < 0) el.zoomInBtn.click();
+    else el.zoomOutBtn.click();
+  }, { passive: false });
+
   // ---- Mode switching ----
 
   function setMode(mode) {
@@ -372,6 +414,20 @@
         }
       }
     }
+
+    // Grid lines between tiles
+    gridCtx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+    gridCtx.lineWidth = 0.5;
+    gridCtx.beginPath();
+    for (let x = 0; x <= cols; x++) {
+      gridCtx.moveTo(x * s, 0);
+      gridCtx.lineTo(x * s, rows * s);
+    }
+    for (let y = 0; y <= rows; y++) {
+      gridCtx.moveTo(0, y * s);
+      gridCtx.lineTo(cols * s, y * s);
+    }
+    gridCtx.stroke();
 
     // Highlight selected tile
     const selX = state.selectedTile % cols;
@@ -495,6 +551,53 @@
       renderTileGrid();
       renderTileZoom();
       updateTileNav();
+    }
+  });
+
+  // ---- Keyboard navigation ----
+
+  function selectTile(idx) {
+    if (idx < 0 || idx >= state.tileData.length) return;
+    state.selectedTile = idx;
+    renderTileGrid();
+    renderTileZoom();
+    updateTileNav();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (state.mode !== 'editor' || !state.tileData.length) return;
+    // Don't capture when typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    const cols = state.tilesX;
+    const cur = state.selectedTile;
+    const curX = cur % cols;
+    const curY = Math.floor(cur / cols);
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        if (curX > 0) selectTile(cur - 1);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        if (curX < cols - 1) selectTile(cur + 1);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        if (curY > 0) selectTile(cur - cols);
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        if (curY < state.tilesY - 1) selectTile(cur + cols);
+        break;
+      // Number keys 1-4 for quick palette selection
+      case '1': case '2': case '3': case '4': {
+        const c = parseInt(e.key) - 1;
+        state.selectedColor = c;
+        el.paletteButtons.forEach(b => b.classList.toggle('active', parseInt(b.dataset.color) === c));
+        break;
+      }
     }
   });
 

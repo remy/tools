@@ -258,6 +258,20 @@ body {
   gap: var(--space-sm);
   margin-top: var(--space-sm);
   min-height: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+#zoomLevel {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 2.5rem;
+  text-align: center;
 }
 
 /* Tile editor */
@@ -289,6 +303,24 @@ body {
   gap: var(--space-sm);
   margin-bottom: var(--space-sm);
   font-size: 0.875rem;
+}
+
+.tile-nav-hint {
+  font-size: 0.75rem;
+  color: var(--colour-text-secondary);
+  text-align: center;
+  margin-bottom: var(--space-sm);
+}
+
+.tile-nav-hint kbd {
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  font-family: inherit;
+  font-size: 0.75rem;
+  background: var(--colour-bg-secondary);
+  border: 1px solid var(--colour-border);
+  border-radius: 0.25rem;
+  line-height: 1.2;
 }
 
 .tile-grid-wrap {
