@@ -44,6 +44,11 @@
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
     "title": "ESP32 Supermini Comparison"
   },
+  "gb-tile-converter": {
+    "category": "Developer Tools",
+    "description": "Convert images to Game Boy DMG tile data. Upload an image, align to an 8x8 grid, edit individual tile pixels, and export C header arrays.",
+    "title": "GB Tile Converter"
+  },
   "ha-template-debugger": {
     "category": "Home Assistant",
     "description": "Test and debug Home Assistant Jinja2 templates with real-time rendering and variable support.",

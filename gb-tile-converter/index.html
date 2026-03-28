@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Convert images to Game Boy DMG tile data. Upload an image, align to an 8x8 grid, edit individual tile pixels, and export C header arrays.">
+  <meta name="category" content="Developer Tools">
+  <title>GB Tile Converter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="toolbar">
+      <h1>GB Tile Converter</h1>
+      <div class="mode-switch">
+        <button id="overviewModeBtn" class="btn btn-sm active">Overview</button>
+        <button id="tileEditModeBtn" class="btn btn-sm" disabled>Tile Editor</button>
+      </div>
+    </header>
+
+    <section id="overviewSection" class="panel">
+      <div class="canvas-wrap" id="dropTarget" tabindex="0">
+        <canvas id="overviewCanvas" width="256" height="256"></canvas>
+        <div class="drop-overlay" id="dropOverlay">Drop PNG, WebP, or AVIF here<br><small>or click to browse</small></div>
+      </div>
+      <input type="file" id="fileInput" accept="image/png,image/webp,image/avif" hidden>
+      <div class="overview-controls">
+        <button id="resetPositionBtn" class="btn btn-sm btn-secondary" hidden>Reset Position</button>
+        <div class="zoom-controls" id="zoomControls" hidden>
+          <button id="zoomOutBtn" class="btn btn-sm btn-secondary" aria-label="Zoom out">&minus;</button>
+          <span id="zoomLevel">1x</span>
+          <button id="zoomInBtn" class="btn btn-sm btn-secondary" aria-label="Zoom in">+</button>
+          <button id="zoomFitBtn" class="btn btn-sm btn-secondary">Fit</button>
+        </div>
+        <span id="imageInfo" class="text-secondary"></span>
+      </div>
+    </section>
+
+    <section id="tileEditorSection" class="panel hidden">
+      <div class="tile-editor-layout">
+        <div class="tile-editor-left">
+          <div class="tile-nav">
+            <button id="prevTileBtn" class="btn btn-sm btn-secondary">&laquo; Prev</button>
+            <span id="tileIndex">Tile 0 / 0</span>
+            <button id="nextTileBtn" class="btn btn-sm btn-secondary">Next &raquo;</button>
+            <button id="deleteTileBtn" class="btn btn-sm btn-delete" title="Delete tile (Del)">Delete</button>
+          </div>
+          <div class="tile-nav-hint"><kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate &middot; <kbd>Shift</kbd>+arrows pan tile &middot; <kbd>1</kbd>-<kbd>4</kbd> colour &middot; <kbd>Del</kbd> remove</div>
+          <div class="tile-grid-wrap">
+            <canvas id="tileGridCanvas"></canvas>
+          </div>
+        </div>
+        <div class="tile-editor-right">
+          <div class="tile-zoom-wrap">
+            <canvas id="tileZoomCanvas" width="320" height="320"></canvas>
+          </div>
+          <div class="palette-picker">
+            <span class="palette-label">Palette:</span>
+            <button class="palette-btn" data-color="0" title="White"></button>
+            <button class="palette-btn" data-color="1" title="Light"></button>
+            <button class="palette-btn" data-color="2" title="Dark"></button>
+            <button class="palette-btn active" data-color="3" title="Black"></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel output-panel">
+      <div class="output-header">
+        <h2>C Header Output</h2>
+        <div class="output-controls">
+          <label for="varName" class="sr-only">Variable name</label>
+          <input type="text" id="varName" class="input input-sm" value="tile_data" spellcheck="false" placeholder="variable name">
+          <button id="formatToggleBtn" class="btn btn-sm btn-secondary">Flat</button>
+          <button id="copyOutputBtn" class="btn btn-sm btn-primary">Copy</button>
+        </div>
+      </div>
+      <pre id="headerOutput" class="code-output" contenteditable="true" spellcheck="false">// Upload an image to generate tile data</pre>
+      <div id="parseStatus" class="parse-status"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
