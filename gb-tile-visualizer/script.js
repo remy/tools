@@ -121,7 +121,7 @@
 
   function scanSource(source) {
     const arrays = [];
-    const arrayPattern = /(?:(?:static|const|extern)\s+)*(?:(?:static|const)\s+)*(?:unsigned\s+char|uint8_t|UINT8|UBYTE|BYTE|u8)\s+(\w+)\s*\[[\w\s]*\]\s*(?:\[[\w\s]*\]\s*)?=\s*\{/g;
+    const arrayPattern = /(?:(?:static|const|extern)\s+)*(?:(?:static|const)\s+)*(?:unsigned\s+char|uint8_t|UINT8|UBYTE|BYTE|u8)\s+(\w+)\s*\[[\w\s]*\]\s*(?:\[[\w\s]*\]\s*)*=\s*\{/g;
     let match;
 
     while ((match = arrayPattern.exec(source)) !== null) {
