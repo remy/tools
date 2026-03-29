@@ -22,7 +22,6 @@
     copyBtn: document.getElementById('copyBtn'),
     downloadBtn: document.getElementById('downloadBtn'),
     resetBtn: document.getElementById('resetBtn'),
-    newFileBtn: document.getElementById('newFileBtn'),
     sourcePanel: document.getElementById('sourcePanel'),
     sourceWrap: document.getElementById('sourceWrap'),
     lineNumbers: document.getElementById('lineNumbers'),
@@ -74,58 +73,126 @@
 
   // ---- Source Code Scanning ----
 
+  function findArrayBody(source, matchIndex, matchLength) {
+    const braceStart = matchIndex + matchLength - 1;
+    let depth = 1;
+    let i = braceStart + 1;
+    while (i < source.length && depth > 0) {
+      if (source[i] === '{') depth++;
+      else if (source[i] === '}') depth--;
+      i++;
+    }
+    if (depth !== 0) return null;
+    return { braceStart, endIdx: i, body: source.substring(braceStart, i) };
+  }
+
+  function extractValues(body, braceStart) {
+    // Try hex first: 0xNN patterns
+    const hexPattern = /0[xX][0-9a-fA-F]{1,2}/g;
+    const hexPositions = [];
+    let m;
+    while ((m = hexPattern.exec(body)) !== null) {
+      hexPositions.push({
+        pos: braceStart + m.index,
+        len: m[0].length,
+        value: parseInt(m[0], 16),
+      });
+    }
+    if (hexPositions.length > 0) return { positions: hexPositions, format: 'hex' };
+
+    // Fall back to bare decimal integers (match numbers not inside words/identifiers)
+    // We need to be careful: only match numbers that appear as array values
+    // i.e. preceded by {, comma, or whitespace and followed by comma, }, or whitespace
+    const decPattern = /(?<=[\s,{])(\d{1,3})(?=\s*[,}])/g;
+    const decPositions = [];
+    while ((m = decPattern.exec(body)) !== null) {
+      const val = parseInt(m[1], 10);
+      if (val > 255) continue; // not a byte
+      decPositions.push({
+        pos: braceStart + m.index,
+        len: m[1].length,
+        value: val,
+      });
+    }
+    if (decPositions.length > 0) return { positions: decPositions, format: 'decimal' };
+
+    return null;
+  }
+
   function scanSource(source) {
     const arrays = [];
-    // Match C array declarations with hex data
-    // Supports: uint8_t, unsigned char, UINT8, UBYTE, BYTE, char, const, static
     const arrayPattern = /(?:(?:static|const|extern)\s+)*(?:(?:static|const)\s+)*(?:unsigned\s+char|uint8_t|UINT8|UBYTE|BYTE|u8)\s+(\w+)\s*\[[\w\s]*\]\s*(?:\[[\w\s]*\]\s*)?=\s*\{/g;
     let match;
 
     while ((match = arrayPattern.exec(source)) !== null) {
       const name = match[1];
-      const braceStart = match.index + match[0].length - 1; // position of opening {
+      const found = findArrayBody(source, match.index, match[0].length);
+      if (!found) continue;
 
-      // Find matching closing brace
-      let depth = 1;
-      let i = braceStart + 1;
-      while (i < source.length && depth > 0) {
-        if (source[i] === '{') depth++;
-        else if (source[i] === '}') depth--;
-        i++;
+      const { braceStart, endIdx, body } = found;
+      const extracted = extractValues(body, braceStart);
+      if (!extracted) continue;
+
+      const { positions, format } = extracted;
+      const values = positions.map(p => p.value);
+
+      // Determine if this is 2BPP encoded tile data or raw pixel data
+      // 2BPP: 16 bytes per 8×8 tile, values can be 0-255
+      // Raw pixels: 64 values per 8×8 tile, all values 0-3
+      const allPixelRange = values.every(v => v >= 0 && v <= 3);
+      const count = values.length;
+
+      let tiles = [];
+      let mode; // '2bpp' or 'raw'
+
+      if (count % 16 === 0 && !allPixelRange) {
+        // Standard 2BPP tile data
+        mode = '2bpp';
+        for (let t = 0; t < count; t += 16) {
+          tiles.push(decodeTile(values, t));
+        }
+      } else if (count % 64 === 0 && allPixelRange) {
+        // Raw pixel data: 64 values = one 8×8 tile
+        mode = 'raw';
+        for (let t = 0; t < count; t += 64) {
+          const tile = [];
+          for (let r = 0; r < 8; r++) {
+            tile.push(values.slice(t + r * 8, t + r * 8 + 8));
+          }
+          tiles.push(tile);
+        }
+      } else if (count % 16 === 0) {
+        // Values are all 0-3 but count is multiple of 16 — could be either
+        // Heuristic: if multiple of 64, prefer raw; otherwise 2BPP
+        if (count % 64 === 0) {
+          mode = 'raw';
+          for (let t = 0; t < count; t += 64) {
+            const tile = [];
+            for (let r = 0; r < 8; r++) {
+              tile.push(values.slice(t + r * 8, t + r * 8 + 8));
+            }
+            tiles.push(tile);
+          }
+        } else {
+          mode = '2bpp';
+          for (let t = 0; t < count; t += 16) {
+            tiles.push(decodeTile(values, t));
+          }
+        }
+      } else {
+        continue; // not tile data
       }
-      if (depth !== 0) continue;
 
-      const endIdx = i; // position after closing }
-      const body = source.substring(braceStart, endIdx);
-
-      // Find all hex bytes and their positions within the source
-      const hexPattern = /0[xX][0-9a-fA-F]{1,2}/g;
-      const hexPositions = [];
-      let hexMatch;
-      while ((hexMatch = hexPattern.exec(body)) !== null) {
-        hexPositions.push({
-          pos: braceStart + hexMatch.index,
-          len: hexMatch[0].length,
-          value: parseInt(hexMatch[0], 16),
-        });
-      }
-
-      // Only treat as tile data if we have a multiple of 16 bytes
-      if (hexPositions.length === 0 || hexPositions.length % 16 !== 0) continue;
-
-      // Decode tiles
-      const byteValues = hexPositions.map(h => h.value);
-      const tiles = [];
-      for (let t = 0; t < byteValues.length; t += 16) {
-        tiles.push(decodeTile(byteValues, t));
-      }
+      if (tiles.length === 0) continue;
 
       arrays.push({
         name,
         startIdx: match.index,
         endIdx,
-        hexPositions,
+        hexPositions: positions,
         tiles,
+        mode,       // '2bpp' or 'raw'
+        format,     // 'hex' or 'decimal'
       });
     }
 
@@ -431,46 +498,73 @@
   function updateSourceFromTile(arrayIdx, tileIdx) {
     const arr = state.arrays[arrayIdx];
     const tile = arr.tiles[tileIdx];
-    const encoded = encodeTile(tile);
 
-    const startByte = tileIdx * 16;
+    let newValues;
+    let startVal, valCount;
+
+    if (arr.mode === '2bpp') {
+      const encoded = encodeTile(tile);
+      startVal = tileIdx * 16;
+      valCount = 16;
+      newValues = Array.from(encoded);
+    } else {
+      // Raw pixel mode: 64 values per tile
+      startVal = tileIdx * 64;
+      valCount = 64;
+      newValues = [];
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          newValues.push(tile[r][c]);
+        }
+      }
+    }
+
     let src = state.currentSource;
     let lengthChanged = false;
 
-    // Replace bytes from end to start to preserve earlier positions
-    for (let b = 15; b >= 0; b--) {
-      const hp = arr.hexPositions[startByte + b];
-      const newHex = '0x' + encoded[b].toString(16).toUpperCase().padStart(2, '0');
-      src = src.substring(0, hp.pos) + newHex + src.substring(hp.pos + hp.len);
-      if (hp.len !== newHex.length) lengthChanged = true;
-      hp.len = newHex.length;
-      hp.value = encoded[b];
+    // Replace values from end to start to preserve earlier positions
+    for (let b = valCount - 1; b >= 0; b--) {
+      const hp = arr.hexPositions[startVal + b];
+      let newStr;
+      if (arr.format === 'hex') {
+        newStr = '0x' + newValues[b].toString(16).toUpperCase().padStart(2, '0');
+      } else {
+        newStr = String(newValues[b]);
+      }
+      src = src.substring(0, hp.pos) + newStr + src.substring(hp.pos + hp.len);
+      if (hp.len !== newStr.length) lengthChanged = true;
+      hp.len = newStr.length;
+      hp.value = newValues[b];
     }
 
     state.currentSource = src;
 
-    // If any hex byte changed length, re-scan to fix all positions
+    // If any value changed length, re-scan to fix all positions
     if (lengthChanged) {
-      const savedTiles = state.arrays.map(a => a.tiles);
+      const savedArrays = state.arrays.map(a => ({ tiles: a.tiles, mode: a.mode, format: a.format }));
       state.arrays = scanSource(src);
-      // Restore tile data (scan decoded from source, should match)
-      // But keep our in-memory edits authoritative
-      for (let i = 0; i < state.arrays.length && i < savedTiles.length; i++) {
-        state.arrays[i].tiles = savedTiles[i];
+      for (let i = 0; i < state.arrays.length && i < savedArrays.length; i++) {
+        state.arrays[i].tiles = savedArrays[i].tiles;
+        state.arrays[i].mode = savedArrays[i].mode;
+        state.arrays[i].format = savedArrays[i].format;
       }
       renderSource();
       return;
     }
 
-    // Update hex byte text in DOM without full re-render
+    // Update value text in DOM without full re-render
     const hexSpans = el.sourceCode.querySelectorAll(
       `.hex-byte[data-array-idx="${arrayIdx}"]`
     );
     for (const span of hexSpans) {
       const bi = parseInt(span.dataset.byteIdx);
-      if (bi >= startByte && bi < startByte + 16) {
-        const localByte = bi - startByte;
-        span.textContent = '0x' + encoded[localByte].toString(16).toUpperCase().padStart(2, '0');
+      if (bi >= startVal && bi < startVal + valCount) {
+        const localIdx = bi - startVal;
+        if (arr.format === 'hex') {
+          span.textContent = '0x' + newValues[localIdx].toString(16).toUpperCase().padStart(2, '0');
+        } else {
+          span.textContent = String(newValues[localIdx]);
+        }
       }
     }
   }
@@ -498,7 +592,7 @@
     state.arrays = scanSource(text);
 
     el.fileName.textContent = state.fileName;
-    el.dropZone.hidden = true;
+    el.dropZone.classList.add('compact');
     el.app.hidden = false;
 
     if (state.arrays.length > 0) {
@@ -566,12 +660,6 @@
 
   el.resetBtn.addEventListener('click', () => {
     loadSource(state.originalSource, state.fileName);
-  });
-
-  el.newFileBtn.addEventListener('click', () => {
-    el.app.hidden = true;
-    el.dropZone.hidden = false;
-    el.fileInput.value = '';
   });
 
   // Tile grid click
@@ -687,10 +775,8 @@
 
   // ---- Paste support ----
   document.addEventListener('paste', (e) => {
-    // Only handle paste when drop zone is visible
-    if (el.dropZone.hidden) return;
     const text = e.clipboardData.getData('text');
-    if (text) {
+    if (text && text.length > 10) {
       e.preventDefault();
       loadSource(text, 'pasted.c');
     }
