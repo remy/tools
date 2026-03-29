@@ -494,6 +494,30 @@
     updateInlinePreviews(state.selectedArray);
   }
 
+  // ---- Pan Tile ----
+
+  function panTile(dx, dy) {
+    const arr = state.arrays[state.selectedArray];
+    if (!arr) return;
+    const tile = arr.tiles[state.selectedTile];
+    if (!tile) return;
+    const fresh = Array.from({ length: 8 }, () => new Array(8).fill(0));
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const sr = r - dy;
+        const sc = c - dx;
+        if (sr >= 0 && sr < 8 && sc >= 0 && sc < 8) {
+          fresh[r][c] = tile[sr][sc];
+        }
+      }
+    }
+    arr.tiles[state.selectedTile] = fresh;
+    renderTileZoom();
+    renderTileGrid();
+    updateSourceFromTile(state.selectedArray, state.selectedTile);
+    updateInlinePreviews(state.selectedArray);
+  }
+
   // ---- Update Source from Tile Edit ----
 
   function updateSourceFromTile(arrayIdx, tileIdx) {
@@ -747,6 +771,17 @@
       state.selectedColor = colorIdx;
       document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
       document.querySelector(`.palette-btn[data-color="${colorIdx}"]`).classList.add('active');
+      return;
+    }
+
+    // Shift+arrow: pan pixel data within the selected tile
+    if (e.shiftKey && e.key.startsWith('Arrow')) {
+      if (!el.editorPanel.hidden) {
+        e.preventDefault();
+        const dx = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
+        const dy = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+        panTile(dx, dy);
+      }
       return;
     }
 
