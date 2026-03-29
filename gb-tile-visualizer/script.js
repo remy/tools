@@ -213,8 +213,9 @@
     const hexMap = new Map(); // charPos -> { arrayIdx, tileIdx, byteIdx }
     for (let ai = 0; ai < arrays.length; ai++) {
       const arr = arrays[ai];
+      const valsPerTile = arr.mode === 'raw' ? 64 : 16;
       for (let bi = 0; bi < arr.hexPositions.length; bi++) {
-        const tileIdx = Math.floor(bi / 16);
+        const tileIdx = Math.floor(bi / valsPerTile);
         hexMap.set(arr.hexPositions[bi].pos, {
           arrayIdx: ai,
           tileIdx,
