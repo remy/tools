@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Drop a Game Boy C/H source file to visualise and edit tile data inline, then download the modified source.">
+  <meta name="category" content="Developer Tools">
+  <title>GB Tile Visualizer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="drop-zone" id="dropZone">
+    <div class="drop-inner">
+      <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+        <polyline points="8 12 12 8 16 12"/>
+        <line x1="12" y1="8" x2="12" y2="20"/>
+      </svg>
+      <p>Drop a <strong>.c</strong> or <strong>.h</strong> file here</p>
+      <p class="hint">or <label class="file-label" for="fileInput">browse</label> — all processing is local</p>
+    </div>
+    <input type="file" id="fileInput" accept=".c,.h,.asm,.s,.inc" hidden>
+  </div>
+
+  <div class="app" id="app" hidden>
+    <div class="toolbar">
+      <span class="file-name" id="fileName"></span>
+      <div class="toolbar-actions">
+        <button class="btn btn-sm" id="copyBtn" title="Copy source">Copy</button>
+        <button class="btn btn-sm" id="downloadBtn" title="Download modified source">Download</button>
+        <button class="btn btn-sm btn-ghost" id="resetBtn" title="Reset to original">Reset</button>
+      </div>
+    </div>
+
+    <div class="panels">
+      <div class="source-panel" id="sourcePanel">
+        <div class="source-wrap" id="sourceWrap">
+          <div class="line-numbers" id="lineNumbers"></div>
+          <pre class="source-code" id="sourceCode"></pre>
+        </div>
+      </div>
+
+      <div class="editor-panel" id="editorPanel" hidden>
+        <div class="editor-sticky">
+          <div class="editor-info" id="editorInfo">No tile selected</div>
+
+          <div class="tile-grid-wrap">
+            <canvas id="tileGridCanvas" width="256" height="64"></canvas>
+          </div>
+
+          <canvas id="tileZoomCanvas" width="320" height="320"></canvas>
+
+          <div class="palette">
+            <button class="palette-btn" data-color="0" title="Color 0 (lightest) — press 1"><span></span></button>
+            <button class="palette-btn" data-color="1" title="Color 1 — press 2"><span></span></button>
+            <button class="palette-btn" data-color="2" title="Color 2 — press 3"><span></span></button>
+            <button class="palette-btn active" data-color="3" title="Color 3 (darkest) — press 4"><span></span></button>
+          </div>
+
+          <div class="editor-nav">
+            <button class="btn btn-sm" id="prevTileBtn">&#9664; Prev</button>
+            <span class="tile-counter" id="tileCounter">0 / 0</span>
+            <button class="btn btn-sm" id="nextTileBtn">Next &#9654;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
