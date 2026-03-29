@@ -215,6 +215,10 @@ body {
   user-select: none;
   border-right: 1px solid var(--border);
   min-width: 3rem;
+  white-space: pre;
+  font-family: var(--code-font);
+  font-size: 0.8rem;
+  line-height: 1.6;
 }
 
 .source-code {
