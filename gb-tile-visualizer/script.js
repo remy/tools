@@ -11,6 +11,7 @@
     selectedTile: 0,
     selectedColor: 3,
     painting: false,
+    hoveredPixels: null, // { row, col, w, h } region to highlight on zoom canvas
   };
 
   // ---- Elements ----
@@ -302,6 +303,29 @@
 
     // Click handler for hex bytes
     el.sourceCode.addEventListener('click', onSourceClick);
+
+    // Hover handler: highlight corresponding pixel(s) in zoom canvas
+    el.sourceCode.addEventListener('mouseover', (e) => {
+      const span = e.target.closest('.hex-byte[data-array-idx]');
+      if (!span) return;
+      const ai = parseInt(span.dataset.arrayIdx);
+      const ti = parseInt(span.dataset.tileIdx);
+      const bi = parseInt(span.dataset.byteIdx);
+      if (ai !== state.selectedArray || ti !== state.selectedTile) return;
+      const arr = state.arrays[ai];
+      if (!arr) return;
+      state.hoveredPixels = byteIdxToPixelRegion(arr, bi);
+      renderTileZoom();
+      drawZoomHighlight();
+    });
+    el.sourceCode.addEventListener('mouseout', (e) => {
+      const span = e.target.closest('.hex-byte[data-array-idx]');
+      if (!span) return;
+      if (state.hoveredPixels) {
+        state.hoveredPixels = null;
+        renderTileZoom();
+      }
+    });
   }
 
   function drawTileToCanvas(canvas, tile) {
@@ -462,6 +486,33 @@
       zoomCtx.lineTo(size, i * px);
       zoomCtx.stroke();
     }
+
+    drawZoomHighlight();
+  }
+
+  function drawZoomHighlight() {
+    if (!state.hoveredPixels) return;
+    const { row, col, w, h } = state.hoveredPixels;
+    const size = 320;
+    const px = size / 8;
+    zoomCtx.save();
+    zoomCtx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    zoomCtx.fillRect(col * px, row * px, w * px, h * px);
+    zoomCtx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    zoomCtx.lineWidth = 2;
+    zoomCtx.strokeRect(col * px + 1, row * px + 1, w * px - 2, h * px - 2);
+    zoomCtx.restore();
+  }
+
+  function byteIdxToPixelRegion(arr, byteIdx) {
+    const localIdx = byteIdx % (arr.mode === 'raw' ? 64 : 16);
+    if (arr.mode === 'raw') {
+      // Each value is one pixel
+      return { row: Math.floor(localIdx / 8), col: localIdx % 8, w: 1, h: 1 };
+    }
+    // 2BPP: every pair of bytes encodes one row of 8 pixels
+    const row = Math.floor(localIdx / 2);
+    return { row, col: 0, w: 8, h: 1 };
   }
 
   // ---- Pixel Painting ----
