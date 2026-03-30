@@ -323,14 +323,15 @@ body.circuit-border::after {
   position: fixed;
   inset: 0;
   border: 4px solid var(--circuit-border-color, transparent);
+  box-shadow: inset 0 0 40px var(--circuit-glow-color, transparent);
   pointer-events: none;
   z-index: 9999;
-  transition: border-color 0.3s;
+  transition: border-color 0.3s, box-shadow 0.3s;
 }
 
-body.circuit-border.circuit-phase-active  { --circuit-border-color: #22c55e; }
-body.circuit-border.circuit-phase-rest    { --circuit-border-color: #ef4444; }
-body.circuit-border.circuit-phase-longRest { --circuit-border-color: #f59e0b; }
+body.circuit-border.circuit-phase-active  { --circuit-border-color: #22c55e; --circuit-glow-color: rgba(34, 197, 94, 0.15); }
+body.circuit-border.circuit-phase-rest    { --circuit-border-color: #ef4444; --circuit-glow-color: rgba(239, 68, 68, 0.15); }
+body.circuit-border.circuit-phase-longRest { --circuit-border-color: #f59e0b; --circuit-glow-color: rgba(245, 158, 11, 0.12); }
 
 .circuit-settings {
   display: grid;

@@ -24,40 +24,34 @@ function playBeep(type) {
   try {
     const ctx = getAudioCtx();
     const now = ctx.currentTime;
-    if (type === 'active') {
-      // Two short high beeps
-      for (let i = 0; i < 2; i++) {
+    if (type === 'active' || type === 'rest') {
+      // Loud triple beep for both active start and rest start
+      for (let i = 0; i < 3; i++) {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.frequency.value = 880;
-        osc.type = 'sine';
-        gain.gain.setValueAtTime(0.3, now + i * 0.18);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.18 + 0.1);
+        osc.frequency.value = type === 'active' ? 880 : 440;
+        osc.type = 'square';
+        gain.gain.setValueAtTime(0.6, now + i * 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.2 + 0.15);
         osc.connect(gain).connect(ctx.destination);
-        osc.start(now + i * 0.18);
-        osc.stop(now + i * 0.18 + 0.1);
+        osc.start(now + i * 0.2);
+        osc.stop(now + i * 0.2 + 0.15);
       }
-    } else if (type === 'rest') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = 440;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.25);
     } else if (type === 'done') {
-      [440, 554, 659].forEach((freq, i) => {
+      // Victory fanfare: ascending triad played twice, loud
+      const notes = [523, 659, 784, 523, 659, 784, 1047];
+      notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.frequency.value = freq;
-        osc.type = 'sine';
-        gain.gain.setValueAtTime(0.3, now + i * 0.15);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.2);
+        osc.type = 'square';
+        const t = now + i * 0.15;
+        gain.gain.setValueAtTime(0.5, t);
+        gain.gain.setValueAtTime(0.5, t + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + (i === notes.length - 1 ? 0.5 : 0.14));
         osc.connect(gain).connect(ctx.destination);
-        osc.start(now + i * 0.15);
-        osc.stop(now + i * 0.15 + 0.2);
+        osc.start(t);
+        osc.stop(t + (i === notes.length - 1 ? 0.5 : 0.14));
       });
     }
   } catch (e) { /* audio not available */ }
