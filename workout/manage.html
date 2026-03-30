@@ -160,6 +160,58 @@
     color: #8a2a2a;
   }
 
+  .preview {
+    display: none;
+    margin-top: 12px;
+    padding: 14px;
+    background: var(--row-b);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .preview.visible { display: block; }
+
+  .preview .preview-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .preview .workout-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .preview .workout-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .preview .workout-chip strong {
+    display: block;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--accent);
+  }
+
+  .preview .workout-chip span {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
   .source-badge {
     font-size: 12px;
     padding: 4px 10px;
@@ -200,11 +252,12 @@
   <div class="section">
     <h2>IMPORT WORKOUTS</h2>
     <p>Import a JSON file to use your own custom workout plan. It will be saved locally in your browser.</p>
-    <div class="file-input-wrap">
+    <div class="file-input-wrap" id="file-input-wrap">
       <div class="file-drop" id="file-drop">
         Tap to choose file or drag &amp; drop
         <input type="file" id="file-input" accept=".json,application/json">
       </div>
+      <div class="preview" id="preview"></div>
     </div>
     <button class="btn" id="import-btn" disabled>Import</button>
     <div class="status" id="status"></div>
@@ -301,16 +354,19 @@
           showStatus('Invalid format: JSON must have a "workouts" array with at least one entry.', 'error');
           pendingData = null;
           importBtn.disabled = true;
+          hidePreview();
           return;
         }
         pendingData = data;
         importBtn.disabled = false;
         fileDrop.innerHTML = 'Tap to choose file or drag &amp; drop<span class="file-name">' + file.name + '</span>';
+        showPreview(data);
         hideStatus();
       } catch (e) {
         showStatus('Invalid JSON: ' + e.message, 'error');
         pendingData = null;
         importBtn.disabled = true;
+        hidePreview();
       }
     };
     reader.readAsText(file);
@@ -336,6 +392,24 @@
     showStatus('Reset to default workouts.', 'success');
     updateSourceInfo();
   });
+
+  function showPreview(data) {
+    const preview = document.getElementById('preview');
+    const workouts = data.workouts;
+    const totalExercises = workouts.reduce((sum, w) => sum + w.exercises.length, 0);
+    const chips = workouts.map(w =>
+      `<div class="workout-chip"><strong>${w.id} — ${w.label}</strong>${w.focus}<br><span>${w.exercises.length} exercises${w.cardio ? ' + cardio' : ''}</span></div>`
+    ).join('');
+    preview.innerHTML = `
+      <div class="preview-title">PREVIEW — ${workouts.length} workout${workouts.length === 1 ? '' : 's'}, ${totalExercises} exercises total</div>
+      <div class="workout-summary">${chips}</div>
+    `;
+    preview.classList.add('visible');
+  }
+
+  function hidePreview() {
+    document.getElementById('preview').classList.remove('visible');
+  }
 
   function showStatus(msg, type) {
     statusEl.textContent = msg;
