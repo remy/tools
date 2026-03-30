@@ -64,6 +64,23 @@ body.light .theme-toggle {
 
 .theme-toggle:active { opacity: 0.7; }
 
+.bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.manage-link {
+  font-size: 18px;
+  text-decoration: none;
+  color: var(--muted);
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s;
+  line-height: 1;
+}
+
+.manage-link:active { opacity: 0.7; }
+
 .content {
   padding: 10px 16px 16px;
 }
