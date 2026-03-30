@@ -88,18 +88,23 @@
   }
 
   function extractValues(body, braceStart) {
-    // Try hex first: 0xNN patterns
-    const hexPattern = /0[xX][0-9a-fA-F]{1,2}/g;
+    // Try hex first: 0xNN or 0xNNNN patterns (8-bit or 16-bit)
+    const hexPattern = /0[xX][0-9a-fA-F]{1,4}/g;
     const hexPositions = [];
     let m;
     while ((m = hexPattern.exec(body)) !== null) {
+      const hexDigits = m[0].length - 2; // minus "0x" prefix
       hexPositions.push({
         pos: braceStart + m.index,
         len: m[0].length,
         value: parseInt(m[0], 16),
+        wide: hexDigits > 2, // true for 16-bit values
       });
     }
-    if (hexPositions.length > 0) return { positions: hexPositions, format: 'hex' };
+    if (hexPositions.length > 0) {
+      const hasWide = hexPositions.some(p => p.wide);
+      return { positions: hexPositions, format: 'hex', wide: hasWide };
+    }
 
     // Fall back to bare decimal integers (match numbers not inside words/identifiers)
     // We need to be careful: only match numbers that appear as array values
@@ -134,8 +139,22 @@
       const extracted = extractValues(body, braceStart);
       if (!extracted) continue;
 
-      const { positions, format } = extracted;
-      const values = positions.map(p => p.value);
+      const { positions, format, wide } = extracted;
+      // For 16-bit hex values, expand each to a lo/hi byte pair
+      let values;
+      if (wide) {
+        values = [];
+        for (const p of positions) {
+          if (p.wide) {
+            values.push(p.value & 0xFF);         // lo byte
+            values.push((p.value >> 8) & 0xFF);  // hi byte
+          } else {
+            values.push(p.value);
+          }
+        }
+      } else {
+        values = positions.map(p => p.value);
+      }
 
       // Determine if this is 2BPP encoded tile data or raw pixel data
       // 2BPP: 16 bytes per 8×8 tile, values can be 0-255
@@ -194,6 +213,7 @@
         tiles,
         mode,       // '2bpp' or 'raw'
         format,     // 'hex' or 'decimal'
+        wide: !!wide, // true if 16-bit hex values
       });
     }
 
@@ -214,7 +234,8 @@
     const hexMap = new Map(); // charPos -> { arrayIdx, tileIdx, byteIdx }
     for (let ai = 0; ai < arrays.length; ai++) {
       const arr = arrays[ai];
-      const valsPerTile = arr.mode === 'raw' ? 64 : 16;
+      // Number of hex positions per tile (not expanded bytes)
+      const valsPerTile = arr.mode === 'raw' ? 64 : (arr.wide ? 8 : 16);
       for (let bi = 0; bi < arr.hexPositions.length; bi++) {
         const tileIdx = Math.floor(bi / valsPerTile);
         hexMap.set(arr.hexPositions[bi].pos, {
@@ -316,7 +337,6 @@
       if (!arr) return;
       state.hoveredPixels = byteIdxToPixelRegion(arr, bi);
       renderTileZoom();
-      drawZoomHighlight();
     });
     el.sourceCode.addEventListener('mouseout', (e) => {
       const span = e.target.closest('.hex-byte[data-array-idx]');
@@ -505,14 +525,20 @@
   }
 
   function byteIdxToPixelRegion(arr, byteIdx) {
-    const localIdx = byteIdx % (arr.mode === 'raw' ? 64 : 16);
+    const valsPerTile = arr.mode === 'raw' ? 64 : (arr.wide ? 8 : 16);
+    const localIdx = byteIdx % valsPerTile;
     if (arr.mode === 'raw') {
       // Each value is one pixel
       return { row: Math.floor(localIdx / 8), col: localIdx % 8, w: 1, h: 1 };
     }
-    // 2BPP: every pair of bytes encodes one row of 8 pixels
+    if (arr.wide) {
+      // 16-bit value: lo+hi byte pair = one full row of 8 pixels
+      return { row: localIdx, col: 0, w: 8, h: 1 };
+    }
+    // 8-bit 2BPP: two bytes per row, each byte → 4 pixels (left or right half)
     const row = Math.floor(localIdx / 2);
-    return { row, col: 0, w: 8, h: 1 };
+    const isHiByte = localIdx % 2 === 1;
+    return { row, col: isHiByte ? 4 : 0, w: 4, h: 1 };
   }
 
   // ---- Pixel Painting ----
@@ -580,9 +606,19 @@
 
     if (arr.mode === '2bpp') {
       const encoded = encodeTile(tile);
-      startVal = tileIdx * 16;
-      valCount = 16;
-      newValues = Array.from(encoded);
+      if (arr.wide) {
+        // 16-bit: combine lo/hi byte pairs into 16-bit values
+        startVal = tileIdx * 8;
+        valCount = 8;
+        newValues = [];
+        for (let r = 0; r < 8; r++) {
+          newValues.push(encoded[r * 2] | (encoded[r * 2 + 1] << 8));
+        }
+      } else {
+        startVal = tileIdx * 16;
+        valCount = 16;
+        newValues = Array.from(encoded);
+      }
     } else {
       // Raw pixel mode: 64 values per tile
       startVal = tileIdx * 64;
@@ -603,7 +639,9 @@
       const hp = arr.hexPositions[startVal + b];
       let newStr;
       if (arr.format === 'hex') {
-        newStr = '0x' + newValues[b].toString(16).toUpperCase().padStart(2, '0');
+        const hp_wide = hp.wide;
+        const padLen = hp_wide ? 4 : 2;
+        newStr = '0x' + newValues[b].toString(16).toUpperCase().padStart(padLen, '0');
       } else {
         newStr = String(newValues[b]);
       }
@@ -617,12 +655,13 @@
 
     // If any value changed length, re-scan to fix all positions
     if (lengthChanged) {
-      const savedArrays = state.arrays.map(a => ({ tiles: a.tiles, mode: a.mode, format: a.format }));
+      const savedArrays = state.arrays.map(a => ({ tiles: a.tiles, mode: a.mode, format: a.format, wide: a.wide }));
       state.arrays = scanSource(src);
       for (let i = 0; i < state.arrays.length && i < savedArrays.length; i++) {
         state.arrays[i].tiles = savedArrays[i].tiles;
         state.arrays[i].mode = savedArrays[i].mode;
         state.arrays[i].format = savedArrays[i].format;
+        state.arrays[i].wide = savedArrays[i].wide;
       }
       renderSource();
       return;
