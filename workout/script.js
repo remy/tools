@@ -1,8 +1,12 @@
 async function init() {
   try {
-    const response = await fetch('workouts.json');
-    const data = await response.json();
+    let data = await WorkoutDB.load();
+    if (!data) {
+      const response = await fetch('workouts.json');
+      data = await response.json();
+    }
     renderWorkouts(data.workouts);
+    restoreTab();
     restoreTheme();
   } catch (error) {
     console.error('Error loading workouts:', error);
@@ -28,7 +32,10 @@ function renderWorkouts(workouts) {
           <div class="focus-sub">Day ${workout.id}</div>
           <div class="focus-text">${workout.focus}</div>
         </div>
-        <button class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
+        <div class="bar-actions">
+          <a href="manage.html" class="manage-link" title="Manage workouts">⚙</a>
+          <button class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
+        </div>
       </div>
       <div class="col-headers">
         <span>Exercise</span><span>Sets</span><span>Reps</span>
@@ -99,6 +106,13 @@ function switchTab(index) {
   });
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === index));
   document.querySelectorAll('.day-panel').forEach((p, i) => p.classList.toggle('active', i === index));
+  try { localStorage.setItem('activeTab', index); } catch (e) {}
+}
+
+function restoreTab() {
+  let index;
+  try { index = parseInt(localStorage.getItem('activeTab'), 10); } catch (e) {}
+  if (index > 0) switchTab(index);
 }
 
 document.addEventListener('click', function(e) {

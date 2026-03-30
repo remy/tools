@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Workouts</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .manage-container {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 100dvh;
+  }
+
+  .manage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--focus-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+  }
+
+  .manage-header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    letter-spacing: 2px;
+    color: var(--text);
+    margin: 0;
+  }
+
+  .manage-header .back-link {
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .section h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1.5px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .section p {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  .btn {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 0.15s;
+  }
+
+  .btn:active { opacity: 0.7; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+  }
+
+  .btn-danger {
+    background: transparent;
+    border: 1.5px solid var(--muted);
+    color: var(--muted);
+  }
+
+  .btn + .btn { margin-left: 10px; }
+
+  .file-input-wrap {
+    position: relative;
+    margin-bottom: 14px;
+  }
+
+  .file-input-wrap input[type="file"] {
+    display: none;
+  }
+
+  .file-drop {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 28px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+
+  .file-drop.dragover {
+    border-color: var(--accent);
+    background: rgba(255, 60, 60, 0.05);
+  }
+
+  .file-drop .file-name {
+    display: block;
+    margin-top: 8px;
+    color: var(--accent);
+    font-weight: 600;
+    word-break: break-all;
+  }
+
+  .status {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    display: none;
+  }
+
+  .status.success {
+    display: block;
+    background: #0a2a0a;
+    border: 1px solid #1a4a1a;
+    color: #4a4;
+  }
+
+  .status.error {
+    display: block;
+    background: #2a0a0a;
+    border: 1px solid #4a1a1a;
+    color: #c44;
+  }
+
+  body.light .status.success {
+    background: #eaf5ea;
+    border-color: #b0d4b0;
+    color: #2a6a2a;
+  }
+
+  body.light .status.error {
+    background: #f5eaea;
+    border-color: #d4b0b0;
+    color: #8a2a2a;
+  }
+
+  .preview {
+    display: none;
+    margin-top: 12px;
+    padding: 14px;
+    background: var(--row-b);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .preview.visible { display: block; }
+
+  .preview .preview-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .preview .workout-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .preview .workout-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .preview .workout-chip strong {
+    display: block;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--accent);
+  }
+
+  .preview .workout-chip span {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .source-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+
+  .source-badge.custom {
+    background: rgba(255, 60, 60, 0.15);
+    color: var(--accent);
+  }
+
+  .source-badge.default {
+    background: rgba(136, 136, 136, 0.15);
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="manage-container">
+  <div class="manage-header">
+    <h1>MANAGE WORKOUTS</h1>
+    <a href="index.html" class="back-link">&larr; Back</a>
+  </div>
+
+  <!-- Current Data -->
+  <div class="section">
+    <h2>CURRENT DATA</h2>
+    <div id="source-info"></div>
+    <p>Download the workout JSON currently in use. Share it or keep it as a backup.</p>
+    <button class="btn" id="download-btn">Download JSON</button>
+  </div>
+
+  <!-- Import -->
+  <div class="section">
+    <h2>IMPORT WORKOUTS</h2>
+    <p>Import a JSON file to use your own custom workout plan. It will be saved locally in your browser.</p>
+    <div class="file-input-wrap" id="file-input-wrap">
+      <div class="file-drop" id="file-drop">
+        Tap to choose file or drag &amp; drop
+        <input type="file" id="file-input" accept=".json,application/json">
+      </div>
+      <div class="preview" id="preview"></div>
+    </div>
+    <button class="btn" id="import-btn" disabled>Import</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- Reset -->
+  <div class="section">
+    <h2>RESET TO DEFAULT</h2>
+    <p>Remove your custom workouts and go back to the built-in plan.</p>
+    <button class="btn btn-danger" id="reset-btn">Reset to Default</button>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script>
+  const fileDrop = document.getElementById('file-drop');
+  const fileInput = document.getElementById('file-input');
+  const importBtn = document.getElementById('import-btn');
+  const downloadBtn = document.getElementById('download-btn');
+  const resetBtn = document.getElementById('reset-btn');
+  const statusEl = document.getElementById('status');
+  const sourceInfo = document.getElementById('source-info');
+
+  let pendingData = null;
+
+  // Restore theme
+  (() => {
+    const urlTheme = new URLSearchParams(location.search).get('theme');
+    let stored;
+    try { stored = localStorage.getItem('theme'); } catch (e) {}
+    if ((urlTheme || stored) === 'light') document.body.classList.add('light');
+  })();
+
+  // Show current source
+  async function updateSourceInfo() {
+    const custom = await WorkoutDB.load();
+    if (custom) {
+      sourceInfo.innerHTML = '<span class="source-badge custom">Custom</span>';
+    } else {
+      sourceInfo.innerHTML = '<span class="source-badge default">Default</span>';
+    }
+  }
+  updateSourceInfo();
+
+  // Download
+  downloadBtn.addEventListener('click', async () => {
+    let data = await WorkoutDB.load();
+    if (!data) {
+      const res = await fetch('workouts.json');
+      data = await res.json();
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'workouts.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // File selection
+  fileDrop.addEventListener('click', () => fileInput.click());
+
+  fileDrop.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    fileDrop.classList.add('dragover');
+  });
+
+  fileDrop.addEventListener('dragleave', () => {
+    fileDrop.classList.remove('dragover');
+  });
+
+  fileDrop.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileDrop.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
+      showStatus('Please select a JSON file.', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data.workouts || !Array.isArray(data.workouts) || data.workouts.length === 0) {
+          showStatus('Invalid format: JSON must have a "workouts" array with at least one entry.', 'error');
+          pendingData = null;
+          importBtn.disabled = true;
+          hidePreview();
+          return;
+        }
+        pendingData = data;
+        importBtn.disabled = false;
+        fileDrop.innerHTML = 'Tap to choose file or drag &amp; drop<span class="file-name">' + file.name + '</span>';
+        showPreview(data);
+        hideStatus();
+      } catch (e) {
+        showStatus('Invalid JSON: ' + e.message, 'error');
+        pendingData = null;
+        importBtn.disabled = true;
+        hidePreview();
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Import
+  importBtn.addEventListener('click', async () => {
+    if (!pendingData) return;
+    try {
+      await WorkoutDB.save(pendingData);
+      showStatus('Workouts imported successfully! Go back to see your custom plan.', 'success');
+      pendingData = null;
+      importBtn.disabled = true;
+      updateSourceInfo();
+    } catch (e) {
+      showStatus('Failed to save: ' + e.message, 'error');
+    }
+  });
+
+  // Reset
+  resetBtn.addEventListener('click', async () => {
+    await WorkoutDB.clear();
+    showStatus('Reset to default workouts.', 'success');
+    updateSourceInfo();
+  });
+
+  function showPreview(data) {
+    const preview = document.getElementById('preview');
+    const workouts = data.workouts;
+    const totalExercises = workouts.reduce((sum, w) => sum + w.exercises.length, 0);
+    const chips = workouts.map(w =>
+      `<div class="workout-chip"><strong>${w.id} — ${w.label}</strong>${w.focus}<br><span>${w.exercises.length} exercises${w.cardio ? ' + cardio' : ''}</span></div>`
+    ).join('');
+    preview.innerHTML = `
+      <div class="preview-title">PREVIEW — ${workouts.length} workout${workouts.length === 1 ? '' : 's'}, ${totalExercises} exercises total</div>
+      <div class="workout-summary">${chips}</div>
+    `;
+    preview.classList.add('visible');
+  }
+
+  function hidePreview() {
+    document.getElementById('preview').classList.remove('visible');
+  }
+
+  function showStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = 'status ' + type;
+  }
+
+  function hideStatus() {
+    statusEl.className = 'status';
+  }
+</script>
+<script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
