@@ -6,6 +6,7 @@ async function init() {
       data = await response.json();
     }
     renderWorkouts(data.workouts);
+    restoreTab();
     restoreTheme();
   } catch (error) {
     console.error('Error loading workouts:', error);
@@ -105,6 +106,13 @@ function switchTab(index) {
   });
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === index));
   document.querySelectorAll('.day-panel').forEach((p, i) => p.classList.toggle('active', i === index));
+  try { localStorage.setItem('activeTab', index); } catch (e) {}
+}
+
+function restoreTab() {
+  let index;
+  try { index = parseInt(localStorage.getItem('activeTab'), 10); } catch (e) {}
+  if (index > 0) switchTab(index);
 }
 
 document.addEventListener('click', function(e) {
