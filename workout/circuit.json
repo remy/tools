@@ -1,0 +1,24 @@
+{
+  "workouts": [
+    {
+      "id": "1",
+      "label": "Circuit",
+      "focus": "FULL BODY STRENGTH",
+      "type": "circuit",
+      "rounds": 3,
+      "exercises": [
+        { "name": "Kettlebell Swings" },
+        { "name": "Skipping Rope" },
+        { "name": "Boxing Bag Combos" },
+        { "name": "Dumbbell Thrusters" },
+        { "name": "Cross Trainer Sprint" },
+        { "name": "Burpees" }
+      ],
+      "cardio": {
+        "icon": "💪",
+        "title": "COOL DOWN",
+        "description": "5 min · Light cross trainer · Stretch"
+      }
+    }
+  ]
+}
