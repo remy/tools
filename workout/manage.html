@@ -397,9 +397,10 @@
     const preview = document.getElementById('preview');
     const workouts = data.workouts;
     const totalExercises = workouts.reduce((sum, w) => sum + w.exercises.length, 0);
-    const chips = workouts.map(w =>
-      `<div class="workout-chip"><strong>${w.id} — ${w.label}</strong>${w.focus}<br><span>${w.exercises.length} exercises${w.cardio ? ' + cardio' : ''}</span></div>`
-    ).join('');
+    const chips = workouts.map(w => {
+      const typeLabel = w.type === 'circuit' ? ' · circuit' : '';
+      return `<div class="workout-chip"><strong>${w.id} — ${w.label}</strong>${w.focus}<br><span>${w.exercises.length} exercises${typeLabel}${w.cardio ? ' + cardio' : ''}</span></div>`;
+    }).join('');
     preview.innerHTML = `
       <div class="preview-title">PREVIEW — ${workouts.length} workout${workouts.length === 1 ? '' : 's'}, ${totalExercises} exercises total</div>
       <div class="workout-summary">${chips}</div>

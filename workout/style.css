@@ -315,3 +315,173 @@ body.light .cardio-title { color: #997700; }
 }
 
 .tab.active .day-label { color: var(--accent); }
+
+/* ── Circuit Training ── */
+
+body.circuit-border::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  border: 4px solid var(--circuit-border-color, transparent);
+  box-shadow: inset 0 0 40px var(--circuit-glow-color, transparent);
+  pointer-events: none;
+  z-index: 9999;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+body.circuit-border.circuit-phase-active  { --circuit-border-color: #22c55e; --circuit-glow-color: rgba(34, 197, 94, 0.15); }
+body.circuit-border.circuit-phase-rest    { --circuit-border-color: #ef4444; --circuit-glow-color: rgba(239, 68, 68, 0.15); }
+body.circuit-border.circuit-phase-longRest { --circuit-border-color: #f59e0b; --circuit-glow-color: rgba(245, 158, 11, 0.12); }
+
+.circuit-settings {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 10px 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.circuit-setting {
+  text-align: center;
+}
+
+.circuit-setting label {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.circuit-setting input {
+  width: 100%;
+  text-align: center;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 6px 2px;
+  -moz-appearance: textfield;
+}
+
+.circuit-setting input::-webkit-inner-spin-button,
+.circuit-setting input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.circuit-round {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.circuit-panel .exercise-list {
+  margin-bottom: 0;
+}
+
+.circuit-panel .exercise-row {
+  grid-template-columns: 1fr;
+  cursor: default;
+  padding: 12px 14px;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.circuit-panel .exercise-row .ex-name::before {
+  width: 8px;
+  height: 8px;
+  border: none;
+  background: var(--border);
+  border-radius: 50%;
+}
+
+.circuit-panel .exercise-row.circuit-current {
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.circuit-panel .exercise-row.circuit-current .ex-name::before {
+  background: #22c55e;
+}
+
+.circuit-panel .exercise-row.circuit-current .ex-name {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.circuit-panel .exercise-row.circuit-done {
+  opacity: 0.35;
+}
+
+.circuit-panel .exercise-row.circuit-done .ex-name {
+  text-decoration: line-through;
+}
+
+.circuit-timer {
+  text-align: center;
+  padding: 24px 0 8px;
+}
+
+.circuit-timer-time {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 80px;
+  letter-spacing: 2px;
+  line-height: 1;
+  color: var(--text);
+  transition: color 0.3s;
+}
+
+.circuit-timer-phase {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.circuit-controls {
+  display: flex;
+  gap: 10px;
+  padding: 14px 0;
+}
+
+.circuit-btn {
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+
+.circuit-btn:active { opacity: 0.7; }
+
+.circuit-btn-start {
+  background: var(--accent);
+  color: #fff;
+}
+
+.circuit-btn-reset {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  padding: 16px 20px;
+}
