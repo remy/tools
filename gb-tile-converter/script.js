@@ -35,6 +35,8 @@
     tileIndex: document.getElementById('tileIndex'),
     paletteButtons: document.querySelectorAll('.palette-btn'),
     varName: document.getElementById('varName'),
+    clusterW: document.getElementById('clusterW'),
+    clusterH: document.getElementById('clusterH'),
     formatToggleBtn: document.getElementById('formatToggleBtn'),
     copyOutputBtn: document.getElementById('copyOutputBtn'),
     headerOutput: document.getElementById('headerOutput'),
@@ -66,6 +68,8 @@
     selectedColor: 3,
     varName: 'tile_data',
     outputFormat: 'grouped',  // 'grouped' or 'flat'
+    clusterW: 1,
+    clusterH: 1,
     painting: false,
     zoom: 1,
     imageScale: 1,
@@ -102,21 +106,50 @@
     return bytes;
   }
 
+  function getClusteredOrder() {
+    const cw = state.clusterW;
+    const ch = state.clusterH;
+    const tw = state.tilesX || state.tileData.length;
+    const th = state.tilesY || 1;
+    const order = [];
+    const clustersX = Math.ceil(tw / cw);
+    const clustersY = Math.ceil(th / ch);
+    for (let cy = 0; cy < clustersY; cy++) {
+      for (let cx = 0; cx < clustersX; cx++) {
+        for (let dy = 0; dy < ch; dy++) {
+          for (let dx = 0; dx < cw; dx++) {
+            const tx = cx * cw + dx;
+            const ty = cy * ch + dy;
+            if (tx < tw && ty < th) {
+              order.push(ty * tw + tx);
+            }
+          }
+        }
+      }
+    }
+    return order;
+  }
+
   function generateHeader() {
     if (!state.tileData.length) return '// Upload an image to generate tile data';
     const name = state.varName || 'tile_data';
-    const totalBytes = state.tileData.length * 16;
-    const comment = `// ${state.tileData.length} tile${state.tileData.length !== 1 ? 's' : ''}, ${totalBytes} bytes`;
+    const order = (state.clusterW > 1 || state.clusterH > 1)
+      ? getClusteredOrder()
+      : null;
+    const count = order ? order.length : state.tileData.length;
+    const totalBytes = count * 16;
+    const comment = `// ${count} tile${count !== 1 ? 's' : ''}, ${totalBytes} bytes`;
 
     if (state.outputFormat === 'grouped') {
       const tileLines = [];
-      for (let t = 0; t < state.tileData.length; t++) {
+      for (let i = 0; i < count; i++) {
+        const t = order ? order[i] : i;
         const enc = encodeTile(state.tileData[t]);
         const rows = [];
         for (let r = 0; r < 2; r++) {
           const row = [];
-          for (let i = r * 8; i < r * 8 + 8; i++) {
-            row.push('0x' + enc[i].toString(16).toUpperCase().padStart(2, '0'));
+          for (let j = r * 8; j < r * 8 + 8; j++) {
+            row.push('0x' + enc[j].toString(16).toUpperCase().padStart(2, '0'));
           }
           rows.push('    {' + row.join(',') + '}');
         }
@@ -127,11 +160,12 @@
 
     // Flat format
     const tileLines = [];
-    for (let t = 0; t < state.tileData.length; t++) {
+    for (let i = 0; i < count; i++) {
+      const t = order ? order[i] : i;
       const enc = encodeTile(state.tileData[t]);
       const hex = [];
-      for (let i = 0; i < 16; i++) {
-        hex.push('0x' + enc[i].toString(16).toUpperCase().padStart(2, '0'));
+      for (let j = 0; j < 16; j++) {
+        hex.push('0x' + enc[j].toString(16).toUpperCase().padStart(2, '0'));
       }
       tileLines.push(`    /* tile ${t} */\n    ${hex.join(', ')}`);
     }
@@ -840,6 +874,18 @@
     updateOutput();
   });
 
+  // ---- Cluster ----
+
+  el.clusterW.addEventListener('input', () => {
+    state.clusterW = Math.max(1, parseInt(el.clusterW.value) || 1);
+    updateOutput();
+  });
+
+  el.clusterH.addEventListener('input', () => {
+    state.clusterH = Math.max(1, parseInt(el.clusterH.value) || 1);
+    updateOutput();
+  });
+
   // ---- Format toggle ----
 
   function updateFormatToggle() {
@@ -891,6 +937,8 @@
         imageScale: state.imageScale,
         zoom: state.zoom,
         outputFormat: state.outputFormat,
+        clusterW: state.clusterW,
+        clusterH: state.clusterH,
         tilesX: state.tilesX,
         tilesY: state.tilesY,
         canvasW: state.canvasW,
@@ -927,6 +975,10 @@
       state.imageScale = data.imageScale || 1;
       state.zoom = data.zoom || 1;
       state.outputFormat = data.outputFormat || 'grouped';
+      state.clusterW = data.clusterW || 1;
+      state.clusterH = data.clusterH || 1;
+      el.clusterW.value = state.clusterW;
+      el.clusterH.value = state.clusterH;
       updateFormatToggle();
       state.tilesX = data.tilesX || 0;
       state.tilesY = data.tilesY || 0;
