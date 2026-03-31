@@ -204,14 +204,20 @@
       state.varName = result.varName;
       el.varName.value = result.varName;
     }
+    // Recalculate grid dimensions for the parsed tile count
+    const count = state.tileData.length;
+    if (count > 0) {
+      if (state.tilesX <= 0 || state.tilesX > count) {
+        state.tilesX = Math.ceil(Math.sqrt(count));
+      }
+      state.tilesY = Math.ceil(count / state.tilesX);
+    }
     if (state.selectedTile >= state.tileData.length) {
       state.selectedTile = Math.max(0, state.tileData.length - 1);
     }
-    if (state.mode === 'editor') {
-      renderTileGrid();
-      if (state.tileData.length) renderTileZoom();
-      updateTileNav();
-    }
+    renderTileGrid();
+    if (state.tileData.length) renderTileZoom();
+    updateTileNav();
     el.tileEditModeBtn.disabled = !state.tileData.length;
     updatingFromCode = false;
   }
