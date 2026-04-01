@@ -8,83 +8,448 @@
     <meta name="category" content="Web Demos">
     <title>Wake Lock Demo</title>
     <style>
-      * {
+      :root {
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --surface-2: #f4f4f5;
+        --border: #d4d4d8;
+        --text: #18181b;
+        --text-dim: #71717a;
+        --accent: #4f46e5;
+        --accent-dim: #4f46e51a;
+        --green: #16a34a;
+        --orange: #ea580c;
+        --radius: 10px;
+        --shadow: 0 8px 32px #0000001a;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1117;
+          --surface: #1a1d27;
+          --surface-2: #242736;
+          --border: #2e3248;
+          --text: #e8e9f0;
+          --text-dim: #8b8fa8;
+          --accent: #6c63ff;
+          --accent-dim: #6c63ff33;
+          --green: #22c55e;
+          --orange: #f97316;
+          --shadow: 0 8px 32px #0009;
+        }
+      }
+
+      *, *::before, *::after {
         box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
 
       body {
-        font-family: system-ui, sans-serif;
-        max-width: 400px;
-        margin: 4rem auto;
-        text-align: center;
-      }
-
-      button {
-        font-size: 1.2rem;
-        padding: 1rem 2rem;
-        cursor: pointer;
-      }
-
-      .status {
-        margin-top: 1.5rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
         padding: 1rem;
+        min-height: 100dvh;
+      }
+
+      @media (min-width: 640px) {
+        body { padding: 2rem 1rem 4rem; }
+      }
+
+      .container {
+        width: 100%;
+        max-width: 900px;
+        margin-inline: auto;
+      }
+
+      /* ─── Header ─── */
+      .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      @media (min-width: 640px) {
+        .page-header { margin-bottom: 3rem; }
+      }
+
+      .page-header h1 {
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.5rem;
+
+        & span { color: var(--accent); }
+      }
+
+      .page-header p {
+        color: var(--text-dim);
+        font-size: 1rem;
+      }
+
+      @media (min-width: 640px) {
+        .page-header p { font-size: 1.05rem; }
+      }
+
+      .badge {
+        display: inline-block;
+        background: var(--accent-dim);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.2em 0.75em;
+        margin-bottom: 0.75rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      /* ─── Sections ─── */
+      .sections {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      @media (min-width: 640px) {
+        .sections { gap: 2rem; }
+      }
+
+      /* ─── Card ─── */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+
+        @media (min-width: 640px) {
+          padding: 1.75rem;
+        }
+      }
+
+      .card-header {
+        margin-bottom: 1rem;
+
+        & h2 {
+          font-size: 1rem;
+          font-weight: 600;
+          margin-bottom: 0.25rem;
+
+          @media (min-width: 640px) {
+            font-size: 1.1rem;
+          }
+        }
+
+        & p {
+          color: var(--text-dim);
+          font-size: 0.875rem;
+        }
+      }
+
+      .demo-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      /* ─── Buttons ─── */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4em;
+        padding: 0.5em 1em;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+        font-family: inherit;
+        white-space: nowrap;
+        line-height: 1.4;
+
+        @media (min-width: 640px) {
+          padding: 0.55em 1.25em;
+          font-size: 0.95rem;
+        }
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+
+        &:hover { opacity: 0.85; }
+      }
+
+      .btn-outline {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--border);
+
+        &:hover {
+          background: var(--surface-2);
+          border-color: var(--accent);
+          color: var(--accent);
+        }
+      }
+
+      /* ─── Inline code ─── */
+      code {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
         border-radius: 4px;
-        background: #f0f0f0;
+        padding: 0.1em 0.4em;
+        font-size: 0.85em;
+        font-family: 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+        color: var(--accent);
       }
 
-      .status.active {
-        background: #d4edda;
+      /* ─── Code hint block ─── */
+      .code-hint {
+        margin-top: 1rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.78rem;
+        color: var(--text-dim);
+        font-family: 'Cascadia Code', 'Fira Code', ui-monospace, monospace;
+        overflow-x: auto;
+        line-height: 1.7;
+
+        @media (min-width: 640px) {
+          font-size: 0.82rem;
+        }
+
+        & .kw  { color: #a78bfa; }
+        & .attr { color: #60a5fa; }
+        & .val  { color: #86efac; }
+        & .tag  { color: #f87171; }
+        & .cm   { color: #6b7280; }
+
+        & code {
+          background: none;
+          border: none;
+          border-radius: 0;
+          padding: 0;
+          font-size: inherit;
+          color: inherit;
+        }
       }
 
-      /* Styling when the wake lock is active */
-      wake-lock[active] {
-        border: 2px solid green;
-        background: green;
+      /* ─── Event log ─── */
+      .event-log {
+        margin-top: 1rem;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.78rem;
+        min-height: 80px;
+        max-height: 150px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+
+        @media (min-width: 640px) {
+          font-size: 0.82rem;
+        }
+
+        & .entry {
+          display: flex;
+          gap: 0.75em;
+        }
+
+        & .time { color: var(--text-dim); flex-shrink: 0; }
+        & .evt-name { color: var(--accent); }
+        & .evt-state { color: var(--green); }
+        & .empty { color: var(--text-dim); font-style: italic; }
       }
 
-      /* Styling when inactive (default) */
-      wake-lock:not([active]) {
-        opacity: 0.8;
+      /* ─── Support callout ─── */
+      .support-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 0.875rem 1.25rem;
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        color: var(--text-dim);
+
+        &.supported { border-color: var(--green); }
+        &.unsupported { border-color: var(--orange); }
+
+        & .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+        & .support-label {
+          font-weight: 600;
+          margin-bottom: 0.2rem;
+
+          &.yes { color: var(--green); }
+          &.no  { color: var(--orange); }
+        }
       }
     </style>
   </head>
 
   <body>
-    <h1>Wake Lock Demo</h1>
+    <div class="container">
 
-    <wake-lock>
-      <button>Toggle Wake Lock</button>
-    </wake-lock>
+      <header class="page-header">
+        <div class="badge">Web Platform</div>
+        <h1>Wake <span>Lock</span> API</h1>
+        <p>Prevent the device screen from dimming or locking using the Screen Wake Lock API.</p>
+      </header>
 
-    <div class="status" id="status">Inactive</div>
+      <div class="sections">
+
+        <!-- ─── 1: Live demo ─── -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Try It</h2>
+            <p>Toggle the wake lock to keep your screen awake. The lock is automatically re-acquired when the page regains visibility.</p>
+          </div>
+          <div class="demo-row">
+            <wake-lock>
+              <button class="btn btn-primary" id="btn-toggle">Activate Wake Lock</button>
+            </wake-lock>
+          </div>
+
+          <div class="event-log" id="event-log">
+            <span class="empty">Events will appear here...</span>
+          </div>
+        </div>
+
+        <!-- ─── 2: Usage ─── -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Usage</h2>
+            <p>Drop in the web component and wrap any clickable element. The <code>&lt;wake-lock&gt;</code> element toggles on click and exposes an <code>active</code> attribute.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="cm">&lt;!-- 1. Add the component --&gt;</span>
+<span class="tag">&lt;wake-lock&gt;</span>
+  <span class="tag">&lt;button&gt;</span>Toggle Wake Lock<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;/wake-lock&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"wake-lock.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="cm">&lt;!-- 2. Listen for events --&gt;</span>
+<span class="tag">&lt;script&gt;</span>
+<span class="kw">const</span> wl = document.querySelector(<span class="val">'wake-lock'</span>);
+wl.addEventListener(<span class="val">'locked'</span>, () =&gt; {
+  console.log(<span class="val">'Screen will stay awake'</span>);
+});
+wl.addEventListener(<span class="val">'released'</span>, () =&gt; {
+  console.log(<span class="val">'Wake lock released'</span>);
+});
+<span class="tag">&lt;/script&gt;</span></code></pre>
+        </div>
+
+        <!-- ─── 3: API reference ─── -->
+        <div class="card">
+          <div class="card-header">
+            <h2>API</h2>
+            <p>Properties, methods, events, and CSS hooks.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="cm">// Properties</span>
+wl.<span class="attr">active</span>      <span class="cm">// boolean — whether the lock is held</span>
+wl.<span class="attr">supported</span>   <span class="cm">// boolean — whether the API is available</span>
+
+<span class="cm">// Methods</span>
+wl.<span class="attr">request</span>()   <span class="cm">// acquire the wake lock</span>
+wl.<span class="attr">release</span>()   <span class="cm">// release the wake lock</span>
+
+<span class="cm">// Events</span>
+<span class="val">'locked'</span>       <span class="cm">// fired when lock is acquired</span>
+<span class="val">'released'</span>     <span class="cm">// fired when lock is released</span>
+<span class="val">'error'</span>        <span class="cm">// fired on failure (detail: error)</span>
+<span class="val">'unsupported'</span>  <span class="cm">// fired if the API is not available</span>
+
+<span class="cm">// CSS — style based on lock state</span>
+<span class="attr">wake-lock[active]</span>        { <span class="cm">/* lock is held */</span> }
+<span class="attr">wake-lock:not([active])</span>  { <span class="cm">/* lock is not held */</span> }</code></pre>
+
+          <div class="support-box" id="support-box">
+            <span class="icon" id="support-icon">🔍</span>
+            <div>
+              <div class="support-label" id="support-label">Checking browser support...</div>
+              <div id="support-detail"></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.sections -->
+    </div><!-- /.container -->
+
     <script src="./wake-lock.js"></script>
     <script>
+      const wl     = document.querySelector('wake-lock');
+      const btn    = document.getElementById('btn-toggle');
+      const logEl  = document.getElementById('event-log');
 
-      // Demo event handling
-      const wl = document.querySelector('wake-lock');
-      const status = document.getElementById('status');
+      function addLog(eventName, description) {
+        const time  = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        const entry = document.createElement('div');
+        entry.className = 'entry';
+        entry.innerHTML =
+          `<span class="time">${time}</span>` +
+          `<span class="evt-name">${eventName}</span>` +
+          `<span class="evt-state">${description}</span>`;
+        logEl.querySelector('.empty')?.remove();
+        logEl.appendChild(entry);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
 
       wl.addEventListener('locked', () => {
-        status.textContent = 'Active — screen will stay awake';
-        status.classList.add('active');
+        btn.textContent = 'Release Wake Lock';
+        addLog('locked', 'screen will stay awake');
       });
 
       wl.addEventListener('released', () => {
-        status.textContent = 'Inactive';
-        status.classList.remove('active');
+        btn.textContent = 'Activate Wake Lock';
+        addLog('released', 'wake lock released');
       });
 
       wl.addEventListener('error', (e) => {
-        status.textContent = `Error: ${e.detail.message}`;
-        status.classList.remove('active');
+        addLog('error', e.detail.message);
       });
 
       wl.addEventListener('unsupported', () => {
-        status.textContent = 'Wake Lock not supported in this browser';
+        addLog('unsupported', 'Wake Lock API not available');
       });
 
+      // ─── Browser support detection ────────────────────────────────────────
+      const box    = document.getElementById('support-box');
+      const icon   = document.getElementById('support-icon');
+      const label  = document.getElementById('support-label');
+      const detail = document.getElementById('support-detail');
+      const supported = 'wakeLock' in navigator;
+
+      if (supported) {
+        box.classList.add('supported');
+        icon.textContent  = '✓';
+        label.textContent = 'Wake Lock API supported in this browser';
+        label.className   = 'support-label yes';
+        detail.textContent = 'All demos on this page should work correctly.';
+      } else {
+        box.classList.add('unsupported');
+        icon.textContent  = '⚠';
+        label.textContent = 'Wake Lock API not supported in this browser';
+        label.className   = 'support-label no';
+        detail.textContent = 'Upgrade to Chrome 84+, Edge 84+, or Safari 16.4+ to use the Wake Lock API.';
+      }
     </script>
-  <script>navigator.serviceWorker?.register("/sw.js")</script>
-</body>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
 
 </html>
