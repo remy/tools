@@ -10,7 +10,6 @@ class ImmichDedupe {
     this.currentIndex = 0;
     this.decisions = new Map(); // duplicateId -> { keep: assetId, trash: [assetIds] }
     this.albumCache = new Map(); // assetId -> albums[]
-    this.trashQueue = new Set(); // asset IDs marked for trash
 
     this.initElements();
     this.attachEventListeners();
@@ -198,7 +197,7 @@ class ImmichDedupe {
 
       this.currentIndex = 0;
       this.decisions.clear();
-      this.trashQueue.clear();
+
       this.albumCache.clear();
 
       // Auto-decide all groups based on file size
@@ -240,10 +239,6 @@ class ImmichDedupe {
       keep: keepAsset.id,
       trash: trashAssets.map((a) => a.id),
     });
-
-    for (const a of trashAssets) {
-      this.trashQueue.add(a.id);
-    }
   }
 
   toggleAssetDecision(group, assetIndex) {
@@ -262,12 +257,6 @@ class ImmichDedupe {
     const oldKeep = decision.keep;
     decision.keep = clickedAsset.id;
     decision.trash = assets.filter((a) => a.id !== clickedAsset.id).map((a) => a.id);
-
-    // Update trash queue
-    this.trashQueue.delete(clickedAsset.id);
-    for (const id of decision.trash) {
-      this.trashQueue.add(id);
-    }
 
     this.updateTrashCount();
     this.renderCurrentPair();
@@ -301,10 +290,6 @@ class ImmichDedupe {
         keep: keepAsset.id,
         trash: trashAssets.map((a) => a.id),
       });
-
-      for (const a of trashAssets) {
-        this.trashQueue.add(a.id);
-      }
     }
     this.updateTrashCount();
     this.renderCurrentPair();
@@ -312,8 +297,16 @@ class ImmichDedupe {
   }
 
   updateTrashCount() {
-    this.trashCount.textContent = this.trashQueue.size;
-    this.trashBtn.disabled = this.trashQueue.size === 0;
+    const group = this.duplicates[this.currentIndex];
+    if (!group) {
+      this.trashCount.textContent = '0';
+      this.trashBtn.disabled = true;
+      return;
+    }
+    const decision = this.decisions.get(group.duplicateId);
+    const count = decision ? decision.trash.length : 0;
+    this.trashCount.textContent = count;
+    this.trashBtn.disabled = count === 0;
   }
 
   async fetchAlbums(assetId) {
@@ -508,80 +501,57 @@ class ImmichDedupe {
   }
 
   async executeTrashes() {
-    if (this.trashQueue.size === 0) {
+    const group = this.duplicates[this.currentIndex];
+    if (!group) return;
+
+    const decision = this.decisions.get(group.duplicateId);
+    if (!decision || decision.trash.length === 0) {
       this.setStatus('No assets marked for trash', 'error');
       return;
     }
 
-    const count = this.trashQueue.size;
+    const keepId = decision.keep;
+    const trashIds = decision.trash;
+
     this.trashBtn.disabled = true;
-    this.setStatus(`Processing ${count} assets...`, 'loading');
+    this.setStatus(`Processing ${trashIds.length} asset(s)...`, 'loading');
 
-    let processed = 0;
-    let failed = 0;
+    // Copy album memberships from trashed assets to kept asset
+    const keepAlbums = await this.fetchAlbums(keepId);
+    const keepAlbumIds = new Set(keepAlbums.map((a) => a.id));
 
-    // First, copy album memberships from trashed assets to kept assets
-    for (const group of this.duplicates) {
-      const decision = this.decisions.get(group.duplicateId);
-      if (!decision) continue;
-
-      const keepId = decision.keep;
-      const trashIds = decision.trash.filter((id) => this.trashQueue.has(id));
-      if (trashIds.length === 0) continue;
-
-      // Gather albums from trashed assets
-      const keepAlbums = await this.fetchAlbums(keepId);
-      const keepAlbumIds = new Set(keepAlbums.map((a) => a.id));
-
-      for (const trashId of trashIds) {
-        const trashAlbums = await this.fetchAlbums(trashId);
-        for (const album of trashAlbums) {
-          if (!keepAlbumIds.has(album.id)) {
-            // DRY RUN: would add keep asset to this album
-            console.log(`[DRY RUN] Would add asset ${keepId} to album "${album.albumName || album.id}"`);
-            keepAlbumIds.add(album.id);
-          }
+    for (const trashId of trashIds) {
+      const trashAlbums = await this.fetchAlbums(trashId);
+      for (const album of trashAlbums) {
+        if (!keepAlbumIds.has(album.id)) {
+          // DRY RUN: would add keep asset to this album
+          console.log(`[DRY RUN] Would add asset ${keepId} to album "${album.albumName || album.id}"`);
+          keepAlbumIds.add(album.id);
         }
       }
     }
 
     // DRY RUN: log what would be trashed instead of actually deleting
-    const assetIds = Array.from(this.trashQueue);
-    console.log(`[DRY RUN] Would trash ${assetIds.length} assets:`, assetIds);
-    processed = assetIds.length;
+    console.log(`[DRY RUN] Would trash ${trashIds.length} asset(s):`, trashIds);
+    console.log(`[DRY RUN] Keeping asset: ${keepId}`);
 
-    // Remove trashed groups from the list
-    if (processed > 0) {
-      // Mark trashed assets
-      for (const group of this.duplicates) {
-        for (const asset of group.assets) {
-          if (this.trashQueue.has(asset.id)) {
-            asset.isTrashed = true;
-          }
-        }
-      }
-
-      // Remove groups where less than 2 non-trashed assets remain
-      this.duplicates = this.duplicates.filter(
-        (group) => group.assets.filter((a) => !a.isTrashed).length >= 2
-      );
-
-      this.trashQueue.clear();
-      this.decisions.clear();
-      this.albumCache.clear();
-      this.autoDecideAll();
-
-      if (this.currentIndex >= this.duplicates.length) {
-        this.currentIndex = Math.max(0, this.duplicates.length - 1);
+    // Mark trashed assets
+    for (const asset of group.assets) {
+      if (trashIds.includes(asset.id)) {
+        asset.isTrashed = true;
       }
     }
 
-    if (failed === 0) {
-      this.setStatus(`Trashed ${processed} assets. ${this.duplicates.length} groups remaining.`, 'success');
-    } else {
-      this.setStatus(`Failed to trash ${failed} assets`, 'error');
+    // Remove this group from the list
+    this.duplicates.splice(this.currentIndex, 1);
+    this.decisions.delete(group.duplicateId);
+
+    // Adjust index
+    if (this.currentIndex >= this.duplicates.length) {
+      this.currentIndex = Math.max(0, this.duplicates.length - 1);
     }
 
+    this.setStatus(`Trashed ${trashIds.length} asset(s). ${this.duplicates.length} groups remaining.`, 'success');
     this.updateTrashCount();
     this.renderCurrentPair();
   }
