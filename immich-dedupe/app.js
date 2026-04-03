@@ -33,6 +33,7 @@ class ImmichDedupe {
     this.stackBtn = $('#stackBtn');
     this.selectKeepAllBtn = $('#selectKeepAllBtn');
     this.selectTrashAllBtn = $('#selectTrashAllBtn');
+    this.dryRunInput = $('#dryRun');
     this.sidebar = document.querySelector('.sidebar');
     this.toggleSidebarBtn = $('#toggleSidebarBtn');
     this.showConfigBtn = $('#showConfigBtn');
@@ -60,6 +61,9 @@ class ImmichDedupe {
     this.proxyInput.addEventListener('change', () =>
       localStorage.setItem('immichDedupe_proxy', this.proxyInput.value)
     );
+    this.dryRunInput.addEventListener('change', () =>
+      localStorage.setItem('immichDedupe_dryRun', this.dryRunInput.checked)
+    );
 
     if (this.toggleSidebarBtn) {
       this.toggleSidebarBtn.addEventListener('click', () => this.toggleSidebar());
@@ -81,6 +85,9 @@ class ImmichDedupe {
     if (host) this.hostInput.value = host;
     if (apiKey) this.apiKeyInput.value = apiKey;
     if (proxy) this.proxyInput.value = proxy;
+
+    const dryRun = localStorage.getItem('immichDedupe_dryRun');
+    this.dryRunInput.checked = dryRun === null ? true : dryRun === 'true';
 
     this.useProxyInput.checked = useProxy;
     this.proxyGroup.style.display = useProxy ? 'block' : 'none';
@@ -520,20 +527,44 @@ class ImmichDedupe {
     const keepAlbums = await this.fetchAlbums(keepId);
     const keepAlbumIds = new Set(keepAlbums.map((a) => a.id));
 
+    const dryRun = this.dryRunInput.checked;
+    const tag = dryRun ? '[DRY RUN]' : '[LIVE]';
+
     for (const trashId of trashIds) {
       const trashAlbums = await this.fetchAlbums(trashId);
       for (const album of trashAlbums) {
         if (!keepAlbumIds.has(album.id)) {
-          // DRY RUN: would add keep asset to this album
-          console.log(`[DRY RUN] Would add asset ${keepId} to album "${album.albumName || album.id}"`);
+          if (dryRun) {
+            console.log(`${tag} Would add asset ${keepId} to album "${album.albumName || album.id}"`);
+          } else {
+            try {
+              await this.addAssetToAlbum(album.id, keepId);
+            } catch (e) {
+              console.error(`Failed to add asset ${keepId} to album ${album.id}:`, e);
+            }
+          }
           keepAlbumIds.add(album.id);
         }
       }
     }
 
-    // DRY RUN: log what would be trashed instead of actually deleting
-    console.log(`[DRY RUN] Would trash ${trashIds.length} asset(s):`, trashIds);
-    console.log(`[DRY RUN] Keeping asset: ${keepId}`);
+    // Trash the assets
+    if (dryRun) {
+      console.log(`${tag} Would trash ${trashIds.length} asset(s):`, trashIds);
+      console.log(`${tag} Keeping asset: ${keepId}`);
+    } else {
+      const { url, headers } = this.getApiConfig('/api/assets');
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers,
+        body: JSON.stringify({ ids: trashIds, force: false }),
+      });
+      if (!response.ok) {
+        this.setStatus(`Trash API Error: ${response.status}`, 'error');
+        this.trashBtn.disabled = false;
+        return;
+      }
+    }
 
     // Mark trashed assets
     for (const asset of group.assets) {
