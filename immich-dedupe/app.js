@@ -394,12 +394,6 @@ class ImmichDedupe {
       locationStr = [exif.city, exif.state, exif.country].filter(Boolean).join(', ');
     }
 
-    // Original path - truncate
-    const originalPath = asset.originalPath || '';
-    const truncatedPath = originalPath.length > 40
-      ? originalPath.substring(0, 20) + '...' + originalPath.substring(originalPath.length - 20)
-      : originalPath;
-
     // Determine if values differ from other assets in group to highlight
     const otherAssets = group.assets.filter((a) => a.id !== asset.id && !a.isTrashed);
 
@@ -432,9 +426,9 @@ class ImmichDedupe {
         </div>
         <div class="meta-row">
           <div class="meta-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17,3H7A2,2 0 0,0 5,5V21L12,18L19,21V5A2,2 0 0,0 17,3Z"/></svg>
           </div>
-          <div class="meta-value"><a href="${this.host}/photos/${asset.id}" target="_blank" title="${originalPath}">${truncatedPath}</a></div>
+          <div class="meta-value">In ${albums.length} album${albums.length !== 1 ? 's' : ''}</div>
         </div>
         <div class="meta-row">
           <div class="meta-icon">
@@ -465,12 +459,6 @@ class ImmichDedupe {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z"/></svg>
           </div>
           <div class="meta-value">${locationStr}</div>
-        </div>
-        <div class="meta-row">
-          <div class="meta-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17,3H7A2,2 0 0,0 5,5V21L12,18L19,21V5A2,2 0 0,0 17,3Z"/></svg>
-          </div>
-          <div class="meta-value">In ${albums.length} album${albums.length !== 1 ? 's' : ''}</div>
         </div>
       </div>
     `;
@@ -549,37 +537,18 @@ class ImmichDedupe {
         const trashAlbums = await this.fetchAlbums(trashId);
         for (const album of trashAlbums) {
           if (!keepAlbumIds.has(album.id)) {
-            // Add keep asset to this album
-            try {
-              await this.addAssetToAlbum(album.id, keepId);
-              keepAlbumIds.add(album.id);
-            } catch (e) {
-              console.error(`Failed to add asset ${keepId} to album ${album.id}:`, e);
-            }
+            // DRY RUN: would add keep asset to this album
+            console.log(`[DRY RUN] Would add asset ${keepId} to album "${album.albumName || album.id}"`);
+            keepAlbumIds.add(album.id);
           }
         }
       }
     }
 
-    // Now trash all queued assets
+    // DRY RUN: log what would be trashed instead of actually deleting
     const assetIds = Array.from(this.trashQueue);
-    try {
-      const { url, headers } = this.getApiConfig('/api/assets');
-      const response = await fetch(url, {
-        method: 'DELETE',
-        headers,
-        body: JSON.stringify({ ids: assetIds, force: false }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Trash API Error: ${response.status}`);
-      }
-
-      processed = assetIds.length;
-    } catch (e) {
-      console.error('Error trashing assets:', e);
-      failed = assetIds.length;
-    }
+    console.log(`[DRY RUN] Would trash ${assetIds.length} assets:`, assetIds);
+    processed = assetIds.length;
 
     // Remove trashed groups from the list
     if (processed > 0) {
