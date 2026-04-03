@@ -767,6 +767,20 @@
     updateOutput();
   }
 
+  function invertPalette() {
+    if (!state.tileData.length) return;
+    for (const tile of state.tileData) {
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          tile[r][c] = tile[r][c] === 0 ? 3 : tile[r][c] === 3 ? 0 : tile[r][c];
+        }
+      }
+    }
+    renderTileZoom();
+    renderTileGrid();
+    updateOutput();
+  }
+
   document.addEventListener('keydown', e => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.target.isContentEditable) return;
@@ -810,9 +824,15 @@
       return;
     }
 
-    if (e.key === 'i') {
+    if (e.key === 'a') {
       e.preventDefault();
       addTile();
+      return;
+    }
+
+    if (e.key === 'i') {
+      e.preventDefault();
+      invertPalette();
       return;
     }
 
