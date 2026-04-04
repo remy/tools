@@ -21,9 +21,9 @@
     <section id="overviewSection" class="panel">
       <div class="canvas-wrap" id="dropTarget" tabindex="0">
         <canvas id="overviewCanvas" width="256" height="256"></canvas>
-        <div class="drop-overlay" id="dropOverlay">Drop PNG, WebP, or AVIF here<br><small>or click to browse</small></div>
+        <div class="drop-overlay" id="dropOverlay">Drop or paste an image here<br><small>or click to browse</small></div>
       </div>
-      <input type="file" id="fileInput" accept="image/png,image/webp,image/avif" hidden>
+      <input type="file" id="fileInput" accept="image/*" hidden>
       <div class="overview-controls">
         <button id="resetPositionBtn" class="btn btn-sm btn-secondary" hidden>Reset Position</button>
         <div class="zoom-controls" id="zoomControls" hidden>
