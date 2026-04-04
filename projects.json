@@ -69,6 +69,11 @@
     "description": "Browser-based tool to bulk manage Immich albums - filter, delete, merge, and rename albums with regex and asset count filtering",
     "title": "Immich Album Manager"
   },
+  "immich-dedupe": {
+    "category": "Immich",
+    "description": "Deduplicate photos in Immich. Compare duplicate pairs side-by-side, choose which to keep, and trash the rest. Album memberships are merged to the kept asset before trashing.",
+    "title": "Immich Dedupe"
+  },
   "immich-mass-rotate": {
     "category": "Immich",
     "description": "Bulk rotate images in Immich. Select multiple thumbnails to rotate clockwise or counter-clockwise en masse via the API.",
