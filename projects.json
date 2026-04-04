@@ -71,7 +71,7 @@
   },
   "immich-dedupe": {
     "category": "Immich",
-    "description": "Deduplicate photos in Immich. Compare duplicate pairs side-by-side, choose which to keep, and trash the rest via the API.",
+    "description": "Deduplicate photos in Immich. Compare duplicate pairs side-by-side, choose which to keep, and trash the rest. Album memberships are merged to the kept asset before trashing.",
     "title": "Immich Dedupe"
   },
   "immich-mass-rotate": {
