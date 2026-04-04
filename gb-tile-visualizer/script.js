@@ -12,6 +12,7 @@
     selectedColor: 3,
     painting: false,
     hoveredPixels: null, // { row, col, w, h } region to highlight on zoom canvas
+    cluster2x2: false,
   };
 
   // ---- Elements ----
@@ -34,6 +35,7 @@
     prevTileBtn: document.getElementById('prevTileBtn'),
     nextTileBtn: document.getElementById('nextTileBtn'),
     tileCounter: document.getElementById('tileCounter'),
+    clusterToggle: document.getElementById('clusterToggle'),
   };
 
   const gridCtx = el.tileGridCanvas.getContext('2d', { willReadFrequently: true });
@@ -424,37 +426,62 @@
 
   // ---- Tile Grid (all tiles in selected array) ----
 
+  // Map tile index to {x, y} pixel position on the grid canvas
+  function tileGridPosition(t, count) {
+    const scale = 2;
+    const tileSize = 8 * scale;
+    if (state.cluster2x2) {
+      const clusterIdx = Math.floor(t / 4);
+      const inner = t % 4; // 0=TL, 1=TR, 2=BL, 3=BR
+      const clusterCols = Math.min(Math.ceil(count / 4), 8);
+      const cx = clusterIdx % clusterCols;
+      const cy = Math.floor(clusterIdx / clusterCols);
+      const ix = inner % 2;
+      const iy = Math.floor(inner / 2);
+      return { x: (cx * 2 + ix) * tileSize, y: (cy * 2 + iy) * tileSize };
+    }
+    const cols = Math.min(count, 16);
+    return { x: (t % cols) * tileSize, y: Math.floor(t / cols) * tileSize };
+  }
+
   function renderTileGrid() {
     const arr = state.arrays[state.selectedArray];
     if (!arr) return;
 
     const count = arr.tiles.length;
-    const cols = Math.min(count, 16);
-    const rows = Math.ceil(count / cols);
     const scale = 2; // 2px per pixel
     const tileSize = 8 * scale;
+    let cols, rows;
+
+    if (state.cluster2x2) {
+      const clusterCols = Math.min(Math.ceil(count / 4), 8);
+      const clusterRows = Math.ceil(Math.ceil(count / 4) / clusterCols);
+      cols = clusterCols * 2;
+      rows = clusterRows * 2;
+    } else {
+      cols = Math.min(count, 16);
+      rows = Math.ceil(count / cols);
+    }
 
     el.tileGridCanvas.width = cols * tileSize;
     el.tileGridCanvas.height = rows * tileSize;
 
     for (let t = 0; t < count; t++) {
-      const col = t % cols;
-      const row = Math.floor(t / cols);
+      const pos = tileGridPosition(t, count);
       const tile = arr.tiles[t];
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
           gridCtx.fillStyle = DMG_CSS[tile[r][c]];
-          gridCtx.fillRect(col * tileSize + c * scale, row * tileSize + r * scale, scale, scale);
+          gridCtx.fillRect(pos.x + c * scale, pos.y + r * scale, scale, scale);
         }
       }
     }
 
     // Draw selection border
-    const selCol = state.selectedTile % cols;
-    const selRow = Math.floor(state.selectedTile / cols);
+    const selPos = tileGridPosition(state.selectedTile, count);
     gridCtx.strokeStyle = '#e74c3c';
     gridCtx.lineWidth = 1;
-    gridCtx.strokeRect(selCol * tileSize + 0.5, selRow * tileSize + 0.5, tileSize - 1, tileSize - 1);
+    gridCtx.strokeRect(selPos.x + 0.5, selPos.y + 0.5, tileSize - 1, tileSize - 1);
 
     // Grid lines
     gridCtx.strokeStyle = 'rgba(128,128,128,0.3)';
@@ -470,6 +497,24 @@
       gridCtx.moveTo(0, y * tileSize);
       gridCtx.lineTo(cols * tileSize, y * tileSize);
       gridCtx.stroke();
+    }
+
+    // Cluster borders (thicker lines between 2x2 groups)
+    if (state.cluster2x2) {
+      gridCtx.strokeStyle = 'rgba(128,128,128,0.7)';
+      gridCtx.lineWidth = 1;
+      for (let x = 0; x <= cols; x += 2) {
+        gridCtx.beginPath();
+        gridCtx.moveTo(x * tileSize, 0);
+        gridCtx.lineTo(x * tileSize, rows * tileSize);
+        gridCtx.stroke();
+      }
+      for (let y = 0; y <= rows; y += 2) {
+        gridCtx.beginPath();
+        gridCtx.moveTo(0, y * tileSize);
+        gridCtx.lineTo(cols * tileSize, y * tileSize);
+        gridCtx.stroke();
+      }
     }
   }
 
@@ -781,18 +826,30 @@
   el.tileGridCanvas.addEventListener('click', (e) => {
     const arr = state.arrays[state.selectedArray];
     if (!arr) return;
+    const count = arr.tiles.length;
     const rect = el.tileGridCanvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    const cols = Math.min(arr.tiles.length, 16);
     const scale = 2;
     const tileSize = 8 * scale;
     const scaleX = el.tileGridCanvas.width / rect.width;
     const scaleY = el.tileGridCanvas.height / rect.height;
     const col = Math.floor((x * scaleX) / tileSize);
     const row = Math.floor((y * scaleY) / tileSize);
-    const idx = row * cols + col;
-    if (idx >= 0 && idx < arr.tiles.length) {
+
+    let idx;
+    if (state.cluster2x2) {
+      const clusterCols = Math.min(Math.ceil(count / 4), 8);
+      const cx = Math.floor(col / 2);
+      const cy = Math.floor(row / 2);
+      const ix = col % 2;
+      const iy = row % 2;
+      idx = (cy * clusterCols + cx) * 4 + iy * 2 + ix;
+    } else {
+      const cols = Math.min(count, 16);
+      idx = row * cols + col;
+    }
+    if (idx >= 0 && idx < count) {
       selectTile(state.selectedArray, idx);
     }
   });
@@ -819,6 +876,12 @@
     if (state.painting) paintPixel(e);
   });
   el.tileZoomCanvas.addEventListener('touchend', () => { state.painting = false; });
+
+  // Cluster toggle
+  el.clusterToggle.addEventListener('change', () => {
+    state.cluster2x2 = el.clusterToggle.checked;
+    renderTileGrid();
+  });
 
   // Palette buttons
   document.querySelectorAll('.palette-btn').forEach((btn) => {

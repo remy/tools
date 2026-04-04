@@ -314,6 +314,22 @@ body {
   padding: 0.25rem;
 }
 
+.tile-grid-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cluster-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
 .tile-grid-wrap {
   overflow-x: auto;
   border: 1px solid var(--border);
