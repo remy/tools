@@ -362,17 +362,16 @@
 
   // ---- File loading ----
 
-  function loadImageFile(file) {
-    if (!file.type.match(/^image\/(png|webp|avif)$/)) return;
-    const url = URL.createObjectURL(file);
+  function loadImageFromBlob(blob, name) {
+    const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
       state.image = img;
-      state.imageFileName = file.name.replace(/\.\w+$/, '');
+      state.imageFileName = name;
       state.offsetX = 0;
       state.offsetY = 0;
       state.imageScale = 1;
-      el.varName.value = state.imageFileName.replace(/[^a-zA-Z0-9_]/g, '_') || 'tile_data';
+      el.varName.value = name.replace(/[^a-zA-Z0-9_]/g, '_') || 'tile_data';
       state.varName = el.varName.value;
       resizeOverviewCanvas();
       renderOverview();
@@ -384,6 +383,11 @@
       el.imageInfo.textContent = `${img.naturalWidth}×${img.naturalHeight}px — ${state.tilesX}×${state.tilesY} tiles`;
     };
     img.src = url;
+  }
+
+  function loadImageFile(file) {
+    if (!file.type.match(/^image\//)) return;
+    loadImageFromBlob(file, file.name.replace(/\.\w+$/, ''));
   }
 
   // ---- Drag to reposition ----
@@ -470,6 +474,25 @@
   el.fileInput.addEventListener('change', () => {
     if (el.fileInput.files[0]) loadImageFile(el.fileInput.files[0]);
     el.fileInput.value = '';
+  });
+
+  // ---- Clipboard paste ----
+
+  document.addEventListener('paste', e => {
+    if (state.mode !== 'overview') return;
+    const items = e.clipboardData && e.clipboardData.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.match(/^image\//)) {
+        e.preventDefault();
+        const blob = item.getAsFile();
+        if (blob) {
+          const ext = item.type.replace('image/', '');
+          loadImageFromBlob(blob, 'pasted_image_' + ext);
+        }
+        return;
+      }
+    }
   });
 
   // ---- Reset position ----
