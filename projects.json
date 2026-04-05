@@ -44,6 +44,11 @@
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
     "title": "ESP32 Supermini Comparison"
   },
+  "image-braille": {
+    "category": "Image Tools",
+    "description": "Convert images to braille character art. Upload or paste an image, adjust threshold, contrast and font size, then copy the output.",
+    "title": "Image to Braille"
+  },
   "gb-tile-converter": {
     "category": "Developer Tools",
     "description": "Convert images to Game Boy DMG tile data. Upload an image, align to an 8x8 grid, edit individual tile pixels, and export C header arrays.",

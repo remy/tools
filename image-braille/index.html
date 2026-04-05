@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Convert images to braille character art. Upload or paste an image, adjust contrast and font size, then copy the braille output.">
+  <meta name="category" content="Image Tools">
+  <title>Image to Braille</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .controls {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .control-group label {
+      font-size: 0.8rem;
+      color: #999;
+      white-space: nowrap;
+    }
+    .control-group input[type="range"] {
+      width: 120px;
+      accent-color: #6cf;
+    }
+    .control-group .value {
+      font-size: 0.75rem;
+      color: #6cf;
+      min-width: 3ch;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .btn {
+      padding: 0.4rem 0.9rem;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover { background: #252525; border-color: #666; }
+    .btn-primary { background: #1a3a5c; border-color: #2a6ab0; color: #8cf; }
+    .btn-primary:hover { background: #224a70; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+    .drop-zone {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      border: 2px dashed #333;
+      border-radius: 12px;
+      margin: 1rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .drop-zone.drag-over {
+      border-color: #6cf;
+      background: rgba(102, 204, 255, 0.05);
+    }
+    .drop-zone.has-output {
+      border: none;
+      cursor: default;
+      align-items: flex-start;
+      overflow: auto;
+    }
+    .drop-hint {
+      text-align: center;
+      color: #666;
+      user-select: none;
+    }
+    .drop-hint p { font-size: 1.1rem; margin-bottom: 0.3rem; }
+    .drop-hint small { font-size: 0.8rem; color: #555; }
+    #brailleOutput {
+      white-space: pre;
+      line-height: 1;
+      letter-spacing: 0;
+      padding: 1rem;
+      width: 100%;
+      font-family: monospace;
+      user-select: all;
+    }
+    #fileInput { display: none; }
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(100%);
+      background: #1a3a1a;
+      border: 1px solid #2a6a2a;
+      color: #8f8;
+      padding: 0.5rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    @media (max-width: 700px) {
+      header { flex-direction: column; align-items: flex-start; }
+      .controls { width: 100%; }
+      .actions { margin-left: 0; width: 100%; }
+      .actions .btn { flex: 1; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Image to Braille</h1>
+    <div class="controls">
+      <div class="control-group">
+        <label for="thresholdSlider">Threshold</label>
+        <input type="range" id="thresholdSlider" min="0" max="255" value="128">
+        <span class="value" id="thresholdValue">128</span>
+      </div>
+      <div class="control-group">
+        <label for="contrastSlider">Contrast</label>
+        <input type="range" id="contrastSlider" min="-100" max="100" value="0">
+        <span class="value" id="contrastValue">0</span>
+      </div>
+      <div class="control-group">
+        <label for="fontSlider">Size</label>
+        <input type="range" id="fontSlider" min="2" max="16" value="8" step="0.5">
+        <span class="value" id="fontValue">8px</span>
+      </div>
+      <div class="control-group">
+        <label for="widthSlider">Width</label>
+        <input type="range" id="widthSlider" min="20" max="300" value="100">
+        <span class="value" id="widthValue">100</span>
+      </div>
+      <div class="control-group">
+        <label>
+          <input type="checkbox" id="invertCheck"> Invert
+        </label>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="copyBtn" disabled>Copy</button>
+      <button class="btn" id="resetBtn" disabled>Reset</button>
+    </div>
+  </header>
+
+  <div class="drop-zone" id="dropZone">
+    <div class="drop-hint" id="dropHint">
+      <p>Drop or paste an image here</p>
+      <small>or click to browse</small>
+    </div>
+    <div id="brailleOutput"></div>
+  </div>
+
+  <input type="file" id="fileInput" accept="image/*">
+  <div class="toast" id="toast">Copied to clipboard</div>
+
+  <canvas id="workCanvas" hidden></canvas>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+
+    const dropZone = $('#dropZone');
+    const dropHint = $('#dropHint');
+    const brailleOutput = $('#brailleOutput');
+    const fileInput = $('#fileInput');
+    const workCanvas = $('#workCanvas');
+    const ctx = workCanvas.getContext('2d', { willReadFrequently: true });
+
+    const thresholdSlider = $('#thresholdSlider');
+    const contrastSlider = $('#contrastSlider');
+    const fontSlider = $('#fontSlider');
+    const widthSlider = $('#widthSlider');
+    const invertCheck = $('#invertCheck');
+    const copyBtn = $('#copyBtn');
+    const resetBtn = $('#resetBtn');
+
+    let sourceImage = null;
+
+    // Braille Unicode block: U+2800 to U+28FF
+    // Each braille char is a 2x4 dot grid. Dot numbering:
+    //  0  3
+    //  1  4
+    //  2  5
+    //  6  7
+    const BRAILLE_BASE = 0x2800;
+    const DOT_OFFSETS = [
+      [0, 0], // dot 0 → bit 0
+      [0, 1], // dot 1 → bit 1
+      [0, 2], // dot 2 → bit 2
+      [1, 0], // dot 3 → bit 3
+      [1, 1], // dot 4 → bit 4
+      [1, 2], // dot 5 → bit 5
+      [0, 3], // dot 6 → bit 6
+      [1, 3], // dot 7 → bit 7
+    ];
+
+    function applyContrast(value, contrast) {
+      const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+      return Math.max(0, Math.min(255, factor * (value - 128) + 128));
+    }
+
+    function imageToGreyscale(imageData, contrast) {
+      const data = imageData.data;
+      const grey = new Float32Array(imageData.width * imageData.height);
+      for (let i = 0; i < grey.length; i++) {
+        const r = data[i * 4];
+        const g = data[i * 4 + 1];
+        const b = data[i * 4 + 2];
+        const a = data[i * 4 + 3] / 255;
+        // Luminance weighted, blend with white background for transparency
+        let lum = 0.299 * r + 0.587 * g + 0.114 * b;
+        lum = lum * a + 255 * (1 - a);
+        grey[i] = applyContrast(lum, contrast);
+      }
+      return grey;
+    }
+
+    function greyToBraille(grey, imgW, imgH, charW, threshold, invert) {
+      const charH = Math.ceil(imgH / 4);
+      const lines = [];
+
+      for (let cy = 0; cy < charH; cy++) {
+        let line = '';
+        for (let cx = 0; cx < charW; cx++) {
+          let code = 0;
+          for (let bit = 0; bit < 8; bit++) {
+            const [dx, dy] = DOT_OFFSETS[bit];
+            const px = cx * 2 + dx;
+            const py = cy * 4 + dy;
+            if (px < imgW && py < imgH) {
+              const val = grey[py * imgW + px];
+              const dark = invert ? val >= threshold : val < threshold;
+              if (dark) code |= (1 << bit);
+            }
+          }
+          line += String.fromCharCode(BRAILLE_BASE + code);
+        }
+        lines.push(line);
+      }
+      return lines.join('\n');
+    }
+
+    function render() {
+      if (!sourceImage) return;
+
+      const charW = parseInt(widthSlider.value);
+      const pixelW = charW * 2;
+      const pixelH = Math.round((sourceImage.height / sourceImage.width) * pixelW);
+
+      workCanvas.width = pixelW;
+      workCanvas.height = pixelH;
+      ctx.clearRect(0, 0, pixelW, pixelH);
+      ctx.drawImage(sourceImage, 0, 0, pixelW, pixelH);
+
+      const imageData = ctx.getImageData(0, 0, pixelW, pixelH);
+      const contrast = parseInt(contrastSlider.value);
+      const threshold = parseInt(thresholdSlider.value);
+      const invert = invertCheck.checked;
+
+      const grey = imageToGreyscale(imageData, contrast);
+      const braille = greyToBraille(grey, pixelW, pixelH, charW, threshold, invert);
+
+      brailleOutput.textContent = braille;
+      brailleOutput.style.fontSize = fontSlider.value + 'px';
+
+      dropZone.classList.add('has-output');
+      dropHint.hidden = true;
+      copyBtn.disabled = false;
+      resetBtn.disabled = false;
+    }
+
+    function loadImage(source) {
+      const img = new Image();
+      img.onload = () => {
+        sourceImage = img;
+        render();
+      };
+      if (typeof source === 'string') {
+        img.src = source;
+      } else {
+        const url = URL.createObjectURL(source);
+        img.onload = () => {
+          sourceImage = img;
+          URL.revokeObjectURL(url);
+          render();
+        };
+        img.src = url;
+      }
+    }
+
+    function handleFile(file) {
+      if (file && file.type.startsWith('image/')) {
+        loadImage(file);
+      }
+    }
+
+    function reset() {
+      sourceImage = null;
+      brailleOutput.textContent = '';
+      dropZone.classList.remove('has-output');
+      dropHint.hidden = false;
+      copyBtn.disabled = true;
+      resetBtn.disabled = true;
+    }
+
+    function showToast(msg) {
+      const toast = $('#toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1500);
+    }
+
+    // Event listeners
+    thresholdSlider.addEventListener('input', () => {
+      $('#thresholdValue').textContent = thresholdSlider.value;
+      render();
+    });
+    contrastSlider.addEventListener('input', () => {
+      $('#contrastValue').textContent = contrastSlider.value;
+      render();
+    });
+    fontSlider.addEventListener('input', () => {
+      $('#fontValue').textContent = fontSlider.value + 'px';
+      if (brailleOutput.textContent) {
+        brailleOutput.style.fontSize = fontSlider.value + 'px';
+      }
+    });
+    widthSlider.addEventListener('input', () => {
+      $('#widthValue').textContent = widthSlider.value;
+      render();
+    });
+    invertCheck.addEventListener('change', render);
+
+    copyBtn.addEventListener('click', async () => {
+      if (!brailleOutput.textContent) return;
+      try {
+        await navigator.clipboard.writeText(brailleOutput.textContent);
+        showToast('Copied to clipboard');
+      } catch {
+        // Fallback
+        const range = document.createRange();
+        range.selectNodeContents(brailleOutput);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand('copy');
+        showToast('Copied to clipboard');
+      }
+    });
+
+    resetBtn.addEventListener('click', reset);
+
+    // Drop zone
+    dropZone.addEventListener('click', (e) => {
+      if (!sourceImage) fileInput.click();
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      handleFile(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      handleFile(fileInput.files[0]);
+      fileInput.value = '';
+    });
+
+    // Paste from clipboard
+    document.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          handleFile(item.getAsFile());
+          return;
+        }
+      }
+    });
+  </script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
