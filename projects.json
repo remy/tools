@@ -44,7 +44,7 @@
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
     "title": "ESP32 Supermini Comparison"
   },
-  "image-braille": {
+  "image-ditherer": {
     "category": "Image Tools",
     "description": "Dither images into braille character art. Upload or paste an image, adjust threshold, contrast and font size, then copy the output.",
     "title": "Image Ditherer"
