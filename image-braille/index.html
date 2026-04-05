@@ -3,22 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Convert images to braille character art. Upload or paste an image, adjust contrast and font size, then copy the braille output.">
+  <meta name="description" content="Dither images into braille character art. Upload or paste an image, adjust threshold, contrast and font size, then copy the output.">
   <meta name="category" content="Image Tools">
-  <title>Image to Braille</title>
+  <title>Image Ditherer</title>
   <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f5f5f5;
+      --fg: #222;
+      --fg-muted: #666;
+      --fg-subtle: #999;
+      --border: #ddd;
+      --btn-bg: #fff;
+      --btn-border: #ccc;
+      --btn-hover-bg: #eee;
+      --btn-hover-border: #aaa;
+      --accent: #07c;
+      --accent-bg: #e0f0ff;
+      --accent-border: #07c;
+      --toast-bg: #e8f5e9;
+      --toast-border: #4caf50;
+      --toast-fg: #2e7d32;
+      --drop-border: #ccc;
+      --drag-accent: #07c;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0a0a0a;
+        --fg: #e0e0e0;
+        --fg-muted: #999;
+        --fg-subtle: #555;
+        --border: #222;
+        --btn-bg: #1a1a1a;
+        --btn-border: #444;
+        --btn-hover-bg: #252525;
+        --btn-hover-border: #666;
+        --accent: #6cf;
+        --accent-bg: rgba(102, 204, 255, 0.05);
+        --accent-border: #2a6ab0;
+        --toast-bg: #1a3a1a;
+        --toast-border: #2a6a2a;
+        --toast-fg: #8f8;
+        --drop-border: #333;
+        --drag-accent: #6cf;
+      }
+    }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #0a0a0a;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--fg);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
     header {
       padding: 1rem 1.5rem;
-      border-bottom: 1px solid #222;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       gap: 1rem;
@@ -43,34 +84,32 @@
     }
     .control-group label {
       font-size: 0.8rem;
-      color: #999;
+      color: var(--fg-muted);
       white-space: nowrap;
     }
     .control-group input[type="range"] {
       width: 120px;
-      accent-color: #6cf;
+      accent-color: var(--accent);
     }
     .control-group .value {
       font-size: 0.75rem;
-      color: #6cf;
+      color: var(--accent);
       min-width: 3ch;
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
     .btn {
       padding: 0.4rem 0.9rem;
-      border: 1px solid #444;
+      border: 1px solid var(--btn-border);
       border-radius: 6px;
-      background: #1a1a1a;
-      color: #e0e0e0;
+      background: var(--btn-bg);
+      color: var(--fg);
       font-size: 0.8rem;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
-    .btn:hover { background: #252525; border-color: #666; }
-    .btn-primary { background: #1a3a5c; border-color: #2a6ab0; color: #8cf; }
-    .btn-primary:hover { background: #224a70; }
+    .btn:hover { background: var(--btn-hover-bg); border-color: var(--btn-hover-border); }
     .btn:disabled { opacity: 0.4; cursor: default; }
     .drop-zone {
       flex: 1;
@@ -78,7 +117,7 @@
       align-items: center;
       justify-content: center;
       min-height: 300px;
-      border: 2px dashed #333;
+      border: 2px dashed var(--drop-border);
       border-radius: 12px;
       margin: 1rem;
       cursor: pointer;
@@ -86,8 +125,8 @@
       position: relative;
     }
     .drop-zone.drag-over {
-      border-color: #6cf;
-      background: rgba(102, 204, 255, 0.05);
+      border-color: var(--drag-accent);
+      background: var(--accent-bg);
     }
     .drop-zone.has-output {
       border: none;
@@ -97,11 +136,11 @@
     }
     .drop-hint {
       text-align: center;
-      color: #666;
+      color: var(--fg-muted);
       user-select: none;
     }
     .drop-hint p { font-size: 1.1rem; margin-bottom: 0.3rem; }
-    .drop-hint small { font-size: 0.8rem; color: #555; }
+    .drop-hint small { font-size: 0.8rem; color: var(--fg-subtle); }
     #brailleOutput {
       white-space: pre;
       line-height: 1;
@@ -122,9 +161,9 @@
       bottom: 1.5rem;
       left: 50%;
       transform: translateX(-50%) translateY(100%);
-      background: #1a3a1a;
-      border: 1px solid #2a6a2a;
-      color: #8f8;
+      background: var(--toast-bg);
+      border: 1px solid var(--toast-border);
+      color: var(--toast-fg);
       padding: 0.5rem 1.2rem;
       border-radius: 8px;
       font-size: 0.85rem;
@@ -147,7 +186,7 @@
 </head>
 <body>
   <header>
-    <h1>Image to Braille</h1>
+    <h1>Image Ditherer</h1>
     <div class="controls">
       <div class="control-group">
         <label for="thresholdSlider">Threshold</label>
@@ -275,7 +314,33 @@
         }
         lines.push(line);
       }
-      return lines.join('\n');
+      return lines;
+    }
+
+    function cropBraille(lines) {
+      const EMPTY = '\u2800';
+      // Trim empty rows from top and bottom
+      let top = 0;
+      while (top < lines.length && [...lines[top]].every(c => c === EMPTY)) top++;
+      let bottom = lines.length - 1;
+      while (bottom > top && [...lines[bottom]].every(c => c === EMPTY)) bottom--;
+      lines = lines.slice(top, bottom + 1);
+      if (lines.length === 0) return '';
+
+      // Trim empty columns from left and right
+      let left = Infinity;
+      let right = 0;
+      for (const line of lines) {
+        const chars = [...line];
+        for (let i = 0; i < chars.length; i++) {
+          if (chars[i] !== EMPTY) {
+            left = Math.min(left, i);
+            right = Math.max(right, i);
+          }
+        }
+      }
+      if (left > right) return '';
+      return lines.map(line => [...line].slice(left, right + 1).join('')).join('\n');
     }
 
     function render() {
@@ -296,7 +361,8 @@
       const invert = invertCheck.checked;
 
       const grey = imageToGreyscale(imageData, contrast);
-      const braille = greyToBraille(grey, pixelW, pixelH, charW, threshold, invert);
+      const lines = greyToBraille(grey, pixelW, pixelH, charW, threshold, invert);
+      const braille = cropBraille(lines);
 
       brailleOutput.textContent = braille;
       brailleOutput.style.fontSize = fontSlider.value + 'px';
