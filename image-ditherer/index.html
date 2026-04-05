@@ -20,12 +20,12 @@
       --btn-hover-border: #aaa;
       --accent: #07c;
       --accent-bg: #e0f0ff;
-      --accent-border: #07c;
       --toast-bg: #e8f5e9;
       --toast-border: #4caf50;
       --toast-fg: #2e7d32;
       --drop-border: #ccc;
       --drag-accent: #07c;
+      --preview-bg: #eee;
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -40,12 +40,12 @@
         --btn-hover-border: #666;
         --accent: #6cf;
         --accent-bg: rgba(102, 204, 255, 0.05);
-        --accent-border: #2a6ab0;
         --toast-bg: #1a3a1a;
         --toast-border: #2a6a2a;
         --toast-fg: #8f8;
         --drop-border: #333;
         --drag-accent: #6cf;
+        --preview-bg: #111;
       }
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -58,21 +58,17 @@
       flex-direction: column;
     }
     header {
-      padding: 1rem 1.5rem;
+      padding: 0.75rem 1.25rem;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       gap: 1rem;
       flex-wrap: wrap;
     }
-    header h1 {
-      font-size: 1.2rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
+    header h1 { font-size: 1.1rem; font-weight: 600; white-space: nowrap; }
     .controls {
       display: flex;
-      gap: 1.5rem;
+      gap: 1.25rem;
       align-items: center;
       flex-wrap: wrap;
       flex: 1;
@@ -80,37 +76,50 @@
     .control-group {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
     .control-group label {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--fg-muted);
       white-space: nowrap;
     }
     .control-group input[type="range"] {
-      width: 120px;
+      width: 100px;
       accent-color: var(--accent);
     }
     .control-group .value {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--accent);
       min-width: 3ch;
       text-align: right;
       font-variant-numeric: tabular-nums;
     }
     .btn {
-      padding: 0.4rem 0.9rem;
+      padding: 0.35rem 0.8rem;
       border: 1px solid var(--btn-border);
       border-radius: 6px;
       background: var(--btn-bg);
       color: var(--fg);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
       white-space: nowrap;
     }
     .btn:hover { background: var(--btn-hover-bg); border-color: var(--btn-hover-border); }
     .btn:disabled { opacity: 0.4; cursor: default; }
+    .actions {
+      display: flex;
+      gap: 0.4rem;
+      margin-left: auto;
+    }
+
+    .main-area {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    /* Drop zone — shown before image loaded */
     .drop-zone {
       flex: 1;
       display: flex;
@@ -128,16 +137,7 @@
       border-color: var(--drag-accent);
       background: var(--accent-bg);
     }
-    .drop-zone.has-output {
-      border: none;
-      cursor: default;
-      align-items: flex-start;
-      overflow: auto;
-    }
-    .drop-zone.has-output .drop-hint { display: none; }
     .drop-hint {
-      position: absolute;
-      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -148,23 +148,56 @@
     }
     .drop-hint p { font-size: 1.1rem; margin-bottom: 0.3rem; }
     .drop-hint small { font-size: 0.8rem; color: var(--fg-subtle); }
+
+    /* Split view — shown after image loaded */
+    .split-view {
+      flex: 1;
+      display: none;
+      min-height: 0;
+    }
+    .split-view.active { display: flex; }
+
+    .braille-pane {
+      flex: 1;
+      overflow: auto;
+      min-width: 0;
+    }
     #brailleOutput {
       white-space: pre;
       line-height: 1;
       letter-spacing: 0;
       padding: 1rem;
-      width: 100%;
       font-family: monospace;
       user-select: all;
-      display: none;
     }
-    .has-output #brailleOutput { display: block; }
-    #fileInput { display: none; }
-    .actions {
+
+    .preview-pane {
+      width: 280px;
+      flex-shrink: 0;
+      border-left: 1px solid var(--border);
       display: flex;
-      gap: 0.5rem;
-      margin-left: auto;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--preview-bg);
+      padding: 1rem;
+      gap: 0.75rem;
+      overflow: auto;
     }
+    .preview-pane canvas {
+      max-width: 100%;
+      height: auto;
+      image-rendering: pixelated;
+      border-radius: 4px;
+    }
+    .preview-pane .preview-label {
+      font-size: 0.7rem;
+      color: var(--fg-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    #fileInput { display: none; }
     .toast {
       position: fixed;
       bottom: 1.5rem;
@@ -190,6 +223,15 @@
       .controls { width: 100%; }
       .actions { margin-left: 0; width: 100%; }
       .actions .btn { flex: 1; text-align: center; }
+      .split-view.active { flex-direction: column-reverse; }
+      .preview-pane {
+        width: 100%;
+        border-left: none;
+        border-bottom: 1px solid var(--border);
+        flex-direction: row;
+        padding: 0.5rem;
+      }
+      .preview-pane canvas { max-height: 120px; width: auto; }
     }
   </style>
 </head>
@@ -229,28 +271,42 @@
     </div>
   </header>
 
-  <div class="drop-zone" id="dropZone">
-    <div class="drop-hint" id="dropHint">
-      <p>Drop or paste an image here</p>
-      <small>or click to browse</small>
+  <div class="main-area" id="mainArea">
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-hint">
+        <p>Drop or paste an image here</p>
+        <small>or click to browse</small>
+      </div>
     </div>
-    <div id="brailleOutput"></div>
+
+    <div class="split-view" id="splitView">
+      <div class="braille-pane">
+        <div id="brailleOutput"></div>
+      </div>
+      <div class="preview-pane">
+        <span class="preview-label">Dithered</span>
+        <canvas id="ditherPreview"></canvas>
+        <span class="preview-label">Original</span>
+        <canvas id="sourcePreview"></canvas>
+      </div>
+    </div>
   </div>
 
   <input type="file" id="fileInput" accept="image/*">
   <div class="toast" id="toast">Copied to clipboard</div>
-
   <canvas id="workCanvas" hidden></canvas>
 
   <script>
     const $ = (s) => document.querySelector(s);
 
     const dropZone = $('#dropZone');
-    const dropHint = $('#dropHint');
+    const splitView = $('#splitView');
     const brailleOutput = $('#brailleOutput');
     const fileInput = $('#fileInput');
     const workCanvas = $('#workCanvas');
     const ctx = workCanvas.getContext('2d', { willReadFrequently: true });
+    const ditherPreview = $('#ditherPreview');
+    const sourcePreview = $('#sourcePreview');
 
     const thresholdSlider = $('#thresholdSlider');
     const contrastSlider = $('#contrastSlider');
@@ -270,14 +326,9 @@
     //  6  7
     const BRAILLE_BASE = 0x2800;
     const DOT_OFFSETS = [
-      [0, 0], // dot 0 → bit 0
-      [0, 1], // dot 1 → bit 1
-      [0, 2], // dot 2 → bit 2
-      [1, 0], // dot 3 → bit 3
-      [1, 1], // dot 4 → bit 4
-      [1, 2], // dot 5 → bit 5
-      [0, 3], // dot 6 → bit 6
-      [1, 3], // dot 7 → bit 7
+      [0, 0], [0, 1], [0, 2],
+      [1, 0], [1, 1], [1, 2],
+      [0, 3], [1, 3],
     ];
 
     function applyContrast(value, contrast) {
@@ -293,7 +344,6 @@
         const g = data[i * 4 + 1];
         const b = data[i * 4 + 2];
         const a = data[i * 4 + 3] / 255;
-        // Luminance weighted, blend with white background for transparency
         let lum = 0.299 * r + 0.587 * g + 0.114 * b;
         lum = lum * a + 255 * (1 - a);
         grey[i] = applyContrast(lum, contrast);
@@ -301,10 +351,31 @@
       return grey;
     }
 
-    function greyToBraille(grey, imgW, imgH, charW, threshold, invert) {
+    function floydSteinbergDither(grey, w, h, threshold, invert) {
+      // Work on a copy so we can diffuse error
+      const buf = new Float32Array(grey);
+      const out = new Uint8Array(w * h);
+
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const i = y * w + x;
+          const old = buf[i];
+          const val = old < threshold ? 0 : 255;
+          out[i] = invert ? (val === 0 ? 255 : 0) : val;
+          const err = old - val;
+
+          if (x + 1 < w)             buf[i + 1]     += err * 7 / 16;
+          if (y + 1 < h && x > 0)    buf[(y+1)*w + x-1] += err * 3 / 16;
+          if (y + 1 < h)             buf[(y+1)*w + x]   += err * 5 / 16;
+          if (y + 1 < h && x + 1 < w) buf[(y+1)*w + x+1] += err * 1 / 16;
+        }
+      }
+      return out;
+    }
+
+    function ditheredToBraille(dithered, imgW, imgH, charW) {
       const charH = Math.ceil(imgH / 4);
       const lines = [];
-
       for (let cy = 0; cy < charH; cy++) {
         let line = '';
         for (let cx = 0; cx < charW; cx++) {
@@ -314,9 +385,7 @@
             const px = cx * 2 + dx;
             const py = cy * 4 + dy;
             if (px < imgW && py < imgH) {
-              const val = grey[py * imgW + px];
-              const dark = invert ? val >= threshold : val < threshold;
-              if (dark) code |= (1 << bit);
+              if (dithered[py * imgW + px] === 0) code |= (1 << bit);
             }
           }
           line += String.fromCharCode(BRAILLE_BASE + code);
@@ -328,7 +397,6 @@
 
     function cropBraille(lines) {
       const EMPTY = '\u2800';
-      // Trim empty rows from top and bottom
       let top = 0;
       while (top < lines.length && [...lines[top]].every(c => c === EMPTY)) top++;
       let bottom = lines.length - 1;
@@ -336,7 +404,6 @@
       lines = lines.slice(top, bottom + 1);
       if (lines.length === 0) return '';
 
-      // Trim empty columns from left and right
       let left = Infinity;
       let right = 0;
       for (const line of lines) {
@@ -350,6 +417,31 @@
       }
       if (left > right) return '';
       return lines.map(line => [...line].slice(left, right + 1).join('')).join('\n');
+    }
+
+    function renderDitherPreview(dithered, w, h) {
+      ditherPreview.width = w;
+      ditherPreview.height = h;
+      const pCtx = ditherPreview.getContext('2d');
+      const img = pCtx.createImageData(w, h);
+      for (let i = 0; i < w * h; i++) {
+        const v = dithered[i];
+        img.data[i * 4] = v;
+        img.data[i * 4 + 1] = v;
+        img.data[i * 4 + 2] = v;
+        img.data[i * 4 + 3] = 255;
+      }
+      pCtx.putImageData(img, 0, 0);
+    }
+
+    function renderSourcePreview() {
+      const maxW = 260;
+      const scale = Math.min(1, maxW / sourceImage.width);
+      const w = Math.round(sourceImage.width * scale);
+      const h = Math.round(sourceImage.height * scale);
+      sourcePreview.width = w;
+      sourcePreview.height = h;
+      sourcePreview.getContext('2d').drawImage(sourceImage, 0, 0, w, h);
     }
 
     function render() {
@@ -370,46 +462,51 @@
       const invert = invertCheck.checked;
 
       const grey = imageToGreyscale(imageData, contrast);
-      const lines = greyToBraille(grey, pixelW, pixelH, charW, threshold, invert);
+      const dithered = floydSteinbergDither(grey, pixelW, pixelH, threshold, invert);
+
+      const lines = ditheredToBraille(dithered, pixelW, pixelH, charW);
       const braille = cropBraille(lines);
 
       brailleOutput.textContent = braille;
       brailleOutput.style.fontSize = fontSlider.value + 'px';
 
-      dropZone.classList.add('has-output');
+      renderDitherPreview(dithered, pixelW, pixelH);
+
+      dropZone.style.display = 'none';
+      splitView.classList.add('active');
       copyBtn.disabled = false;
       resetBtn.disabled = false;
     }
 
     function loadImage(source) {
       const img = new Image();
-      img.onload = () => {
+      const onLoad = () => {
         sourceImage = img;
+        renderSourcePreview();
         render();
       };
       if (typeof source === 'string') {
+        img.onload = onLoad;
         img.src = source;
       } else {
         const url = URL.createObjectURL(source);
         img.onload = () => {
-          sourceImage = img;
           URL.revokeObjectURL(url);
-          render();
+          onLoad();
         };
         img.src = url;
       }
     }
 
     function handleFile(file) {
-      if (file && file.type.startsWith('image/')) {
-        loadImage(file);
-      }
+      if (file && file.type.startsWith('image/')) loadImage(file);
     }
 
     function reset() {
       sourceImage = null;
       brailleOutput.textContent = '';
-      dropZone.classList.remove('has-output');
+      splitView.classList.remove('active');
+      dropZone.style.display = '';
       copyBtn.disabled = true;
       resetBtn.disabled = true;
     }
@@ -448,7 +545,6 @@
         await navigator.clipboard.writeText(brailleOutput.textContent);
         showToast('Copied to clipboard');
       } catch {
-        // Fallback
         const range = document.createRange();
         range.selectNodeContents(brailleOutput);
         const sel = window.getSelection();
@@ -462,22 +558,16 @@
     resetBtn.addEventListener('click', reset);
 
     // Drop zone
-    dropZone.addEventListener('click', (e) => {
-      if (!sourceImage) fileInput.click();
-    });
-
+    dropZone.addEventListener('click', () => fileInput.click());
     dropZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       dropZone.classList.add('drag-over');
     });
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('drag-over');
-    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
     dropZone.addEventListener('drop', (e) => {
       e.preventDefault();
       dropZone.classList.remove('drag-over');
-      const file = e.dataTransfer.files[0];
-      handleFile(file);
+      handleFile(e.dataTransfer.files[0]);
     });
 
     fileInput.addEventListener('change', () => {
