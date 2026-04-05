@@ -134,7 +134,14 @@
       align-items: flex-start;
       overflow: auto;
     }
+    .drop-zone.has-output .drop-hint { display: none; }
     .drop-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
       text-align: center;
       color: var(--fg-muted);
       user-select: none;
@@ -149,7 +156,9 @@
       width: 100%;
       font-family: monospace;
       user-select: all;
+      display: none;
     }
+    .has-output #brailleOutput { display: block; }
     #fileInput { display: none; }
     .actions {
       display: flex;
@@ -368,7 +377,6 @@
       brailleOutput.style.fontSize = fontSlider.value + 'px';
 
       dropZone.classList.add('has-output');
-      dropHint.hidden = true;
       copyBtn.disabled = false;
       resetBtn.disabled = false;
     }
@@ -402,7 +410,6 @@
       sourceImage = null;
       brailleOutput.textContent = '';
       dropZone.classList.remove('has-output');
-      dropHint.hidden = false;
       copyBtn.disabled = true;
       resetBtn.disabled = true;
     }
