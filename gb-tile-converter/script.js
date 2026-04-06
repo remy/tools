@@ -461,7 +461,6 @@
     state.tileData = [];
 
     for (const char of FONT_CHARS) {
-      ctx.imageSmoothingEnabled = state.fontSmoothing;
       ctx.fillStyle = DMG_CSS[0];
       ctx.fillRect(0, 0, 8, 8);
 
@@ -480,7 +479,12 @@
         const row = [];
         for (let c = 0; c < 8; c++) {
           const i = (r * 8 + c) * 4;
-          row.push(rgbToDmg(pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]));
+          let color = rgbToDmg(pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]);
+          // When anti-alias is off, threshold to binary (white or black only)
+          if (!state.fontSmoothing) {
+            color = color >= 2 ? 3 : 0;
+          }
+          row.push(color);
         }
         tile.push(row);
       }
