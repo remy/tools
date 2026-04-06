@@ -91,6 +91,8 @@
     imageScale: 1,
     fontLoaded: false,
     fontFamily: null,
+    fontBase64: null,
+    fontMime: null,
     fontSize: 8,
     fontYOffset: 0,
     fontBold: false,
@@ -425,6 +427,23 @@
     return FONT_EXTENSIONS.test(file.name);
   }
 
+  function fontMimeType(filename) {
+    const ext = filename.toLowerCase().split('.').pop();
+    switch (ext) {
+      case 'woff': return 'font/woff';
+      case 'woff2': return 'font/woff2';
+      case 'otf': return 'font/otf';
+      default: return 'font/ttf';
+    }
+  }
+
+  function arrayBufferToBase64(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+
   async function loadFontFile(file) {
     try {
       const buffer = await file.arrayBuffer();
@@ -435,6 +454,8 @@
 
       state.fontLoaded = true;
       state.fontFamily = familyName;
+      state.fontBase64 = arrayBufferToBase64(buffer);
+      state.fontMime = fontMimeType(file.name);
       state.image = null;
       state.imageFileName = file.name.replace(/\.\w+$/, '');
 
@@ -445,66 +466,103 @@
       el.dropOverlay.classList.add('loaded');
       el.resetPositionBtn.hidden = true;
 
-      generateFontTiles();
+      await generateFontTiles();
     } catch (err) {
       console.error('Failed to load font:', err);
     }
   }
 
-  function generateFontTiles() {
-    if (!state.fontLoaded) return;
+  async function generateFontTiles() {
+    if (!state.fontLoaded || !state.fontBase64) return;
 
     const fontSize = state.fontSize;
     const yOffset = state.fontYOffset;
-    const bold = state.fontBold ? 'bold ' : '';
-    const fontSpec = `${bold}${fontSize}px "${state.fontFamily}"`;
-
-    // Render all 96 characters in a single fillText call on one wide canvas.
-    // This lets the text shaper position every glyph on the same baseline with
-    // consistent subpixel alignment, avoiding per-character rendering where
-    // some strokes land on pixel boundaries and others don't.
-    // We use letter-spacing (via manual positioning with measureText) to
-    // ensure each glyph lands in its own 8px-wide cell.
+    const bold = state.fontBold;
+    const cellSize = Math.ceil(fontSize);
     const cols = FONT_CHARS.length;
-    const stripW = cols * 8;
-    const stripH = 8;
+    const totalW = cols * cellSize;
+    const totalH = cellSize;
 
-    const canvas = document.createElement('canvas');
-    canvas.width = stripW;
-    canvas.height = stripH;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    // Render glyphs via SVG foreignObject so the browser's CSS text engine
+    // handles rasterisation (identical to normal HTML text rendering).
+    // The font is embedded as a base64 @font-face so the SVG is self-contained.
+    const fontFaceCss = `@font-face{font-family:'tile-font';src:url('data:${state.fontMime};base64,${state.fontBase64}')}`;
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, stripW, stripH);
-
-    ctx.fillStyle = '#000000';
-    ctx.font = fontSpec;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Draw each character centered in its 8px cell
-    for (let i = 0; i < cols; i++) {
-      if (FONT_CHARS[i] !== ' ') {
-        ctx.fillText(FONT_CHARS[i], i * 8 + 4, 4 + yOffset);
+    const spans = FONT_CHARS.map(ch => {
+      let escaped;
+      switch (ch) {
+        case '&': escaped = '&amp;'; break;
+        case '<': escaped = '&lt;'; break;
+        case '>': escaped = '&gt;'; break;
+        case '"': escaped = '&quot;'; break;
+        case "'": escaped = '&#39;'; break;
+        case ' ': escaped = '&#160;'; break;
+        default: escaped = ch;
       }
+      return `<span style="display:inline-block;width:${cellSize}px;height:${cellSize}px;text-align:center;font-family:'tile-font';font-size:${fontSize}px;line-height:1;${bold ? 'font-weight:bold;' : ''}color:#000;overflow:hidden">${escaped}</span>`;
+    }).join('');
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}">` +
+      `<style>${fontFaceCss}</style>` +
+      `<foreignObject width="100%" height="100%">` +
+      `<div xmlns="http://www.w3.org/1999/xhtml" style="margin:0;padding:0;font-size:0;white-space:nowrap;line-height:0;position:relative;top:${yOffset}px">` +
+      spans +
+      `</div></foreignObject></svg>`;
+
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    let svgImg;
+    try {
+      svgImg = await new Promise((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = url;
+      });
+    } finally {
+      URL.revokeObjectURL(url);
     }
 
-    // Slice the strip into 8×8 tiles
-    const imgData = ctx.getImageData(0, 0, stripW, stripH);
-    const pixels = imgData.data;
+    // Draw SVG to a canvas at native font size
+    const stripCanvas = document.createElement('canvas');
+    stripCanvas.width = totalW;
+    stripCanvas.height = totalH;
+    const stripCtx = stripCanvas.getContext('2d', { willReadFrequently: true });
+    stripCtx.drawImage(svgImg, 0, 0);
+
+    const stripData = stripCtx.getImageData(0, 0, totalW, totalH);
+
+    // Scale each cellSize×cellSize character cell down to 8×8 and quantise
+    const tileCanvas = document.createElement('canvas');
+    tileCanvas.width = 8;
+    tileCanvas.height = 8;
+    const tileCtx = tileCanvas.getContext('2d', { willReadFrequently: true });
 
     state.tileData = [];
-    const lumDump = []; // for debug
+    const lumDump = [];
 
     for (let i = 0; i < cols; i++) {
+      tileCtx.clearRect(0, 0, 8, 8);
+      tileCtx.fillStyle = '#ffffff';
+      tileCtx.fillRect(0, 0, 8, 8);
+      // Anti-alias toggle controls downscale interpolation:
+      // off = nearest-neighbour (crisp pixel fonts), on = bilinear (smooth)
+      tileCtx.imageSmoothingEnabled = state.fontSmoothing;
+      tileCtx.drawImage(stripCanvas,
+        i * cellSize, 0, cellSize, cellSize,
+        0, 0, 8, 8
+      );
+
+      const tileData = tileCtx.getImageData(0, 0, 8, 8);
+      const pixels = tileData.data;
       const tile = [];
-      const charLum = []; // raw lum values for this char
+      const charLum = [];
       for (let r = 0; r < 8; r++) {
         const row = [];
         const lumRow = [];
         for (let c = 0; c < 8; c++) {
-          const si = (r * stripW + i * 8 + c) * 4;
-          // Red channel is sufficient (white bg, black text = grayscale)
+          const si = (r * 8 + c) * 4;
           const lum = pixels[si];
           lumRow.push(lum);
           let color;
@@ -532,7 +590,8 @@
     }
 
     // Populate debug panel
-    updateDebugPanel(canvas, imgData, lumDump, fontSpec);
+    const fontSpec = `${bold ? 'bold ' : ''}${fontSize}px via SVG foreignObject (cell ${cellSize}×${cellSize} → 8×8)`;
+    updateDebugPanel(stripCanvas, stripData, lumDump, fontSpec);
 
     renderFontPreview();
     renderFontCharMap();
@@ -623,34 +682,37 @@
   function updateDebugPanel(stripCanvas, imgData, lumDump, fontSpec) {
     el.debugPanel.hidden = false;
 
+    const cellSize = Math.ceil(state.fontSize);
+
     // Info
     const dpr = window.devicePixelRatio || 1;
     el.debugInfo.innerHTML = [
-      `<strong>Font spec:</strong> <code>${fontSpec}</code>`,
+      `<strong>Rendering:</strong> <code>${fontSpec}</code>`,
       `<strong>Device pixel ratio:</strong> ${dpr}`,
-      `<strong>Strip canvas:</strong> ${stripCanvas.width}×${stripCanvas.height}`,
-      `<strong>Anti-alias (4-colour):</strong> ${state.fontSmoothing}`,
-      `<strong>Canvas backing store:</strong> ${imgData.width}×${imgData.height} (${imgData.data.length} bytes)`,
+      `<strong>Strip canvas:</strong> ${stripCanvas.width}×${stripCanvas.height} (${FONT_CHARS.length} cells of ${cellSize}×${cellSize})`,
+      `<strong>Anti-alias / smooth downscale:</strong> ${state.fontSmoothing}`,
+      `<strong>Downscale:</strong> ${cellSize}×${cellSize} → 8×8 (${cellSize === 8 ? 'none' : (cellSize / 8).toFixed(2) + '×'})`,
     ].join('<br>');
 
-    // Raw strip — show at 4× zoom so individual pixels are visible
+    // Raw strip — show at a zoom so individual pixels are visible
     el.debugStripWrap.innerHTML = '';
+    const stripZoom = Math.max(1, Math.floor(128 / cellSize));
     const stripClone = document.createElement('canvas');
     stripClone.width = stripCanvas.width;
     stripClone.height = stripCanvas.height;
-    stripClone.style.width = (stripCanvas.width * 4) + 'px';
-    stripClone.style.height = (stripCanvas.height * 4) + 'px';
+    stripClone.style.width = (stripCanvas.width * stripZoom) + 'px';
+    stripClone.style.height = (stripCanvas.height * stripZoom) + 'px';
     stripClone.getContext('2d').drawImage(stripCanvas, 0, 0);
     el.debugStripWrap.appendChild(stripClone);
 
-    // Per-character tiles — show each 8×8 raw tile at 4× with red grid lines
+    // Per-character tiles at native size — show each cellSize×cellSize cell zoomed up
     el.debugTilesWrap.innerHTML = '';
-    const tileScale = 6;
+    const tileScale = Math.max(2, Math.floor(48 / cellSize));
     const tilesPerRow = 16;
     const totalRows = Math.ceil(FONT_CHARS.length / tilesPerRow);
     const debugTileCanvas = document.createElement('canvas');
-    const dtW = tilesPerRow * (8 * tileScale + 1) + 1;
-    const dtH = totalRows * (8 * tileScale + 1) + 1;
+    const dtW = tilesPerRow * (cellSize * tileScale + 1) + 1;
+    const dtH = totalRows * (cellSize * tileScale + 1) + 1;
     debugTileCanvas.width = dtW;
     debugTileCanvas.height = dtH;
     debugTileCanvas.style.width = dtW + 'px';
@@ -662,13 +724,13 @@
     for (let i = 0; i < FONT_CHARS.length; i++) {
       const col = i % tilesPerRow;
       const row = Math.floor(i / tilesPerRow);
-      const ox = col * (8 * tileScale + 1) + 1;
-      const oy = row * (8 * tileScale + 1) + 1;
+      const ox = col * (cellSize * tileScale + 1) + 1;
+      const oy = row * (cellSize * tileScale + 1) + 1;
 
-      // Draw raw pixels from the strip (not quantised)
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const si = (r * stripCanvas.width + i * 8 + c) * 4;
+      // Draw raw pixels from the strip at native cell size (not quantised)
+      for (let r = 0; r < cellSize; r++) {
+        for (let c = 0; c < cellSize; c++) {
+          const si = (r * stripCanvas.width + i * cellSize + c) * 4;
           const rv = imgData.data[si], gv = imgData.data[si + 1], bv = imgData.data[si + 2];
           dtCtx.fillStyle = `rgb(${rv},${gv},${bv})`;
           dtCtx.fillRect(ox + c * tileScale, oy + r * tileScale, tileScale, tileScale);
@@ -678,24 +740,24 @@
       // Grid lines within each tile
       dtCtx.strokeStyle = 'rgba(255,0,0,0.15)';
       dtCtx.lineWidth = 1;
-      for (let g = 1; g < 8; g++) {
+      for (let g = 1; g < cellSize; g++) {
         dtCtx.beginPath();
         dtCtx.moveTo(ox + g * tileScale, oy);
-        dtCtx.lineTo(ox + g * tileScale, oy + 8 * tileScale);
+        dtCtx.lineTo(ox + g * tileScale, oy + cellSize * tileScale);
         dtCtx.moveTo(ox, oy + g * tileScale);
-        dtCtx.lineTo(ox + 8 * tileScale, oy + g * tileScale);
+        dtCtx.lineTo(ox + cellSize * tileScale, oy + g * tileScale);
         dtCtx.stroke();
       }
     }
     el.debugTilesWrap.appendChild(debugTileCanvas);
 
-    // Luminance dump — show raw values for first ~20 interesting chars
+    // Luminance dump — raw 8×8 values after downscale (what the quantiser sees)
     const lines = [];
     for (let i = 0; i < FONT_CHARS.length; i++) {
       const ch = FONT_CHARS[i];
       const label = ch === ' ' ? 'SP' : ch;
       const allWhite = lumDump[i].every(row => row.every(v => v === 255));
-      if (allWhite && ch === ' ') continue; // skip empty space
+      if (allWhite && ch === ' ') continue;
       const grid = lumDump[i].map(row =>
         row.map(v => String(v).padStart(3)).join(' ')
       ).join('\n');
@@ -705,6 +767,7 @@
 
     // HTML-rendered glyphs using the loaded @font-face
     el.debugHtmlWrap.innerHTML = '';
+    const fontSize = state.fontSize;
     const glyphSize = fontSize;
     const zoomedSize = glyphSize * 6;
     const grid = document.createElement('div');
@@ -717,7 +780,7 @@
       const span = document.createElement('span');
       span.style.fontFamily = `"${state.fontFamily}"`;
       span.style.fontSize = fontSize + 'px';
-      span.style.lineHeight = fontSize + 'px';
+      span.style.lineHeight = '1';
       span.style.transform = `scale(${zoomedSize / glyphSize})`;
       span.style.transformOrigin = 'top left';
       span.style.width = glyphSize + 'px';
