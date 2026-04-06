@@ -609,3 +609,37 @@ body {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }
+
+.debug-html-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--colour-border);
+  border-radius: 0.375rem;
+  padding: var(--space-sm);
+  background: #fff;
+}
+
+.debug-html-grid {
+  display: grid;
+  grid-template-columns: repeat(16, auto);
+  gap: 0;
+  width: fit-content;
+}
+
+.debug-html-grid .glyph-cell {
+  width: var(--glyph-size);
+  height: var(--glyph-size);
+  line-height: var(--glyph-size);
+  text-align: center;
+  overflow: hidden;
+  color: #000;
+  background: #e0f8d0;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-sizing: content-box;
+}
+
+.debug-html-grid .glyph-cell span {
+  display: block;
+  image-rendering: pixelated;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+}

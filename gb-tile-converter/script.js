@@ -56,6 +56,7 @@
     debugStripWrap: document.getElementById('debugStripWrap'),
     debugTilesWrap: document.getElementById('debugTilesWrap'),
     debugLum: document.getElementById('debugLum'),
+    debugHtmlWrap: document.getElementById('debugHtmlWrap'),
   };
 
   const ovCtx = el.overviewCanvas.getContext('2d', { willReadFrequently: true });
@@ -701,6 +702,34 @@
       lines.push(`── ${label} (0x${(32 + i).toString(16).toUpperCase()}) ──\n${grid}`);
     }
     el.debugLum.textContent = lines.join('\n\n');
+
+    // HTML-rendered glyphs using the loaded @font-face
+    el.debugHtmlWrap.innerHTML = '';
+    const glyphSize = fontSize;
+    const zoomedSize = glyphSize * 6;
+    const grid = document.createElement('div');
+    grid.className = 'debug-html-grid';
+    grid.style.setProperty('--glyph-size', zoomedSize + 'px');
+
+    for (let i = 0; i < FONT_CHARS.length; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'glyph-cell';
+      const span = document.createElement('span');
+      span.style.fontFamily = `"${state.fontFamily}"`;
+      span.style.fontSize = fontSize + 'px';
+      span.style.lineHeight = fontSize + 'px';
+      span.style.transform = `scale(${zoomedSize / glyphSize})`;
+      span.style.transformOrigin = 'top left';
+      span.style.width = glyphSize + 'px';
+      span.style.height = glyphSize + 'px';
+      span.style.display = 'block';
+      if (state.fontBold) span.style.fontWeight = 'bold';
+      span.textContent = FONT_CHARS[i] === ' ' ? '\u00A0' : FONT_CHARS[i];
+      cell.appendChild(span);
+      grid.appendChild(cell);
+    }
+
+    el.debugHtmlWrap.appendChild(grid);
   }
 
   // Font control event listeners
