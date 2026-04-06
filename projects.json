@@ -44,6 +44,11 @@
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
     "title": "ESP32 Supermini Comparison"
   },
+  "font-grid-generator": {
+    "category": "Developer Tools",
+    "description": "Drop a pixel font file and generate an 8x8 grid representation of each glyph. Supports TTF, OTF, WOFF, and WOFF2 formats.",
+    "title": "Font Grid Generator"
+  },
   "gb-tile-converter": {
     "category": "Developer Tools",
     "description": "Convert images to Game Boy DMG tile data. Upload an image, align to an 8x8 grid, edit individual tile pixels, and export C header arrays.",
