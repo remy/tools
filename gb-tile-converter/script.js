@@ -475,191 +475,200 @@
     }
   }
 
-  function extractGlyph(ctx, canvasSize, char, fontSpec, yOffset) {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
-    if (char === ' ') {
-      const adv = Math.round(ctx.measureText(' ').width) || Math.ceil(canvasSize / 4);
-      return { pixels: null, w: adv, h: 0, minX: 0, minY: 0 };
-    }
-    ctx.fillStyle = '#000000';
-    ctx.font = fontSpec;
-    ctx.textBaseline = 'top';
-    ctx.textAlign = 'left';
-    ctx.fillText(char, 0, yOffset);
+  /**
+   * Renders a pixel font glyph sheet onto a canvas.
+   * @param {object} opts
+   * @param {string} opts.fontFamily  - CSS font-family name (already loaded)
+   * @param {number} opts.nativeSize  - The font's designed pixel size
+   * @param {number} [opts.scale=1]   - Integer multiplier for output pixels
+   * @param {number} [opts.cols=16]   - Columns per row
+   * @param {number} [opts.cellW=8]   - Cell width in native pixels
+   * @param {string} [opts.fg='#000'] - Foreground colour
+   * @param {string} [opts.bg='#fff'] - Background colour
+   * @returns {{ canvas: HTMLCanvasElement, cellW: number, cellH: number, rows: number }}
+   */
+  function renderPixelFontSheet(opts) {
+    const {
+      fontFamily,
+      nativeSize,
+      scale = 1,
+      cols = 16,
+      cellW = 8,
+      fg = '#000',
+      bg = '#fff',
+    } = opts;
 
-    const data = ctx.getImageData(0, 0, canvasSize, canvasSize);
-    const px = data.data;
-    let minX = canvasSize, maxX = 0, minY = canvasSize, maxY = 0;
-    for (let y = 0; y < canvasSize; y++) {
-      for (let x = 0; x < canvasSize; x++) {
-        if (px[(y * canvasSize + x) * 4] < 250) {
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
+    const chars = FONT_CHARS;
+    const rows = Math.ceil(chars.length / cols);
+
+    function getGlyphBounds(char) {
+      const c = document.createElement('canvas');
+      const w = nativeSize * 2;
+      const h = nativeSize * 2;
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, w, h);
+      ctx.font = `${nativeSize}px ${fontFamily}`;
+      ctx.fillStyle = '#fff';
+      ctx.textBaseline = 'top';
+      ctx.fillText(char, 0, 0);
+      const data = ctx.getImageData(0, 0, w, h);
+
+      let minX = w, maxX = 0, minY = h, maxY = 0;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (data.data[(y * w + x) * 4] > 128) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < minX) return null;
+      return { minX, maxX, minY, maxY, data, w };
+    }
+
+    function extractGlyph(bounds, globalMinY, cellH) {
+      const cell = [];
+      for (let y = 0; y < cellH; y++) cell.push(new Uint8Array(cellW));
+      if (!bounds) return cell;
+      const { minX, maxX, minY, maxY, data, w } = bounds;
+      for (let y = minY; y <= maxY; y++) {
+        const dy = y - globalMinY;
+        if (dy < 0 || dy >= cellH) continue;
+        for (let x = minX; x <= maxX; x++) {
+          const dx = x - minX;
+          if (dx >= cellW) break;
+          if (data.data[(y * w + x) * 4] > 128) cell[dy][dx] = 1;
+        }
+      }
+      return cell;
+    }
+
+    // -- pass 1: measure --
+    const allBounds = {};
+    let globalMinY = Infinity, globalMaxY = 0;
+    for (const ch of chars) {
+      const b = getGlyphBounds(ch);
+      allBounds[ch] = b;
+      if (b) {
+        if (b.minY < globalMinY) globalMinY = b.minY;
+        if (b.maxY > globalMaxY) globalMaxY = b.maxY;
+      }
+    }
+    if (globalMinY === Infinity) globalMinY = 0;
+    const cellH = globalMaxY - globalMinY + 1;
+
+    // -- pass 2: render --
+    const canvas = document.createElement('canvas');
+    canvas.width = cols * cellW * scale;
+    canvas.height = rows * cellH * scale;
+    const ctx = canvas.getContext('2d');
+    if (bg) {
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    for (let idx = 0; idx < chars.length; idx++) {
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      const pixels = extractGlyph(allBounds[chars[idx]], globalMinY, cellH);
+      const ox = col * cellW;
+      const oy = row * cellH;
+      for (let y = 0; y < cellH; y++) {
+        for (let x = 0; x < cellW; x++) {
+          if (pixels[y][x]) {
+            ctx.fillStyle = fg;
+            ctx.fillRect((ox + x) * scale, (oy + y) * scale, scale, scale);
+          }
         }
       }
     }
-    if (maxX < minX) {
-      const adv = Math.round(ctx.measureText(char).width) || Math.ceil(canvasSize / 4);
-      return { pixels: null, w: adv, h: 0, minX: 0, minY: 0 };
-    }
-    const gw = maxX - minX + 1;
-    const gh = maxY - minY + 1;
-    // Extract raw luminance for the bounding box region
-    const pixels = [];
-    for (let y = minY; y <= maxY; y++) {
-      const row = [];
-      for (let x = minX; x <= maxX; x++) {
-        row.push(px[(y * canvasSize + x) * 4]);
-      }
-      pixels.push(row);
-    }
-    return { pixels, w: gw, h: gh, minX, minY };
+
+    return { canvas, cellW, cellH, rows };
   }
 
   function generateFontTiles() {
     if (!state.fontLoaded) return;
 
     const fontSize = state.fontSize;
-    const yOffset = state.fontYOffset;
     const bold = state.fontBold ? 'bold ' : '';
-    const fontSpec = `${bold}${fontSize}px "${state.fontFamily}"`;
 
-    // Render each character at native font size on a generous canvas
-    // (2× font size) so the text rasteriser has room to work.
-    const canvasSize = Math.ceil(fontSize) * 2;
-    const renderCanvas = document.createElement('canvas');
-    renderCanvas.width = canvasSize;
-    renderCanvas.height = canvasSize;
-    const renderCtx = renderCanvas.getContext('2d', { willReadFrequently: true });
+    // Render the full glyph sheet at 1× scale
+    const { canvas: sheetCanvas, cellW, cellH, rows } = renderPixelFontSheet({
+      fontFamily: `${bold}"${state.fontFamily}"`,
+      nativeSize: fontSize,
+      scale: 1,
+      cols: 16,
+      cellW: 8,
+      fg: DMG_CSS[3],
+      bg: DMG_CSS[0],
+    });
 
-    // --- Pass 1: extract bounding boxes for all glyphs ---
-    const glyphs = [];
-    for (const char of FONT_CHARS) {
-      glyphs.push(extractGlyph(renderCtx, canvasSize, char, fontSpec, yOffset));
-    }
+    // Extract 8×8 tiles from the sheet
+    // If cellH < 8, center vertically; if cellH > 8, crop to 8
+    const tileH = Math.min(cellH, 8);
+    const padY = cellH < 8 ? Math.floor((8 - cellH) / 2) : 0;
 
-    // Find global metrics for consistent baseline across all chars
-    let globalMinY = Infinity, globalMaxBottom = 0, globalMaxW = 0;
-    for (const g of glyphs) {
-      if (!g.pixels) continue;
-      if (g.minY < globalMinY) globalMinY = g.minY;
-      if (g.minY + g.h > globalMaxBottom) globalMaxBottom = g.minY + g.h;
-      if (g.w > globalMaxW) globalMaxW = g.w;
-    }
-    if (globalMinY === Infinity) globalMinY = 0;
-    const globalH = globalMaxBottom - globalMinY || Math.ceil(fontSize);
-    if (!globalMaxW) globalMaxW = Math.ceil(fontSize);
-
-    // The bounding region for all glyphs: globalMaxW wide, globalH tall
-    // Scale factor to fit into 8×8
-    const scaleX = 8 / globalMaxW;
-    const scaleY = 8 / globalH;
-    const scale = Math.min(scaleX, scaleY, 1); // don't upscale
-
-    // --- Pass 2: place each glyph into 8×8 tile ---
-    const cols = FONT_CHARS.length;
-
-    // Build debug strip at native size
-    const stripCellW = globalMaxW;
-    const stripCellH = globalH;
-    const stripCanvas = document.createElement('canvas');
-    stripCanvas.width = cols * stripCellW;
-    stripCanvas.height = stripCellH;
-    const stripCtx = stripCanvas.getContext('2d');
-    stripCtx.fillStyle = '#ffffff';
-    stripCtx.fillRect(0, 0, stripCanvas.width, stripCellH);
+    const sheetCtx = sheetCanvas.getContext('2d', { willReadFrequently: true });
+    const sheetData = sheetCtx.getImageData(0, 0, sheetCanvas.width, sheetCanvas.height);
+    const sheetPx = sheetData.data;
+    const sheetW = sheetCanvas.width;
 
     state.tileData = [];
     const lumDump = [];
     const downscaledImages = [];
 
-    for (let i = 0; i < cols; i++) {
-      const g = glyphs[i];
+    for (let idx = 0; idx < FONT_CHARS.length; idx++) {
+      const col = idx % 16;
+      const row = Math.floor(idx / 16);
+      const ox = col * cellW;
+      const oy = row * cellH;
+
       const tile = Array.from({ length: 8 }, () => new Array(8).fill(0));
       const charLum = Array.from({ length: 8 }, () => new Array(8).fill(255));
 
-      if (g.pixels) {
-        // Draw glyph into the debug strip at native size
-        for (let r = 0; r < g.h; r++) {
-          for (let c = 0; c < g.w; c++) {
-            const lum = g.pixels[r][c];
-            if (lum < 250) {
-              const sx = i * stripCellW + g.minX - (globalMinY > 0 ? 0 : 0);
-              // Position relative to global top
-              const dy = g.minY - globalMinY;
-              stripCtx.fillStyle = `rgb(${lum},${lum},${lum})`;
-              stripCtx.fillRect(i * stripCellW + c, dy + r, 1, 1);
-            }
-          }
-        }
-
-        // Place into 8×8 tile: center horizontally, align to global baseline
-        const placedW = Math.round(g.w * scale);
-        const placedH = Math.round(g.h * scale);
-        const tileOffX = Math.floor((8 - Math.round(globalMaxW * scale)) / 2);
-        const glyphRelY = g.minY - globalMinY;
-        const tileOffY = Math.round(glyphRelY * scale);
-
-        for (let r = 0; r < g.h; r++) {
-          for (let c = 0; c < g.w; c++) {
-            const lum = g.pixels[r][c];
-            const tx = tileOffX + Math.round(c * scale);
-            const ty = tileOffY + Math.round(r * scale);
-            if (tx >= 0 && tx < 8 && ty >= 0 && ty < 8) {
-              // Keep darkest value if multiple source pixels map here
-              if (lum < charLum[ty][tx]) {
-                charLum[ty][tx] = lum;
-              }
-            }
+      for (let y = 0; y < tileH; y++) {
+        for (let x = 0; x < 8; x++) {
+          const si = ((oy + y) * sheetW + ox + x) * 4;
+          const lum = sheetPx[si];
+          const ty = padY + y;
+          if (ty < 8) {
+            charLum[ty][x] = lum;
+            // The sheet renders fg (DMG 3) on bg (DMG 0), so we can
+            // use rgbToDmg for proper quantisation
+            tile[ty][x] = rgbToDmg(sheetPx[si], sheetPx[si + 1], sheetPx[si + 2], sheetPx[si + 3]);
           }
         }
       }
 
-      // Quantise luminance → DMG colour
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const lum = charLum[r][c];
-          let color;
-          if (!state.fontSmoothing) {
-            color = lum < 128 ? 3 : 0;
-          } else {
-            if (lum > 192) color = 0;
-            else if (lum > 128) color = 1;
-            else if (lum > 64) color = 2;
-            else color = 3;
-          }
-          tile[r][c] = color;
-        }
-      }
+      state.tileData.push(tile);
+      lumDump.push(charLum);
 
       // Build debug downscaled ImageData
       const dsData = new Uint8ClampedArray(8 * 8 * 4);
       for (let r = 0; r < 8; r++) {
         for (let c = 0; c < 8; c++) {
-          const idx = (r * 8 + c) * 4;
+          const i = (r * 8 + c) * 4;
           const v = charLum[r][c];
-          dsData[idx] = v; dsData[idx + 1] = v; dsData[idx + 2] = v; dsData[idx + 3] = 255;
+          dsData[i] = v; dsData[i + 1] = v; dsData[i + 2] = v; dsData[i + 3] = 255;
         }
       }
       downscaledImages.push(new ImageData(dsData, 8, 8));
-
-      state.tileData.push(tile);
-      lumDump.push(charLum);
     }
 
     state.tilesX = 16;
-    state.tilesY = 6;
+    state.tilesY = Math.ceil(FONT_CHARS.length / 16);
     if (state.selectedTile >= state.tileData.length) {
       state.selectedTile = 0;
     }
 
-    // Populate debug panel
-    const stripData = stripCtx.getImageData(0, 0, stripCanvas.width, stripCellH);
-    const debugSpec = `${bold}${fontSize}px fillText → bbox ${globalMaxW}×${globalH} → 8×8 (scale ${scale.toFixed(3)})`;
-    updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, debugSpec);
+    // Debug
+    const debugSpec = `${bold}${fontSize}px fillText → bbox cellW=${cellW} cellH=${cellH} → 8×8 (padY=${padY})`;
+    updateDebugPanel(sheetCanvas, sheetData, lumDump, downscaledImages, debugSpec);
 
     renderFontPreview();
     renderFontCharMap();
@@ -747,23 +756,19 @@
     }
   }
 
-  function updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec) {
+  function updateDebugPanel(sheetCanvas, sheetData, lumDump, downscaledImages, fontSpec) {
     el.debugPanel.hidden = false;
 
-    const cellSize = Math.ceil(state.fontSize);
     const fontSize = state.fontSize;
     const tilesPerRow = 16;
     const totalRows = Math.ceil(FONT_CHARS.length / tilesPerRow);
-    const stripZoom = Math.max(1, Math.floor(128 / cellSize));
 
     // Info
     const dpr = window.devicePixelRatio || 1;
     el.debugInfo.innerHTML = [
       `<strong>Rendering:</strong> <code>${fontSpec}</code>`,
       `<strong>Device pixel ratio:</strong> ${dpr}`,
-      `<strong>Strip canvas:</strong> ${stripCanvas.width}×${stripCanvas.height} (${FONT_CHARS.length} cells of ${cellSize}×${cellSize})`,
-      `<strong>Anti-alias / smooth downscale:</strong> ${state.fontSmoothing}`,
-      `<strong>Downscale:</strong> ${cellSize}×${cellSize} → 8×8 (${cellSize === 8 ? 'none' : (cellSize / 8).toFixed(2) + '×'})`,
+      `<strong>Sheet canvas:</strong> ${sheetCanvas.width}×${sheetCanvas.height}`,
     ].join('<br>');
 
     // --- Step 1: HTML/CSS reference ---
@@ -793,17 +798,18 @@
     }
     el.debugHtmlWrap.appendChild(htmlGrid);
 
-    // --- Step 2: Native-size canvas fillText strip ---
+    // --- Step 2: Native-size glyph sheet from renderPixelFontSheet ---
     el.debugSvgWrap.innerHTML = '';
-    el.debugSvgSrc.textContent = '(N/A — using canvas fillText, no SVG)';
+    el.debugSvgSrc.textContent = '';
     el.debugStripWrap.innerHTML = '';
-    const stripClone = document.createElement('canvas');
-    stripClone.width = stripCanvas.width;
-    stripClone.height = stripCanvas.height;
-    stripClone.style.width = (stripCanvas.width * stripZoom) + 'px';
-    stripClone.style.height = (stripCanvas.height * stripZoom) + 'px';
-    stripClone.getContext('2d').drawImage(stripCanvas, 0, 0);
-    el.debugStripWrap.appendChild(stripClone);
+    const sheetZoom = Math.max(1, Math.floor(480 / sheetCanvas.width));
+    const sheetClone = document.createElement('canvas');
+    sheetClone.width = sheetCanvas.width;
+    sheetClone.height = sheetCanvas.height;
+    sheetClone.style.width = (sheetCanvas.width * sheetZoom) + 'px';
+    sheetClone.style.height = (sheetCanvas.height * sheetZoom) + 'px';
+    sheetClone.getContext('2d').drawImage(sheetCanvas, 0, 0);
+    el.debugStripWrap.appendChild(sheetClone);
 
     // --- Step 3: Downscaled 8×8 raw RGB (before quantisation) ---
     el.debugDownscaledWrap.innerHTML = '';
