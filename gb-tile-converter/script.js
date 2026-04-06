@@ -46,20 +46,8 @@
     fontControls: document.getElementById('fontControls'),
     fontSize: document.getElementById('fontSize'),
     fontSizeVal: document.getElementById('fontSizeVal'),
-    fontYOffset: document.getElementById('fontYOffset'),
-    fontYOffsetVal: document.getElementById('fontYOffsetVal'),
     fontBold: document.getElementById('fontBold'),
-    fontSmoothing: document.getElementById('fontSmoothing'),
     fontCharMap: document.getElementById('fontCharMap'),
-    debugPanel: document.getElementById('debugPanel'),
-    debugInfo: document.getElementById('debugInfo'),
-    debugSvgWrap: document.getElementById('debugSvgWrap'),
-    debugSvgSrc: document.getElementById('debugSvgSrc'),
-    debugStripWrap: document.getElementById('debugStripWrap'),
-    debugDownscaledWrap: document.getElementById('debugDownscaledWrap'),
-    debugQuantisedWrap: document.getElementById('debugQuantisedWrap'),
-    debugLum: document.getElementById('debugLum'),
-    debugHtmlWrap: document.getElementById('debugHtmlWrap'),
   };
 
   const ovCtx = el.overviewCanvas.getContext('2d', { willReadFrequently: true });
@@ -94,12 +82,8 @@
     imageScale: 1,
     fontLoaded: false,
     fontFamily: null,
-    fontBase64: null,
-    fontMime: null,
     fontSize: 8,
-    fontYOffset: 0,
     fontBold: false,
-    fontSmoothing: true,
   };
 
   // ---- Helpers ----
@@ -430,23 +414,6 @@
     return FONT_EXTENSIONS.test(file.name);
   }
 
-  function fontMimeType(filename) {
-    const ext = filename.toLowerCase().split('.').pop();
-    switch (ext) {
-      case 'woff': return 'font/woff';
-      case 'woff2': return 'font/woff2';
-      case 'otf': return 'font/otf';
-      default: return 'font/ttf';
-    }
-  }
-
-  function arrayBufferToBase64(buffer) {
-    const bytes = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-    return btoa(binary);
-  }
-
   async function loadFontFile(file) {
     try {
       const buffer = await file.arrayBuffer();
@@ -457,8 +424,6 @@
 
       state.fontLoaded = true;
       state.fontFamily = familyName;
-      state.fontBase64 = arrayBufferToBase64(buffer);
-      state.fontMime = fontMimeType(file.name);
       state.image = null;
       state.imageFileName = file.name.replace(/\.\w+$/, '');
 
@@ -598,7 +563,7 @@
     const bold = state.fontBold ? 'bold ' : '';
 
     // Render the full glyph sheet at 1× scale
-    const { canvas: sheetCanvas, cellW, cellH, rows } = renderPixelFontSheet({
+    const { canvas: sheetCanvas, cellW, cellH } = renderPixelFontSheet({
       fontFamily: `${bold}"${state.fontFamily}"`,
       nativeSize: fontSize,
       scale: 1,
@@ -608,119 +573,35 @@
       bg: DMG_CSS[0],
     });
 
-    // Extract 8×8 tiles from the sheet
-    // If cellH < 8, center vertically; if cellH > 8, crop to 8
-    const tileH = Math.min(cellH, 8);
-    const padY = cellH < 8 ? Math.floor((8 - cellH) / 2) : 0;
+    // Convert the sheet canvas to an Image and feed it into the
+    // existing image pipeline (same as dropping an image)
+    const dataUrl = sheetCanvas.toDataURL('image/png');
+    const img = new Image();
+    img.onload = () => {
+      state.image = img;
+      state.offsetX = 0;
+      state.offsetY = 0;
+      state.imageScale = 1;
+      resizeOverviewCanvas();
+      renderOverview();
+      quantize();
+      el.dropOverlay.classList.add('loaded');
+      el.resetPositionBtn.hidden = false;
+      el.zoomControls.hidden = false;
+      el.tileEditModeBtn.disabled = false;
+      el.imageInfo.textContent = `${FONT_CHARS.length} characters — ${state.tilesX}×${state.tilesY} tiles (cell ${cellW}×${cellH})`;
 
-    const sheetCtx = sheetCanvas.getContext('2d', { willReadFrequently: true });
-    const sheetData = sheetCtx.getImageData(0, 0, sheetCanvas.width, sheetCanvas.height);
-    const sheetPx = sheetData.data;
-    const sheetW = sheetCanvas.width;
+      renderFontCharMap();
 
-    state.tileData = [];
-    const lumDump = [];
-    const downscaledImages = [];
-
-    for (let idx = 0; idx < FONT_CHARS.length; idx++) {
-      const col = idx % 16;
-      const row = Math.floor(idx / 16);
-      const ox = col * cellW;
-      const oy = row * cellH;
-
-      const tile = Array.from({ length: 8 }, () => new Array(8).fill(0));
-      const charLum = Array.from({ length: 8 }, () => new Array(8).fill(255));
-
-      for (let y = 0; y < tileH; y++) {
-        for (let x = 0; x < 8; x++) {
-          const si = ((oy + y) * sheetW + ox + x) * 4;
-          const lum = sheetPx[si];
-          const ty = padY + y;
-          if (ty < 8) {
-            charLum[ty][x] = lum;
-            // The sheet renders fg (DMG 3) on bg (DMG 0), so we can
-            // use rgbToDmg for proper quantisation
-            tile[ty][x] = rgbToDmg(sheetPx[si], sheetPx[si + 1], sheetPx[si + 2], sheetPx[si + 3]);
-          }
-        }
+      if (state.mode === 'editor') {
+        renderTileGrid();
+        renderTileZoom();
       }
-
-      state.tileData.push(tile);
-      lumDump.push(charLum);
-
-      // Build debug downscaled ImageData
-      const dsData = new Uint8ClampedArray(8 * 8 * 4);
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const i = (r * 8 + c) * 4;
-          const v = charLum[r][c];
-          dsData[i] = v; dsData[i + 1] = v; dsData[i + 2] = v; dsData[i + 3] = 255;
-        }
-      }
-      downscaledImages.push(new ImageData(dsData, 8, 8));
-    }
-
-    state.tilesX = 16;
-    state.tilesY = Math.ceil(FONT_CHARS.length / 16);
-    if (state.selectedTile >= state.tileData.length) {
-      state.selectedTile = 0;
-    }
-
-    // Debug
-    const debugSpec = `${bold}${fontSize}px fillText → bbox cellW=${cellW} cellH=${cellH} → 8×8 (padY=${padY})`;
-    updateDebugPanel(sheetCanvas, sheetData, lumDump, downscaledImages, debugSpec);
-
-    renderFontPreview();
-    renderFontCharMap();
-
-    el.tileEditModeBtn.disabled = false;
-    el.zoomControls.hidden = false;
-    updateOutput();
-    updateTileNav();
-
-    if (state.mode === 'editor') {
-      renderTileGrid();
-      renderTileZoom();
-    }
+      updateTileNav();
+    };
+    img.src = dataUrl;
   }
 
-  function renderFontPreview() {
-    const cols = 16;
-    const rows = 6;
-    state.canvasW = cols * 8;
-    state.canvasH = rows * 8;
-    el.overviewCanvas.width = state.canvasW;
-    el.overviewCanvas.height = state.canvasH;
-    applyZoom();
-
-    for (let idx = 0; idx < state.tileData.length; idx++) {
-      const tx = idx % cols;
-      const ty = Math.floor(idx / cols);
-      const tile = state.tileData[idx];
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          ovCtx.fillStyle = DMG_CSS[tile[r][c]];
-          ovCtx.fillRect(tx * 8 + c, ty * 8 + r, 1, 1);
-        }
-      }
-    }
-
-    // Grid overlay
-    ovCtx.strokeStyle = 'rgba(0, 0, 0, 0.18)';
-    ovCtx.lineWidth = 0.5;
-    ovCtx.beginPath();
-    for (let x = 0; x <= state.canvasW; x += 8) {
-      ovCtx.moveTo(x, 0);
-      ovCtx.lineTo(x, state.canvasH);
-    }
-    for (let y = 0; y <= state.canvasH; y += 8) {
-      ovCtx.moveTo(0, y);
-      ovCtx.lineTo(state.canvasW, y);
-    }
-    ovCtx.stroke();
-
-    el.imageInfo.textContent = `96 characters — ${cols}×${rows} tiles`;
-  }
 
   function renderFontCharMap() {
     el.fontCharMap.innerHTML = '';
@@ -756,159 +637,6 @@
     }
   }
 
-  function updateDebugPanel(sheetCanvas, sheetData, lumDump, downscaledImages, fontSpec) {
-    el.debugPanel.hidden = false;
-
-    const fontSize = state.fontSize;
-    const tilesPerRow = 16;
-    const totalRows = Math.ceil(FONT_CHARS.length / tilesPerRow);
-
-    // Info
-    const dpr = window.devicePixelRatio || 1;
-    el.debugInfo.innerHTML = [
-      `<strong>Rendering:</strong> <code>${fontSpec}</code>`,
-      `<strong>Device pixel ratio:</strong> ${dpr}`,
-      `<strong>Sheet canvas:</strong> ${sheetCanvas.width}×${sheetCanvas.height}`,
-    ].join('<br>');
-
-    // --- Step 1: HTML/CSS reference ---
-    el.debugHtmlWrap.innerHTML = '';
-    const glyphSize = fontSize;
-    const zoomedSize = glyphSize * 6;
-    const htmlGrid = document.createElement('div');
-    htmlGrid.className = 'debug-html-grid';
-    htmlGrid.style.setProperty('--glyph-size', zoomedSize + 'px');
-
-    for (let i = 0; i < FONT_CHARS.length; i++) {
-      const cell = document.createElement('div');
-      cell.className = 'glyph-cell';
-      const span = document.createElement('span');
-      span.style.fontFamily = `"${state.fontFamily}"`;
-      span.style.fontSize = fontSize + 'px';
-      span.style.lineHeight = '1';
-      span.style.transform = `scale(${zoomedSize / glyphSize})`;
-      span.style.transformOrigin = 'top left';
-      span.style.width = glyphSize + 'px';
-      span.style.height = glyphSize + 'px';
-      span.style.display = 'block';
-      if (state.fontBold) span.style.fontWeight = 'bold';
-      span.textContent = FONT_CHARS[i] === ' ' ? '\u00A0' : FONT_CHARS[i];
-      cell.appendChild(span);
-      htmlGrid.appendChild(cell);
-    }
-    el.debugHtmlWrap.appendChild(htmlGrid);
-
-    // --- Step 2: Native-size glyph sheet from renderPixelFontSheet ---
-    el.debugSvgWrap.innerHTML = '';
-    el.debugSvgSrc.textContent = '';
-    el.debugStripWrap.innerHTML = '';
-    const sheetZoom = Math.max(1, Math.floor(480 / sheetCanvas.width));
-    const sheetClone = document.createElement('canvas');
-    sheetClone.width = sheetCanvas.width;
-    sheetClone.height = sheetCanvas.height;
-    sheetClone.style.width = (sheetCanvas.width * sheetZoom) + 'px';
-    sheetClone.style.height = (sheetCanvas.height * sheetZoom) + 'px';
-    sheetClone.getContext('2d').drawImage(sheetCanvas, 0, 0);
-    el.debugStripWrap.appendChild(sheetClone);
-
-    // --- Step 3: Downscaled 8×8 raw RGB (before quantisation) ---
-    el.debugDownscaledWrap.innerHTML = '';
-    const dsScale = 6;
-    const dsCanvas = document.createElement('canvas');
-    const dsW = tilesPerRow * (8 * dsScale + 1) + 1;
-    const dsH = totalRows * (8 * dsScale + 1) + 1;
-    dsCanvas.width = dsW;
-    dsCanvas.height = dsH;
-    dsCanvas.style.width = dsW + 'px';
-    dsCanvas.style.height = dsH + 'px';
-    const dsCtx = dsCanvas.getContext('2d');
-    dsCtx.fillStyle = '#ccc';
-    dsCtx.fillRect(0, 0, dsW, dsH);
-
-    for (let i = 0; i < FONT_CHARS.length; i++) {
-      const col = i % tilesPerRow;
-      const row = Math.floor(i / tilesPerRow);
-      const ox = col * (8 * dsScale + 1) + 1;
-      const oy = row * (8 * dsScale + 1) + 1;
-      const px = downscaledImages[i].data;
-
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const si = (r * 8 + c) * 4;
-          dsCtx.fillStyle = `rgb(${px[si]},${px[si + 1]},${px[si + 2]})`;
-          dsCtx.fillRect(ox + c * dsScale, oy + r * dsScale, dsScale, dsScale);
-        }
-      }
-
-      dsCtx.strokeStyle = 'rgba(255,0,0,0.15)';
-      dsCtx.lineWidth = 1;
-      for (let g = 1; g < 8; g++) {
-        dsCtx.beginPath();
-        dsCtx.moveTo(ox + g * dsScale, oy);
-        dsCtx.lineTo(ox + g * dsScale, oy + 8 * dsScale);
-        dsCtx.moveTo(ox, oy + g * dsScale);
-        dsCtx.lineTo(ox + 8 * dsScale, oy + g * dsScale);
-        dsCtx.stroke();
-      }
-    }
-    el.debugDownscaledWrap.appendChild(dsCanvas);
-
-    // --- Step 4: Quantised to DMG palette ---
-    el.debugQuantisedWrap.innerHTML = '';
-    const qScale = 6;
-    const qCanvas = document.createElement('canvas');
-    const qW = tilesPerRow * (8 * qScale + 1) + 1;
-    const qH = totalRows * (8 * qScale + 1) + 1;
-    qCanvas.width = qW;
-    qCanvas.height = qH;
-    qCanvas.style.width = qW + 'px';
-    qCanvas.style.height = qH + 'px';
-    const qCtx = qCanvas.getContext('2d');
-    qCtx.fillStyle = '#ccc';
-    qCtx.fillRect(0, 0, qW, qH);
-
-    for (let i = 0; i < state.tileData.length; i++) {
-      const col = i % tilesPerRow;
-      const row = Math.floor(i / tilesPerRow);
-      const ox = col * (8 * qScale + 1) + 1;
-      const oy = row * (8 * qScale + 1) + 1;
-      const tile = state.tileData[i];
-
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          qCtx.fillStyle = DMG_CSS[tile[r][c]];
-          qCtx.fillRect(ox + c * qScale, oy + r * qScale, qScale, qScale);
-        }
-      }
-
-      qCtx.strokeStyle = 'rgba(255,0,0,0.15)';
-      qCtx.lineWidth = 1;
-      for (let g = 1; g < 8; g++) {
-        qCtx.beginPath();
-        qCtx.moveTo(ox + g * qScale, oy);
-        qCtx.lineTo(ox + g * qScale, oy + 8 * qScale);
-        qCtx.moveTo(ox, oy + g * qScale);
-        qCtx.lineTo(ox + 8 * qScale, oy + g * qScale);
-        qCtx.stroke();
-      }
-    }
-    el.debugQuantisedWrap.appendChild(qCanvas);
-
-    // --- Luminance dump (step 3 values) ---
-    const lines = [];
-    for (let i = 0; i < FONT_CHARS.length; i++) {
-      const ch = FONT_CHARS[i];
-      const label = ch === ' ' ? 'SP' : ch;
-      const allWhite = lumDump[i].every(row => row.every(v => v === 255));
-      if (allWhite && ch === ' ') continue;
-      const grid = lumDump[i].map(row =>
-        row.map(v => String(v).padStart(3)).join(' ')
-      ).join('\n');
-      lines.push(`── ${label} (0x${(32 + i).toString(16).toUpperCase()}) ──\n${grid}`);
-    }
-    el.debugLum.textContent = lines.join('\n\n');
-  }
-
   // Font control event listeners
   el.loadFontLink.addEventListener('click', e => {
     e.preventDefault();
@@ -927,19 +655,8 @@
     generateFontTiles();
   });
 
-  el.fontYOffset.addEventListener('input', () => {
-    state.fontYOffset = parseFloat(el.fontYOffset.value);
-    el.fontYOffsetVal.textContent = state.fontYOffset;
-    generateFontTiles();
-  });
-
   el.fontBold.addEventListener('change', () => {
     state.fontBold = el.fontBold.checked;
-    generateFontTiles();
-  });
-
-  el.fontSmoothing.addEventListener('change', () => {
-    state.fontSmoothing = el.fontSmoothing.checked;
     generateFontTiles();
   });
 
@@ -1545,9 +1262,7 @@
         imageFileName: state.imageFileName,
         fontLoaded: state.fontLoaded,
         fontSize: state.fontSize,
-        fontYOffset: state.fontYOffset,
         fontBold: state.fontBold,
-        fontSmoothing: state.fontSmoothing,
       };
       // Store image as data URL if present
       if (state.image) {

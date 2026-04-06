@@ -40,17 +40,9 @@
           <input type="range" id="fontSize" min="4" max="20" value="8" step="0.5">
           <span id="fontSizeVal">8</span>px
         </label>
-        <label class="font-control-label">Y Offset
-          <input type="range" id="fontYOffset" min="-4" max="4" value="0" step="0.5">
-          <span id="fontYOffsetVal">0</span>
-        </label>
         <label class="font-control-label">
           <input type="checkbox" id="fontBold">
           Bold
-        </label>
-        <label class="font-control-label">
-          <input type="checkbox" id="fontSmoothing" checked>
-          Anti-alias
         </label>
         <div class="font-char-map" id="fontCharMap"></div>
       </div>
@@ -104,25 +96,7 @@
       <pre id="headerOutput" class="code-output" contenteditable="true" spellcheck="false">// Upload an image to generate tile data</pre>
       <div id="parseStatus" class="parse-status"></div>
     </section>
-    <details id="debugPanel" class="panel" hidden>
-      <summary>Debug: Font Rendering Pipeline</summary>
-      <div class="debug-content">
-        <p id="debugInfo" class="text-secondary"></p>
-        <h3>Step 1: HTML/CSS rendered glyphs (reference — what the browser's text engine produces)</h3>
-        <div id="debugHtmlWrap" class="debug-html-wrap"></div>
-        <h3>Step 2: Canvas fillText at native size (each char rendered on 2× canvas, cropped to cell)</h3>
-        <div id="debugStripWrap" class="debug-canvas-wrap"></div>
-        <div id="debugSvgWrap" hidden></div>
-        <pre id="debugSvgSrc" hidden></pre>
-        <h3>Step 3: Downscaled to 8×8 (before quantisation — raw RGB)</h3>
-        <div id="debugDownscaledWrap" class="debug-canvas-wrap"></div>
-        <h3>Step 4: Quantised to DMG palette (final output)</h3>
-        <div id="debugQuantisedWrap" class="debug-canvas-wrap"></div>
-        <h3>Luminance values at step 3 (0=black, 255=white)</h3>
-        <pre id="debugLum" class="code-output" style="max-height:16rem;font-size:0.7rem"></pre>
-      </div>
-    </details>
-    </main>
+  </main>
 
   <script src="script.js"></script>
   <script>navigator.serviceWorker?.register("/sw.js")</script>
