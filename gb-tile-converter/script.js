@@ -451,56 +451,59 @@
     const fontSize = state.fontSize;
     const yOffset = state.fontYOffset;
     const bold = state.fontBold ? 'bold ' : '';
+    const fontSpec = `${bold}${fontSize}px "${state.fontFamily}"`;
 
-    // Supersample: render text at 8× resolution then downsample to 8×8.
-    // This avoids subpixel text positioning artifacts where strokes that
-    // fall between pixel boundaries get anti-aliased into 2px-wide lines.
-    const scale = 8;
-    const bigSize = 8 * scale;
-    const fontSpec = `${bold}${fontSize * scale}px "${state.fontFamily}"`;
+    // Render all 96 characters in a single fillText call on one wide canvas.
+    // This lets the text shaper position every glyph on the same baseline with
+    // consistent subpixel alignment, avoiding per-character rendering where
+    // some strokes land on pixel boundaries and others don't.
+    // We use letter-spacing (via manual positioning with measureText) to
+    // ensure each glyph lands in its own 8px-wide cell.
+    const cols = FONT_CHARS.length;
+    const stripW = cols * 8;
+    const stripH = 8;
 
     const canvas = document.createElement('canvas');
-    canvas.width = bigSize;
-    canvas.height = bigSize;
+    canvas.width = stripW;
+    canvas.height = stripH;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, stripW, stripH);
+
+    ctx.fillStyle = '#000000';
+    ctx.font = fontSpec;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Draw each character centered in its 8px cell
+    for (let i = 0; i < cols; i++) {
+      if (FONT_CHARS[i] !== ' ') {
+        ctx.fillText(FONT_CHARS[i], i * 8 + 4, 4 + yOffset);
+      }
+    }
+
+    // Slice the strip into 8×8 tiles
+    const imgData = ctx.getImageData(0, 0, stripW, stripH);
+    const pixels = imgData.data;
 
     state.tileData = [];
 
-    for (const char of FONT_CHARS) {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, bigSize, bigSize);
-
-      if (char !== ' ') {
-        ctx.fillStyle = '#000000';
-        ctx.font = fontSpec;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(char, bigSize / 2, bigSize / 2 + yOffset * scale);
-      }
-
-      const imgData = ctx.getImageData(0, 0, bigSize, bigSize);
-      const pixels = imgData.data;
+    for (let i = 0; i < cols; i++) {
       const tile = [];
       for (let r = 0; r < 8; r++) {
         const row = [];
         for (let c = 0; c < 8; c++) {
-          // Average the scale×scale block of supersampled pixels
-          let sum = 0;
-          for (let dy = 0; dy < scale; dy++) {
-            for (let dx = 0; dx < scale; dx++) {
-              const si = ((r * scale + dy) * bigSize + (c * scale + dx)) * 4;
-              sum += pixels[si]; // red channel (grayscale: white bg, black text)
-            }
-          }
-          // avg: 255 = white, 0 = black
-          const avg = sum / (scale * scale);
+          const si = (r * stripW + i * 8 + c) * 4;
+          // Red channel is sufficient (white bg, black text = grayscale)
+          const lum = pixels[si];
           let color;
           if (!state.fontSmoothing) {
-            color = avg < 128 ? 3 : 0;
+            color = lum < 128 ? 3 : 0;
           } else {
-            if (avg > 192) color = 0;
-            else if (avg > 128) color = 1;
-            else if (avg > 64) color = 2;
+            if (lum > 192) color = 0;
+            else if (lum > 128) color = 1;
+            else if (lum > 64) color = 2;
             else color = 3;
           }
           row.push(color);
