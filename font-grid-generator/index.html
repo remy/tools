@@ -251,10 +251,6 @@
     let loadedFontFace = null;
     let fontFileName = 'font';
     let currentTheme = 'auto';
-    const COLS = 32;
-    const ROWS = 3;
-    const CELL = 8;
-    const CHARS = Array.from({ length: 96 }, (_, i) => String.fromCharCode(32 + i));
 
     dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
     dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
@@ -306,65 +302,91 @@
       link.click();
     });
 
-    function getGlyphBounds(char, nativeSize) {
-      const canvas = document.createElement('canvas');
-      const w = nativeSize * 2;
-      const h = nativeSize * 2;
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d', { willReadFrequently: true });
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, w, h);
-      ctx.font = `${nativeSize}px PixelFont`;
-      ctx.fillStyle = '#fff';
-      ctx.textBaseline = 'top';
-      ctx.fillText(char, 0, 0);
-      const data = ctx.getImageData(0, 0, w, h);
+    /**
+     * Renders a pixel font glyph sheet onto a canvas.
+     *
+     * @param {object} opts
+     * @param {string} opts.fontFamily  - CSS font-family name (must already be loaded via FontFace/document.fonts)
+     * @param {number} opts.nativeSize  - The font's designed pixel size (e.g. 8, 10, 16)
+     * @param {number} [opts.scale=1]   - Integer multiplier for output pixels
+     * @param {number} [opts.cols=32]   - Columns per row
+     * @param {number} [opts.cellW=8]   - Cell width in native pixels
+     * @param {number} [opts.cellH=cellW] - Cell height in native pixels
+     * @param {string} [opts.fg='#000'] - Foreground colour
+     * @param {string} [opts.bg='#fff'] - Background colour (null for transparent)
+     * @returns {{ canvas: HTMLCanvasElement, cellW: number, cellH: number, rows: number }}
+     */
+    function renderPixelFontSheet(opts) {
+      const {
+        fontFamily,
+        nativeSize,
+        scale = 1,
+        cols = 32,
+        cellW = 8,
+        cellH = cellW,
+        fg = '#000',
+        bg = '#fff',
+      } = opts;
 
-      let minX = w, maxX = 0, minY = h, maxY = 0;
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          if (data.data[(y * w + x) * 4] > 128) {
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (y < minY) minY = y;
-            if (y > maxY) maxY = y;
+      const chars = Array.from({ length: 96 }, (_, i) => String.fromCharCode(32 + i));
+      const rows = Math.ceil(chars.length / cols);
+
+      // -- helpers --
+      function getGlyphBounds(char) {
+        const c = document.createElement('canvas');
+        const w = nativeSize * 2;
+        const h = nativeSize * 2;
+        c.width = w;
+        c.height = h;
+        const ctx = c.getContext('2d', { willReadFrequently: true });
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, w, h);
+        ctx.font = `${nativeSize}px ${fontFamily}`;
+        ctx.fillStyle = '#fff';
+        ctx.textBaseline = 'top';
+        ctx.fillText(char, 0, 0);
+        const data = ctx.getImageData(0, 0, w, h);
+
+        let minX = w, maxX = 0, minY = h, maxY = 0;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (data.data[(y * w + x) * 4] > 128) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
           }
         }
+        if (maxX < minX) return null;
+        return { minX, maxX, minY, maxY, data, w };
       }
-      if (maxX < minX) return null;
-      return { minX, maxX, minY, maxY, data, w };
-    }
 
-    function extractGlyph(bounds, globalMinY, cellH) {
-      const cell = [];
-      for (let y = 0; y < cellH; y++) { cell.push(new Uint8Array(CELL)); }
-      if (!bounds) return cell;
-
-      const { minX, maxX, minY, maxY, data, w } = bounds;
-      for (let y = minY; y <= maxY; y++) {
-        const dy = y - globalMinY;
-        if (dy < 0 || dy >= cellH) continue;
-        for (let x = minX; x <= maxX; x++) {
-          const dx = x - minX;
-          if (dx >= CELL) break;
-          if (data.data[(y * w + x) * 4] > 128) {
-            cell[dy][dx] = 1;
+      function extractGlyph(bounds, globalMinY, cellH) {
+        const cell = [];
+        for (let y = 0; y < cellH; y++) cell.push(new Uint8Array(cellW));
+        if (!bounds) return cell;
+        const { minX, maxX, minY, maxY, data, w } = bounds;
+        // shift glyph up if its bottom overflows the cell
+        const bottom = maxY - globalMinY;
+        const shift = Math.max(0, bottom - (cellH - 1));
+        for (let y = minY; y <= maxY; y++) {
+          const dy = y - globalMinY - shift;
+          if (dy < 0 || dy >= cellH) continue;
+          for (let x = minX; x <= maxX; x++) {
+            const dx = x - minX;
+            if (dx >= cellW) break;
+            if (data.data[(y * w + x) * 4] > 128) cell[dy][dx] = 1;
           }
         }
+        return cell;
       }
-      return cell;
-    }
 
-    function render() {
-      if (!loadedFontFace) return;
-      const nativeSize = parseInt(document.getElementById('native-size').value) || 8;
-      const scale = parseInt(document.getElementById('scale').value) || 4;
-
+      // -- pass 1: measure --
       const allBounds = {};
       let globalMinY = Infinity, globalMaxY = 0;
-      for (const ch of CHARS) {
-        const b = getGlyphBounds(ch, nativeSize);
+      for (const ch of chars) {
+        const b = getGlyphBounds(ch);
         allBounds[ch] = b;
         if (b) {
           if (b.minY < globalMinY) globalMinY = b.minY;
@@ -372,41 +394,59 @@
         }
       }
       if (globalMinY === Infinity) globalMinY = 0;
-      const cellH = globalMaxY - globalMinY + 1;
 
-      const nativeW = COLS * CELL;
-      const nativeH = ROWS * cellH;
-      renderedCanvas.width = nativeW * scale;
-      renderedCanvas.height = nativeH * scale;
-      renderedCanvas.style.width = nativeW * scale + 'px';
-      renderedCanvas.style.height = nativeH * scale + 'px';
-      const ctx = renderedCanvas.getContext('2d');
+      // -- pass 2: render --
+      const canvas = document.createElement('canvas');
+      canvas.width = cols * cellW * scale;
+      canvas.height = rows * cellH * scale;
+      const ctx = canvas.getContext('2d');
+      if (bg) {
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
 
-      const isDark = currentTheme === 'dark' ||
-        (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      const bgColor = isDark ? '#18181b' : '#fff';
-      const fgColor = isDark ? '#fafafa' : '#000';
-
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, renderedCanvas.width, renderedCanvas.height);
-
-      for (let idx = 0; idx < CHARS.length; idx++) {
-        const col = idx % COLS;
-        const row = Math.floor(idx / COLS);
-        const pixels = extractGlyph(allBounds[CHARS[idx]], globalMinY, cellH);
-        const ox = col * CELL;
+      for (let idx = 0; idx < chars.length; idx++) {
+        const col = idx % cols;
+        const row = Math.floor(idx / cols);
+        const pixels = extractGlyph(allBounds[chars[idx]], globalMinY, cellH);
+        const ox = col * cellW;
         const oy = row * cellH;
         for (let y = 0; y < cellH; y++) {
-          for (let x = 0; x < CELL; x++) {
+          for (let x = 0; x < cellW; x++) {
             if (pixels[y][x]) {
-              ctx.fillStyle = fgColor;
+              ctx.fillStyle = fg;
               ctx.fillRect((ox + x) * scale, (oy + y) * scale, scale, scale);
             }
           }
         }
       }
 
-      status.textContent = `Cell: ${CELL}\u00d7${cellH}px \u2014 Grid: ${COLS}\u00d7${ROWS} \u2014 Total range: ${globalMinY}\u2013${globalMaxY}`;
+      return { canvas, cellW, cellH, rows };
+    }
+
+    function render() {
+      if (!loadedFontFace) return;
+      const nativeSize = parseInt(document.getElementById('native-size').value) || 8;
+      const scale = parseInt(document.getElementById('scale').value) || 4;
+
+      const isDark = currentTheme === 'dark' ||
+        (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+      const { canvas, cellW, cellH, rows } = renderPixelFontSheet({
+        fontFamily: 'PixelFont',
+        nativeSize,
+        scale,
+        fg: isDark ? '#fafafa' : '#000',
+        bg: isDark ? '#18181b' : '#fff',
+      });
+
+      renderedCanvas.width = canvas.width;
+      renderedCanvas.height = canvas.height;
+      renderedCanvas.style.width = canvas.width + 'px';
+      renderedCanvas.style.height = canvas.height + 'px';
+      renderedCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+      status.textContent = `Cell: ${cellW}\u00d7${cellH}px \u2014 Grid: 32\u00d7${rows}`;
       downloadBtn.disabled = false;
     }
   </script>
