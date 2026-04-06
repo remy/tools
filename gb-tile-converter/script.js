@@ -54,7 +54,8 @@
     debugPanel: document.getElementById('debugPanel'),
     debugInfo: document.getElementById('debugInfo'),
     debugStripWrap: document.getElementById('debugStripWrap'),
-    debugTilesWrap: document.getElementById('debugTilesWrap'),
+    debugDownscaledWrap: document.getElementById('debugDownscaledWrap'),
+    debugQuantisedWrap: document.getElementById('debugQuantisedWrap'),
     debugLum: document.getElementById('debugLum'),
     debugHtmlWrap: document.getElementById('debugHtmlWrap'),
   };
@@ -541,6 +542,7 @@
 
     state.tileData = [];
     const lumDump = [];
+    const downscaledImages = []; // raw 8×8 ImageData per char for debug
 
     for (let i = 0; i < cols; i++) {
       tileCtx.clearRect(0, 0, 8, 8);
@@ -554,8 +556,9 @@
         0, 0, 8, 8
       );
 
-      const tileData = tileCtx.getImageData(0, 0, 8, 8);
-      const pixels = tileData.data;
+      const tileImgData = tileCtx.getImageData(0, 0, 8, 8);
+      downscaledImages.push(new ImageData(new Uint8ClampedArray(tileImgData.data), 8, 8));
+      const pixels = tileImgData.data;
       const tile = [];
       const charLum = [];
       for (let r = 0; r < 8; r++) {
@@ -591,7 +594,7 @@
 
     // Populate debug panel
     const fontSpec = `${bold ? 'bold ' : ''}${fontSize}px via SVG foreignObject (cell ${cellSize}×${cellSize} → 8×8)`;
-    updateDebugPanel(stripCanvas, stripData, lumDump, fontSpec);
+    updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec);
 
     renderFontPreview();
     renderFontCharMap();
@@ -679,10 +682,13 @@
     }
   }
 
-  function updateDebugPanel(stripCanvas, imgData, lumDump, fontSpec) {
+  function updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec) {
     el.debugPanel.hidden = false;
 
     const cellSize = Math.ceil(state.fontSize);
+    const fontSize = state.fontSize;
+    const tilesPerRow = 16;
+    const totalRows = Math.ceil(FONT_CHARS.length / tilesPerRow);
 
     // Info
     const dpr = window.devicePixelRatio || 1;
@@ -694,85 +700,13 @@
       `<strong>Downscale:</strong> ${cellSize}×${cellSize} → 8×8 (${cellSize === 8 ? 'none' : (cellSize / 8).toFixed(2) + '×'})`,
     ].join('<br>');
 
-    // Raw strip — show at a zoom so individual pixels are visible
-    el.debugStripWrap.innerHTML = '';
-    const stripZoom = Math.max(1, Math.floor(128 / cellSize));
-    const stripClone = document.createElement('canvas');
-    stripClone.width = stripCanvas.width;
-    stripClone.height = stripCanvas.height;
-    stripClone.style.width = (stripCanvas.width * stripZoom) + 'px';
-    stripClone.style.height = (stripCanvas.height * stripZoom) + 'px';
-    stripClone.getContext('2d').drawImage(stripCanvas, 0, 0);
-    el.debugStripWrap.appendChild(stripClone);
-
-    // Per-character tiles at native size — show each cellSize×cellSize cell zoomed up
-    el.debugTilesWrap.innerHTML = '';
-    const tileScale = Math.max(2, Math.floor(48 / cellSize));
-    const tilesPerRow = 16;
-    const totalRows = Math.ceil(FONT_CHARS.length / tilesPerRow);
-    const debugTileCanvas = document.createElement('canvas');
-    const dtW = tilesPerRow * (cellSize * tileScale + 1) + 1;
-    const dtH = totalRows * (cellSize * tileScale + 1) + 1;
-    debugTileCanvas.width = dtW;
-    debugTileCanvas.height = dtH;
-    debugTileCanvas.style.width = dtW + 'px';
-    debugTileCanvas.style.height = dtH + 'px';
-    const dtCtx = debugTileCanvas.getContext('2d');
-    dtCtx.fillStyle = '#ccc';
-    dtCtx.fillRect(0, 0, dtW, dtH);
-
-    for (let i = 0; i < FONT_CHARS.length; i++) {
-      const col = i % tilesPerRow;
-      const row = Math.floor(i / tilesPerRow);
-      const ox = col * (cellSize * tileScale + 1) + 1;
-      const oy = row * (cellSize * tileScale + 1) + 1;
-
-      // Draw raw pixels from the strip at native cell size (not quantised)
-      for (let r = 0; r < cellSize; r++) {
-        for (let c = 0; c < cellSize; c++) {
-          const si = (r * stripCanvas.width + i * cellSize + c) * 4;
-          const rv = imgData.data[si], gv = imgData.data[si + 1], bv = imgData.data[si + 2];
-          dtCtx.fillStyle = `rgb(${rv},${gv},${bv})`;
-          dtCtx.fillRect(ox + c * tileScale, oy + r * tileScale, tileScale, tileScale);
-        }
-      }
-
-      // Grid lines within each tile
-      dtCtx.strokeStyle = 'rgba(255,0,0,0.15)';
-      dtCtx.lineWidth = 1;
-      for (let g = 1; g < cellSize; g++) {
-        dtCtx.beginPath();
-        dtCtx.moveTo(ox + g * tileScale, oy);
-        dtCtx.lineTo(ox + g * tileScale, oy + cellSize * tileScale);
-        dtCtx.moveTo(ox, oy + g * tileScale);
-        dtCtx.lineTo(ox + cellSize * tileScale, oy + g * tileScale);
-        dtCtx.stroke();
-      }
-    }
-    el.debugTilesWrap.appendChild(debugTileCanvas);
-
-    // Luminance dump — raw 8×8 values after downscale (what the quantiser sees)
-    const lines = [];
-    for (let i = 0; i < FONT_CHARS.length; i++) {
-      const ch = FONT_CHARS[i];
-      const label = ch === ' ' ? 'SP' : ch;
-      const allWhite = lumDump[i].every(row => row.every(v => v === 255));
-      if (allWhite && ch === ' ') continue;
-      const grid = lumDump[i].map(row =>
-        row.map(v => String(v).padStart(3)).join(' ')
-      ).join('\n');
-      lines.push(`── ${label} (0x${(32 + i).toString(16).toUpperCase()}) ──\n${grid}`);
-    }
-    el.debugLum.textContent = lines.join('\n\n');
-
-    // HTML-rendered glyphs using the loaded @font-face
+    // --- Step 1: HTML/CSS reference ---
     el.debugHtmlWrap.innerHTML = '';
-    const fontSize = state.fontSize;
     const glyphSize = fontSize;
     const zoomedSize = glyphSize * 6;
-    const grid = document.createElement('div');
-    grid.className = 'debug-html-grid';
-    grid.style.setProperty('--glyph-size', zoomedSize + 'px');
+    const htmlGrid = document.createElement('div');
+    htmlGrid.className = 'debug-html-grid';
+    htmlGrid.style.setProperty('--glyph-size', zoomedSize + 'px');
 
     for (let i = 0; i < FONT_CHARS.length; i++) {
       const cell = document.createElement('div');
@@ -789,10 +723,117 @@
       if (state.fontBold) span.style.fontWeight = 'bold';
       span.textContent = FONT_CHARS[i] === ' ' ? '\u00A0' : FONT_CHARS[i];
       cell.appendChild(span);
-      grid.appendChild(cell);
+      htmlGrid.appendChild(cell);
     }
+    el.debugHtmlWrap.appendChild(htmlGrid);
 
-    el.debugHtmlWrap.appendChild(grid);
+    // --- Step 2: SVG foreignObject → canvas strip at native size ---
+    el.debugStripWrap.innerHTML = '';
+    const stripZoom = Math.max(1, Math.floor(128 / cellSize));
+    const stripClone = document.createElement('canvas');
+    stripClone.width = stripCanvas.width;
+    stripClone.height = stripCanvas.height;
+    stripClone.style.width = (stripCanvas.width * stripZoom) + 'px';
+    stripClone.style.height = (stripCanvas.height * stripZoom) + 'px';
+    stripClone.getContext('2d').drawImage(stripCanvas, 0, 0);
+    el.debugStripWrap.appendChild(stripClone);
+
+    // --- Step 3: Downscaled 8×8 raw RGB (before quantisation) ---
+    el.debugDownscaledWrap.innerHTML = '';
+    const dsScale = 6;
+    const dsCanvas = document.createElement('canvas');
+    const dsW = tilesPerRow * (8 * dsScale + 1) + 1;
+    const dsH = totalRows * (8 * dsScale + 1) + 1;
+    dsCanvas.width = dsW;
+    dsCanvas.height = dsH;
+    dsCanvas.style.width = dsW + 'px';
+    dsCanvas.style.height = dsH + 'px';
+    const dsCtx = dsCanvas.getContext('2d');
+    dsCtx.fillStyle = '#ccc';
+    dsCtx.fillRect(0, 0, dsW, dsH);
+
+    for (let i = 0; i < FONT_CHARS.length; i++) {
+      const col = i % tilesPerRow;
+      const row = Math.floor(i / tilesPerRow);
+      const ox = col * (8 * dsScale + 1) + 1;
+      const oy = row * (8 * dsScale + 1) + 1;
+      const px = downscaledImages[i].data;
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const si = (r * 8 + c) * 4;
+          dsCtx.fillStyle = `rgb(${px[si]},${px[si + 1]},${px[si + 2]})`;
+          dsCtx.fillRect(ox + c * dsScale, oy + r * dsScale, dsScale, dsScale);
+        }
+      }
+
+      dsCtx.strokeStyle = 'rgba(255,0,0,0.15)';
+      dsCtx.lineWidth = 1;
+      for (let g = 1; g < 8; g++) {
+        dsCtx.beginPath();
+        dsCtx.moveTo(ox + g * dsScale, oy);
+        dsCtx.lineTo(ox + g * dsScale, oy + 8 * dsScale);
+        dsCtx.moveTo(ox, oy + g * dsScale);
+        dsCtx.lineTo(ox + 8 * dsScale, oy + g * dsScale);
+        dsCtx.stroke();
+      }
+    }
+    el.debugDownscaledWrap.appendChild(dsCanvas);
+
+    // --- Step 4: Quantised to DMG palette ---
+    el.debugQuantisedWrap.innerHTML = '';
+    const qScale = 6;
+    const qCanvas = document.createElement('canvas');
+    const qW = tilesPerRow * (8 * qScale + 1) + 1;
+    const qH = totalRows * (8 * qScale + 1) + 1;
+    qCanvas.width = qW;
+    qCanvas.height = qH;
+    qCanvas.style.width = qW + 'px';
+    qCanvas.style.height = qH + 'px';
+    const qCtx = qCanvas.getContext('2d');
+    qCtx.fillStyle = '#ccc';
+    qCtx.fillRect(0, 0, qW, qH);
+
+    for (let i = 0; i < state.tileData.length; i++) {
+      const col = i % tilesPerRow;
+      const row = Math.floor(i / tilesPerRow);
+      const ox = col * (8 * qScale + 1) + 1;
+      const oy = row * (8 * qScale + 1) + 1;
+      const tile = state.tileData[i];
+
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          qCtx.fillStyle = DMG_CSS[tile[r][c]];
+          qCtx.fillRect(ox + c * qScale, oy + r * qScale, qScale, qScale);
+        }
+      }
+
+      qCtx.strokeStyle = 'rgba(255,0,0,0.15)';
+      qCtx.lineWidth = 1;
+      for (let g = 1; g < 8; g++) {
+        qCtx.beginPath();
+        qCtx.moveTo(ox + g * qScale, oy);
+        qCtx.lineTo(ox + g * qScale, oy + 8 * qScale);
+        qCtx.moveTo(ox, oy + g * qScale);
+        qCtx.lineTo(ox + 8 * qScale, oy + g * qScale);
+        qCtx.stroke();
+      }
+    }
+    el.debugQuantisedWrap.appendChild(qCanvas);
+
+    // --- Luminance dump (step 3 values) ---
+    const lines = [];
+    for (let i = 0; i < FONT_CHARS.length; i++) {
+      const ch = FONT_CHARS[i];
+      const label = ch === ' ' ? 'SP' : ch;
+      const allWhite = lumDump[i].every(row => row.every(v => v === 255));
+      if (allWhite && ch === ' ') continue;
+      const grid = lumDump[i].map(row =>
+        row.map(v => String(v).padStart(3)).join(' ')
+      ).join('\n');
+      lines.push(`── ${label} (0x${(32 + i).toString(16).toUpperCase()}) ──\n${grid}`);
+    }
+    el.debugLum.textContent = lines.join('\n\n');
   }
 
   // Font control event listeners
