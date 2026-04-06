@@ -53,6 +53,7 @@
     fontCharMap: document.getElementById('fontCharMap'),
     debugPanel: document.getElementById('debugPanel'),
     debugInfo: document.getElementById('debugInfo'),
+    debugSvgWrap: document.getElementById('debugSvgWrap'),
     debugStripWrap: document.getElementById('debugStripWrap'),
     debugDownscaledWrap: document.getElementById('debugDownscaledWrap'),
     debugQuantisedWrap: document.getElementById('debugQuantisedWrap'),
@@ -500,7 +501,7 @@
         case ' ': escaped = '&#160;'; break;
         default: escaped = ch;
       }
-      return `<span style="display:inline-block;width:${cellSize}px;height:${cellSize}px;text-align:center;font-family:'tile-font';font-size:${fontSize}px;line-height:1;${bold ? 'font-weight:bold;' : ''}color:#000;overflow:hidden">${escaped}</span>`;
+      return `<span style="display:inline-block;width:${cellSize}px;height:${cellSize}px;text-align:center;font-family:'tile-font';font-size:${fontSize}px;line-height:1;text-rendering:geometricPrecision;-webkit-font-smoothing:none;${bold ? 'font-weight:bold;' : ''}color:#000;overflow:hidden">${escaped}</span>`;
     }).join('');
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}">` +
@@ -511,7 +512,7 @@
       `</div></foreignObject></svg>`;
 
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
+    const svgUrl = URL.createObjectURL(blob);
 
     let svgImg;
     try {
@@ -519,10 +520,12 @@
         const i = new Image();
         i.onload = () => resolve(i);
         i.onerror = reject;
-        i.src = url;
+        i.src = svgUrl;
       });
-    } finally {
-      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('SVG image load failed:', err);
+      URL.revokeObjectURL(svgUrl);
+      return;
     }
 
     // Draw SVG to a canvas at native font size
@@ -530,6 +533,7 @@
     stripCanvas.width = totalW;
     stripCanvas.height = totalH;
     const stripCtx = stripCanvas.getContext('2d', { willReadFrequently: true });
+    stripCtx.imageSmoothingEnabled = false;
     stripCtx.drawImage(svgImg, 0, 0);
 
     const stripData = stripCtx.getImageData(0, 0, totalW, totalH);
@@ -594,7 +598,7 @@
 
     // Populate debug panel
     const fontSpec = `${bold ? 'bold ' : ''}${fontSize}px via SVG foreignObject (cell ${cellSize}×${cellSize} → 8×8)`;
-    updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec);
+    updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec, svgUrl, totalW, totalH);
 
     renderFontPreview();
     renderFontCharMap();
@@ -682,13 +686,20 @@
     }
   }
 
-  function updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec) {
+  let debugSvgUrl = null; // track for cleanup
+
+  function updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec, svgUrl, svgW, svgH) {
     el.debugPanel.hidden = false;
+
+    // Clean up previous SVG blob URL
+    if (debugSvgUrl) URL.revokeObjectURL(debugSvgUrl);
+    debugSvgUrl = svgUrl; // keep alive for the <img>
 
     const cellSize = Math.ceil(state.fontSize);
     const fontSize = state.fontSize;
     const tilesPerRow = 16;
     const totalRows = Math.ceil(FONT_CHARS.length / tilesPerRow);
+    const stripZoom = Math.max(1, Math.floor(128 / cellSize));
 
     // Info
     const dpr = window.devicePixelRatio || 1;
@@ -727,9 +738,17 @@
     }
     el.debugHtmlWrap.appendChild(htmlGrid);
 
-    // --- Step 2: SVG foreignObject → canvas strip at native size ---
+    // --- Step 2a: Raw SVG as <img> (before canvas touches it) ---
+    el.debugSvgWrap.innerHTML = '';
+    const svgImg = document.createElement('img');
+    svgImg.src = svgUrl;
+    svgImg.style.width = (svgW * stripZoom) + 'px';
+    svgImg.style.height = (svgH * stripZoom) + 'px';
+    svgImg.style.imageRendering = 'pixelated';
+    el.debugSvgWrap.appendChild(svgImg);
+
+    // --- Step 2b: SVG → canvas (after drawImage) ---
     el.debugStripWrap.innerHTML = '';
-    const stripZoom = Math.max(1, Math.floor(128 / cellSize));
     const stripClone = document.createElement('canvas');
     stripClone.width = stripCanvas.width;
     stripClone.height = stripCanvas.height;

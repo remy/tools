@@ -110,7 +110,9 @@
         <p id="debugInfo" class="text-secondary"></p>
         <h3>Step 1: HTML/CSS rendered glyphs (reference — what the browser's text engine produces)</h3>
         <div id="debugHtmlWrap" class="debug-html-wrap"></div>
-        <h3>Step 2: SVG foreignObject → canvas (the raw pixels after drawImage of the SVG)</h3>
+        <h3>Step 2a: Raw SVG (rendered inline via &lt;img&gt; — before canvas)</h3>
+        <div id="debugSvgWrap" class="debug-canvas-wrap"></div>
+        <h3>Step 2b: SVG → canvas (the raw pixels after drawImage of the SVG)</h3>
         <div id="debugStripWrap" class="debug-canvas-wrap"></div>
         <h3>Step 3: Downscaled to 8×8 (before quantisation — raw RGB)</h3>
         <div id="debugDownscaledWrap" class="debug-canvas-wrap"></div>
