@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Convert images to Game Boy DMG tile data. Upload an image, align to an 8x8 grid, edit individual tile pixels, and export C header arrays.">
+  <meta name="description" content="Convert images or font files to Game Boy DMG tile data. Upload an image, align to an 8x8 grid, or load a font to generate character tiles. Edit individual tile pixels and export C header arrays.">
   <meta name="category" content="Developer Tools">
   <title>GB Tile Converter</title>
   <link rel="stylesheet" href="style.css">
@@ -21,9 +21,10 @@
     <section id="overviewSection" class="panel">
       <div class="canvas-wrap" id="dropTarget" tabindex="0">
         <canvas id="overviewCanvas" width="256" height="256"></canvas>
-        <div class="drop-overlay" id="dropOverlay">Drop or paste an image here<br><small>or click to browse</small></div>
+        <div class="drop-overlay" id="dropOverlay">Drop or paste an image here<br><small>or click to browse</small><br><small class="font-link">or <a href="#" id="loadFontLink">load a font file</a></small></div>
       </div>
       <input type="file" id="fileInput" accept="image/*" hidden>
+      <input type="file" id="fontInput" accept=".ttf,.otf,.woff,.woff2" hidden>
       <div class="overview-controls">
         <button id="resetPositionBtn" class="btn btn-sm btn-secondary" hidden>Reset Position</button>
         <div class="zoom-controls" id="zoomControls" hidden>
@@ -33,6 +34,17 @@
           <button id="zoomFitBtn" class="btn btn-sm btn-secondary">Fit</button>
         </div>
         <span id="imageInfo" class="text-secondary"></span>
+      </div>
+      <div id="fontControls" class="font-controls" hidden>
+        <label class="font-control-label">Size
+          <input type="range" id="fontSize" min="4" max="20" value="8" step="0.5">
+          <span id="fontSizeVal">8</span>px
+        </label>
+        <label class="font-control-label">
+          <input type="checkbox" id="fontBold">
+          Bold
+        </label>
+        <div class="font-char-map" id="fontCharMap"></div>
       </div>
     </section>
 
@@ -65,6 +77,14 @@
         </div>
       </div>
     </section>
+
+    <details id="fontDebugPanel" class="panel" hidden>
+      <summary>Font Reference</summary>
+      <div class="debug-content">
+        <p id="fontDebugInfo" class="text-secondary"></p>
+        <div id="fontDebugHtmlWrap" class="font-debug-html-wrap"></div>
+      </div>
+    </details>
 
     <section class="panel output-panel">
       <div class="output-header">
