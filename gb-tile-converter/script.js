@@ -451,38 +451,57 @@
     const fontSize = state.fontSize;
     const yOffset = state.fontYOffset;
     const bold = state.fontBold ? 'bold ' : '';
-    const fontSpec = `${bold}${fontSize}px "${state.fontFamily}"`;
+
+    // Supersample: render text at 8× resolution then downsample to 8×8.
+    // This avoids subpixel text positioning artifacts where strokes that
+    // fall between pixel boundaries get anti-aliased into 2px-wide lines.
+    const scale = 8;
+    const bigSize = 8 * scale;
+    const fontSpec = `${bold}${fontSize * scale}px "${state.fontFamily}"`;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 8;
-    canvas.height = 8;
+    canvas.width = bigSize;
+    canvas.height = bigSize;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     state.tileData = [];
 
     for (const char of FONT_CHARS) {
-      ctx.fillStyle = DMG_CSS[0];
-      ctx.fillRect(0, 0, 8, 8);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, bigSize, bigSize);
 
       if (char !== ' ') {
-        ctx.fillStyle = DMG_CSS[3];
+        ctx.fillStyle = '#000000';
         ctx.font = fontSpec;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(char, 4, 4 + yOffset);
+        ctx.fillText(char, bigSize / 2, bigSize / 2 + yOffset * scale);
       }
 
-      const imgData = ctx.getImageData(0, 0, 8, 8);
+      const imgData = ctx.getImageData(0, 0, bigSize, bigSize);
       const pixels = imgData.data;
       const tile = [];
       for (let r = 0; r < 8; r++) {
         const row = [];
         for (let c = 0; c < 8; c++) {
-          const i = (r * 8 + c) * 4;
-          let color = rgbToDmg(pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]);
-          // When anti-alias is off, threshold to binary (white or black only)
+          // Average the scale×scale block of supersampled pixels
+          let sum = 0;
+          for (let dy = 0; dy < scale; dy++) {
+            for (let dx = 0; dx < scale; dx++) {
+              const si = ((r * scale + dy) * bigSize + (c * scale + dx)) * 4;
+              sum += pixels[si]; // red channel (grayscale: white bg, black text)
+            }
+          }
+          // avg: 255 = white, 0 = black
+          const avg = sum / (scale * scale);
+          let color;
           if (!state.fontSmoothing) {
-            color = color >= 2 ? 3 : 0;
+            color = avg < 128 ? 3 : 0;
+          } else {
+            if (avg > 192) color = 0;
+            else if (avg > 128) color = 1;
+            else if (avg > 64) color = 2;
+            else color = 3;
           }
           row.push(color);
         }
