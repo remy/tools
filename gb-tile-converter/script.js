@@ -41,6 +41,16 @@
     copyOutputBtn: document.getElementById('copyOutputBtn'),
     headerOutput: document.getElementById('headerOutput'),
     parseStatus: document.getElementById('parseStatus'),
+    fontInput: document.getElementById('fontInput'),
+    loadFontLink: document.getElementById('loadFontLink'),
+    fontControls: document.getElementById('fontControls'),
+    fontSize: document.getElementById('fontSize'),
+    fontSizeVal: document.getElementById('fontSizeVal'),
+    fontYOffset: document.getElementById('fontYOffset'),
+    fontYOffsetVal: document.getElementById('fontYOffsetVal'),
+    fontBold: document.getElementById('fontBold'),
+    fontSmoothing: document.getElementById('fontSmoothing'),
+    fontCharMap: document.getElementById('fontCharMap'),
   };
 
   const ovCtx = el.overviewCanvas.getContext('2d', { willReadFrequently: true });
@@ -73,6 +83,12 @@
     painting: false,
     zoom: 1,
     imageScale: 1,
+    fontLoaded: false,
+    fontFamily: null,
+    fontSize: 8,
+    fontYOffset: 0,
+    fontBold: false,
+    fontSmoothing: true,
   };
 
   // ---- Helpers ----
@@ -387,8 +403,215 @@
 
   function loadImageFile(file) {
     if (!file.type.match(/^image\//)) return;
+    state.fontLoaded = false;
+    el.fontControls.hidden = true;
+    el.fontCharMap.innerHTML = '';
     loadImageFromBlob(file, file.name.replace(/\.\w+$/, ''));
   }
+
+  // ---- Font loading ----
+
+  const FONT_CHARS = Array.from({ length: 96 }, (_, i) => String.fromCharCode(32 + i));
+  const FONT_EXTENSIONS = /\.(ttf|otf|woff2?|TTF|OTF|WOFF2?)$/;
+  let fontFaceCounter = 0;
+
+  function isFontFile(file) {
+    return FONT_EXTENSIONS.test(file.name);
+  }
+
+  async function loadFontFile(file) {
+    try {
+      const buffer = await file.arrayBuffer();
+      const familyName = `gb-font-${++fontFaceCounter}`;
+      const fontFace = new FontFace(familyName, buffer);
+      await fontFace.load();
+      document.fonts.add(fontFace);
+
+      state.fontLoaded = true;
+      state.fontFamily = familyName;
+      state.image = null;
+      state.imageFileName = file.name.replace(/\.\w+$/, '');
+
+      el.varName.value = state.imageFileName.replace(/[^a-zA-Z0-9_]/g, '_') || 'font_data';
+      state.varName = el.varName.value;
+
+      el.fontControls.hidden = false;
+      el.dropOverlay.classList.add('loaded');
+      el.resetPositionBtn.hidden = true;
+
+      generateFontTiles();
+    } catch (err) {
+      console.error('Failed to load font:', err);
+    }
+  }
+
+  function generateFontTiles() {
+    if (!state.fontLoaded) return;
+
+    const fontSize = state.fontSize;
+    const yOffset = state.fontYOffset;
+    const bold = state.fontBold ? 'bold ' : '';
+    const fontSpec = `${bold}${fontSize}px "${state.fontFamily}"`;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 8;
+    canvas.height = 8;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    state.tileData = [];
+
+    for (const char of FONT_CHARS) {
+      ctx.imageSmoothingEnabled = state.fontSmoothing;
+      ctx.fillStyle = DMG_CSS[0];
+      ctx.fillRect(0, 0, 8, 8);
+
+      if (char !== ' ') {
+        ctx.fillStyle = DMG_CSS[3];
+        ctx.font = fontSpec;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(char, 4, 4 + yOffset);
+      }
+
+      const imgData = ctx.getImageData(0, 0, 8, 8);
+      const pixels = imgData.data;
+      const tile = [];
+      for (let r = 0; r < 8; r++) {
+        const row = [];
+        for (let c = 0; c < 8; c++) {
+          const i = (r * 8 + c) * 4;
+          row.push(rgbToDmg(pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]));
+        }
+        tile.push(row);
+      }
+      state.tileData.push(tile);
+    }
+
+    state.tilesX = 16;
+    state.tilesY = 6;
+    if (state.selectedTile >= state.tileData.length) {
+      state.selectedTile = 0;
+    }
+
+    renderFontPreview();
+    renderFontCharMap();
+
+    el.tileEditModeBtn.disabled = false;
+    el.zoomControls.hidden = false;
+    updateOutput();
+    updateTileNav();
+
+    if (state.mode === 'editor') {
+      renderTileGrid();
+      renderTileZoom();
+    }
+  }
+
+  function renderFontPreview() {
+    const cols = 16;
+    const rows = 6;
+    state.canvasW = cols * 8;
+    state.canvasH = rows * 8;
+    el.overviewCanvas.width = state.canvasW;
+    el.overviewCanvas.height = state.canvasH;
+    applyZoom();
+
+    for (let idx = 0; idx < state.tileData.length; idx++) {
+      const tx = idx % cols;
+      const ty = Math.floor(idx / cols);
+      const tile = state.tileData[idx];
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          ovCtx.fillStyle = DMG_CSS[tile[r][c]];
+          ovCtx.fillRect(tx * 8 + c, ty * 8 + r, 1, 1);
+        }
+      }
+    }
+
+    // Grid overlay
+    ovCtx.strokeStyle = 'rgba(0, 0, 0, 0.18)';
+    ovCtx.lineWidth = 0.5;
+    ovCtx.beginPath();
+    for (let x = 0; x <= state.canvasW; x += 8) {
+      ovCtx.moveTo(x, 0);
+      ovCtx.lineTo(x, state.canvasH);
+    }
+    for (let y = 0; y <= state.canvasH; y += 8) {
+      ovCtx.moveTo(0, y);
+      ovCtx.lineTo(state.canvasW, y);
+    }
+    ovCtx.stroke();
+
+    el.imageInfo.textContent = `96 characters — ${cols}×${rows} tiles`;
+  }
+
+  function renderFontCharMap() {
+    el.fontCharMap.innerHTML = '';
+    for (let i = 0; i < FONT_CHARS.length; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'char-cell' + (i === state.selectedTile ? ' selected' : '');
+      cell.title = FONT_CHARS[i] === ' ' ? 'Space (0x20)' : `${FONT_CHARS[i]} (0x${(32 + i).toString(16).toUpperCase()})`;
+
+      const cvs = document.createElement('canvas');
+      cvs.width = 8;
+      cvs.height = 8;
+      const ctx = cvs.getContext('2d');
+      const tile = state.tileData[i];
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          ctx.fillStyle = DMG_CSS[tile[r][c]];
+          ctx.fillRect(c, r, 1, 1);
+        }
+      }
+      cell.appendChild(cvs);
+
+      cell.addEventListener('click', () => {
+        state.selectedTile = i;
+        renderFontCharMap();
+        if (state.mode === 'editor') {
+          renderTileGrid();
+          renderTileZoom();
+          updateTileNav();
+        }
+      });
+
+      el.fontCharMap.appendChild(cell);
+    }
+  }
+
+  // Font control event listeners
+  el.loadFontLink.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    el.fontInput.click();
+  });
+
+  el.fontInput.addEventListener('change', () => {
+    if (el.fontInput.files[0]) loadFontFile(el.fontInput.files[0]);
+    el.fontInput.value = '';
+  });
+
+  el.fontSize.addEventListener('input', () => {
+    state.fontSize = parseFloat(el.fontSize.value);
+    el.fontSizeVal.textContent = state.fontSize;
+    generateFontTiles();
+  });
+
+  el.fontYOffset.addEventListener('input', () => {
+    state.fontYOffset = parseFloat(el.fontYOffset.value);
+    el.fontYOffsetVal.textContent = state.fontYOffset;
+    generateFontTiles();
+  });
+
+  el.fontBold.addEventListener('change', () => {
+    state.fontBold = el.fontBold.checked;
+    generateFontTiles();
+  });
+
+  el.fontSmoothing.addEventListener('change', () => {
+    state.fontSmoothing = el.fontSmoothing.checked;
+    generateFontTiles();
+  });
 
   // ---- Drag to reposition ----
 
@@ -458,16 +681,19 @@
     el.dropTarget.addEventListener(evt, e => {
       e.preventDefault();
       el.dropOverlay.classList.remove('dragover');
-      if (state.image) el.dropOverlay.classList.add('loaded');
+      if (state.image || state.fontLoaded) el.dropOverlay.classList.add('loaded');
     });
   });
 
   el.dropTarget.addEventListener('drop', e => {
     e.preventDefault();
     el.dropOverlay.classList.remove('dragover');
-    if (state.image) el.dropOverlay.classList.add('loaded');
+    if (state.image || state.fontLoaded) el.dropOverlay.classList.add('loaded');
     const file = e.dataTransfer.files[0];
-    if (file) loadImageFile(file);
+    if (file) {
+      if (isFontFile(file)) loadFontFile(file);
+      else loadImageFile(file);
+    }
   });
 
   el.dropOverlay.addEventListener('click', () => el.fileInput.click());
@@ -987,6 +1213,11 @@
         canvasW: state.canvasW,
         canvasH: state.canvasH,
         imageFileName: state.imageFileName,
+        fontLoaded: state.fontLoaded,
+        fontSize: state.fontSize,
+        fontYOffset: state.fontYOffset,
+        fontBold: state.fontBold,
+        fontSmoothing: state.fontSmoothing,
       };
       // Store image as data URL if present
       if (state.image) {
