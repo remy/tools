@@ -6,6 +6,10 @@
   padding: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 :root {
   --colour-primary: #2563eb;
   --colour-primary-hover: #1d4ed8;
