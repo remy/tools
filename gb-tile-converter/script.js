@@ -48,6 +48,9 @@
     fontSizeVal: document.getElementById('fontSizeVal'),
     fontBold: document.getElementById('fontBold'),
     fontCharMap: document.getElementById('fontCharMap'),
+    fontDebugPanel: document.getElementById('fontDebugPanel'),
+    fontDebugInfo: document.getElementById('fontDebugInfo'),
+    fontDebugHtmlWrap: document.getElementById('fontDebugHtmlWrap'),
   };
 
   const ovCtx = el.overviewCanvas.getContext('2d', { willReadFrequently: true });
@@ -596,6 +599,7 @@
       el.imageInfo.textContent = `${FONT_CHARS.length} characters — ${state.tilesX}×${state.tilesY} tiles (cell ${cellW}×${cellH})`;
 
       renderFontCharMap();
+      renderFontDebug(fontSize, bold, cellW, cellH);
 
       if (state.mode === 'editor') {
         renderTileGrid();
@@ -639,6 +643,40 @@
 
       el.fontCharMap.appendChild(cell);
     }
+  }
+
+  function renderFontDebug(fontSize, bold, cellW, cellH) {
+    el.fontDebugPanel.hidden = false;
+    el.fontDebugInfo.innerHTML = `<strong>${bold}${fontSize}px</strong> — cell ${cellW}×${cellH}`;
+
+    el.fontDebugHtmlWrap.innerHTML = '';
+    const glyphScale = 4;
+    const grid = document.createElement('div');
+    grid.className = 'font-debug-grid';
+
+    for (let i = 0; i < FONT_CHARS.length; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'glyph-cell';
+      cell.style.width = (fontSize * glyphScale) + 'px';
+      cell.style.height = (fontSize * glyphScale) + 'px';
+
+      const span = document.createElement('span');
+      span.style.fontFamily = `"${state.fontFamily}"`;
+      span.style.fontSize = fontSize + 'px';
+      span.style.lineHeight = '1';
+      span.style.display = 'block';
+      span.style.width = fontSize + 'px';
+      span.style.height = fontSize + 'px';
+      span.style.transformOrigin = 'top left';
+      span.style.transform = `scale(${glyphScale})`;
+      if (state.fontBold) span.style.fontWeight = 'bold';
+      span.textContent = FONT_CHARS[i] === ' ' ? '\u00A0' : FONT_CHARS[i];
+
+      cell.appendChild(span);
+      grid.appendChild(cell);
+    }
+
+    el.fontDebugHtmlWrap.appendChild(grid);
   }
 
   // Font control event listeners

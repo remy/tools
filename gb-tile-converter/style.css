@@ -575,3 +575,43 @@ body {
   z-index: 1;
 }
 
+/* Font debug reference */
+#fontDebugPanel summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--colour-text-secondary);
+}
+
+.debug-content {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.font-debug-html-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--colour-border);
+  border-radius: 0.375rem;
+  padding: var(--space-sm);
+  background: var(--dmg-0);
+}
+
+.font-debug-grid {
+  display: grid;
+  grid-template-columns: repeat(16, auto);
+  gap: 0;
+  width: fit-content;
+}
+
+.font-debug-grid .glyph-cell {
+  overflow: hidden;
+  color: #000;
+  background: var(--dmg-0);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-sizing: content-box;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
