@@ -448,6 +448,7 @@
    * @param {number} [opts.scale=1]   - Integer multiplier for output pixels
    * @param {number} [opts.cols=16]   - Columns per row
    * @param {number} [opts.cellW=8]   - Cell width in native pixels
+   * @param {number} [opts.cellH=cellW] - Cell height in native pixels
    * @param {string} [opts.fg='#000'] - Foreground colour
    * @param {string} [opts.bg='#fff'] - Background colour
    * @returns {{ canvas: HTMLCanvasElement, cellW: number, cellH: number, rows: number }}
@@ -459,6 +460,7 @@
       scale = 1,
       cols = 16,
       cellW = 8,
+      cellH = cellW,
       fg = '#000',
       bg = '#fff',
     } = opts;
@@ -501,8 +503,11 @@
       for (let y = 0; y < cellH; y++) cell.push(new Uint8Array(cellW));
       if (!bounds) return cell;
       const { minX, maxX, minY, maxY, data, w } = bounds;
+      // shift glyph up if its bottom overflows the cell
+      const bottom = maxY - globalMinY;
+      const shift = Math.max(0, bottom - (cellH - 1));
       for (let y = minY; y <= maxY; y++) {
-        const dy = y - globalMinY;
+        const dy = y - globalMinY - shift;
         if (dy < 0 || dy >= cellH) continue;
         for (let x = minX; x <= maxX; x++) {
           const dx = x - minX;
@@ -525,7 +530,6 @@
       }
     }
     if (globalMinY === Infinity) globalMinY = 0;
-    const cellH = globalMaxY - globalMinY + 1;
 
     // -- pass 2: render --
     const canvas = document.createElement('canvas');
