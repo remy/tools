@@ -475,6 +475,50 @@
     }
   }
 
+  function extractGlyph(ctx, canvasSize, char, fontSpec, yOffset) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+    if (char === ' ') {
+      const adv = Math.round(ctx.measureText(' ').width) || Math.ceil(canvasSize / 4);
+      return { pixels: null, w: adv, h: 0, minX: 0, minY: 0 };
+    }
+    ctx.fillStyle = '#000000';
+    ctx.font = fontSpec;
+    ctx.textBaseline = 'top';
+    ctx.textAlign = 'left';
+    ctx.fillText(char, 0, yOffset);
+
+    const data = ctx.getImageData(0, 0, canvasSize, canvasSize);
+    const px = data.data;
+    let minX = canvasSize, maxX = 0, minY = canvasSize, maxY = 0;
+    for (let y = 0; y < canvasSize; y++) {
+      for (let x = 0; x < canvasSize; x++) {
+        if (px[(y * canvasSize + x) * 4] < 250) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < minX) {
+      const adv = Math.round(ctx.measureText(char).width) || Math.ceil(canvasSize / 4);
+      return { pixels: null, w: adv, h: 0, minX: 0, minY: 0 };
+    }
+    const gw = maxX - minX + 1;
+    const gh = maxY - minY + 1;
+    // Extract raw luminance for the bounding box region
+    const pixels = [];
+    for (let y = minY; y <= maxY; y++) {
+      const row = [];
+      for (let x = minX; x <= maxX; x++) {
+        row.push(px[(y * canvasSize + x) * 4]);
+      }
+      pixels.push(row);
+    }
+    return { pixels, w: gw, h: gh, minX, minY };
+  }
+
   function generateFontTiles() {
     if (!state.fontLoaded) return;
 
@@ -482,77 +526,102 @@
     const yOffset = state.fontYOffset;
     const bold = state.fontBold ? 'bold ' : '';
     const fontSpec = `${bold}${fontSize}px "${state.fontFamily}"`;
-    const cellSize = Math.ceil(fontSize);
 
     // Render each character at native font size on a generous canvas
-    // (2× font size) so the text rasteriser has room to work without
-    // subpixel clipping artefacts. Use textBaseline:'top' for consistent
-    // vertical positioning across all glyphs.
-    const canvasSize = cellSize * 2;
+    // (2× font size) so the text rasteriser has room to work.
+    const canvasSize = Math.ceil(fontSize) * 2;
     const renderCanvas = document.createElement('canvas');
     renderCanvas.width = canvasSize;
     renderCanvas.height = canvasSize;
     const renderCtx = renderCanvas.getContext('2d', { willReadFrequently: true });
 
-    // Also build a debug strip showing all chars side by side at native size
+    // --- Pass 1: extract bounding boxes for all glyphs ---
+    const glyphs = [];
+    for (const char of FONT_CHARS) {
+      glyphs.push(extractGlyph(renderCtx, canvasSize, char, fontSpec, yOffset));
+    }
+
+    // Find global metrics for consistent baseline across all chars
+    let globalMinY = Infinity, globalMaxBottom = 0, globalMaxW = 0;
+    for (const g of glyphs) {
+      if (!g.pixels) continue;
+      if (g.minY < globalMinY) globalMinY = g.minY;
+      if (g.minY + g.h > globalMaxBottom) globalMaxBottom = g.minY + g.h;
+      if (g.w > globalMaxW) globalMaxW = g.w;
+    }
+    if (globalMinY === Infinity) globalMinY = 0;
+    const globalH = globalMaxBottom - globalMinY || Math.ceil(fontSize);
+    if (!globalMaxW) globalMaxW = Math.ceil(fontSize);
+
+    // The bounding region for all glyphs: globalMaxW wide, globalH tall
+    // Scale factor to fit into 8×8
+    const scaleX = 8 / globalMaxW;
+    const scaleY = 8 / globalH;
+    const scale = Math.min(scaleX, scaleY, 1); // don't upscale
+
+    // --- Pass 2: place each glyph into 8×8 tile ---
     const cols = FONT_CHARS.length;
+
+    // Build debug strip at native size
+    const stripCellW = globalMaxW;
+    const stripCellH = globalH;
     const stripCanvas = document.createElement('canvas');
-    stripCanvas.width = cols * cellSize;
-    stripCanvas.height = cellSize;
+    stripCanvas.width = cols * stripCellW;
+    stripCanvas.height = stripCellH;
     const stripCtx = stripCanvas.getContext('2d');
     stripCtx.fillStyle = '#ffffff';
-    stripCtx.fillRect(0, 0, stripCanvas.width, cellSize);
-
-    // Tile canvas for downscaling to 8×8
-    const tileCanvas = document.createElement('canvas');
-    tileCanvas.width = 8;
-    tileCanvas.height = 8;
-    const tileCtx = tileCanvas.getContext('2d', { willReadFrequently: true });
+    stripCtx.fillRect(0, 0, stripCanvas.width, stripCellH);
 
     state.tileData = [];
     const lumDump = [];
     const downscaledImages = [];
 
     for (let i = 0; i < cols; i++) {
-      const char = FONT_CHARS[i];
+      const g = glyphs[i];
+      const tile = Array.from({ length: 8 }, () => new Array(8).fill(0));
+      const charLum = Array.from({ length: 8 }, () => new Array(8).fill(255));
 
-      // Render at native size on large canvas
-      renderCtx.fillStyle = '#ffffff';
-      renderCtx.fillRect(0, 0, canvasSize, canvasSize);
+      if (g.pixels) {
+        // Draw glyph into the debug strip at native size
+        for (let r = 0; r < g.h; r++) {
+          for (let c = 0; c < g.w; c++) {
+            const lum = g.pixels[r][c];
+            if (lum < 250) {
+              const sx = i * stripCellW + g.minX - (globalMinY > 0 ? 0 : 0);
+              // Position relative to global top
+              const dy = g.minY - globalMinY;
+              stripCtx.fillStyle = `rgb(${lum},${lum},${lum})`;
+              stripCtx.fillRect(i * stripCellW + c, dy + r, 1, 1);
+            }
+          }
+        }
 
-      if (char !== ' ') {
-        renderCtx.fillStyle = '#000000';
-        renderCtx.font = fontSpec;
-        renderCtx.textBaseline = 'top';
-        renderCtx.textAlign = 'left';
-        renderCtx.fillText(char, 0, yOffset);
+        // Place into 8×8 tile: center horizontally, align to global baseline
+        const placedW = Math.round(g.w * scale);
+        const placedH = Math.round(g.h * scale);
+        const tileOffX = Math.floor((8 - Math.round(globalMaxW * scale)) / 2);
+        const glyphRelY = g.minY - globalMinY;
+        const tileOffY = Math.round(glyphRelY * scale);
+
+        for (let r = 0; r < g.h; r++) {
+          for (let c = 0; c < g.w; c++) {
+            const lum = g.pixels[r][c];
+            const tx = tileOffX + Math.round(c * scale);
+            const ty = tileOffY + Math.round(r * scale);
+            if (tx >= 0 && tx < 8 && ty >= 0 && ty < 8) {
+              // Keep darkest value if multiple source pixels map here
+              if (lum < charLum[ty][tx]) {
+                charLum[ty][tx] = lum;
+              }
+            }
+          }
+        }
       }
 
-      // Copy the cellSize×cellSize region to the debug strip
-      stripCtx.drawImage(renderCanvas, 0, 0, cellSize, cellSize, i * cellSize, 0, cellSize, cellSize);
-
-      // Scale cellSize×cellSize → 8×8
-      tileCtx.clearRect(0, 0, 8, 8);
-      tileCtx.fillStyle = '#ffffff';
-      tileCtx.fillRect(0, 0, 8, 8);
-      tileCtx.imageSmoothingEnabled = state.fontSmoothing;
-      tileCtx.drawImage(renderCanvas,
-        0, 0, cellSize, cellSize,
-        0, 0, 8, 8
-      );
-
-      const tileImgData = tileCtx.getImageData(0, 0, 8, 8);
-      downscaledImages.push(new ImageData(new Uint8ClampedArray(tileImgData.data), 8, 8));
-      const pixels = tileImgData.data;
-      const tile = [];
-      const charLum = [];
+      // Quantise luminance → DMG colour
       for (let r = 0; r < 8; r++) {
-        const row = [];
-        const lumRow = [];
         for (let c = 0; c < 8; c++) {
-          const si = (r * 8 + c) * 4;
-          const lum = pixels[si];
-          lumRow.push(lum);
+          const lum = charLum[r][c];
           let color;
           if (!state.fontSmoothing) {
             color = lum < 128 ? 3 : 0;
@@ -562,11 +631,21 @@
             else if (lum > 64) color = 2;
             else color = 3;
           }
-          row.push(color);
+          tile[r][c] = color;
         }
-        tile.push(row);
-        charLum.push(lumRow);
       }
+
+      // Build debug downscaled ImageData
+      const dsData = new Uint8ClampedArray(8 * 8 * 4);
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const idx = (r * 8 + c) * 4;
+          const v = charLum[r][c];
+          dsData[idx] = v; dsData[idx + 1] = v; dsData[idx + 2] = v; dsData[idx + 3] = 255;
+        }
+      }
+      downscaledImages.push(new ImageData(dsData, 8, 8));
+
       state.tileData.push(tile);
       lumDump.push(charLum);
     }
@@ -578,8 +657,8 @@
     }
 
     // Populate debug panel
-    const stripData = stripCtx.getImageData(0, 0, stripCanvas.width, cellSize);
-    const debugSpec = `${bold}${fontSize}px canvas fillText (render ${canvasSize}×${canvasSize}, cell ${cellSize}×${cellSize} → 8×8)`;
+    const stripData = stripCtx.getImageData(0, 0, stripCanvas.width, stripCellH);
+    const debugSpec = `${bold}${fontSize}px fillText → bbox ${globalMaxW}×${globalH} → 8×8 (scale ${scale.toFixed(3)})`;
     updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, debugSpec);
 
     renderFontPreview();
