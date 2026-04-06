@@ -372,10 +372,10 @@
         }
       }
       if (globalMinY === Infinity) globalMinY = 0;
-      const cellH = globalMaxY - globalMinY + 1;
+      const cellH = CELL;
 
       const nativeW = COLS * CELL;
-      const nativeH = ROWS * cellH;
+      const nativeH = ROWS * CELL;
       renderedCanvas.width = nativeW * scale;
       renderedCanvas.height = nativeH * scale;
       renderedCanvas.style.width = nativeW * scale + 'px';
@@ -406,7 +406,7 @@
         }
       }
 
-      status.textContent = `Cell: ${CELL}\u00d7${cellH}px \u2014 Grid: ${COLS}\u00d7${ROWS} \u2014 Total range: ${globalMinY}\u2013${globalMaxY}`;
+      status.textContent = `Cell: ${CELL}\u00d7${CELL}px \u2014 Grid: ${COLS}\u00d7${ROWS}`;
       downloadBtn.disabled = false;
     }
   </script>
