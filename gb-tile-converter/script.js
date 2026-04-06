@@ -469,77 +469,41 @@
       el.dropOverlay.classList.add('loaded');
       el.resetPositionBtn.hidden = true;
 
-      await generateFontTiles();
+      generateFontTiles();
     } catch (err) {
       console.error('Failed to load font:', err);
     }
   }
 
-  async function generateFontTiles() {
-    if (!state.fontLoaded || !state.fontBase64) return;
+  function generateFontTiles() {
+    if (!state.fontLoaded) return;
 
     const fontSize = state.fontSize;
     const yOffset = state.fontYOffset;
-    const bold = state.fontBold;
+    const bold = state.fontBold ? 'bold ' : '';
+    const fontSpec = `${bold}${fontSize}px "${state.fontFamily}"`;
     const cellSize = Math.ceil(fontSize);
+
+    // Render each character at native font size on a generous canvas
+    // (2× font size) so the text rasteriser has room to work without
+    // subpixel clipping artefacts. Use textBaseline:'top' for consistent
+    // vertical positioning across all glyphs.
+    const canvasSize = cellSize * 2;
+    const renderCanvas = document.createElement('canvas');
+    renderCanvas.width = canvasSize;
+    renderCanvas.height = canvasSize;
+    const renderCtx = renderCanvas.getContext('2d', { willReadFrequently: true });
+
+    // Also build a debug strip showing all chars side by side at native size
     const cols = FONT_CHARS.length;
-    const totalW = cols * cellSize;
-    const totalH = cellSize;
-
-    // Render glyphs via SVG foreignObject so the browser's CSS text engine
-    // handles rasterisation (identical to normal HTML text rendering).
-    // The font is embedded as a base64 @font-face so the SVG is self-contained.
-    const fontFaceCss = `@font-face{font-family:'tile-font';src:url('data:${state.fontMime};base64,${state.fontBase64}')}`;
-
-    const spans = FONT_CHARS.map(ch => {
-      let escaped;
-      switch (ch) {
-        case '&': escaped = '&amp;'; break;
-        case '<': escaped = '&lt;'; break;
-        case '>': escaped = '&gt;'; break;
-        case '"': escaped = '&quot;'; break;
-        case "'": escaped = '&#39;'; break;
-        case ' ': escaped = '&#160;'; break;
-        default: escaped = ch;
-      }
-      return `<span style="display:inline-block;width:${cellSize}px;height:${cellSize}px;text-align:center;font-family:'tile-font';font-size:${fontSize}px;line-height:1;text-rendering:geometricPrecision;-webkit-font-smoothing:none;${bold ? 'font-weight:bold;' : ''}color:#000;overflow:hidden">${escaped}</span>`;
-    }).join('');
-
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}">` +
-      `<style>${fontFaceCss}</style>` +
-      `<foreignObject width="100%" height="100%">` +
-      `<div xmlns="http://www.w3.org/1999/xhtml" style="margin:0;padding:0;font-size:0;white-space:nowrap;line-height:0;position:relative;top:${yOffset}px">` +
-      spans +
-      `</div></foreignObject></svg>`;
-
-    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-    const svgUrl = URL.createObjectURL(blob);
-
-    let svgImg;
-    try {
-      svgImg = await new Promise((resolve, reject) => {
-        const i = new Image();
-        i.onload = () => resolve(i);
-        i.onerror = reject;
-        i.src = svgUrl;
-      });
-    } catch (err) {
-      console.error('SVG image load failed:', err);
-      URL.revokeObjectURL(svgUrl);
-      return;
-    }
-
-    // Draw SVG to a canvas at native font size
     const stripCanvas = document.createElement('canvas');
-    stripCanvas.width = totalW;
-    stripCanvas.height = totalH;
-    const stripCtx = stripCanvas.getContext('2d', { willReadFrequently: true });
-    stripCtx.imageSmoothingEnabled = false;
-    stripCtx.drawImage(svgImg, 0, 0);
+    stripCanvas.width = cols * cellSize;
+    stripCanvas.height = cellSize;
+    const stripCtx = stripCanvas.getContext('2d');
+    stripCtx.fillStyle = '#ffffff';
+    stripCtx.fillRect(0, 0, stripCanvas.width, cellSize);
 
-    const stripData = stripCtx.getImageData(0, 0, totalW, totalH);
-
-    // Scale each cellSize×cellSize character cell down to 8×8 and quantise
+    // Tile canvas for downscaling to 8×8
     const tileCanvas = document.createElement('canvas');
     tileCanvas.width = 8;
     tileCanvas.height = 8;
@@ -547,17 +511,33 @@
 
     state.tileData = [];
     const lumDump = [];
-    const downscaledImages = []; // raw 8×8 ImageData per char for debug
+    const downscaledImages = [];
 
     for (let i = 0; i < cols; i++) {
+      const char = FONT_CHARS[i];
+
+      // Render at native size on large canvas
+      renderCtx.fillStyle = '#ffffff';
+      renderCtx.fillRect(0, 0, canvasSize, canvasSize);
+
+      if (char !== ' ') {
+        renderCtx.fillStyle = '#000000';
+        renderCtx.font = fontSpec;
+        renderCtx.textBaseline = 'top';
+        renderCtx.textAlign = 'left';
+        renderCtx.fillText(char, 0, yOffset);
+      }
+
+      // Copy the cellSize×cellSize region to the debug strip
+      stripCtx.drawImage(renderCanvas, 0, 0, cellSize, cellSize, i * cellSize, 0, cellSize, cellSize);
+
+      // Scale cellSize×cellSize → 8×8
       tileCtx.clearRect(0, 0, 8, 8);
       tileCtx.fillStyle = '#ffffff';
       tileCtx.fillRect(0, 0, 8, 8);
-      // Anti-alias toggle controls downscale interpolation:
-      // off = nearest-neighbour (crisp pixel fonts), on = bilinear (smooth)
       tileCtx.imageSmoothingEnabled = state.fontSmoothing;
-      tileCtx.drawImage(stripCanvas,
-        i * cellSize, 0, cellSize, cellSize,
+      tileCtx.drawImage(renderCanvas,
+        0, 0, cellSize, cellSize,
         0, 0, 8, 8
       );
 
@@ -598,8 +578,9 @@
     }
 
     // Populate debug panel
-    const fontSpec = `${bold ? 'bold ' : ''}${fontSize}px via SVG foreignObject (cell ${cellSize}×${cellSize} → 8×8)`;
-    updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec, svgUrl, totalW, totalH, svg);
+    const stripData = stripCtx.getImageData(0, 0, stripCanvas.width, cellSize);
+    const debugSpec = `${bold}${fontSize}px canvas fillText (render ${canvasSize}×${canvasSize}, cell ${cellSize}×${cellSize} → 8×8)`;
+    updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, debugSpec);
 
     renderFontPreview();
     renderFontCharMap();
@@ -687,14 +668,8 @@
     }
   }
 
-  let debugSvgUrl = null; // track for cleanup
-
-  function updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec, svgUrl, svgW, svgH, svgSource) {
+  function updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec) {
     el.debugPanel.hidden = false;
-
-    // Clean up previous SVG blob URL
-    if (debugSvgUrl) URL.revokeObjectURL(debugSvgUrl);
-    debugSvgUrl = svgUrl; // keep alive for the <img>
 
     const cellSize = Math.ceil(state.fontSize);
     const fontSize = state.fontSize;
@@ -739,20 +714,9 @@
     }
     el.debugHtmlWrap.appendChild(htmlGrid);
 
-    // --- Step 2a: Raw SVG as <img> (before canvas touches it) ---
+    // --- Step 2: Native-size canvas fillText strip ---
     el.debugSvgWrap.innerHTML = '';
-    const svgImg = document.createElement('img');
-    svgImg.src = svgUrl;
-    svgImg.style.width = (svgW * stripZoom) + 'px';
-    svgImg.style.height = (svgH * stripZoom) + 'px';
-    svgImg.style.imageRendering = 'pixelated';
-    el.debugSvgWrap.appendChild(svgImg);
-
-    // SVG source (truncate base64 for readability)
-    const truncatedSvg = svgSource.replace(/(base64,)[A-Za-z0-9+/=]{60,}/, '$1[...base64 data truncated...]');
-    el.debugSvgSrc.textContent = truncatedSvg;
-
-    // --- Step 2b: SVG → canvas (after drawImage) ---
+    el.debugSvgSrc.textContent = '(N/A — using canvas fillText, no SVG)';
     el.debugStripWrap.innerHTML = '';
     const stripClone = document.createElement('canvas');
     stripClone.width = stripCanvas.width;
