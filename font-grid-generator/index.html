@@ -39,7 +39,7 @@
     }
 
     @media (prefers-color-scheme: dark) {
-      :root {
+      :root:not([data-theme="light"]) {
         --colour-bg: #09090b;
         --colour-bg-secondary: #18181b;
         --colour-bg-tertiary: #27272a;
@@ -51,6 +51,19 @@
         --colour-shadow: rgba(0, 0, 0, 0.4);
         --colour-input-border: #3f3f46;
       }
+    }
+
+    [data-theme="dark"] {
+      --colour-bg: #09090b;
+      --colour-bg-secondary: #18181b;
+      --colour-bg-tertiary: #27272a;
+      --colour-border: #3f3f46;
+      --colour-text: #fafafa;
+      --colour-text-secondary: #a1a1aa;
+      --colour-block-bg: #18181b;
+      --colour-block-border: #27272a;
+      --colour-shadow: rgba(0, 0, 0, 0.4);
+      --colour-input-border: #3f3f46;
     }
 
     html {
@@ -136,6 +149,44 @@
       background: var(--colour-primary-hover);
     }
 
+    .btn-secondary {
+      background: var(--colour-bg-secondary);
+      color: var(--colour-text);
+      border-color: var(--colour-border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--colour-bg-tertiary);
+    }
+
+    .btn-secondary.active {
+      background: var(--colour-primary);
+      color: #fff;
+      border-color: var(--colour-primary);
+    }
+
+    .theme-toggle {
+      display: flex;
+      gap: 0;
+    }
+
+    .theme-toggle .btn {
+      border-radius: 0;
+    }
+
+    .theme-toggle .btn:first-child {
+      border-radius: var(--radius) 0 0 var(--radius);
+    }
+
+    .theme-toggle .btn:last-child {
+      border-radius: 0 var(--radius) var(--radius) 0;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     #output {
       background: var(--colour-block-bg);
       border: 1px solid var(--colour-block-border);
@@ -171,7 +222,20 @@
       <input type="number" id="scale" value="4" min="1" max="16">
     </div>
     <div>
+      <label>Theme</label>
+      <div class="theme-toggle">
+        <button class="btn btn-secondary" data-theme-btn="light">Light</button>
+        <button class="btn btn-secondary active" data-theme-btn="auto">Auto</button>
+        <button class="btn btn-secondary" data-theme-btn="dark">Dark</button>
+      </div>
+    </div>
+    <div>
+      <label>&nbsp;</label>
       <button id="render-btn" class="btn">Render</button>
+    </div>
+    <div>
+      <label>&nbsp;</label>
+      <button id="download-btn" class="btn btn-secondary" disabled>Download PNG</button>
     </div>
   </div>
 
@@ -184,8 +248,11 @@
     const dropZone = document.getElementById('drop-zone');
     const status = document.getElementById('status');
     const renderedCanvas = document.getElementById('rendered-text');
+    const downloadBtn = document.getElementById('download-btn');
 
     let loadedFontFace = null;
+    let fontFileName = 'font';
+    let currentTheme = 'auto';
     const COLS = 32;
     const ROWS = 3;
     const CELL = 8;
@@ -203,12 +270,36 @@
       await font.load();
       document.fonts.add(font);
       loadedFontFace = font;
+      fontFileName = file.name.replace(/\.[^.]+$/, '');
       dropZone.textContent = `Loaded: ${file.name}`;
       status.textContent = '';
       render();
     });
 
     document.getElementById('render-btn').addEventListener('click', render);
+
+    // Theme toggle
+    document.querySelectorAll('[data-theme-btn]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-theme-btn]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTheme = btn.dataset.themeBtn;
+        if (currentTheme === 'auto') {
+          document.documentElement.removeAttribute('data-theme');
+        } else {
+          document.documentElement.setAttribute('data-theme', currentTheme);
+        }
+        if (loadedFontFace) render();
+      });
+    });
+
+    // Download
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `${fontFileName}.png`;
+      link.href = renderedCanvas.toDataURL('image/png');
+      link.click();
+    });
 
     function getGlyphBounds(char, nativeSize) {
       const canvas = document.createElement('canvas');
@@ -286,7 +377,8 @@
       renderedCanvas.style.height = nativeH * scale + 'px';
       const ctx = renderedCanvas.getContext('2d');
 
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDark = currentTheme === 'dark' ||
+        (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
       const bgColor = isDark ? '#18181b' : '#fff';
       const fgColor = isDark ? '#fafafa' : '#000';
 
@@ -310,6 +402,7 @@
       }
 
       status.textContent = `Cell: ${CELL}\u00d7${cellH}px \u2014 Grid: ${COLS}\u00d7${ROWS} \u2014 Total range: ${globalMinY}\u2013${globalMaxY}`;
+      downloadBtn.disabled = false;
     }
   </script>
   <script>navigator.serviceWorker?.register("/sw.js")</script>
