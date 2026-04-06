@@ -104,6 +104,18 @@
       <pre id="headerOutput" class="code-output" contenteditable="true" spellcheck="false">// Upload an image to generate tile data</pre>
       <div id="parseStatus" class="parse-status"></div>
     </section>
+    <details id="debugPanel" class="panel" hidden>
+      <summary>Debug: Font Rendering</summary>
+      <div class="debug-content">
+        <p id="debugInfo" class="text-secondary"></p>
+        <h3>Raw canvas strip (actual pixels the browser rendered)</h3>
+        <div id="debugStripWrap" class="debug-canvas-wrap"></div>
+        <h3>Per-character isolation (individual 8×8 tiles before quantisation)</h3>
+        <div id="debugTilesWrap" class="debug-canvas-wrap"></div>
+        <h3>Pixel luminance values (0=black, 255=white)</h3>
+        <pre id="debugLum" class="code-output" style="max-height:16rem;font-size:0.7rem"></pre>
+      </div>
+    </details>
   </main>
 
   <script src="script.js"></script>

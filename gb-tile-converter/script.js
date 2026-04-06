@@ -51,6 +51,11 @@
     fontBold: document.getElementById('fontBold'),
     fontSmoothing: document.getElementById('fontSmoothing'),
     fontCharMap: document.getElementById('fontCharMap'),
+    debugPanel: document.getElementById('debugPanel'),
+    debugInfo: document.getElementById('debugInfo'),
+    debugStripWrap: document.getElementById('debugStripWrap'),
+    debugTilesWrap: document.getElementById('debugTilesWrap'),
+    debugLum: document.getElementById('debugLum'),
   };
 
   const ovCtx = el.overviewCanvas.getContext('2d', { willReadFrequently: true });
@@ -488,15 +493,19 @@
     const pixels = imgData.data;
 
     state.tileData = [];
+    const lumDump = []; // for debug
 
     for (let i = 0; i < cols; i++) {
       const tile = [];
+      const charLum = []; // raw lum values for this char
       for (let r = 0; r < 8; r++) {
         const row = [];
+        const lumRow = [];
         for (let c = 0; c < 8; c++) {
           const si = (r * stripW + i * 8 + c) * 4;
           // Red channel is sufficient (white bg, black text = grayscale)
           const lum = pixels[si];
+          lumRow.push(lum);
           let color;
           if (!state.fontSmoothing) {
             color = lum < 128 ? 3 : 0;
@@ -509,8 +518,10 @@
           row.push(color);
         }
         tile.push(row);
+        charLum.push(lumRow);
       }
       state.tileData.push(tile);
+      lumDump.push(charLum);
     }
 
     state.tilesX = 16;
@@ -518,6 +529,9 @@
     if (state.selectedTile >= state.tileData.length) {
       state.selectedTile = 0;
     }
+
+    // Populate debug panel
+    updateDebugPanel(canvas, imgData, lumDump, fontSpec);
 
     renderFontPreview();
     renderFontCharMap();
@@ -603,6 +617,90 @@
 
       el.fontCharMap.appendChild(cell);
     }
+  }
+
+  function updateDebugPanel(stripCanvas, imgData, lumDump, fontSpec) {
+    el.debugPanel.hidden = false;
+
+    // Info
+    const dpr = window.devicePixelRatio || 1;
+    el.debugInfo.innerHTML = [
+      `<strong>Font spec:</strong> <code>${fontSpec}</code>`,
+      `<strong>Device pixel ratio:</strong> ${dpr}`,
+      `<strong>Strip canvas:</strong> ${stripCanvas.width}×${stripCanvas.height}`,
+      `<strong>Anti-alias (4-colour):</strong> ${state.fontSmoothing}`,
+      `<strong>Canvas backing store:</strong> ${imgData.width}×${imgData.height} (${imgData.data.length} bytes)`,
+    ].join('<br>');
+
+    // Raw strip — show at 4× zoom so individual pixels are visible
+    el.debugStripWrap.innerHTML = '';
+    const stripClone = document.createElement('canvas');
+    stripClone.width = stripCanvas.width;
+    stripClone.height = stripCanvas.height;
+    stripClone.style.width = (stripCanvas.width * 4) + 'px';
+    stripClone.style.height = (stripCanvas.height * 4) + 'px';
+    stripClone.getContext('2d').drawImage(stripCanvas, 0, 0);
+    el.debugStripWrap.appendChild(stripClone);
+
+    // Per-character tiles — show each 8×8 raw tile at 4× with red grid lines
+    el.debugTilesWrap.innerHTML = '';
+    const tileScale = 6;
+    const tilesPerRow = 16;
+    const totalRows = Math.ceil(FONT_CHARS.length / tilesPerRow);
+    const debugTileCanvas = document.createElement('canvas');
+    const dtW = tilesPerRow * (8 * tileScale + 1) + 1;
+    const dtH = totalRows * (8 * tileScale + 1) + 1;
+    debugTileCanvas.width = dtW;
+    debugTileCanvas.height = dtH;
+    debugTileCanvas.style.width = dtW + 'px';
+    debugTileCanvas.style.height = dtH + 'px';
+    const dtCtx = debugTileCanvas.getContext('2d');
+    dtCtx.fillStyle = '#ccc';
+    dtCtx.fillRect(0, 0, dtW, dtH);
+
+    for (let i = 0; i < FONT_CHARS.length; i++) {
+      const col = i % tilesPerRow;
+      const row = Math.floor(i / tilesPerRow);
+      const ox = col * (8 * tileScale + 1) + 1;
+      const oy = row * (8 * tileScale + 1) + 1;
+
+      // Draw raw pixels from the strip (not quantised)
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const si = (r * stripCanvas.width + i * 8 + c) * 4;
+          const rv = imgData.data[si], gv = imgData.data[si + 1], bv = imgData.data[si + 2];
+          dtCtx.fillStyle = `rgb(${rv},${gv},${bv})`;
+          dtCtx.fillRect(ox + c * tileScale, oy + r * tileScale, tileScale, tileScale);
+        }
+      }
+
+      // Grid lines within each tile
+      dtCtx.strokeStyle = 'rgba(255,0,0,0.15)';
+      dtCtx.lineWidth = 1;
+      for (let g = 1; g < 8; g++) {
+        dtCtx.beginPath();
+        dtCtx.moveTo(ox + g * tileScale, oy);
+        dtCtx.lineTo(ox + g * tileScale, oy + 8 * tileScale);
+        dtCtx.moveTo(ox, oy + g * tileScale);
+        dtCtx.lineTo(ox + 8 * tileScale, oy + g * tileScale);
+        dtCtx.stroke();
+      }
+    }
+    el.debugTilesWrap.appendChild(debugTileCanvas);
+
+    // Luminance dump — show raw values for first ~20 interesting chars
+    const lines = [];
+    for (let i = 0; i < FONT_CHARS.length; i++) {
+      const ch = FONT_CHARS[i];
+      const label = ch === ' ' ? 'SP' : ch;
+      const allWhite = lumDump[i].every(row => row.every(v => v === 255));
+      if (allWhite && ch === ' ') continue; // skip empty space
+      const grid = lumDump[i].map(row =>
+        row.map(v => String(v).padStart(3)).join(' ')
+      ).join('\n');
+      lines.push(`── ${label} (0x${(32 + i).toString(16).toUpperCase()}) ──\n${grid}`);
+    }
+    el.debugLum.textContent = lines.join('\n\n');
   }
 
   // Font control event listeners

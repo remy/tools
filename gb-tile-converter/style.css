@@ -574,3 +574,38 @@ body {
   outline-offset: -2px;
   z-index: 1;
 }
+
+/* Debug panel */
+#debugPanel summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--colour-text-secondary);
+}
+
+.debug-content {
+  margin-top: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.debug-content h3 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--colour-text-secondary);
+}
+
+.debug-canvas-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid var(--colour-border);
+  border-radius: 0.375rem;
+  padding: var(--space-sm);
+}
+
+.debug-canvas-wrap canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
