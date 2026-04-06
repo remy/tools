@@ -54,6 +54,7 @@
     debugPanel: document.getElementById('debugPanel'),
     debugInfo: document.getElementById('debugInfo'),
     debugSvgWrap: document.getElementById('debugSvgWrap'),
+    debugSvgSrc: document.getElementById('debugSvgSrc'),
     debugStripWrap: document.getElementById('debugStripWrap'),
     debugDownscaledWrap: document.getElementById('debugDownscaledWrap'),
     debugQuantisedWrap: document.getElementById('debugQuantisedWrap'),
@@ -598,7 +599,7 @@
 
     // Populate debug panel
     const fontSpec = `${bold ? 'bold ' : ''}${fontSize}px via SVG foreignObject (cell ${cellSize}×${cellSize} → 8×8)`;
-    updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec, svgUrl, totalW, totalH);
+    updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec, svgUrl, totalW, totalH, svg);
 
     renderFontPreview();
     renderFontCharMap();
@@ -688,7 +689,7 @@
 
   let debugSvgUrl = null; // track for cleanup
 
-  function updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec, svgUrl, svgW, svgH) {
+  function updateDebugPanel(stripCanvas, stripData, lumDump, downscaledImages, fontSpec, svgUrl, svgW, svgH, svgSource) {
     el.debugPanel.hidden = false;
 
     // Clean up previous SVG blob URL
@@ -746,6 +747,10 @@
     svgImg.style.height = (svgH * stripZoom) + 'px';
     svgImg.style.imageRendering = 'pixelated';
     el.debugSvgWrap.appendChild(svgImg);
+
+    // SVG source (truncate base64 for readability)
+    const truncatedSvg = svgSource.replace(/(base64,)[A-Za-z0-9+/=]{60,}/, '$1[...base64 data truncated...]');
+    el.debugSvgSrc.textContent = truncatedSvg;
 
     // --- Step 2b: SVG → canvas (after drawImage) ---
     el.debugStripWrap.innerHTML = '';
