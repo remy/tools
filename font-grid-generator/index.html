@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Drop a pixel font file and generate an 8x8 grid representation of each glyph. Supports TTF, OTF, WOFF, and WOFF2 formats.">
+  <meta name="category" content="Developer Tools">
+  <title>Font Grid Generator</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --colour-primary: #2563eb;
+      --colour-primary-hover: #1d4ed8;
+      --colour-bg: #fafafa;
+      --colour-bg-secondary: #f4f4f5;
+      --colour-bg-tertiary: #e4e4e7;
+      --colour-border: #d4d4d8;
+      --colour-text: #18181b;
+      --colour-text-secondary: #52525b;
+      --colour-block-bg: #ffffff;
+      --colour-block-border: #e4e4e7;
+      --colour-shadow: rgba(0, 0, 0, 0.1);
+      --colour-input-border: #d4d4d8;
+      --colour-input-focus: #2563eb;
+
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 0.75rem;
+      --space-lg: 1rem;
+      --space-xl: 1.5rem;
+      --radius: 0.5rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --colour-bg: #09090b;
+        --colour-bg-secondary: #18181b;
+        --colour-bg-tertiary: #27272a;
+        --colour-border: #3f3f46;
+        --colour-text: #fafafa;
+        --colour-text-secondary: #a1a1aa;
+        --colour-block-bg: #18181b;
+        --colour-block-border: #27272a;
+        --colour-shadow: rgba(0, 0, 0, 0.4);
+        --colour-input-border: #3f3f46;
+      }
+    }
+
+    [data-theme="dark"] {
+      --colour-bg: #09090b;
+      --colour-bg-secondary: #18181b;
+      --colour-bg-tertiary: #27272a;
+      --colour-border: #3f3f46;
+      --colour-text: #fafafa;
+      --colour-text-secondary: #a1a1aa;
+      --colour-block-bg: #18181b;
+      --colour-block-border: #27272a;
+      --colour-shadow: rgba(0, 0, 0, 0.4);
+      --colour-input-border: #3f3f46;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--colour-text);
+      background: var(--colour-bg);
+      padding: var(--space-xl);
+    }
+
+    header {
+      position: relative;
+      padding-block: 0.5rem;
+      margin-bottom: var(--space-lg);
+    }
+
+    h1 {
+      font-size: 1.4rem;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 0.5rem;
+      right: 0;
+      background: var(--colour-bg-secondary);
+      border: 1px solid var(--colour-border);
+      border-radius: var(--radius);
+      padding: 0.375rem 0.625rem;
+      cursor: pointer;
+      color: var(--colour-text);
+      font-size: 1rem;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .theme-toggle:hover {
+      background: var(--colour-bg-tertiary);
+      border-color: var(--colour-primary);
+    }
+
+    #drop-zone {
+      border: 2px dashed var(--colour-border);
+      border-radius: var(--radius);
+      padding: 3rem;
+      text-align: center;
+      margin-bottom: var(--space-xl);
+      transition: border-color 0.2s;
+      color: var(--colour-text-secondary);
+      background: var(--colour-bg-secondary);
+    }
+
+    #drop-zone.over {
+      border-color: var(--colour-primary);
+      background: var(--colour-bg-tertiary);
+    }
+
+    .controls {
+      display: flex;
+      gap: var(--space-xl);
+      flex-wrap: wrap;
+      align-items: end;
+      margin-bottom: var(--space-xl);
+    }
+
+    .controls div {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
+
+    label {
+      font-size: 0.875rem;
+      color: var(--colour-text-secondary);
+    }
+
+    input[type="number"] {
+      background: var(--colour-bg-secondary);
+      color: var(--colour-text);
+      border: 1px solid var(--colour-input-border);
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      width: 6rem;
+    }
+
+    input[type="number"]:focus {
+      outline: 2px solid var(--colour-input-focus);
+      outline-offset: -1px;
+    }
+
+    .btn {
+      padding: 4px 12px;
+      cursor: pointer;
+      border: 1px solid var(--colour-primary);
+      background: var(--colour-primary);
+      color: #fff;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      transition: background 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--colour-primary-hover);
+    }
+
+    .btn-secondary {
+      background: var(--colour-bg-secondary);
+      color: var(--colour-text);
+      border-color: var(--colour-border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--colour-bg-tertiary);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #output {
+      background: var(--colour-block-bg);
+      border: 1px solid var(--colour-block-border);
+      border-radius: var(--radius);
+      padding: var(--space-lg);
+      overflow: auto;
+    }
+
+    #status {
+      color: var(--colour-text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    canvas {
+      image-rendering: pixelated;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Font Grid Generator</h1>
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+      <span class="theme-icon"></span>
+    </button>
+  </header>
+
+  <div id="drop-zone">Drop a .ttf / .otf / .woff / .woff2 pixel font here</div>
+
+  <div class="controls">
+    <div>
+      <label for="native-size">Native pixel size (px)</label>
+      <input type="number" id="native-size" value="8" min="4" max="64">
+    </div>
+    <div>
+      <label for="scale">Render scale</label>
+      <input type="number" id="scale" value="4" min="1" max="16">
+    </div>
+    <div>
+      <label>&nbsp;</label>
+      <button id="render-btn" class="btn">Render</button>
+    </div>
+    <div>
+      <label>&nbsp;</label>
+      <button id="download-btn" class="btn btn-secondary" disabled>Download PNG</button>
+    </div>
+  </div>
+
+  <div id="output">
+    <p id="status">Waiting for font&hellip;</p>
+    <canvas id="rendered-text"></canvas>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('drop-zone');
+    const status = document.getElementById('status');
+    const renderedCanvas = document.getElementById('rendered-text');
+    const downloadBtn = document.getElementById('download-btn');
+
+    let loadedFontFace = null;
+    let fontFileName = 'font';
+    let currentTheme = 'auto';
+    const COLS = 32;
+    const ROWS = 3;
+    const CELL = 8;
+    const CHARS = Array.from({ length: 96 }, (_, i) => String.fromCharCode(32 + i));
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+    dropZone.addEventListener('drop', async e => {
+      e.preventDefault();
+      dropZone.classList.remove('over');
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      const buf = await file.arrayBuffer();
+      const font = new FontFace('PixelFont', buf);
+      await font.load();
+      document.fonts.add(font);
+      loadedFontFace = font;
+      fontFileName = file.name.replace(/\.[^.]+$/, '');
+      dropZone.textContent = `Loaded: ${file.name}`;
+      status.textContent = '';
+      render();
+    });
+
+    document.getElementById('render-btn').addEventListener('click', render);
+
+    // Theme toggle: auto → light → dark → auto
+    const themeIcon = document.querySelector('.theme-icon');
+    const themes = ['auto', 'light', 'dark'];
+    const icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
+
+    function applyTheme() {
+      themeIcon.textContent = icons[currentTheme];
+      if (currentTheme === 'auto') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', currentTheme);
+      }
+      if (loadedFontFace) render();
+    }
+
+    applyTheme();
+
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      currentTheme = themes[(themes.indexOf(currentTheme) + 1) % 3];
+      applyTheme();
+    });
+
+    // Download
+    downloadBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `${fontFileName}.png`;
+      link.href = renderedCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    function getGlyphBounds(char, nativeSize) {
+      const canvas = document.createElement('canvas');
+      const w = nativeSize * 2;
+      const h = nativeSize * 2;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, w, h);
+      ctx.font = `${nativeSize}px PixelFont`;
+      ctx.fillStyle = '#fff';
+      ctx.textBaseline = 'top';
+      ctx.fillText(char, 0, 0);
+      const data = ctx.getImageData(0, 0, w, h);
+
+      let minX = w, maxX = 0, minY = h, maxY = 0;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (data.data[(y * w + x) * 4] > 128) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < minX) return null;
+      return { minX, maxX, minY, maxY, data, w };
+    }
+
+    function extractGlyph(bounds, globalMinY, cellH) {
+      const cell = [];
+      for (let y = 0; y < cellH; y++) { cell.push(new Uint8Array(CELL)); }
+      if (!bounds) return cell;
+
+      const { minX, maxX, minY, maxY, data, w } = bounds;
+      for (let y = minY; y <= maxY; y++) {
+        const dy = y - globalMinY;
+        if (dy < 0 || dy >= cellH) continue;
+        for (let x = minX; x <= maxX; x++) {
+          const dx = x - minX;
+          if (dx >= CELL) break;
+          if (data.data[(y * w + x) * 4] > 128) {
+            cell[dy][dx] = 1;
+          }
+        }
+      }
+      return cell;
+    }
+
+    function render() {
+      if (!loadedFontFace) return;
+      const nativeSize = parseInt(document.getElementById('native-size').value) || 8;
+      const scale = parseInt(document.getElementById('scale').value) || 4;
+
+      const allBounds = {};
+      let globalMinY = Infinity, globalMaxY = 0;
+      for (const ch of CHARS) {
+        const b = getGlyphBounds(ch, nativeSize);
+        allBounds[ch] = b;
+        if (b) {
+          if (b.minY < globalMinY) globalMinY = b.minY;
+          if (b.maxY > globalMaxY) globalMaxY = b.maxY;
+        }
+      }
+      if (globalMinY === Infinity) globalMinY = 0;
+      const cellH = globalMaxY - globalMinY + 1;
+
+      const nativeW = COLS * CELL;
+      const nativeH = ROWS * cellH;
+      renderedCanvas.width = nativeW * scale;
+      renderedCanvas.height = nativeH * scale;
+      renderedCanvas.style.width = nativeW * scale + 'px';
+      renderedCanvas.style.height = nativeH * scale + 'px';
+      const ctx = renderedCanvas.getContext('2d');
+
+      const isDark = currentTheme === 'dark' ||
+        (currentTheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const bgColor = isDark ? '#18181b' : '#fff';
+      const fgColor = isDark ? '#fafafa' : '#000';
+
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, renderedCanvas.width, renderedCanvas.height);
+
+      for (let idx = 0; idx < CHARS.length; idx++) {
+        const col = idx % COLS;
+        const row = Math.floor(idx / COLS);
+        const pixels = extractGlyph(allBounds[CHARS[idx]], globalMinY, cellH);
+        const ox = col * CELL;
+        const oy = row * cellH;
+        for (let y = 0; y < cellH; y++) {
+          for (let x = 0; x < CELL; x++) {
+            if (pixels[y][x]) {
+              ctx.fillStyle = fgColor;
+              ctx.fillRect((ox + x) * scale, (oy + y) * scale, scale, scale);
+            }
+          }
+        }
+      }
+
+      status.textContent = `Cell: ${CELL}\u00d7${cellH}px \u2014 Grid: ${COLS}\u00d7${ROWS} \u2014 Total range: ${globalMinY}\u2013${globalMaxY}`;
+      downloadBtn.disabled = false;
+    }
+  </script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
