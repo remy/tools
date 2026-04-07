@@ -38,7 +38,7 @@ function glyphLabel(index) {
 
 function generateFontHeader() {
   if (!state.tileData.length) return '// Upload a font image to generate data';
-  const prefix = state.varName || 'font';
+  const prefix = state.varName ? state.varName + '_' : '';
   const count = state.tileData.length;
 
   // bitmap_data
@@ -51,7 +51,7 @@ function generateFontHeader() {
     }
     bitmapLines.push(`    /* ${glyphLabel(i)} */\n    ${hex.join(', ')}`);
   }
-  const bitmapArr = `static const uint8_t ${prefix}_bitmap_data[] = {\n${bitmapLines.join(',\n')}\n};`;
+  const bitmapArr = `static const uint8_t ${prefix}font_bitmap_data[] = {\n${bitmapLines.join(',\n')}\n};`;
 
   // glyph_widths
   const widthRows = [];
@@ -59,7 +59,7 @@ function generateFontHeader() {
     const slice = state.glyphWidths.slice(i, Math.min(i + 16, count));
     widthRows.push('    ' + slice.join(', '));
   }
-  const widthArr = `static const uint8_t ${prefix}_glyph_widths[] = {\n${widthRows.join(',\n')}\n};`;
+  const widthArr = `static const uint8_t ${prefix}font_glyph_widths[] = {\n${widthRows.join(',\n')}\n};`;
 
   const comment = `// ${count} glyphs, ${count * 16} bitmap bytes`;
   return `${bitmapArr}\n\n${widthArr}\n${comment}`;
@@ -146,8 +146,9 @@ function parseFontHeader(text) {
     if (nums) widths = nums.map(Number);
   }
 
-  const prefixMatch = text.match(/uint8_t\s+(\w+)_bitmap_data/);
-  const varName = prefixMatch ? prefixMatch[1] : null;
+  // Match optional prefix before font_bitmap_data
+  const prefixMatch = text.match(/uint8_t\s+(?:(\w+)_)?font_bitmap_data/);
+  const varName = prefixMatch && prefixMatch[1] ? prefixMatch[1] : null;
 
   return { tiles, widths, varName };
 }
