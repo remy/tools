@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <!-- Body -->
+  <rect x="3" y="1" width="10" height="14" rx="1" fill="#c0c0b8" stroke="#999" stroke-width=".4"/>
+  <!-- Screen bezel -->
+  <rect x="4" y="2" width="8" height="5.5" rx=".5" fill="#8a8a82"/>
+  <!-- Screen -->
+  <rect x="5" y="3" width="6" height="3.5" fill="#9ba86c"/>
+  <!-- D-pad cross -->
+  <rect x="4.2" y="9.4" width="2.6" height=".9" rx=".15" fill="#2a2a2a"/>
+  <rect x="5.05" y="8.5" width=".9" height="2.6" rx=".15" fill="#2a2a2a"/>
+  <!-- A/B buttons - B lower-left, A upper-right -->
+  <circle cx="9.5" cy="10.2" r=".8" fill="#8b2252"/>
+  <circle cx="11" cy="9.3" r=".8" fill="#8b2252"/>
+  <!-- Select/Start - angled -->
+  <rect x="5.2" y="12.2" width="1.6" height=".45" rx=".2" fill="#888" transform="rotate(-25 6 12.4)"/>
+  <rect x="7.2" y="12.2" width="1.6" height=".45" rx=".2" fill="#888" transform="rotate(-25 8 12.4)"/>
+  <!-- Speaker grille -->
+  <line x1="10" y1="12.5" x2="11.5" y2="13.5" stroke="#999" stroke-width=".3"/>
+  <line x1="10.5" y1="12.2" x2="12" y2="13.2" stroke="#999" stroke-width=".3"/>
+  <line x1="11" y1="11.9" x2="12" y2="12.6" stroke="#999" stroke-width=".3"/>
+</svg>
