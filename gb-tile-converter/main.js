@@ -1,5 +1,6 @@
-import { state } from './state.js';
+import { state, FONT_CSS, FIRST_CHAR } from './state.js';
 import { el, initDOM } from './dom.js';
+import { calcAllWidths } from './color.js';
 import { onHeaderInput, updateOutput } from './header.js';
 import { applyZoom, renderOverview, quantize } from './overview.js';
 import { loadImageFromBlob, loadImageFile } from './image-io.js';
@@ -89,6 +90,7 @@ el.resetPositionBtn.addEventListener('click', () => {
   state.imageScale = 1;
   renderOverview();
   quantize();
+  renderCharMap();
   if (state.mode === 'editor') {
     renderTileGrid();
     renderTileZoom();
@@ -152,6 +154,7 @@ el.tileGridCanvas.addEventListener('click', e => {
     renderTileGrid();
     renderTileZoom();
     updateTileNav();
+    renderCharMap();
   }
 });
 
@@ -188,6 +191,7 @@ el.prevTileBtn.addEventListener('click', () => {
     renderTileGrid();
     renderTileZoom();
     updateTileNav();
+    renderCharMap();
   }
 });
 
@@ -197,6 +201,7 @@ el.nextTileBtn.addEventListener('click', () => {
     renderTileGrid();
     renderTileZoom();
     updateTileNav();
+    renderCharMap();
   }
 });
 
@@ -230,6 +235,7 @@ document.addEventListener('keydown', e => {
       e.preventDefault();
       renderOverview();
       quantize();
+      renderCharMap();
       el.imageInfo.textContent = `${state.image.naturalWidth}×${state.image.naturalHeight}px — ${state.tilesX}×${state.tilesY} tiles` +
         (state.imageScale !== 1 ? ` — scale ${state.imageScale.toFixed(1)}x` : '');
       return;
@@ -292,6 +298,7 @@ document.addEventListener('keydown', e => {
       break;
     case '1': case '2': case '3': case '4': {
       const c = parseInt(e.key) - 1;
+      if (state.fontMode && c > 2) break;
       state.selectedColor = c;
       el.paletteButtons.forEach(b => b.classList.toggle('active', parseInt(b.dataset.color) === c));
       break;
@@ -336,6 +343,111 @@ el.formatToggleBtn.addEventListener('click', () => {
 });
 
 updateFormatToggle();
+
+// ---- VWF (Variable Width Font) mode ----
+
+const tileNavHint = document.querySelector('.tile-nav-hint');
+const clusterLabel = document.querySelector('.cluster-label');
+
+function renderCharMap() {
+  el.fontCharMap.innerHTML = '';
+  if (!state.fontMode || !state.tileData.length) {
+    el.charMapWrap.hidden = true;
+    return;
+  }
+  el.charMapWrap.hidden = false;
+
+  for (let i = 0; i < state.tileData.length; i++) {
+    const code = FIRST_CHAR + i;
+    const ch = String.fromCharCode(code);
+    const cell = document.createElement('div');
+    cell.className = 'char-cell' + (i === state.selectedTile ? ' selected' : '');
+    cell.title = code === 32 ? 'Space (0x20)' : `${ch} (0x${code.toString(16).toUpperCase()})`;
+
+    const cvs = document.createElement('canvas');
+    cvs.width = 8;
+    cvs.height = 8;
+    const ctx = cvs.getContext('2d');
+    const tile = state.tileData[i];
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        ctx.fillStyle = FONT_CSS[tile[r][c]];
+        ctx.fillRect(c, r, 1, 1);
+      }
+    }
+    cell.appendChild(cvs);
+
+    cell.addEventListener('click', () => {
+      state.selectedTile = i;
+      renderCharMap();
+      if (state.mode === 'editor') {
+        renderTileGrid();
+        renderTileZoom();
+        updateTileNav();
+      }
+    });
+
+    el.fontCharMap.appendChild(cell);
+  }
+}
+
+function applyFontMode() {
+  const on = state.fontMode;
+
+  // Toggle visibility of font-only vs tile-only controls
+  el.glyphInfo.hidden = !on;
+  clusterLabel.hidden = on;
+  el.formatToggleBtn.hidden = on;
+
+  // Update palette buttons: show 3 in font mode, 4 in tile mode
+  el.paletteButtons.forEach(btn => {
+    const c = parseInt(btn.dataset.color);
+    if (on) {
+      btn.hidden = c === 3;
+      btn.title = c === 0 ? 'Light (bg)' : c === 1 ? 'Dark (ink)' : 'Magenta (width marker)';
+    } else {
+      btn.hidden = false;
+      btn.title = c === 0 ? 'White' : c === 1 ? 'Light' : c === 2 ? 'Dark' : 'Black';
+    }
+  });
+
+  // Fix selected color if out of range
+  if (on && state.selectedColor > 2) {
+    state.selectedColor = 1;
+  }
+  el.paletteButtons.forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.color) === state.selectedColor)
+  );
+
+  // Update keyboard hint
+  if (tileNavHint) {
+    tileNavHint.innerHTML = on
+      ? '<kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate &middot; <kbd>Shift</kbd>+arrows pan tile &middot; <kbd>1</kbd>-<kbd>3</kbd> colour &middot; <kbd>Del</kbd> remove &middot; <kbd>a</kbd> add tile'
+      : '<kbd>&larr;</kbd><kbd>&rarr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate &middot; <kbd>Shift</kbd>+arrows pan tile &middot; <kbd>1</kbd>-<kbd>4</kbd> colour &middot; <kbd>Del</kbd> remove &middot; <kbd>a</kbd> add tile';
+  }
+
+  // Compute glyph widths if switching to font mode with existing tiles
+  if (on && state.tileData.length && !state.glyphWidths.length) {
+    state.glyphWidths = calcAllWidths(state.tileData);
+  }
+
+  // Re-quantize if image loaded (palette changed)
+  if (state.image) {
+    renderOverview();
+    quantize();
+  }
+
+  renderCharMap();
+  renderTileGrid();
+  if (state.tileData.length) renderTileZoom();
+  updateTileNav();
+  updateOutput();
+}
+
+el.fontModeToggle.addEventListener('change', () => {
+  state.fontMode = el.fontModeToggle.checked;
+  applyFontMode();
+});
 
 // ---- Copy ----
 
@@ -392,3 +504,4 @@ document.addEventListener('keyup', scheduleSave);
 
 el.overviewCanvas.style.cursor = 'default';
 restoreState();
+if (state.fontMode) applyFontMode();
