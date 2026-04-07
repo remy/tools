@@ -1,0 +1,204 @@
+import { state } from './state.js';
+import { db } from './db.js';
+import { faviconUrl } from './utils.js';
+import { render } from './render-calendar.js';
+import { renderYearView, toggleYearView } from './render-year.js';
+import { openSubPopover, handleSubFormSubmit, handleSubDelete, syncToggleToSelect, updateRenewalVisibility } from './popover-sub.js';
+import { openQuickAdd, handleQuickAddSubmit, handleSaveAndAddMore } from './popover-quickadd.js';
+import { openBreakdown } from './popover-breakdown.js';
+import { openSettings, handleSettingsSave } from './popover-settings.js';
+import { handleExport, handleImport } from './io.js';
+
+// ── Favicon preview debounce ──
+let faviconTimer = null;
+export function setupFaviconPreview(inputId, previewId) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  input.addEventListener('input', () => {
+    clearTimeout(faviconTimer);
+    faviconTimer = setTimeout(() => {
+      const fav = faviconUrl(input.value);
+      if (fav) {
+        preview.src = fav;
+        preview.hidden = false;
+      } else {
+        preview.hidden = true;
+        preview.src = '';
+      }
+    }, 300);
+  });
+}
+
+// ── Navigation (shared between month and year views) ──
+export function navPrev() {
+  if (state.viewMode === 'year') {
+    state.yearViewYear--;
+    document.getElementById('month-title').textContent = state.yearViewYear;
+    renderYearView();
+  } else {
+    state.currentMonth--;
+    if (state.currentMonth < 0) { state.currentMonth = 11; state.currentYear--; }
+    render();
+  }
+}
+
+export function navNext() {
+  if (state.viewMode === 'year') {
+    state.yearViewYear++;
+    document.getElementById('month-title').textContent = state.yearViewYear;
+    renderYearView();
+  } else {
+    state.currentMonth++;
+    if (state.currentMonth > 11) { state.currentMonth = 0; state.currentYear++; }
+    render();
+  }
+}
+
+// ── Event binding ──
+export function bindEvents() {
+  document.getElementById('prev-month').addEventListener('click', navPrev);
+  document.getElementById('next-month').addEventListener('click', navNext);
+
+  document.getElementById('btn-year-view').addEventListener('click', toggleYearView);
+  document.getElementById('year-grid').addEventListener('click', (e) => {
+    const row = e.target.closest('.year-month');
+    if (row) {
+      state.currentMonth = parseInt(row.dataset.month, 10);
+      state.currentYear = state.yearViewYear;
+      toggleYearView();
+    }
+  });
+
+  // Swipe on calendar for month navigation
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const calendarEl = document.querySelector('.calendar');
+  calendarEl.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+  calendarEl.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) navNext();
+      else navPrev();
+    }
+  }, { passive: true });
+
+  // Category filter — keep both filter groups in sync
+  function syncFilters(source) {
+    state.categoryFilter = source.value;
+    const mainRadio = document.querySelector(`input[name="category-filter"][value="${state.categoryFilter}"]`);
+    const yearRadio = document.querySelector(`input[name="year-category-filter"][value="${state.categoryFilter}"]`);
+    if (mainRadio) mainRadio.checked = true;
+    if (yearRadio) yearRadio.checked = true;
+    if (state.viewMode === 'year') renderYearView();
+    else render();
+  }
+  for (const radio of document.querySelectorAll('input[name="category-filter"]')) {
+    radio.addEventListener('change', (e) => syncFilters(e.target));
+  }
+  for (const radio of document.querySelectorAll('input[name="year-category-filter"]')) {
+    radio.addEventListener('change', (e) => syncFilters(e.target));
+  }
+
+  // Monthly total → breakdown
+  document.getElementById('monthly-total').addEventListener('click', openBreakdown);
+
+  // Quick add
+  document.getElementById('btn-quick-add').addEventListener('click', openQuickAdd);
+
+  // Settings
+  document.getElementById('btn-settings').addEventListener('click', openSettings);
+
+  // Popover close buttons
+  document.getElementById('sub-popover-close').addEventListener('click', () =>
+    document.getElementById('sub-popover').hidePopover());
+  document.getElementById('quick-add-close').addEventListener('click', () =>
+    document.getElementById('quick-add-popover').hidePopover());
+  document.getElementById('breakdown-close').addEventListener('click', () =>
+    document.getElementById('breakdown-popover').hidePopover());
+  document.getElementById('settings-close').addEventListener('click', () =>
+    document.getElementById('settings-popover').hidePopover());
+
+  // Sub form
+  document.getElementById('sub-form').addEventListener('submit', handleSubFormSubmit);
+  document.getElementById('sub-delete').addEventListener('click', handleSubDelete);
+
+  // Toggle group sync for sub form
+  for (const radio of document.querySelectorAll('input[name="sub-cycle-radio"]')) {
+    radio.addEventListener('change', () => {
+      syncToggleToSelect('sub-cycle-radio', 'sub-cycle');
+      updateRenewalVisibility('sub-cycle-radio', 'sub-month');
+    });
+  }
+  for (const radio of document.querySelectorAll('input[name="qa-cycle-radio"]')) {
+    radio.addEventListener('change', () => {
+      syncToggleToSelect('qa-cycle-radio', 'qa-cycle');
+      updateRenewalVisibility('qa-cycle-radio', 'qa-month');
+    });
+  }
+
+  // Quick add form
+  document.getElementById('quick-add-form').addEventListener('submit', handleQuickAddSubmit);
+  document.getElementById('qa-save-more').addEventListener('click', handleSaveAndAddMore);
+
+  // Settings
+  document.getElementById('settings-save').addEventListener('click', handleSettingsSave);
+  document.getElementById('btn-export').addEventListener('click', handleExport);
+  document.getElementById('btn-import').addEventListener('change', (e) => {
+    if (e.target.files[0]) handleImport(e.target.files[0]);
+    e.target.value = '';
+  });
+
+  // Calendar grid — delegate clicks
+  document.getElementById('calendar-grid').addEventListener('click', (e) => {
+    const subItem = e.target.closest('.day-sub-item');
+    if (subItem) {
+      const subId = subItem.dataset.subId;
+      const sub = state.subscriptions.find(s => s.id === subId);
+      if (sub) openSubPopover(null, sub);
+      return;
+    }
+    const cell = e.target.closest('.day-cell');
+    if (cell && cell.dataset.day) {
+      openSubPopover(parseInt(cell.dataset.day, 10));
+    }
+  });
+
+  // Breakdown — delegate edit/delete
+  document.getElementById('breakdown-list').addEventListener('click', async (e) => {
+    const editBtn = e.target.closest('[data-edit-id]');
+    if (editBtn) {
+      document.getElementById('breakdown-popover').hidePopover();
+      const sub = state.subscriptions.find(s => s.id === editBtn.dataset.editId);
+      if (sub) setTimeout(() => openSubPopover(null, sub), 200);
+      return;
+    }
+    const deleteBtn = e.target.closest('[data-delete-id]');
+    if (deleteBtn) {
+      await db.delete(deleteBtn.dataset.deleteId);
+      state.subscriptions = await db.getAll();
+      render();
+      openBreakdown();
+    }
+  });
+
+  // Favicon previews
+  setupFaviconPreview('sub-url', 'favicon-preview');
+  setupFaviconPreview('qa-url', 'qa-favicon-preview');
+
+  // Escape key closes popovers
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      for (const id of ['sub-popover', 'quick-add-popover', 'breakdown-popover', 'settings-popover']) {
+        const el = document.getElementById(id);
+        if (el.matches(':popover-open')) {
+          el.hidePopover();
+          break;
+        }
+      }
+    }
+  });
+}

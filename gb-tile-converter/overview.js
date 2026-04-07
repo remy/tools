@@ -1,0 +1,102 @@
+import { state, DMG_CSS } from './state.js';
+import { el, ovCtx } from './dom.js';
+import { rgbToDmg } from './color.js';
+import { updateOutput } from './header.js';
+
+export function resizeOverviewCanvas() {
+  if (!state.image) return;
+  const img = state.image;
+  const maxDim = 512;
+  let w = img.naturalWidth;
+  let h = img.naturalHeight;
+  w = Math.ceil(w / 8) * 8;
+  h = Math.ceil(h / 8) * 8;
+  if (w > maxDim) w = maxDim;
+  if (h > maxDim) h = maxDim;
+  w = Math.max(w, 8);
+  h = Math.max(h, 8);
+  state.canvasW = w;
+  state.canvasH = h;
+  el.overviewCanvas.width = w;
+  el.overviewCanvas.height = h;
+  applyZoom();
+}
+
+export function applyZoom() {
+  const z = state.zoom;
+  el.overviewCanvas.style.width = (state.canvasW * z) + 'px';
+  el.overviewCanvas.style.height = (state.canvasH * z) + 'px';
+  el.zoomLevel.textContent = z + 'x';
+}
+
+export function renderOverview() {
+  const w = state.canvasW;
+  const h = state.canvasH;
+  // Clear to DMG white
+  ovCtx.fillStyle = DMG_CSS[0];
+  ovCtx.fillRect(0, 0, w, h);
+
+  if (state.image) {
+    const s = state.imageScale;
+    const sw = state.image.naturalWidth * s;
+    const sh = state.image.naturalHeight * s;
+    ovCtx.drawImage(state.image, state.offsetX, state.offsetY, sw, sh);
+  }
+
+  // Grid overlay
+  ovCtx.strokeStyle = 'rgba(0, 0, 0, 0.18)';
+  ovCtx.lineWidth = 0.5;
+  ovCtx.beginPath();
+  for (let x = 0; x <= w; x += 8) {
+    ovCtx.moveTo(x, 0);
+    ovCtx.lineTo(x, h);
+  }
+  for (let y = 0; y <= h; y += 8) {
+    ovCtx.moveTo(0, y);
+    ovCtx.lineTo(w, y);
+  }
+  ovCtx.stroke();
+}
+
+export function quantize() {
+  if (!state.image) return;
+  const w = state.canvasW;
+  const h = state.canvasH;
+  // Draw image to a temp canvas at positioned offset to sample pixels
+  const tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width = w;
+  tmpCanvas.height = h;
+  const tmpCtx = tmpCanvas.getContext('2d', { willReadFrequently: true });
+  tmpCtx.fillStyle = DMG_CSS[0];
+  tmpCtx.fillRect(0, 0, w, h);
+  const sc = state.imageScale;
+  tmpCtx.drawImage(state.image, state.offsetX, state.offsetY, state.image.naturalWidth * sc, state.image.naturalHeight * sc);
+  const imgData = tmpCtx.getImageData(0, 0, w, h);
+  const pixels = imgData.data;
+
+  state.tilesX = w / 8;
+  state.tilesY = h / 8;
+  state.tileData = [];
+
+  for (let ty = 0; ty < state.tilesY; ty++) {
+    for (let tx = 0; tx < state.tilesX; tx++) {
+      const tile = [];
+      for (let row = 0; row < 8; row++) {
+        const tileRow = [];
+        for (let col = 0; col < 8; col++) {
+          const px = (ty * 8 + row) * w + (tx * 8 + col);
+          const i = px * 4;
+          tileRow.push(rgbToDmg(pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]));
+        }
+        tile.push(tileRow);
+      }
+      state.tileData.push(tile);
+    }
+  }
+
+  if (state.selectedTile >= state.tileData.length) {
+    state.selectedTile = 0;
+  }
+
+  updateOutput();
+}
