@@ -404,9 +404,11 @@ function applyFontMode() {
     const c = parseInt(btn.dataset.color);
     if (on) {
       btn.hidden = c === 3;
+      btn.style.background = c < 3 ? FONT_CSS[c] : '';
       btn.title = c === 0 ? 'Light (bg)' : c === 1 ? 'Dark (ink)' : 'Magenta (width marker)';
     } else {
       btn.hidden = false;
+      btn.style.background = '';
       btn.title = c === 0 ? 'White' : c === 1 ? 'Light' : c === 2 ? 'Dark' : 'Black';
     }
   });
