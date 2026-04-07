@@ -49,6 +49,11 @@
     "description": "Drop a pixel font file and generate an 8x8 grid representation of each glyph. Supports TTF, OTF, WOFF, and WOFF2 formats.",
     "title": "Font Grid Generator"
   },
+  "gb-font-extractor": {
+    "category": "Developer Tools",
+    "description": "Game Boy variable-width font editor. Extract bitmap data and glyph widths from a font image using magenta (#FF00FF) width markers. Generates C arrays for VWF engines.",
+    "title": "GB Variable Width Fonts"
+  },
   "gb-tile-converter": {
     "category": "Developer Tools",
     "description": "Convert images or font files to Game Boy DMG tile data. Upload an image, align to an 8x8 grid, or load a font to generate character tiles. Edit individual tile pixels and export C header arrays.",
