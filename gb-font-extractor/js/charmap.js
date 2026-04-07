@@ -51,6 +51,7 @@ export function updateTileNav() {
     el.tileIndex.textContent = 'No glyphs';
     el.prevTileBtn.disabled = true;
     el.nextTileBtn.disabled = true;
+    el.deleteTileBtn.disabled = true;
     return;
   }
   const code = FIRST_CHAR + state.selectedTile;
@@ -58,4 +59,5 @@ export function updateTileNav() {
   el.tileIndex.textContent = `${ch} — ${state.selectedTile + 1} / ${total}`;
   el.prevTileBtn.disabled = state.selectedTile <= 0;
   el.nextTileBtn.disabled = state.selectedTile >= total - 1;
+  el.deleteTileBtn.disabled = false;
 }

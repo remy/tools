@@ -379,6 +379,17 @@ body {
   text-align: center;
 }
 
+.btn-delete {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.btn-delete:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
 .tile-nav-hint {
   font-size: 0.75rem;
   color: var(--colour-text-secondary);

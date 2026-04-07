@@ -21,6 +21,7 @@ export const el = {
   tileZoomCanvas: document.getElementById('tileZoomCanvas'),
   prevTileBtn: document.getElementById('prevTileBtn'),
   nextTileBtn: document.getElementById('nextTileBtn'),
+  deleteTileBtn: document.getElementById('deleteTileBtn'),
   tileIndex: document.getElementById('tileIndex'),
   glyphInfo: document.getElementById('glyphInfo'),
   paletteButtons: document.querySelectorAll('.palette-btn'),

@@ -64,6 +64,26 @@ function panTile(dx, dy) {
   updateOutput();
 }
 
+function deleteTile() {
+  if (!state.tileData.length) return;
+  state.tileData.splice(state.selectedTile, 1);
+  state.glyphWidths.splice(state.selectedTile, 1);
+  if (state.selectedTile >= state.tileData.length) {
+    state.selectedTile = Math.max(0, state.tileData.length - 1);
+  }
+  state.tilesY = state.tilesX ? Math.ceil(state.tileData.length / state.tilesX) : 0;
+  renderTileGrid();
+  if (state.tileData.length) {
+    renderTileZoom();
+  } else {
+    zoomCtx.clearRect(0, 0, el.tileZoomCanvas.width, el.tileZoomCanvas.height);
+  }
+  updateTileNav();
+  renderCharMap();
+  updateOutput();
+  el.tileEditModeBtn.disabled = !state.tileData.length;
+}
+
 // --- Event binding ---
 
 export function initEditor() {
@@ -102,13 +122,14 @@ export function initEditor() {
     if (idx >= 0 && idx < state.tileData.length) selectTile(idx);
   });
 
-  // Prev / Next
+  // Prev / Next / Delete
   el.prevTileBtn.addEventListener('click', () => {
     if (state.selectedTile > 0) selectTile(state.selectedTile - 1);
   });
   el.nextTileBtn.addEventListener('click', () => {
     if (state.selectedTile < state.tileData.length - 1) selectTile(state.selectedTile + 1);
   });
+  el.deleteTileBtn.addEventListener('click', deleteTile);
 
   // Palette buttons
   el.paletteButtons.forEach(btn => {
@@ -154,6 +175,13 @@ export function initEditor() {
     }
 
     if (state.mode !== 'editor') return;
+
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      deleteTile();
+      return;
+    }
+
     if (!state.tileData.length) return;
 
     // Shift+arrow: pan pixel data
