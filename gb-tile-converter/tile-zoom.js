@@ -1,5 +1,6 @@
-import { state, DMG_CSS } from './state.js';
+import { state, DMG_CSS, FONT_CSS } from './state.js';
 import { el, zoomCtx } from './dom.js';
+import { calcGlyphWidth } from './color.js';
 import { renderTileGrid } from './tile-grid.js';
 import { updateOutput } from './header.js';
 import { updateTileNav } from './tile-edit.js';
@@ -13,11 +14,28 @@ export function renderTileZoom() {
   el.tileZoomCanvas.width = 8 * s;
   el.tileZoomCanvas.height = 8 * s;
 
+  const palette = state.fontMode ? FONT_CSS : DMG_CSS;
   for (let r = 0; r < 8; r++) {
     for (let c = 0; c < 8; c++) {
-      zoomCtx.fillStyle = DMG_CSS[tile[r][c]];
+      zoomCtx.fillStyle = palette[tile[r][c]];
       zoomCtx.fillRect(c * s, r * s, s, s);
     }
+  }
+
+  // Width boundary line (VWF mode)
+  if (state.fontMode) {
+    const width = calcGlyphWidth(tile);
+    if (width < 8) {
+      zoomCtx.strokeStyle = 'rgba(255, 0, 255, 0.6)';
+      zoomCtx.lineWidth = 2;
+      zoomCtx.setLineDash([4, 4]);
+      zoomCtx.beginPath();
+      zoomCtx.moveTo(width * s, 0);
+      zoomCtx.lineTo(width * s, 8 * s);
+      zoomCtx.stroke();
+      zoomCtx.setLineDash([]);
+    }
+    updateGlyphInfo();
   }
 
   // Grid lines
@@ -49,6 +67,9 @@ export function paintPixel(e) {
   const tile = state.tileData[state.selectedTile];
   if (tile[row][col] === state.selectedColor) return;
   tile[row][col] = state.selectedColor;
+  if (state.fontMode) {
+    state.glyphWidths[state.selectedTile] = calcGlyphWidth(tile);
+  }
   renderTileZoom();
   renderTileGrid();
   updateOutput();
@@ -60,6 +81,19 @@ export function selectTile(idx) {
   renderTileGrid();
   renderTileZoom();
   updateTileNav();
+}
+
+function updateGlyphInfo() {
+  if (!state.fontMode || !el.glyphInfo) return;
+  if (!state.tileData.length) {
+    el.glyphInfo.textContent = '';
+    return;
+  }
+  const idx = state.selectedTile;
+  const code = 32 + idx;
+  const ch = code === 32 ? 'Space' : String.fromCharCode(code);
+  const w = state.glyphWidths[idx] ?? calcGlyphWidth(state.tileData[idx]);
+  el.glyphInfo.textContent = `${ch} (0x${code.toString(16).toUpperCase()}) — width: ${w}px`;
 }
 
 export function panTile(dx, dy) {
@@ -76,6 +110,9 @@ export function panTile(dx, dy) {
     }
   }
   state.tileData[state.selectedTile] = fresh;
+  if (state.fontMode) {
+    state.glyphWidths[state.selectedTile] = calcGlyphWidth(fresh);
+  }
   renderTileZoom();
   renderTileGrid();
   updateOutput();

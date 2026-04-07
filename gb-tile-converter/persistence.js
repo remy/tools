@@ -31,6 +31,8 @@ export function saveState() {
       fontLoaded: state.fontLoaded,
       fontSize: state.fontSize,
       fontBold: state.fontBold,
+      fontMode: state.fontMode,
+      glyphWidths: state.glyphWidths,
     };
     // Store image as data URL if present
     if (state.image) {
@@ -72,8 +74,11 @@ export function restoreState() {
     state.canvasW = data.canvasW || 256;
     state.canvasH = data.canvasH || 256;
     state.imageFileName = data.imageFileName || '';
+    state.fontMode = data.fontMode || false;
+    state.glyphWidths = data.glyphWidths || [];
 
     el.varName.value = state.varName;
+    el.fontModeToggle.checked = state.fontMode;
     el.paletteButtons.forEach(b =>
       b.classList.toggle('active', parseInt(b.dataset.color) === state.selectedColor)
     );

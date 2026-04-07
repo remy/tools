@@ -47,6 +47,9 @@ export function initDOM() {
   el.fontDebugPanel = document.getElementById('fontDebugPanel');
   el.fontDebugInfo = document.getElementById('fontDebugInfo');
   el.fontDebugHtmlWrap = document.getElementById('fontDebugHtmlWrap');
+  el.fontModeToggle = document.getElementById('fontModeToggle');
+  el.glyphInfo = document.getElementById('glyphInfo');
+  el.charMapWrap = document.getElementById('charMapWrap');
 
   ovCtx = el.overviewCanvas.getContext('2d', { willReadFrequently: true });
   gridCtx = el.tileGridCanvas.getContext('2d');

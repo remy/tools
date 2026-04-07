@@ -1,4 +1,4 @@
-import { state, DMG_CSS } from './state.js';
+import { state, DMG_CSS, FONT_CSS } from './state.js';
 import { el, gridCtx } from './dom.js';
 import { renderTileZoom } from './tile-zoom.js';
 import { updateTileNav } from './tile-edit.js';
@@ -13,13 +13,14 @@ export function renderTileGrid() {
   el.tileGridCanvas.width = cols * s;
   el.tileGridCanvas.height = rows * s;
 
+  const palette = state.fontMode ? FONT_CSS : DMG_CSS;
   for (let idx = 0; idx < state.tileData.length; idx++) {
     const tx = idx % cols;
     const ty = Math.floor(idx / cols);
     const tile = state.tileData[idx];
     for (let r = 0; r < 8; r++) {
       for (let c = 0; c < 8; c++) {
-        gridCtx.fillStyle = DMG_CSS[tile[r][c]];
+        gridCtx.fillStyle = palette[tile[r][c]];
         gridCtx.fillRect(tx * s + c * 2, ty * s + r * 2, 2, 2);
       }
     }
