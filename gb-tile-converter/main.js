@@ -447,7 +447,20 @@ function applyFontMode() {
 }
 
 el.fontModeToggle.addEventListener('change', () => {
-  state.fontMode = el.fontModeToggle.checked;
+  const wantFont = el.fontModeToggle.checked;
+
+  // Warn when turning OFF font mode if any tile uses magenta (width markers)
+  if (!wantFont && state.tileData.length) {
+    const hasMagenta = state.tileData.some(tile =>
+      tile.some(row => row.includes(2))
+    );
+    if (hasMagenta && !confirm('Tiles contain width markers (magenta). Switching off VWF mode will lose this information. Continue?')) {
+      el.fontModeToggle.checked = true;
+      return;
+    }
+  }
+
+  state.fontMode = wantFont;
   applyFontMode();
 });
 
