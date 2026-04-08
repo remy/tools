@@ -1,6 +1,6 @@
-import { state, DMG_CSS } from './state.js';
+import { state, DMG_CSS, FONT_CSS } from './state.js';
 import { el, ovCtx } from './dom.js';
-import { rgbToDmg } from './color.js';
+import { rgbToDmg, rgbToFont, calcAllWidths } from './color.js';
 import { updateOutput } from './header.js';
 
 export function resizeOverviewCanvas() {
@@ -32,8 +32,8 @@ export function applyZoom() {
 export function renderOverview() {
   const w = state.canvasW;
   const h = state.canvasH;
-  // Clear to DMG white
-  ovCtx.fillStyle = DMG_CSS[0];
+  const palette = state.fontMode ? FONT_CSS : DMG_CSS;
+  ovCtx.fillStyle = palette[0];
   ovCtx.fillRect(0, 0, w, h);
 
   if (state.image) {
@@ -67,7 +67,8 @@ export function quantize() {
   tmpCanvas.width = w;
   tmpCanvas.height = h;
   const tmpCtx = tmpCanvas.getContext('2d', { willReadFrequently: true });
-  tmpCtx.fillStyle = DMG_CSS[0];
+  const palette = state.fontMode ? FONT_CSS : DMG_CSS;
+  tmpCtx.fillStyle = palette[0];
   tmpCtx.fillRect(0, 0, w, h);
   const sc = state.imageScale;
   tmpCtx.drawImage(state.image, state.offsetX, state.offsetY, state.image.naturalWidth * sc, state.image.naturalHeight * sc);
@@ -86,12 +87,17 @@ export function quantize() {
         for (let col = 0; col < 8; col++) {
           const px = (ty * 8 + row) * w + (tx * 8 + col);
           const i = px * 4;
-          tileRow.push(rgbToDmg(pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]));
+          const colorFn = state.fontMode ? rgbToFont : rgbToDmg;
+          tileRow.push(colorFn(pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]));
         }
         tile.push(tileRow);
       }
       state.tileData.push(tile);
     }
+  }
+
+  if (state.fontMode) {
+    state.glyphWidths = calcAllWidths(state.tileData);
   }
 
   if (state.selectedTile >= state.tileData.length) {

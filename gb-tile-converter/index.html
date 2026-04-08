@@ -36,6 +36,9 @@
         </div>
         <span id="imageInfo" class="text-secondary"></span>
       </div>
+      <div id="charMapWrap" class="char-map-wrap" hidden>
+        <div class="font-char-map" id="fontCharMap"></div>
+      </div>
       <div id="fontControls" class="font-controls" hidden>
         <label class="font-control-label">Size
           <input type="range" id="fontSize" min="4" max="20" value="8" step="0.5">
@@ -68,6 +71,7 @@
           <div class="tile-zoom-wrap">
             <canvas id="tileZoomCanvas" width="320" height="320"></canvas>
           </div>
+          <div class="glyph-info" id="glyphInfo" hidden></div>
           <div class="palette-picker">
             <span class="palette-label">Palette:</span>
             <button class="palette-btn" data-color="0" title="White"></button>
@@ -98,6 +102,7 @@
             &times;
             <input type="number" id="clusterH" class="input input-sm cluster-input" value="1" min="1" max="64">
           </label>
+          <label class="font-mode-label" title="Variable-width font mode"><input type="checkbox" id="fontModeToggle"> VWF</label>
           <button id="formatToggleBtn" class="btn btn-sm btn-secondary">Flat</button>
           <button id="copyOutputBtn" class="btn btn-sm btn-primary">Copy</button>
         </div>

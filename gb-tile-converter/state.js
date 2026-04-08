@@ -8,6 +8,17 @@ export const DMG = [
 
 export const DMG_CSS = ['#e0f8d0', '#88c070', '#346856', '#081820'];
 
+// Font palette: light (bg), dark (ink), magenta (width marker)
+export const FONT_PALETTE = [
+  { r: 224, g: 248, b: 208 }, // 0 - Light
+  { r:   8, g:  24, b:  32 }, // 1 - Dark
+  { r: 255, g:   0, b: 255 }, // 2 - Magenta
+];
+
+export const FONT_CSS = ['#e0f8d0', '#081820', '#ff00ff'];
+
+export const FIRST_CHAR = 32; // ASCII space
+
 // Shared mutable state
 export const state = {
   image: null,
@@ -38,4 +49,6 @@ export const state = {
   fontFamily: null,
   fontSize: 8,
   fontBold: false,
+  fontMode: false,      // VWF mode toggle
+  glyphWidths: [],      // per-tile width (0-8), only used in fontMode
 };

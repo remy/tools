@@ -619,3 +619,33 @@ body {
   image-rendering: crisp-edges;
 }
 
+/* Glyph info (VWF mode) */
+.glyph-info {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--colour-text-secondary);
+  margin-top: var(--space-sm);
+  min-height: 1.25rem;
+}
+
+/* Character map wrap (VWF mode) */
+.char-map-wrap {
+  margin-top: var(--space-sm);
+}
+
+/* Font mode toggle */
+.font-mode-label {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--colour-text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.font-mode-label input[type="checkbox"] {
+  accent-color: var(--colour-primary);
+}
+
