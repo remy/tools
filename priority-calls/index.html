@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="An Android app that lets priority contacts break through silent, Do Not Disturb, and bedtime modes.">
+  <title>Priority Calls &mdash; let the people who matter reach you</title>
+  <style>
+    :root {
+      /* Primary */
+      --colour-primary: #2563eb;
+      --colour-primary-hover: #1d4ed8;
+      --colour-primary-light: #dbeafe;
+
+      /* Accent */
+      --colour-accent: #0891b2;
+      --colour-accent-hover: #0e7490;
+      --colour-accent-light: #cffafe;
+
+      /* Tertiary */
+      --colour-tertiary: #f59e0b;
+      --colour-tertiary-hover: #d97706;
+      --colour-tertiary-light: #fef3c7;
+
+      /* Neutral */
+      --colour-bg: #fafafa;
+      --colour-bg-secondary: #f4f4f5;
+      --colour-bg-tertiary: #e4e4e7;
+      --colour-border: #d4d4d8;
+      --colour-text: #18181b;
+      --colour-text-secondary: #52525b;
+      --colour-text-tertiary: #a1a1aa;
+
+      /* Semantic */
+      --colour-success: #10b981;
+      --colour-success-light: #d1fae5;
+
+      /* UI */
+      --colour-shadow: rgba(0, 0, 0, 0.1);
+      --colour-block-bg: #ffffff;
+      --colour-block-border: #e4e4e7;
+
+      /* Spacing */
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 0.75rem;
+      --space-lg: 1rem;
+      --space-xl: 1.5rem;
+      --space-2xl: 2rem;
+      --space-3xl: 3rem;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --colour-bg: #0a0a0a;
+        --colour-bg-secondary: #171717;
+        --colour-bg-tertiary: #262626;
+        --colour-border: #404040;
+        --colour-text: #fafafa;
+        --colour-text-secondary: #a1a1aa;
+        --colour-text-tertiary: #71717a;
+        --colour-shadow: rgba(0, 0, 0, 0.5);
+        --colour-block-bg: #171717;
+        --colour-block-border: #262626;
+        --colour-primary-light: #1e3a8a;
+        --colour-success-light: #064e3b;
+      }
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+      color: var(--colour-text);
+      background: var(--colour-bg);
+    }
+
+    h1, h2, h3, h4 {
+      font-family: Georgia, "Times New Roman", Times, serif;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      margin-top: 1.5em;
+      margin-bottom: 0.5em;
+    }
+
+    p {
+      margin-bottom: 1em;
+    }
+
+    a {
+      color: var(--colour-primary);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    a:hover {
+      color: var(--colour-primary-hover);
+    }
+
+    code {
+      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.875em;
+      padding: var(--space-xs) var(--space-sm);
+      background: var(--colour-bg-secondary);
+      border-radius: 0.25rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 720px;
+      margin-inline: auto;
+      padding: var(--space-xl) var(--space-lg);
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        padding: var(--space-3xl) var(--space-xl);
+      }
+
+      h1 {
+        font-size: 2.25rem;
+      }
+    }
+
+    header {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .tagline {
+      font-size: 1.125rem;
+      color: var(--colour-text-secondary);
+      font-family: Georgia, "Times New Roman", Times, serif;
+      font-style: italic;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      margin-top: var(--space-lg);
+    }
+
+    .download {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-top: var(--space-xl);
+      padding: 0.75rem var(--space-xl);
+      background: var(--colour-primary);
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 0.5rem;
+      transition: background 0.15s ease;
+      box-shadow: 0 1px 3px var(--colour-shadow);
+    }
+
+    .download:hover {
+      background: var(--colour-primary-hover);
+      color: white;
+    }
+
+    .download-meta {
+      display: block;
+      margin-top: var(--space-sm);
+      font-size: 0.8125rem;
+      color: var(--colour-text-tertiary);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-xs) var(--space-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1;
+      border-radius: 0.25rem;
+      background: var(--colour-primary-light);
+      color: var(--colour-primary);
+    }
+
+    .badge-accent {
+      background: var(--colour-accent-light);
+      color: var(--colour-accent);
+    }
+
+    .badge-tertiary {
+      background: var(--colour-tertiary-light);
+      color: var(--colour-tertiary);
+    }
+
+    .prose {
+      line-height: 1.7;
+    }
+
+    .prose ul {
+      margin-bottom: 1.25em;
+      padding-left: 1.5em;
+    }
+
+    .prose li {
+      margin-bottom: 0.5em;
+    }
+
+    .prose strong {
+      color: var(--colour-text);
+    }
+
+    .section-block {
+      background: var(--colour-block-bg);
+      border: 1px solid var(--colour-block-border);
+      border-radius: 0.5rem;
+      padding: var(--space-lg);
+      margin-bottom: var(--space-xl);
+      box-shadow: 0 1px 2px var(--colour-shadow);
+    }
+
+    @media (min-width: 768px) {
+      .section-block {
+        padding: var(--space-xl);
+      }
+    }
+
+    .section-block h2:first-child,
+    .section-block h3:first-child {
+      margin-top: 0;
+    }
+
+    .callout {
+      border-left: 4px solid var(--colour-tertiary);
+      background: var(--colour-tertiary-light);
+      color: #713f12;
+      padding: var(--space-md) var(--space-lg);
+      border-radius: 0.375rem;
+      margin-bottom: var(--space-xl);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .callout {
+        color: #fef3c7;
+        background: rgba(245, 158, 11, 0.15);
+      }
+    }
+
+    .callout p:last-child {
+      margin-bottom: 0;
+    }
+
+    .steps {
+      list-style: none;
+      padding: 0;
+      counter-reset: step;
+    }
+
+    .steps li {
+      position: relative;
+      padding-left: 2.5rem;
+      margin-bottom: var(--space-lg);
+      counter-increment: step;
+    }
+
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 1.75rem;
+      height: 1.75rem;
+      background: var(--colour-primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      font-family: -apple-system, sans-serif;
+    }
+
+    .steps li strong {
+      display: block;
+      margin-bottom: var(--space-xs);
+    }
+
+    .perm-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .perm-list li {
+      padding: var(--space-md) 0;
+      border-bottom: 1px solid var(--colour-border);
+    }
+
+    .perm-list li:last-child {
+      border-bottom: none;
+    }
+
+    .perm-list li:first-child {
+      padding-top: 0;
+    }
+
+    .perm-name {
+      display: block;
+      font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8125rem;
+      color: var(--colour-accent);
+      margin-bottom: var(--space-xs);
+    }
+
+    .perm-title {
+      display: block;
+      font-weight: 600;
+      margin-bottom: var(--space-xs);
+    }
+
+    .perm-reason {
+      color: var(--colour-text-secondary);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+
+    footer {
+      margin-top: var(--space-3xl);
+      padding-top: var(--space-xl);
+      border-top: 1px solid var(--colour-border);
+      color: var(--colour-text-secondary);
+      font-size: 0.875rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Priority Calls</h1>
+      <p class="tagline">Let the people who matter reach you &mdash; even when nobody else can.</p>
+      <div class="badges" aria-label="Project tags">
+        <span class="badge">Android</span>
+        <span class="badge badge-accent">Kotlin</span>
+        <span class="badge badge-tertiary">Pixel</span>
+      </div>
+      <a class="download" href="priority-calls.apk" download>
+        &darr; Download APK
+      </a>
+      <small class="download-meta">
+        Android 8.0+ &middot; See install instructions below
+      </small>
+    </header>
+
+    <main class="prose">
+      <div class="callout">
+        <p><strong>The problem:</strong> You put your phone on silent, Do Not Disturb, or bedtime mode to get peace &mdash; and then miss the one call that actually mattered.</p>
+      </div>
+
+      <section class="section-block">
+        <h2>What it does</h2>
+        <p>
+          Priority Calls is a small Android app that watches for incoming calls
+          from a list of contacts you mark as <em>priority</em>. When one of them
+          rings, the app temporarily overrides silent mode, Do Not Disturb, and
+          bedtime mode so the phone rings the way it would any other time &mdash;
+          then puts everything back exactly as it was when the call ends.
+        </p>
+        <p>
+          If you miss the call, it also plays an audible alert so you notice.
+        </p>
+      </section>
+
+      <section class="section-block">
+        <h2>Why it exists</h2>
+        <p>
+          Android&rsquo;s built-in Do Not Disturb has a &ldquo;priority contacts&rdquo;
+          exception, but in practice it behaves inconsistently across versions and
+          OEM skins. Bedtime mode layers on top of it and silences things that DND
+          alone wouldn&rsquo;t. And if the phone is simply on silent, no amount of
+          contact-starring will make it ring.
+        </p>
+        <p>
+          The goal of this project is simple: <strong>if a specific, trusted person
+          calls, the phone rings.</strong> Not &ldquo;it shows a notification.&rdquo;
+          Not &ldquo;it vibrates quietly on the table.&rdquo; It <em>rings.</em>
+          Everyone else gets the silence you asked for.
+        </p>
+      </section>
+
+      <section class="section-block">
+        <h2>How it works</h2>
+        <ol class="steps">
+          <li>
+            <strong>You add priority contacts</strong>
+            Pick them from your contacts list in the app. A toggle lets you enable
+            or disable the whole thing without losing your list.
+          </li>
+          <li>
+            <strong>The app listens for incoming calls</strong>
+            A broadcast receiver checks each ringing call against your priority
+            list (with UK mobile number normalisation so <code>07&hellip;</code>
+            and <code>+447&hellip;</code> match).
+          </li>
+          <li>
+            <strong>It overrides silent / DND / bedtime</strong>
+            The current ringer mode, volume, and DND interruption filter are
+            saved, then temporarily set so the phone actually rings.
+          </li>
+          <li>
+            <strong>It restores your original state</strong>
+            When the call ends, everything goes back to exactly how you had it.
+            The saved state is persisted, so even if Android kills the process
+            mid-call, your settings still come back.
+          </li>
+        </ol>
+      </section>
+
+      <section class="section-block" id="install">
+        <h2>Installing it yourself</h2>
+        <p>
+          This isn&rsquo;t on the Play Store &mdash; you install the APK
+          directly. The process is safe but Android will (rightly) warn you
+          along the way.
+        </p>
+        <ol class="steps">
+          <li>
+            <strong>Download the APK to your phone</strong>
+            Open this page on the phone and tap the <em>Download APK</em>
+            button above, or transfer <code>priority-calls.apk</code> from
+            your computer over USB / AirDrop / email.
+          </li>
+          <li>
+            <strong>Allow installs from this source</strong>
+            Open the APK from your Files app or browser downloads. Android
+            will block it the first time and offer a settings shortcut &mdash;
+            tap it and toggle <em>Allow from this source</em> for whichever
+            app you opened the APK from (usually Files or Chrome).
+          </li>
+          <li>
+            <strong>Tap install</strong>
+            Go back and open the APK again. You&rsquo;ll see the standard
+            Android install dialog. Play Protect may warn that it can&rsquo;t
+            scan the app &mdash; choose <em>Install anyway</em>.
+          </li>
+          <li>
+            <strong>Grant the permissions</strong>
+            Open the app and work through the buttons on the main screen.
+            They each open the right system settings page. See the next
+            section for what each permission is for.
+          </li>
+          <li>
+            <strong>Add your priority contacts</strong>
+            Tap <em>Add contact</em>, pick someone from your contacts, and
+            you&rsquo;re done. The toggle at the top turns the whole thing
+            on and off without losing your list.
+          </li>
+        </ol>
+      </section>
+
+      <section class="section-block" id="permissions">
+        <h2>Permissions and why they&rsquo;re needed</h2>
+        <p>
+          The app asks for a handful of permissions. None of them leave your
+          phone &mdash; there&rsquo;s no network code in this app at all.
+        </p>
+        <ul class="perm-list">
+          <li>
+            <span class="perm-title">Notification listener access</span>
+            <span class="perm-name">BIND_NOTIFICATION_LISTENER_SERVICE</span>
+            <span class="perm-reason">
+              Lets the app see missed-call notifications posted by the dialer,
+              so it can play an audible alert if you missed a priority call
+              while the phone was silent.
+            </span>
+          </li>
+          <li>
+            <span class="perm-title">Do Not Disturb access</span>
+            <span class="perm-name">ACCESS_NOTIFICATION_POLICY</span>
+            <span class="perm-reason">
+              Required to temporarily override DND / bedtime mode when a
+              priority contact calls, and to restore your original DND state
+              the moment the call ends.
+            </span>
+          </li>
+          <li>
+            <span class="perm-title">Modify audio settings</span>
+            <span class="perm-name">MODIFY_AUDIO_SETTINGS</span>
+            <span class="perm-reason">
+              Used to switch the ringer from silent/vibrate to normal and
+              raise the ring volume to something audible &mdash; then put both
+              back exactly as they were.
+            </span>
+          </li>
+          <li>
+            <span class="perm-title">Phone state</span>
+            <span class="perm-name">READ_PHONE_STATE</span>
+            <span class="perm-reason">
+              Lets the app know when a call is ringing, picked up, or ended.
+              This is how it knows when to apply the override and when to
+              restore your settings.
+            </span>
+          </li>
+          <li>
+            <span class="perm-title">Call log</span>
+            <span class="perm-name">READ_CALL_LOG</span>
+            <span class="perm-reason">
+              Needed alongside phone state on modern Android to receive the
+              incoming caller&rsquo;s number &mdash; without it, the app
+              can&rsquo;t tell whether the caller is on your priority list.
+            </span>
+          </li>
+          <li>
+            <span class="perm-title">Contacts</span>
+            <span class="perm-name">READ_CONTACTS</span>
+            <span class="perm-reason">
+              Used when you tap <em>Add contact</em> to pick someone from
+              your address book, and to match incoming numbers against the
+              contacts you&rsquo;ve marked as priority.
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="section-block">
+        <h2>Scope</h2>
+        <p>
+          Right now this is targeted at <strong>Google Pixel phones</strong>.
+          The APIs it uses are standard Android, but Samsung, Xiaomi, and other
+          OEMs layer extra silent/DND behaviour on top that the app doesn&rsquo;t
+          currently account for. Pull requests welcome.
+        </p>
+        <p>
+          Requires Android 8.0 (API 26) or later. Needs permissions for reading
+          phone state, the call log, contacts, and notification policy access.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <p>Source on <a href="https://github.com/remy/android-priority-calls">GitHub</a></p>
+    </footer>
+  </div>
+</body>
+</html>
