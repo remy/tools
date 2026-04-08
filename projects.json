@@ -124,6 +124,11 @@
     "description": "Track your daily reading progress and visualize pages read over time",
     "title": "My Pages Read"
   },
+  "priority-calls": {
+    "category": "Uncategorized",
+    "description": "An Android app that lets priority contacts break through silent, Do Not Disturb, and bedtime modes.",
+    "title": "Priority Calls \u2014 let the people who matter reach you"
+  },
   "quote-game": {
     "category": "Game",
     "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
