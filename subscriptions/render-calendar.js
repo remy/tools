@@ -66,19 +66,14 @@ export function renderGrid() {
 
     if (hasSubs) {
       const daySubs = byDay[dayNum];
-      const maxVisible = 3;
       html += '<div class="day-subs">';
-      for (let s = 0; s < Math.min(daySubs.length, maxVisible); s++) {
-        const sub = daySubs[s];
+      for (const sub of daySubs) {
         const favSrc = sub.favicon || '';
         html += `<div class="day-sub-item" data-sub-id="${sub.id}">`;
         if (favSrc) {
           html += `<img src="${escapeHtml(favSrc)}" alt="" width="12" height="12" loading="lazy">`;
         }
         html += `<span>${escapeHtml(sub.name)}</span></div>`;
-      }
-      if (daySubs.length > maxVisible) {
-        html += `<span class="day-overflow">+${daySubs.length - maxVisible}</span>`;
       }
       html += '</div>';
     }

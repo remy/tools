@@ -54,10 +54,33 @@ export function navNext() {
   }
 }
 
+// ── Reset view to current month/year ──
+function jumpToToday() {
+  const now = new Date();
+  if (state.viewMode === 'year') {
+    state.yearViewYear = now.getFullYear();
+    document.getElementById('month-title').textContent = state.yearViewYear;
+    renderYearView();
+  } else {
+    state.currentYear = now.getFullYear();
+    state.currentMonth = now.getMonth();
+    render();
+  }
+}
+
 // ── Event binding ──
 export function bindEvents() {
   document.getElementById('prev-month').addEventListener('click', navPrev);
   document.getElementById('next-month').addEventListener('click', navNext);
+
+  const monthTitle = document.getElementById('month-title');
+  monthTitle.addEventListener('click', jumpToToday);
+  monthTitle.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      jumpToToday();
+    }
+  });
 
   document.getElementById('btn-year-view').addEventListener('click', toggleYearView);
   document.getElementById('year-grid').addEventListener('click', (e) => {
@@ -188,17 +211,4 @@ export function bindEvents() {
   // Favicon previews
   setupFaviconPreview('sub-url', 'favicon-preview');
   setupFaviconPreview('qa-url', 'qa-favicon-preview');
-
-  // Escape key closes popovers
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      for (const id of ['sub-popover', 'quick-add-popover', 'breakdown-popover', 'settings-popover']) {
-        const el = document.getElementById(id);
-        if (el.matches(':popover-open')) {
-          el.hidePopover();
-          break;
-        }
-      }
-    }
-  });
 }

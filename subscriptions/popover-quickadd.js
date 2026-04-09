@@ -51,11 +51,12 @@ export async function handleSaveAndAddMore() {
   await db.put(sub);
   state.subscriptions = await db.getAll();
   render();
+  const selectedCategory = document.querySelector('input[name="qa-category-radio"]:checked').value;
   form.reset();
   document.getElementById('qa-favicon-preview').hidden = true;
   document.getElementById('qa-favicon-preview').src = '';
   document.getElementById('qa-cycle-monthly').checked = true;
-  document.getElementById('qa-cat-personal').checked = true;
+  document.getElementById(`qa-cat-${selectedCategory}`).checked = true;
   updateRenewalVisibility('qa-cycle-radio', 'qa-month');
   document.getElementById('qa-name').focus();
 }
