@@ -115,6 +115,21 @@ body {
   letter-spacing: -0.02em;
   text-align: center;
   user-select: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius);
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    color: var(--accent);
+    background: var(--bg-hover);
+  }
+
+  &:focus-visible {
+    outline: none;
+    color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
 }
 
 .nav-btn, .action-btn {
@@ -309,8 +324,25 @@ body {
   display: flex;
   flex-direction: column;
   gap: 1px;
+  flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }
 
 .day-sub-item {
@@ -340,13 +372,6 @@ body {
     flex-shrink: 0;
     border-radius: 3px;
   }
-}
-
-.day-overflow {
-  font-size: 0.5rem;
-  font-weight: 700;
-  color: var(--accent);
-  padding: 0 3px;
 }
 
 /* ── Empty State ── */
@@ -1054,5 +1079,20 @@ body {
 
   .total-amount {
     font-size: 2rem;
+  }
+}
+
+/* ── Wide screens: expand just the calendar ── */
+@media (min-width: 900px) {
+  .app {
+    max-width: min(1100px, 92vw);
+  }
+
+  .header,
+  .month-chrome,
+  .year-view {
+    width: 100%;
+    max-width: 520px;
+    margin-inline: auto;
   }
 }
