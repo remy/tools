@@ -53,8 +53,11 @@ export function openBreakdown() {
     html += `</div>`;
     const cat = item.category || 'personal';
     const catClass = cat === 'business' ? 'cat-business' : 'cat-personal';
+    const nameHtml = item.url
+      ? `<a class="breakdown-name" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.name)}</a>`
+      : `<div class="breakdown-name">${escapeHtml(item.name)}</div>`;
     html += `<div class="breakdown-info">
-      <div class="breakdown-name">${escapeHtml(item.name)}</div>
+      ${nameHtml}
     </div>`;
     html += `<div class="breakdown-price">
       <div class="breakdown-converted">${formatCurrency(item.monthlyConverted, state.settings.displayCurrency)}</div>

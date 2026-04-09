@@ -797,11 +797,18 @@ body {
 }
 
 .breakdown-name {
+  display: block;
   font-weight: 600;
   font-size: 0.875rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.breakdown-name:hover {
+  text-decoration: underline;
 }
 
 .breakdown-tags {
