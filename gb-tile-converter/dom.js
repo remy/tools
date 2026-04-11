@@ -33,6 +33,7 @@ export function initDOM() {
   el.varName = document.getElementById('varName');
   el.clusterW = document.getElementById('clusterW');
   el.clusterH = document.getElementById('clusterH');
+  el.tileMapToggle = document.getElementById('tileMapToggle');
   el.formatToggleBtn = document.getElementById('formatToggleBtn');
   el.copyOutputBtn = document.getElementById('copyOutputBtn');
   el.headerOutput = document.getElementById('headerOutput');

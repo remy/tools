@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { el } from './dom.js';
-import { applyZoom, renderOverview } from './overview.js';
+import { applyZoom, renderOverview, updateImageInfo } from './overview.js';
 import { updateOutput } from './header.js';
 
 const STORAGE_KEY = 'gb-tile-converter';
@@ -23,6 +23,7 @@ export function saveState() {
       outputFormat: state.outputFormat,
       clusterW: state.clusterW,
       clusterH: state.clusterH,
+      tileMap: state.tileMap,
       tilesX: state.tilesX,
       tilesY: state.tilesY,
       canvasW: state.canvasW,
@@ -66,8 +67,10 @@ export function restoreState() {
     state.outputFormat = data.outputFormat || 'grouped';
     state.clusterW = data.clusterW || 1;
     state.clusterH = data.clusterH || 1;
+    state.tileMap = !!data.tileMap;
     el.clusterW.value = state.clusterW;
     el.clusterH.value = state.clusterH;
+    el.tileMapToggle.checked = state.tileMap;
     updateFormatToggle();
     state.tilesX = data.tilesX || 0;
     state.tilesY = data.tilesY || 0;
@@ -103,8 +106,7 @@ export function restoreState() {
         el.resetPositionBtn.hidden = false;
         el.zoomControls.hidden = false;
         el.overviewCanvas.style.cursor = 'grab';
-        el.imageInfo.textContent = `${img.naturalWidth}×${img.naturalHeight}px — ${state.tilesX}×${state.tilesY} tiles` +
-          (state.imageScale !== 1 ? ` — scale ${state.imageScale.toFixed(1)}x` : '');
+        updateImageInfo();
       };
       img.src = data.imageDataURL;
     }

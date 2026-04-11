@@ -1,7 +1,25 @@
 import { state, DMG_CSS, FONT_CSS } from './state.js';
 import { el, ovCtx } from './dom.js';
 import { rgbToDmg, rgbToFont, calcAllWidths } from './color.js';
+import { dedupeTiles } from './dedupe.js';
 import { updateOutput } from './header.js';
+
+export function updateImageInfo() {
+  if (!state.image) {
+    el.imageInfo.textContent = '';
+    return;
+  }
+  const img = state.image;
+  let info = `${img.naturalWidth}×${img.naturalHeight}px — ${state.tilesX}×${state.tilesY} tiles`;
+  if (state.imageScale !== 1) {
+    info += ` — scale ${state.imageScale.toFixed(1)}x`;
+  }
+  if (!state.fontMode && state.tileData.length) {
+    const { uniqueTiles } = dedupeTiles(state.tileData);
+    info += ` — ${uniqueTiles.length} unique`;
+  }
+  el.imageInfo.textContent = info;
+}
 
 export function resizeOverviewCanvas() {
   if (!state.image) return;
@@ -105,4 +123,5 @@ export function quantize() {
   }
 
   updateOutput();
+  updateImageInfo();
 }
