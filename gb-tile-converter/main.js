@@ -332,20 +332,20 @@ el.clusterH.addEventListener('input', () => {
   updateOutput();
 });
 
-// ---- Dedupe toggle ----
+// ---- TileMap toggle ----
 
-el.dedupeToggle.addEventListener('change', () => {
-  state.dedupe = el.dedupeToggle.checked;
-  applyDedupeMode();
+el.tileMapToggle.addEventListener('change', () => {
+  state.tileMap = el.tileMapToggle.checked;
+  applyTileMapMode();
   updateOutput();
   updateImageInfo();
 });
 
-function applyDedupeMode() {
+function applyTileMapMode() {
   // Cluster ordering has no meaning when tiles are deduplicated.
-  clusterLabel.hidden = state.dedupe || state.fontMode;
-  // Flat/grouped formatting is replaced by a fixed layout in dedupe mode.
-  el.formatToggleBtn.hidden = state.dedupe || state.fontMode;
+  clusterLabel.hidden = state.tileMap || state.fontMode;
+  // Flat/grouped formatting is replaced by a fixed layout in TileMap mode.
+  el.formatToggleBtn.hidden = state.tileMap || state.fontMode;
 }
 
 // ---- Format toggle ----
@@ -410,9 +410,9 @@ function applyFontMode() {
 
   // Toggle visibility of font-only vs tile-only controls
   el.glyphInfo.hidden = !on;
-  clusterLabel.hidden = on || state.dedupe;
-  el.formatToggleBtn.hidden = on || state.dedupe;
-  el.dedupeToggle.parentElement.hidden = on;
+  clusterLabel.hidden = on || state.tileMap;
+  el.formatToggleBtn.hidden = on || state.tileMap;
+  el.tileMapToggle.parentElement.hidden = on;
 
   // Update palette buttons: show 3 in font mode, 4 in tile mode
   el.paletteButtons.forEach(btn => {
@@ -535,5 +535,5 @@ document.addEventListener('keyup', scheduleSave);
 el.overviewCanvas.style.cursor = 'default';
 restoreState();
 if (state.fontMode) applyFontMode();
-applyDedupeMode();
+applyTileMapMode();
 updateImageInfo();

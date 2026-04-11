@@ -74,9 +74,9 @@ function hexBytes(enc) {
   return hex;
 }
 
-function generateDedupedHeader() {
+function generateTileMapHeader() {
   const name = state.varName || 'tile_data';
-  const { uniqueTiles, tileMap } = dedupeTiles(state.tileData);
+  const { uniqueTiles, tileMap: mapIndices } = dedupeTiles(state.tileData);
   const count = uniqueTiles.length;
   const totalBytes = count * 16;
 
@@ -90,14 +90,14 @@ function generateDedupedHeader() {
   const tileComment = `// ${count} unique tile${count !== 1 ? 's' : ''}, ${totalBytes} bytes`;
 
   // Tilemap — laid out row-by-row matching the image grid
-  const tw = state.tilesX || tileMap.length;
+  const tw = state.tilesX || mapIndices.length;
   const th = state.tilesY || 1;
   const pad = count > 99 ? 3 : count > 9 ? 2 : 1;
   const mapLines = [];
   for (let y = 0; y < th; y++) {
     const row = [];
     for (let x = 0; x < tw; x++) {
-      row.push(tileMap[y * tw + x].toString().padStart(pad));
+      row.push(mapIndices[y * tw + x].toString().padStart(pad));
     }
     mapLines.push('    ' + row.join(', '));
   }
@@ -105,16 +105,16 @@ function generateDedupedHeader() {
   const mapArr = `static const ${mapType} ${name}_map[] = {\n${mapLines.join(',\n')}\n};`;
   const mapComment = `// ${tw}x${th} = ${tw * th} entries`;
 
-  const total = tileMap.length;
+  const total = mapIndices.length;
   const savedPct = total > 0 ? Math.round(((total - count) / total) * 100) : 0;
-  const savings = `// dedupe: ${count}/${total} unique tiles (${savedPct}% saved)`;
+  const savings = `// tilemap: ${count}/${total} unique tiles (${savedPct}% saved)`;
 
   return `${tileArr}\n${tileComment}\n\n${mapArr}\n${mapComment}\n${savings}`;
 }
 
 function generateTileHeader() {
   if (!state.tileData.length) return '// Upload an image to generate tile data';
-  if (state.dedupe) return generateDedupedHeader();
+  if (state.tileMap) return generateTileMapHeader();
   const name = state.varName || 'tile_data';
   const order = (state.clusterW > 1 || state.clusterH > 1)
     ? getClusteredOrder()

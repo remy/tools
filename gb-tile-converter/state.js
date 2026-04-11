@@ -42,7 +42,7 @@ export const state = {
   outputFormat: 'grouped',  // 'grouped' or 'flat'
   clusterW: 1,
   clusterH: 1,
-  dedupe: false,        // emit unique tiles + tilemap
+  tileMap: false,       // TileMap mode: emit unique tiles + tilemap
   painting: false,
   zoom: 1,
   imageScale: 1,

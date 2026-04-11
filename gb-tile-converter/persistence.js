@@ -23,7 +23,7 @@ export function saveState() {
       outputFormat: state.outputFormat,
       clusterW: state.clusterW,
       clusterH: state.clusterH,
-      dedupe: state.dedupe,
+      tileMap: state.tileMap,
       tilesX: state.tilesX,
       tilesY: state.tilesY,
       canvasW: state.canvasW,
@@ -67,10 +67,10 @@ export function restoreState() {
     state.outputFormat = data.outputFormat || 'grouped';
     state.clusterW = data.clusterW || 1;
     state.clusterH = data.clusterH || 1;
-    state.dedupe = !!data.dedupe;
+    state.tileMap = !!data.tileMap;
     el.clusterW.value = state.clusterW;
     el.clusterH.value = state.clusterH;
-    el.dedupeToggle.checked = state.dedupe;
+    el.tileMapToggle.checked = state.tileMap;
     updateFormatToggle();
     state.tilesX = data.tilesX || 0;
     state.tilesY = data.tilesY || 0;
