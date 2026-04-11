@@ -2,7 +2,7 @@ import { state, FONT_CSS, FIRST_CHAR } from './state.js';
 import { el, initDOM } from './dom.js';
 import { calcAllWidths } from './color.js';
 import { onHeaderInput, updateOutput } from './header.js';
-import { applyZoom, renderOverview, quantize } from './overview.js';
+import { applyZoom, renderOverview, quantize, updateImageInfo } from './overview.js';
 import { loadImageFromBlob, loadImageFile } from './image-io.js';
 import { isFontFile, loadFontFile, generateFontTiles } from './font.js';
 import { onDragStart, onDragMove, onDragEnd } from './canvas-drag.js';
@@ -236,8 +236,6 @@ document.addEventListener('keydown', e => {
       renderOverview();
       quantize();
       renderCharMap();
-      el.imageInfo.textContent = `${state.image.naturalWidth}×${state.image.naturalHeight}px — ${state.tilesX}×${state.tilesY} tiles` +
-        (state.imageScale !== 1 ? ` — scale ${state.imageScale.toFixed(1)}x` : '');
       return;
     }
   }
@@ -334,6 +332,22 @@ el.clusterH.addEventListener('input', () => {
   updateOutput();
 });
 
+// ---- Dedupe toggle ----
+
+el.dedupeToggle.addEventListener('change', () => {
+  state.dedupe = el.dedupeToggle.checked;
+  applyDedupeMode();
+  updateOutput();
+  updateImageInfo();
+});
+
+function applyDedupeMode() {
+  // Cluster ordering has no meaning when tiles are deduplicated.
+  clusterLabel.hidden = state.dedupe || state.fontMode;
+  // Flat/grouped formatting is replaced by a fixed layout in dedupe mode.
+  el.formatToggleBtn.hidden = state.dedupe || state.fontMode;
+}
+
 // ---- Format toggle ----
 
 el.formatToggleBtn.addEventListener('click', () => {
@@ -396,8 +410,9 @@ function applyFontMode() {
 
   // Toggle visibility of font-only vs tile-only controls
   el.glyphInfo.hidden = !on;
-  clusterLabel.hidden = on;
-  el.formatToggleBtn.hidden = on;
+  clusterLabel.hidden = on || state.dedupe;
+  el.formatToggleBtn.hidden = on || state.dedupe;
+  el.dedupeToggle.parentElement.hidden = on;
 
   // Update palette buttons: show 3 in font mode, 4 in tile mode
   el.paletteButtons.forEach(btn => {
@@ -520,3 +535,5 @@ document.addEventListener('keyup', scheduleSave);
 el.overviewCanvas.style.cursor = 'default';
 restoreState();
 if (state.fontMode) applyFontMode();
+applyDedupeMode();
+updateImageInfo();

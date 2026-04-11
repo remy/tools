@@ -20,7 +20,6 @@ export function loadImageFromBlob(blob, name) {
     el.resetPositionBtn.hidden = false;
     el.zoomControls.hidden = false;
     el.tileEditModeBtn.disabled = false;
-    el.imageInfo.textContent = `${img.naturalWidth}×${img.naturalHeight}px — ${state.tilesX}×${state.tilesY} tiles`;
   };
   img.src = url;
 }
