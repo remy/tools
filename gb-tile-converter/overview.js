@@ -24,13 +24,10 @@ export function updateImageInfo() {
 export function resizeOverviewCanvas() {
   if (!state.image) return;
   const img = state.image;
-  const maxDim = 512;
   let w = img.naturalWidth;
   let h = img.naturalHeight;
   w = Math.ceil(w / 8) * 8;
   h = Math.ceil(h / 8) * 8;
-  if (w > maxDim) w = maxDim;
-  if (h > maxDim) h = maxDim;
   w = Math.max(w, 8);
   h = Math.max(h, 8);
   state.canvasW = w;
