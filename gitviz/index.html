@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+      content="Analyse a GitHub repository with contributor, churn, momentum, bug-cluster, and firefighting visualizations powered by the GitHub API.">
+    <meta name="category" content="Developer Tools">
+    <title>gitviz web</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+
+    <!-- ======== VIEW: FORM ======== -->
+    <div id="view-form" class="container">
+      <div class="form-card">
+        <div class="tag">gitviz web</div>
+        <h1>Analyze a GitHub repo</h1>
+        <div class="sub">Runs the same 5 health checks as the CLI, using the GitHub API.</div>
+        <form id="analyze-form" autocomplete="off">
+          <div class="field">
+            <label for="inp-repo">Repository</label>
+            <input id="inp-repo" type="text" placeholder="owner/repo" spellcheck="false" required>
+            <div class="error-text hide" id="repo-error"></div>
+          </div>
+          <div class="field">
+            <label for="inp-token">Personal access token</label>
+            <input id="inp-token" type="password" placeholder="ghp_... or github_pat_..." spellcheck="false">
+            <div class="hint">Optional for public repos (60 req/hr). <a
+                href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Create a
+                fine-grained PAT</a> with <strong>Contents: Read</strong> for higher limits (5,000/hr).</div>
+          </div>
+          <div class="field-row">
+            <input id="inp-remember" type="checkbox" checked>
+            <label for="inp-remember">Remember token in localStorage</label>
+          </div>
+          <button type="submit" class="btn-primary">Analyze</button>
+        </form>
+        <div class="cached-repos hide" id="cached-repos">
+          <h3>Recent reports</h3>
+          <ul class="cached-list" id="cached-list"></ul>
+          <button class="cached-clear" id="cached-clear">Clear all cached reports</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== VIEW: PROGRESS ======== -->
+    <div id="view-progress" class="container hide">
+      <div class="progress-card">
+        <h2>Analyzing...</h2>
+        <div class="repo-label" id="prog-repo"></div>
+        <div id="prog-error" class="error-banner hide"></div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" id="prog-bar"></div>
+        </div>
+        <div class="progress-pct" id="prog-pct">0%</div>
+        <div class="panel-statuses">
+          <div class="panel-status"><span class="name">Contributors</span><span class="status"
+              id="ps-contributors">waiting</span></div>
+          <div class="panel-status"><span class="name">Momentum</span><span class="status"
+              id="ps-momentum">waiting</span></div>
+          <div class="panel-status"><span class="name">Firefighting</span><span class="status"
+              id="ps-firefighting">waiting</span></div>
+          <div class="panel-status"><span class="name">Churn</span><span class="status" id="ps-churn">waiting</span>
+          </div>
+          <div class="panel-status"><span class="name">Bug clusters</span><span class="status"
+              id="ps-bugs">waiting</span></div>
+        </div>
+        <button class="btn-cancel" id="btn-cancel">Cancel</button>
+      </div>
+    </div>
+
+    <!-- ======== VIEW: REPORT ======== -->
+    <div id="view-report" class="container hide">
+      <header>
+        <div>
+          <div class="tag">gitviz web</div>
+          <h1 id="repo-name">-</h1>
+          <div class="meta" id="repo-path" style="text-align:left"></div>
+        </div>
+        <div style="text-align:right">
+          <div class="meta" id="generated"></div>
+          <button class="btn-back" id="btn-back">Back</button>
+        </div>
+      </header>
+      <section class="summary">
+        <div class="stat">
+          <div class="label">Total commits</div>
+          <div class="value" id="stat-commits">-</div>
+        </div>
+        <div class="stat">
+          <div class="label">Contributors</div>
+          <div class="value" id="stat-contributors">-</div>
+        </div>
+        <div class="stat">
+          <div class="label">Hot files</div>
+          <div class="value" id="stat-hot">-</div>
+        </div>
+        <div class="stat">
+          <div class="label">Bug clusters</div>
+          <div class="value" id="stat-bugs">-</div>
+        </div>
+        <div class="stat">
+          <div class="label">Firefighting</div>
+          <div class="value" id="stat-ff">-</div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Churn Hotspots</h2>
+        <div class="sub">Top 20 most-changed files (last year). <code>GET /repos/.../commits</code></div>
+        <div id="wrap-churn" class="chart chart-tall"><canvas id="chart-churn"></canvas></div>
+      </section>
+      <section class="panel">
+        <h2>Contributors</h2>
+        <div class="sub">Top 20 authors by commit count, excluding merges.
+          <code>GET /repos/.../stats/contributors</code></div>
+        <div id="wrap-contrib" class="chart chart-tall"><canvas id="chart-contrib"></canvas></div>
+      </section>
+      <section class="panel">
+        <h2>Bug Clusters</h2>
+        <div class="sub">Files most frequently touched in fix/bug/broken commits. <code>GET /search/commits</code></div>
+        <div id="wrap-bugs" class="chart chart-tall"><canvas id="chart-bugs"></canvas></div>
+      </section>
+      <section class="panel">
+        <h2>Project Momentum</h2>
+        <div class="sub">Commits per month (last 52 weeks). <code>GET /repos/.../stats/commit_activity</code></div>
+        <div id="wrap-momentum" class="chart"><canvas id="chart-momentum"></canvas></div>
+      </section>
+      <section class="panel">
+        <h2>Firefighting</h2>
+        <div class="sub">Reverts, hotfixes, emergencies, rollbacks (last year).</div>
+        <div class="ff-controls">
+          <input id="ff-search" type="text" placeholder="Filter by subject or hash...">
+          <span class="ff-chip active" data-kind="all">all</span>
+          <span class="ff-chip" data-kind="revert">revert</span>
+          <span class="ff-chip" data-kind="hotfix">hotfix</span>
+          <span class="ff-chip" data-kind="emergency">emergency</span>
+          <span class="ff-chip" data-kind="rollback">rollback</span>
+          <span class="ff-count" id="ff-count"></span>
+        </div>
+        <table class="ff-table">
+          <thead>
+            <tr>
+              <th data-sort="kind">Kind<span class="arrow"></span></th>
+              <th data-sort="hash">Hash<span class="arrow"></span></th>
+              <th data-sort="subject">Subject<span class="arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="ff-body"></tbody>
+        </table>
+      </section>
+      <footer>gitviz web &middot; powered by the GitHub API &middot; inspired by <a
+          href="https://piechowski.io/post/git-commands-before-reading-code/" target="_blank" rel="noopener">Greg
+          Piechowski</a></footer>
+    </div>
+
+    <script src="chart.umd.js"></script>
+    <script type="module" src="script.js"></script>
+  </body>
+
+</html>

@@ -64,6 +64,11 @@
     "description": "Drop a Game Boy C/H source file to visualise and edit tile data inline, then download the modified source.",
     "title": "GB Tile Visualizer"
   },
+  "gitviz": {
+    "category": "Developer Tools",
+    "description": "Analyze a GitHub repository with contributor, churn, momentum, bug-cluster, and firefighting visualizations powered by the GitHub API.",
+    "title": "gitviz web"
+  },
   "ha-template-debugger": {
     "category": "Home Assistant",
     "description": "Test and debug Home Assistant Jinja2 templates with real-time rendering and variable support.",
