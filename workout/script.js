@@ -519,18 +519,27 @@ document.addEventListener('input', function(e) {
 });
 
 /* ── Scroll gating ──
-   Prevent accidental scroll on mobile: block touch-scroll unless the finger
-   has been held down for HOLD_MS. A quick tap-and-drag will not scroll;
-   holding briefly before dragging enables scrolling. */
+   Prevent accidental scroll on mobile during a tap. Scroll is unlocked when
+   either (a) the finger has been held for HOLD_MS, or (b) the finger has
+   moved more than FLICK_PX — so deliberate swipes still scroll immediately
+   while tap jitter (small, brief movements) does not cause scroll. Taps
+   themselves fire normally: preventDefault only blocks scrolling, not the
+   synthesized click. */
 (function() {
   const HOLD_MS = 180;
+  const FLICK_PX = 14;
   let startTime = 0;
+  let startX = 0;
+  let startY = 0;
   let scrollUnlocked = false;
   let tracking = false;
 
   document.addEventListener('touchstart', function(e) {
     if (e.touches.length !== 1) { tracking = false; return; }
+    const t = e.touches[0];
     startTime = Date.now();
+    startX = t.clientX;
+    startY = t.clientY;
     scrollUnlocked = false;
     tracking = true;
   }, { passive: true });
@@ -540,11 +549,13 @@ document.addEventListener('input', function(e) {
     // Let native inputs (number steppers, text selection) behave normally
     if (e.target.closest('input, textarea, select')) return;
     if (scrollUnlocked) return;
-    if (Date.now() - startTime < HOLD_MS) {
-      e.preventDefault();
-    } else {
+    const t = e.touches[0];
+    const moved = Math.hypot(t.clientX - startX, t.clientY - startY);
+    if (moved > FLICK_PX || Date.now() - startTime >= HOLD_MS) {
       scrollUnlocked = true;
+      return;
     }
+    e.preventDefault();
   }, { passive: false });
 
   document.addEventListener('touchend', function() { tracking = false; }, { passive: true });
