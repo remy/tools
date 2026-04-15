@@ -518,4 +518,37 @@ document.addEventListener('input', function(e) {
   }
 });
 
+/* ── Scroll gating ──
+   Prevent accidental scroll on mobile: block touch-scroll unless the finger
+   has been held down for HOLD_MS. A quick tap-and-drag will not scroll;
+   holding briefly before dragging enables scrolling. */
+(function() {
+  const HOLD_MS = 180;
+  let startTime = 0;
+  let scrollUnlocked = false;
+  let tracking = false;
+
+  document.addEventListener('touchstart', function(e) {
+    if (e.touches.length !== 1) { tracking = false; return; }
+    startTime = Date.now();
+    scrollUnlocked = false;
+    tracking = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!tracking || e.touches.length !== 1) return;
+    // Let native inputs (number steppers, text selection) behave normally
+    if (e.target.closest('input, textarea, select')) return;
+    if (scrollUnlocked) return;
+    if (Date.now() - startTime < HOLD_MS) {
+      e.preventDefault();
+    } else {
+      scrollUnlocked = true;
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', function() { tracking = false; }, { passive: true });
+  document.addEventListener('touchcancel', function() { tracking = false; }, { passive: true });
+})();
+
 init();
