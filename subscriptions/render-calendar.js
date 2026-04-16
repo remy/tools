@@ -38,8 +38,13 @@ export function renderGrid() {
   const prevYear = state.currentMonth === 0 ? state.currentYear - 1 : state.currentYear;
   const prevDays = getDaysInMonth(prevYear, prevMonth);
 
+  // Only render as many weeks as needed — drop any trailing row that would
+  // contain only next-month spill. Months need 4, 5, or 6 weeks.
+  const weeks = Math.ceil((firstDay + daysInMonth) / 7);
+  const totalCells = weeks * 7;
+  grid.style.setProperty('--weeks', weeks);
+
   let html = '';
-  const totalCells = 42;
 
   for (let i = 0; i < totalCells; i++) {
     const dayIndex = i - firstDay + 1;

@@ -262,7 +262,7 @@ body {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, 1fr);
+  grid-template-rows: repeat(var(--weeks, 6), 1fr);
   gap: 2px;
   flex: 1;
   min-height: 0;
