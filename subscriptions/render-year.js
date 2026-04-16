@@ -1,17 +1,12 @@
 import { state } from './state.js';
-import { filteredSubs, convertAmount, formatCurrency } from './utils.js';
+import { filteredSubs, isSubActive, convertAmount, formatCurrency } from './utils.js';
 import { render, renderHeader } from './render-calendar.js';
 
 export function computeMonthTotal(subs, year, month, displayCurrency, rate) {
   let total = 0;
   for (const sub of subs) {
-    if (sub.cycle === 'yearly') {
-      if (sub.recurringMonth === month) {
-        total += convertAmount(sub.amount, sub.currency, displayCurrency, rate);
-      }
-    } else {
-      total += convertAmount(sub.amount, sub.currency, displayCurrency, rate);
-    }
+    if (!isSubActive(sub, year, month)) continue;
+    total += convertAmount(sub.amount, sub.currency, displayCurrency, rate);
   }
   return total;
 }
