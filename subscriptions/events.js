@@ -149,6 +149,16 @@ export function bindEvents() {
   document.getElementById('sub-form').addEventListener('submit', handleSubFormSubmit);
   document.getElementById('sub-delete').addEventListener('click', handleSubDelete);
 
+  // End-date helper buttons
+  document.getElementById('sub-end-today').addEventListener('click', () => {
+    const today = new Date();
+    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    document.getElementById('sub-end-date').value = iso;
+  });
+  document.getElementById('sub-end-clear').addEventListener('click', () => {
+    document.getElementById('sub-end-date').value = '';
+  });
+
   // Toggle group sync for sub form
   for (const radio of document.querySelectorAll('input[name="sub-cycle-radio"]')) {
     radio.addEventListener('change', () => {

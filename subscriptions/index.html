@@ -22,6 +22,9 @@
           </button>
         </div>
         <div class="header-actions">
+          <button class="action-btn" id="btn-search" aria-label="Search (⌘K)" title="Search (⌘K)">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="8" cy="8" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M12 12L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
           <button class="action-btn" id="btn-year-view" aria-label="Year view" title="Year view">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M2 7H16M6 3V7M12 3V7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
           </button>
@@ -148,6 +151,14 @@
           <label for="sub-cat-business">Business</label>
         </div>
       </div>
+      <label class="field">
+        <span class="field-label">End date <span class="field-hint">— leave empty if still active</span></span>
+        <div class="end-date-row">
+          <input type="date" id="sub-end-date">
+          <button type="button" class="btn btn-ghost btn-sm" id="sub-end-today">Today</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="sub-end-clear">Clear</button>
+        </div>
+      </label>
       <input type="hidden" id="sub-edit-id">
       <div class="pop-actions">
         <button type="button" class="btn btn-danger" id="sub-delete" hidden>Delete</button>
@@ -290,6 +301,9 @@
     </div>
   </div>
 
+  <command-palette></command-palette>
+
+  <script src="command-palette.js"></script>
   <script type="module" src="main.js"></script>
   <script>navigator.serviceWorker?.register("/sw.js")</script>
 </body>

@@ -548,6 +548,7 @@ body {
 .field input[type="text"],
 .field input[type="url"],
 .field input[type="number"],
+.field input[type="date"],
 .field select {
   width: 100%;
   padding: 0.625rem 0.75rem;
@@ -710,6 +711,30 @@ body {
   }
 }
 
+.btn-sm {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+/* End-date row: date input + small helper buttons */
+.end-date-row {
+  display: flex;
+  gap: 0.375rem;
+  align-items: stretch;
+
+  & input[type="date"] {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.field-hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-3);
+}
+
 .import-label {
   cursor: pointer;
 }
@@ -862,6 +887,18 @@ a.breakdown-name:hover {
   border-radius: 4px;
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+.tag-ends {
+  display: inline-flex;
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .breakdown-price {
@@ -1102,4 +1139,15 @@ a.breakdown-name:hover {
     max-width: 520px;
     margin-inline: auto;
   }
+}
+
+/* ── Command palette: theme alias ── */
+/* The command-palette web component reads --surface, --surface-2, --text-dim,
+   and --accent-dim. Map them to this project's variables so the palette picks
+   up dark/light mode automatically. */
+command-palette {
+  --surface: var(--bg-card);
+  --surface-2: var(--bg-input);
+  --text-dim: var(--text-2);
+  --accent-dim: var(--accent-soft);
 }

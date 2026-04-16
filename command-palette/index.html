@@ -355,7 +355,34 @@ palette.addEventListener(<span class="val">'pick-dom'</span>, () =&gt; {
 <span class="cm">// commands when closed or dismissed</span></code></pre>
         </div>
 
-        <!-- 4: API reference -->
+        <!-- 4: Dynamic base commands -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Dynamic Base Commands</h2>
+            <p>When the root list itself is backed by app state (subscriptions, notes, tabs), use <code>setBaseCommands()</code>. Unlike <code>setCommands()</code>, this replaces the root list — no back button, no reset on close. Pair it with <code>onBeforeOpen</code> for just-in-time refresh.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="cm">// Refresh the root list whenever the palette is about to open</span>
+palette.<span class="attr">onBeforeOpen</span> = () =&gt; {
+  <span class="kw">const</span> commands = [
+    { name: <span class="val">'quick-add'</span>, description: <span class="val">'Add subscription'</span> },
+    ...state.subscriptions.map(s =&gt; ({
+      name: <span class="val">'edit-sub'</span>,
+      description: <span class="val">`Edit: ${s.name}`</span>,
+      _subId: s.id  <span class="cm">// any extra metadata is preserved in e.detail.command</span>
+    }))
+  ];
+  palette.<span class="attr">setBaseCommands</span>(commands);
+};
+
+<span class="cm">// One listener handles every matching command</span>
+palette.addEventListener(<span class="val">'edit-sub'</span>, (e) =&gt; {
+  <span class="kw">const</span> sub = state.subscriptions.find(s =&gt; s.id === e.detail.command._subId);
+  openEditor(sub);
+});</code></pre>
+        </div>
+
+        <!-- 5: API reference -->
         <div class="card">
           <div class="card-header">
             <h2>API</h2>
@@ -366,7 +393,13 @@ palette.addEventListener(<span class="val">'pick-dom'</span>, () =&gt; {
 palette.<span class="attr">open</span>();
 palette.<span class="attr">close</span>();
 
-<span class="cm">// Replace commands dynamically (resets on close)</span>
+<span class="cm">// Replace the root command list (for dynamic data)</span>
+palette.<span class="attr">setBaseCommands</span>(commands);
+
+<span class="cm">// Called just before open() shows the panel</span>
+palette.<span class="attr">onBeforeOpen</span> = () =&gt; { <span class="cm">/* refresh commands */</span> };
+
+<span class="cm">// Drill-down (adds back button, resets on close)</span>
 palette.<span class="attr">setCommands</span>(commands, {
   placeholder: <span class="val">'Pick something...'</span>,  <span class="cm">// optional</span>
   label: <span class="val">'Elements'</span>               <span class="cm">// optional aria-label</span>

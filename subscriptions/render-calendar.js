@@ -4,6 +4,7 @@ import {
   getFirstDayOfWeek,
   subsForMonth,
   filteredSubs,
+  isSubActive,
   convertAmount,
   formatCurrency,
   escapeHtml,
@@ -88,13 +89,8 @@ export function renderTotal() {
   const { settings } = state;
   let total = 0;
   for (const sub of filteredSubs()) {
-    if (sub.cycle === 'yearly') {
-      if (sub.recurringMonth === state.currentMonth) {
-        total += convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate);
-      }
-    } else {
-      total += convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate);
-    }
+    if (!isSubActive(sub, state.currentYear, state.currentMonth)) continue;
+    total += convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate);
   }
   document.getElementById('total-amount').textContent =
     formatCurrency(total, settings.displayCurrency);

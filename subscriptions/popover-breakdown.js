@@ -1,14 +1,13 @@
 import { state } from './state.js';
-import { filteredSubs, convertAmount, formatCurrency, escapeHtml } from './utils.js';
+import { filteredSubs, isSubActive, subEndsInMonth, parseEndDate, convertAmount, formatCurrency, escapeHtml } from './utils.js';
 
 export function openBreakdown() {
   const list = document.getElementById('breakdown-list');
   const emptyEl = document.getElementById('breakdown-empty');
 
-  const visible = filteredSubs().filter(sub => {
-    if (sub.cycle === 'yearly' && sub.recurringMonth !== state.currentMonth) return false;
-    return true;
-  });
+  const visible = filteredSubs().filter(sub =>
+    isSubActive(sub, state.currentYear, state.currentMonth)
+  );
   if (visible.length === 0) {
     list.innerHTML = '';
     emptyEl.hidden = false;
@@ -68,10 +67,16 @@ export function openBreakdown() {
       <button data-delete-id="${item.id}" aria-label="Delete">&times;</button>
     </div>`;
     const renewsThisMonth = item.cycle === 'yearly' && item.recurringMonth === state.currentMonth;
+    const endsThisMonth = subEndsInMonth(item, state.currentYear, state.currentMonth);
+    const end = parseEndDate(item.endDate);
+    const endLabel = endsThisMonth && end
+      ? `ends ${SHORT_MONTHS[end.getMonth()]} ${end.getDate()}`
+      : '';
     html += `<div class="breakdown-tags">
       <span class="breakdown-cycle ${cycleClass}">${item.cycle}</span>
       <span class="cat-badge ${catClass}">${cat}</span>
       ${renewsThisMonth ? '<span class="tag-renews">renews</span>' : ''}
+      ${endLabel ? `<span class="tag-ends">${endLabel}</span>` : ''}
     </div>`;
     html += `</li>`;
   }
