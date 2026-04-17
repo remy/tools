@@ -86,6 +86,52 @@ function subParams(r) {
     r.recurring_day, r.recurring_month, r.category, r.end_date, r.created_at];
 }
 
+async function fetchRemoteTables(url, authToken) {
+  const endpoint = new URL('/v2/pipeline', url);
+  const resp = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...(authToken ? { authorization: `Bearer ${authToken}` } : {}),
+    },
+    body: JSON.stringify({
+      requests: [
+        {
+          type: 'execute',
+          stmt: {
+            sql: "SELECT name, sql FROM sqlite_master WHERE type = 'table'"
+              + " AND name NOT LIKE '\\_sync\\_%' ESCAPE '\\'"
+              + " AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\'",
+            args: [],
+          },
+        },
+        { type: 'close' },
+      ],
+    }),
+  });
+  if (!resp.ok) throw new Error(`libSQL returned HTTP ${resp.status}`);
+  const json = await resp.json();
+  const res = json.results?.[0];
+  if (res?.type === 'error') {
+    throw new Error(res.error?.message || 'remote schema query failed');
+  }
+  const result = res?.response?.result;
+  const cols = (result?.cols ?? []).map((c) => c.name);
+  const rows = result?.rows ?? [];
+  const nameIdx = cols.indexOf('name');
+  const sqlIdx = cols.indexOf('sql');
+  return rows
+    .map((r) => ({ name: r[nameIdx]?.value, sql: r[sqlIdx]?.value }))
+    .filter((t) => t.name && t.sql);
+}
+
+function toIdempotentCreate(sql) {
+  return sql.replace(
+    /^(\s*CREATE\s+TABLE\s+)(?!IF\s+NOT\s+EXISTS\b)/i,
+    '$1IF NOT EXISTS ',
+  );
+}
+
 // ── One-time migration from the legacy IndexedDB store ──
 async function readLegacyIdb() {
   if (!('indexedDB' in globalThis)) return null;
@@ -229,8 +275,16 @@ class SubscriptionDB {
   }
 
   async pullFromRemote() {
+    const cfg = getSyncConfig();
+    if (!cfg.url) throw new Error('Sync is not configured');
     const dbh = await this.open();
-    if (!getSyncConfig().url) throw new Error('Sync is not configured');
+    // origin-sql's pull doesn't auto-create tables that only exist on the
+    // remote — we'd hit "no such table: …" when applying a row. Fetch the
+    // remote schema first and mirror any missing tables locally.
+    const remoteTables = await fetchRemoteTables(cfg.url, cfg.token);
+    for (const t of remoteTables) {
+      await dbh.exec(toIdempotentCreate(t.sql));
+    }
     // Drop any un-pushed local changes so the subsequent sync() is a pull only.
     // _sync_meta is internal to origin-sql; deleting pending rows means push()
     // has nothing to send, while pull() still applies remote ops locally.
