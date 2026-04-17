@@ -222,7 +222,12 @@ class SubscriptionDB {
     this._dbPromise = (async () => {
       const cfg = getSyncConfig();
       const sync = cfg.url
-        ? { url: cfg.url, authToken: cfg.token || undefined, interval: cfg.interval || undefined }
+        ? {
+          url: cfg.url,
+          authToken: cfg.token || undefined,
+          interval: cfg.interval || undefined,
+          syncOnMutation: true,
+        }
         : undefined;
       // Schema is applied one statement at a time: origin-sql runs the schema
       // option through sqlite's single-statement prepare/step, which silently
