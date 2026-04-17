@@ -7,7 +7,7 @@ import { openSubPopover, handleSubFormSubmit, handleSubDelete, syncToggleToSelec
 import { openQuickAdd, handleQuickAddSubmit, handleSaveAndAddMore } from './popover-quickadd.js';
 import { openBreakdown } from './popover-breakdown.js';
 import { openSettings, handleSettingsSave, handleSyncSave, handleSyncNow } from './popover-settings.js';
-import { handleExport, handleImport } from './io.js';
+import { handleExport, handleImport, handleImportLegacy } from './io.js';
 
 // ── Favicon preview debounce ──
 let faviconTimer = null;
@@ -186,6 +186,7 @@ export function bindEvents() {
     if (e.target.files[0]) handleImport(e.target.files[0]);
     e.target.value = '';
   });
+  document.getElementById('btn-import-legacy').addEventListener('click', handleImportLegacy);
 
   // Calendar grid — delegate clicks
   document.getElementById('calendar-grid').addEventListener('click', (e) => {

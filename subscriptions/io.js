@@ -30,3 +30,23 @@ export async function handleImport(file) {
     alert('Import failed: ' + err.message);
   }
 }
+
+export async function handleImportLegacy() {
+  const ok = confirm(
+    'Replace all subscriptions and settings with the data from the legacy '
+    + 'IndexedDB store? This cannot be undone.',
+  );
+  if (!ok) return;
+  try {
+    const result = await db.replaceFromLegacy();
+    const saved = await db.getAllSettings();
+    state.settings.displayCurrency = saved.displayCurrency || 'GBP';
+    state.settings.exchangeRate = saved.exchangeRate || DEFAULT_RATE;
+    state.subscriptions = await db.getAll();
+    render();
+    document.getElementById('settings-popover').hidePopover();
+    alert(`Replaced with ${result.subscriptions} subscription(s) from legacy store.`);
+  } catch (err) {
+    alert('Legacy import failed: ' + err.message);
+  }
+}

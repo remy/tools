@@ -301,6 +301,27 @@ class SubscriptionDB {
       }
     });
   }
+
+  async replaceFromLegacy() {
+    const legacy = await readLegacyIdb();
+    const hasData = legacy
+      && (legacy.subscriptions.length || Object.keys(legacy.settings).length);
+    if (!hasData) throw new Error('No legacy data found in IndexedDB');
+    const dbh = await this.open();
+    await dbh.transaction(async (tx) => {
+      await tx.exec('DELETE FROM subscriptions');
+      for (const sub of legacy.subscriptions) {
+        await tx.exec(INSERT_SUB_SQL, subParams(toRow(sub)));
+      }
+      for (const [k, v] of Object.entries(legacy.settings)) {
+        await tx.exec(
+          'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
+          [k, JSON.stringify(v)],
+        );
+      }
+    });
+    return { subscriptions: legacy.subscriptions.length };
+  }
 }
 
 export const db = new SubscriptionDB();
