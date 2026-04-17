@@ -1,26 +1,26 @@
 import { DB_NAME } from './state.js';
 import { openDatabase } from '../vendor/origin-sql/origin-sql.bundle.js';
 
-const SCHEMA = `
-CREATE TABLE IF NOT EXISTS subscriptions (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  url TEXT,
-  favicon TEXT,
-  amount REAL NOT NULL,
-  currency TEXT NOT NULL,
-  cycle TEXT NOT NULL,
-  recurring_day INTEGER NOT NULL,
-  recurring_month INTEGER,
-  category TEXT NOT NULL,
-  end_date TEXT,
-  created_at INTEGER
-);
-CREATE TABLE IF NOT EXISTS settings (
-  key TEXT PRIMARY KEY,
-  value TEXT
-);
-`;
+const SCHEMA_STATEMENTS = [
+  `CREATE TABLE IF NOT EXISTS subscriptions (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    url TEXT,
+    favicon TEXT,
+    amount REAL NOT NULL,
+    currency TEXT NOT NULL,
+    cycle TEXT NOT NULL,
+    recurring_day INTEGER NOT NULL,
+    recurring_month INTEGER,
+    category TEXT NOT NULL,
+    end_date TEXT,
+    created_at INTEGER
+  )`,
+  `CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  )`,
+];
 
 const SYNC_PREFIX = 'subscription-tracker.sync.';
 
@@ -178,7 +178,11 @@ class SubscriptionDB {
       const sync = cfg.url
         ? { url: cfg.url, authToken: cfg.token || undefined, interval: cfg.interval || undefined }
         : undefined;
-      const dbh = await openDatabase({ name: DB_NAME, schema: SCHEMA, sync });
+      // Schema is applied one statement at a time: origin-sql runs the schema
+      // option through sqlite's single-statement prepare/step, which silently
+      // drops anything after the first semicolon.
+      const dbh = await openDatabase({ name: DB_NAME, sync });
+      for (const sql of SCHEMA_STATEMENTS) await dbh.exec(sql);
       await migrateFromIdb(dbh);
       if (sync) {
         this._unsubStatus = dbh.onSyncStatus((s) => {
