@@ -318,6 +318,7 @@
         <p class="sync-status" id="sync-status" aria-live="polite">Sync disabled.</p>
         <p class="sync-hint">Server must send CORS headers (sqld itself does not). Configure them on your reverse proxy.</p>
         <div class="pop-actions">
+          <button class="btn btn-ghost" id="sync-pull" type="button" title="Overwrite local with server data; leaves the remote untouched">Pull from server</button>
           <button class="btn btn-ghost" id="sync-now" type="button">Sync now</button>
           <button class="btn btn-primary" id="sync-save" type="button">Save sync settings</button>
         </div>

@@ -88,3 +88,25 @@ export async function handleSyncNow() {
     btn.disabled = false;
   }
 }
+
+export async function handleSyncPull() {
+  const ok = confirm(
+    'Pull from the server and overwrite local data? Any local changes that '
+    + "haven't been pushed will be discarded. The remote server is not modified.",
+  );
+  if (!ok) return;
+  const btn = document.getElementById('sync-pull');
+  btn.disabled = true;
+  try {
+    await db.pullFromRemote();
+    const saved = await db.getAllSettings();
+    if (saved.displayCurrency) state.settings.displayCurrency = saved.displayCurrency;
+    if (saved.exchangeRate) state.settings.exchangeRate = saved.exchangeRate;
+    state.subscriptions = await db.getAll();
+    render();
+  } catch (err) {
+    renderSyncStatus({ state: 'error', lastError: err });
+  } finally {
+    btn.disabled = false;
+  }
+}

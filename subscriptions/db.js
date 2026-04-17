@@ -224,6 +224,17 @@ class SubscriptionDB {
     return dbh.sync();
   }
 
+  async pullFromRemote() {
+    const dbh = await this.open();
+    if (!getSyncConfig().url) throw new Error('Sync is not configured');
+    // Drop any un-pushed local changes so the subsequent sync() is a pull only.
+    // _sync_meta is internal to origin-sql; deleting pending rows means push()
+    // has nothing to send, while pull() still applies remote ops locally.
+    await dbh.exec('DELETE FROM _sync_meta WHERE synced_at IS NULL');
+    const result = await dbh.sync();
+    return result.pull;
+  }
+
   async getAll() {
     const dbh = await this.open();
     const rows = await dbh.query('SELECT * FROM subscriptions ORDER BY created_at ASC');
