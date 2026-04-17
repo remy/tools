@@ -22,6 +22,11 @@
         --red: #dc2626;
         --radius: 10px;
         --shadow: 0 8px 32px #0000001a;
+        --syn-kw: #7c3aed;
+        --syn-attr: #1e40af;
+        --syn-val: #166534;
+        --syn-tag: #b91c1c;
+        --syn-cm: #4b5563;
       }
 
       @media (prefers-color-scheme: dark) {
@@ -38,6 +43,11 @@
           --orange: #f97316;
           --red: #ef4444;
           --shadow: 0 8px 32px #0009;
+          --syn-kw: #a78bfa;
+          --syn-attr: #60a5fa;
+          --syn-val: #86efac;
+          --syn-tag: #f87171;
+          --syn-cm: #9ca3af;
         }
       }
 
@@ -243,11 +253,11 @@
           font-size: 0.82rem;
         }
 
-        & .kw  { color: #a78bfa; }
-        & .attr { color: #60a5fa; }
-        & .val  { color: #86efac; }
-        & .tag  { color: #f87171; }
-        & .cm   { color: #6b7280; }
+        & .kw  { color: var(--syn-kw); }
+        & .attr { color: var(--syn-attr); }
+        & .val  { color: var(--syn-val); }
+        & .tag  { color: var(--syn-tag); }
+        & .cm   { color: var(--syn-cm); }
 
         /* Reset inline-code styles when <code> is the pre's child */
         & code {
