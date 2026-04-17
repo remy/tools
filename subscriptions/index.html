@@ -298,6 +298,27 @@
           </label>
         </div>
       </div>
+      <div class="settings-section" style="margin-top: 0.5rem">
+        <h3 class="settings-heading">Sync</h3>
+        <label class="field">
+          <span class="field-label">libSQL server URL</span>
+          <input type="url" id="sync-url" placeholder="https://libsql.example.com" autocomplete="off">
+        </label>
+        <label class="field">
+          <span class="field-label">Auth token (optional)</span>
+          <input type="password" id="sync-token" autocomplete="off">
+        </label>
+        <label class="field">
+          <span class="field-label">Interval (seconds)</span>
+          <input type="number" id="sync-interval" min="1" step="1" value="15">
+        </label>
+        <p class="sync-status" id="sync-status" aria-live="polite">Sync disabled.</p>
+        <p class="sync-hint">Server must send CORS headers (sqld itself does not). Configure them on your reverse proxy.</p>
+        <div class="pop-actions">
+          <button class="btn btn-ghost" id="sync-now" type="button">Sync now</button>
+          <button class="btn btn-primary" id="sync-save" type="button">Save sync settings</button>
+        </div>
+      </div>
     </div>
   </div>
 

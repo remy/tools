@@ -1,111 +1,283 @@
-import { DB_NAME, DB_VERSION } from './state.js';
+import { DB_NAME } from './state.js';
+import { openDatabase } from '../vendor/origin-sql/origin-sql.bundle.js';
+
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  url TEXT,
+  favicon TEXT,
+  amount REAL NOT NULL,
+  currency TEXT NOT NULL,
+  cycle TEXT NOT NULL,
+  recurring_day INTEGER NOT NULL,
+  recurring_month INTEGER,
+  category TEXT NOT NULL,
+  end_date TEXT,
+  created_at INTEGER
+);
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
+`;
+
+const SYNC_PREFIX = 'subscription-tracker.sync.';
+
+export function getSyncConfig() {
+  const url = localStorage.getItem(SYNC_PREFIX + 'url') || '';
+  const token = localStorage.getItem(SYNC_PREFIX + 'token') || '';
+  const interval = parseInt(localStorage.getItem(SYNC_PREFIX + 'interval') || '15000', 10);
+  return { url, token, interval };
+}
+
+export function setSyncConfig({ url, token, interval }) {
+  const setOrClear = (k, v) => {
+    if (v) localStorage.setItem(SYNC_PREFIX + k, String(v));
+    else localStorage.removeItem(SYNC_PREFIX + k);
+  };
+  setOrClear('url', url);
+  setOrClear('token', token);
+  setOrClear('interval', interval);
+}
+
+function toRow(sub) {
+  return {
+    id: sub.id,
+    name: sub.name,
+    url: sub.url ?? null,
+    favicon: sub.favicon ?? null,
+    amount: sub.amount,
+    currency: sub.currency,
+    cycle: sub.cycle,
+    recurring_day: sub.recurringDay,
+    recurring_month: sub.recurringMonth ?? null,
+    category: sub.category ?? 'personal',
+    end_date: sub.endDate ?? null,
+    created_at: sub.createdAt ?? Date.now(),
+  };
+}
+
+function fromRow(r) {
+  const sub = {
+    id: r.id,
+    name: r.name,
+    url: r.url || '',
+    favicon: r.favicon || '',
+    amount: r.amount,
+    currency: r.currency,
+    cycle: r.cycle,
+    recurringDay: r.recurring_day,
+    category: r.category,
+    createdAt: r.created_at,
+  };
+  if (r.recurring_month != null) sub.recurringMonth = r.recurring_month;
+  if (r.end_date) sub.endDate = r.end_date;
+  return sub;
+}
+
+const INSERT_SUB_SQL = `INSERT OR REPLACE INTO subscriptions
+    (id, name, url, favicon, amount, currency, cycle,
+     recurring_day, recurring_month, category, end_date, created_at)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+function subParams(r) {
+  return [r.id, r.name, r.url, r.favicon, r.amount, r.currency, r.cycle,
+    r.recurring_day, r.recurring_month, r.category, r.end_date, r.created_at];
+}
+
+// ── One-time migration from the legacy IndexedDB store ──
+async function readLegacyIdb() {
+  if (!('indexedDB' in globalThis)) return null;
+  const existing = await new Promise((resolve) => {
+    if (!indexedDB.databases) return resolve(true); // can't tell — try anyway
+    indexedDB.databases().then(
+      (list) => resolve(list.some((d) => d.name === DB_NAME)),
+      () => resolve(true),
+    );
+  });
+  if (!existing) return null;
+
+  return new Promise((resolve) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    let opened = null;
+    req.onsuccess = () => {
+      opened = req.result;
+      const stores = opened.objectStoreNames;
+      if (!stores.contains('subscriptions') && !stores.contains('settings')) {
+        opened.close();
+        return resolve(null);
+      }
+      const tx = opened.transaction(
+        [stores.contains('subscriptions') ? 'subscriptions' : 'settings'].concat(
+          stores.contains('subscriptions') && stores.contains('settings') ? ['settings'] : [],
+        ),
+        'readonly',
+      );
+      const subsReq = stores.contains('subscriptions')
+        ? tx.objectStore('subscriptions').getAll() : null;
+      const setReq = stores.contains('settings')
+        ? tx.objectStore('settings').getAll() : null;
+      tx.oncomplete = () => {
+        opened.close();
+        resolve({
+          subscriptions: subsReq?.result || [],
+          settings: (setReq?.result || []).reduce((m, r) => { m[r.key] = r.value; return m; }, {}),
+        });
+      };
+      tx.onerror = () => {
+        opened.close();
+        resolve(null);
+      };
+    };
+    req.onerror = () => resolve(null);
+    req.onblocked = () => resolve(null);
+  });
+}
+
+async function migrateFromIdb(dbh) {
+  const already = await dbh.query("SELECT value FROM settings WHERE key = 'migratedFromIdb'");
+  if (already.length) return;
+  const legacy = await readLegacyIdb();
+  if (!legacy) {
+    await dbh.exec(
+      'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
+      ['migratedFromIdb', JSON.stringify('1')],
+    );
+    return;
+  }
+  await dbh.transaction(async (tx) => {
+    for (const sub of legacy.subscriptions) {
+      await tx.exec(INSERT_SUB_SQL, subParams(toRow(sub)));
+    }
+    for (const [k, v] of Object.entries(legacy.settings)) {
+      await tx.exec(
+        'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
+        [k, JSON.stringify(v)],
+      );
+    }
+    await tx.exec(
+      'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
+      ['migratedFromIdb', JSON.stringify('1')],
+    );
+  });
+}
 
 class SubscriptionDB {
   constructor() {
-    this.dbPromise = null;
+    this._dbPromise = null;
+    this._statusListeners = new Set();
+    this._unsubStatus = null;
+    this._lastStatus = null;
   }
 
-  openDb() {
-    if (this.dbPromise) return this.dbPromise;
-    this.dbPromise = new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains('subscriptions')) {
-          const store = db.createObjectStore('subscriptions', { keyPath: 'id' });
-          store.createIndex('by-day', 'recurringDay', { unique: false });
+  async open() {
+    if (this._dbPromise) return this._dbPromise;
+    this._dbPromise = (async () => {
+      const cfg = getSyncConfig();
+      const sync = cfg.url
+        ? { url: cfg.url, authToken: cfg.token || undefined, interval: cfg.interval || undefined }
+        : undefined;
+      const dbh = await openDatabase({ name: DB_NAME, schema: SCHEMA, sync });
+      await migrateFromIdb(dbh);
+      if (sync) {
+        this._unsubStatus = dbh.onSyncStatus((s) => {
+          this._lastStatus = s;
+          for (const cb of Array.from(this._statusListeners)) {
+            try { cb(s); } catch (err) { console.error(err); }
+          }
+        });
+      } else {
+        this._lastStatus = { state: 'disabled' };
+        for (const cb of Array.from(this._statusListeners)) {
+          try { cb(this._lastStatus); } catch (err) { console.error(err); }
         }
-        if (!db.objectStoreNames.contains('settings')) {
-          db.createObjectStore('settings', { keyPath: 'key' });
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-    return this.dbPromise;
+      }
+      return dbh;
+    })();
+    return this._dbPromise;
+  }
+
+  async reopen() {
+    if (this._unsubStatus) {
+      try { this._unsubStatus(); } catch {}
+      this._unsubStatus = null;
+    }
+    if (this._dbPromise) {
+      try { const dbh = await this._dbPromise; await dbh.close(); } catch {}
+      this._dbPromise = null;
+    }
+    return this.open();
+  }
+
+  onSyncStatus(cb) {
+    this._statusListeners.add(cb);
+    if (this._lastStatus) {
+      try { cb(this._lastStatus); } catch (err) { console.error(err); }
+    }
+    return () => this._statusListeners.delete(cb);
+  }
+
+  async syncNow() {
+    const dbh = await this.open();
+    if (!getSyncConfig().url) throw new Error('Sync is not configured');
+    return dbh.sync();
   }
 
   async getAll() {
-    const db = await this.openDb();
-    return new Promise((resolve) => {
-      const tx = db.transaction('subscriptions', 'readonly');
-      const req = tx.objectStore('subscriptions').getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => resolve([]);
-    });
+    const dbh = await this.open();
+    const rows = await dbh.query('SELECT * FROM subscriptions ORDER BY created_at ASC');
+    return rows.map(fromRow);
   }
 
   async put(sub) {
-    const db = await this.openDb();
-    return new Promise((resolve) => {
-      const tx = db.transaction('subscriptions', 'readwrite');
-      tx.objectStore('subscriptions').put(sub);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
-    });
+    const dbh = await this.open();
+    await dbh.exec(INSERT_SUB_SQL, subParams(toRow(sub)));
   }
 
   async delete(id) {
-    const db = await this.openDb();
-    return new Promise((resolve) => {
-      const tx = db.transaction('subscriptions', 'readwrite');
-      tx.objectStore('subscriptions').delete(id);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
-    });
+    const dbh = await this.open();
+    await dbh.exec('DELETE FROM subscriptions WHERE id = ?', [id]);
   }
 
   async clearAll() {
-    const db = await this.openDb();
-    return new Promise((resolve) => {
-      const tx = db.transaction('subscriptions', 'readwrite');
-      tx.objectStore('subscriptions').clear();
-      tx.oncomplete = () => resolve();
-    });
+    const dbh = await this.open();
+    await dbh.exec('DELETE FROM subscriptions');
   }
 
   async getSetting(key) {
-    const db = await this.openDb();
-    return new Promise((resolve) => {
-      const tx = db.transaction('settings', 'readonly');
-      const req = tx.objectStore('settings').get(key);
-      req.onsuccess = () => resolve(req.result?.value ?? null);
-      req.onerror = () => resolve(null);
-    });
+    const dbh = await this.open();
+    const rows = await dbh.query('SELECT value FROM settings WHERE key = ?', [key]);
+    if (!rows.length) return null;
+    try { return JSON.parse(rows[0].value); } catch { return rows[0].value; }
   }
 
   async setSetting(key, value) {
-    const db = await this.openDb();
-    return new Promise((resolve) => {
-      const tx = db.transaction('settings', 'readwrite');
-      tx.objectStore('settings').put({ key, value });
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
-    });
+    const dbh = await this.open();
+    await dbh.exec(
+      'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
+      [key, JSON.stringify(value)],
+    );
   }
 
   async getAllSettings() {
-    const db = await this.openDb();
-    return new Promise((resolve) => {
-      const tx = db.transaction('settings', 'readonly');
-      const req = tx.objectStore('settings').getAll();
-      req.onsuccess = () => {
-        const map = {};
-        for (const r of req.result || []) map[r.key] = r.value;
-        resolve(map);
-      };
-      req.onerror = () => resolve({});
-    });
+    const dbh = await this.open();
+    const rows = await dbh.query('SELECT key, value FROM settings');
+    const map = {};
+    for (const r of rows) {
+      try { map[r.key] = JSON.parse(r.value); } catch { map[r.key] = r.value; }
+    }
+    return map;
   }
 
   async exportData() {
-    const subs = await this.getAll();
-    const s = await this.getAllSettings();
+    const subscriptions = await this.getAll();
+    const settings = await this.getAllSettings();
     return {
       version: 1,
       exportedAt: new Date().toISOString(),
-      settings: s,
-      subscriptions: subs,
+      settings,
+      subscriptions,
     };
   }
 
@@ -113,15 +285,21 @@ class SubscriptionDB {
     if (!data || data.version !== 1 || !Array.isArray(data.subscriptions)) {
       throw new Error('Invalid import file');
     }
-    await this.clearAll();
-    for (const sub of data.subscriptions) {
-      await this.put(sub);
-    }
-    if (data.settings) {
-      for (const [k, v] of Object.entries(data.settings)) {
-        await this.setSetting(k, v);
+    const dbh = await this.open();
+    await dbh.transaction(async (tx) => {
+      await tx.exec('DELETE FROM subscriptions');
+      for (const sub of data.subscriptions) {
+        await tx.exec(INSERT_SUB_SQL, subParams(toRow(sub)));
       }
-    }
+      if (data.settings) {
+        for (const [k, v] of Object.entries(data.settings)) {
+          await tx.exec(
+            'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
+            [k, JSON.stringify(v)],
+          );
+        }
+      }
+    });
   }
 }
 

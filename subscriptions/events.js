@@ -6,7 +6,7 @@ import { renderYearView, toggleYearView } from './render-year.js';
 import { openSubPopover, handleSubFormSubmit, handleSubDelete, syncToggleToSelect, updateRenewalVisibility } from './popover-sub.js';
 import { openQuickAdd, handleQuickAddSubmit, handleSaveAndAddMore } from './popover-quickadd.js';
 import { openBreakdown } from './popover-breakdown.js';
-import { openSettings, handleSettingsSave } from './popover-settings.js';
+import { openSettings, handleSettingsSave, handleSyncSave, handleSyncNow } from './popover-settings.js';
 import { handleExport, handleImport } from './io.js';
 
 // ── Favicon preview debounce ──
@@ -179,6 +179,8 @@ export function bindEvents() {
 
   // Settings
   document.getElementById('settings-save').addEventListener('click', handleSettingsSave);
+  document.getElementById('sync-save').addEventListener('click', handleSyncSave);
+  document.getElementById('sync-now').addEventListener('click', handleSyncNow);
   document.getElementById('btn-export').addEventListener('click', handleExport);
   document.getElementById('btn-import').addEventListener('change', (e) => {
     if (e.target.files[0]) handleImport(e.target.files[0]);
