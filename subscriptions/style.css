@@ -1119,6 +1119,7 @@ a.breakdown-name:hover {
 .day-sheet-price {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  height: 100%;
 }
 
 .day-sheet-amount {
