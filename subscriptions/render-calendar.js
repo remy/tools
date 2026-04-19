@@ -81,6 +81,9 @@ export function renderGrid() {
         }
         html += `<span>${escapeHtml(sub.name)}</span></div>`;
       }
+      if (daySubs.length > 3) {
+        html += `<span class="day-sub-more" aria-hidden="true">+${daySubs.length - 3}</span>`;
+      }
       html += '</div>';
     }
 
