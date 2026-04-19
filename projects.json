@@ -36,7 +36,7 @@
   },
   "distance-time-converter": {
     "category": "Calculators",
-    "description": "Convert distances between km, miles, yards, feet, meters and more. Optionally set a travel speed to calculate how long a journey will take.",
+    "description": "Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed to calculate how long a journey will take.",
     "title": "Distance & Time Converter"
   },
   "esp-compare": {
