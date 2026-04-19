@@ -374,6 +374,23 @@ body {
   }
 }
 
+/* Overflow chip used on narrow screens (hidden by default). */
+.day-sub-more {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  background: var(--bg-input);
+  border-radius: 999px;
+  padding: 0 0.3rem;
+  min-width: 1.1rem;
+  height: 1rem;
+  line-height: 1;
+}
+
 /* ── Empty State ── */
 .empty-state {
   position: absolute;
@@ -460,6 +477,52 @@ body {
     max-width: calc(100vw - 0.5rem);
     max-height: 88dvh;
     border-radius: var(--radius-lg);
+  }
+
+  /* Day cells: swap cramped text rows for a glanceable favicon stack.
+     Individual items no longer act as tap targets — the whole cell opens
+     a day-sheet popover with full-width rows. */
+  .day-cell {
+    padding: 0.3125rem;
+  }
+
+  .day-number {
+    font-size: 0.8125rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .day-subs {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 1px;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .day-sub-item {
+    padding: 0;
+    gap: 0;
+    overflow: visible;
+  }
+
+  .day-sub-item > span {
+    display: none;
+  }
+
+  .day-sub-item > img {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+
+  /* Hide any items beyond the first 3 — the +N chip summarises the rest. */
+  .day-sub-item:nth-of-type(n+4) {
+    display: none;
+  }
+
+  .day-sub-more {
+    display: inline-flex;
   }
 }
 
@@ -990,6 +1053,95 @@ a.breakdown-name:hover {
   color: var(--text-3);
   font-size: 0.875rem;
   padding: 2rem 1rem;
+}
+
+/* ── Day sheet (narrow-screen per-day list) ── */
+.day-sheet-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.day-sheet-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto 16px;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.5rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  min-height: 52px;
+  transition: background 0.12s;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--bg-hover);
+    outline: none;
+  }
+}
+
+.day-sheet-favicon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  & img {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.day-sheet-info {
+  min-width: 0;
+}
+
+.day-sheet-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.day-sheet-tags {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.day-sheet-price {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-sheet-amount {
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.day-sheet-converted {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--text-3);
+  margin-top: 0.125rem;
+}
+
+.day-sheet-chevron {
+  color: var(--text-3);
+}
+
+.day-sheet-add {
+  width: 100%;
+  justify-content: center;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
 }
 
 /* ── Year View ── */

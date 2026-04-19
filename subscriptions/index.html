@@ -259,6 +259,23 @@
     </div>
   </div>
 
+  <!-- Day Sheet (narrow-screen per-day list) -->
+  <div id="day-sheet-popover" popover="auto">
+    <div class="pop-header">
+      <h2 id="day-sheet-title">Day</h2>
+      <button class="pop-close" id="day-sheet-close" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="pop-body">
+      <ul class="day-sheet-list" id="day-sheet-list"></ul>
+      <button type="button" class="btn btn-ghost day-sheet-add" id="day-sheet-add">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3.5V12.5M3.5 8H12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Add to this day
+      </button>
+    </div>
+  </div>
+
   <!-- Settings -->
   <div id="settings-popover" popover="auto">
     <div class="pop-header">
