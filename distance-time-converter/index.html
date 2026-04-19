@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Convert distances between km, miles, yards, feet, meters and more. Optionally set a travel speed to calculate how long a journey will take.">
+  <meta name="description" content="Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed to calculate how long a journey will take.">
   <meta name="category" content="Calculators">
   <title>Distance &amp; Time Converter</title>
   <link rel="stylesheet" href="style.css">
@@ -40,9 +40,11 @@
           <option value="cm">Centimeters (cm)</option>
           <option value="mm">Millimeters (mm)</option>
           <option value="nmi">Nautical Miles (nmi)</option>
+          <option value="steps">Steps</option>
           <option value="ly">Light Years (ly)</option>
         </select>
       </div>
+      <p class="hint">Steps assume an average step length for a person 5′5″ tall (~0.68 m / step).</p>
     </section>
 
     <section class="speed-section card">
@@ -72,11 +74,13 @@
             <option value="yd">yards / hour</option>
             <option value="ft">feet / hour</option>
             <option value="nmi">knots (nmi / hour)</option>
+            <option value="steps">steps / hour</option>
           </select>
         </div>
         <div class="presets">
           <span class="presets-label">Presets:</span>
           <button class="preset-btn" data-speed="5" data-unit="km">Walking (5 km/h)</button>
+          <button class="preset-btn" data-speed="6000" data-unit="steps">Walking (6000 steps/h)</button>
           <button class="preset-btn" data-speed="20" data-unit="km">Cycling (20 km/h)</button>
           <button class="preset-btn" data-speed="100" data-unit="km">Driving (100 km/h)</button>
           <button class="preset-btn" data-speed="900" data-unit="km">Flying (900 km/h)</button>
