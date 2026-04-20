@@ -20,14 +20,8 @@ header {
 header a,
 footer a {
     color: #4f46e5;
-    text-decoration: none;
-    border-bottom: 1px solid #4f46e51a;
-    transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-header a:hover,
-footer a:hover {
-    border-bottom-color: #4f46e5;
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
 
 h1 {
@@ -199,12 +193,6 @@ footer p {
     header a,
     footer a {
         color: #6c63ff;
-        border-bottom-color: #6c63ff33;
-    }
-
-    header a:hover,
-    footer a:hover {
-        border-bottom-color: #6c63ff;
     }
 
     h1 {
