@@ -1,43 +1,11 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-[hidden] {
-    display: none !important;
-}
-
-:root {
-    --bg: #fafafa;
-    --surface: #ffffff;
-    --surface-2: #f4f4f5;
-    --border: #d4d4d8;
-    --text: #18181b;
-    --text-dim: #71717a;
-    --accent: #4f46e5;
-    --accent-dim: #4f46e51a;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #0f1117;
-        --surface: #1a1d27;
-        --surface-2: #242736;
-        --border: #2e3248;
-        --text: #e8e9f0;
-        --text-dim: #8b8fa8;
-        --accent: #6c63ff;
-        --accent-dim: #6c63ff33;
-        --shadow: 0 1px 3px #0006;
-        --shadow-lg: 0 8px 24px #0009;
-    }
-}
-
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f0 100%);
     min-height: 100vh;
     padding: 20px 16px;
-    color: var(--text);
+    color: #2c3e50;
 }
 
 .container {
@@ -51,27 +19,27 @@ header {
 
 header a,
 footer a {
-    color: var(--accent);
+    color: #4f46e5;
     text-decoration: none;
-    border-bottom: 1px solid var(--accent-dim);
+    border-bottom: 1px solid #4f46e51a;
     transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 header a:hover,
 footer a:hover {
-    border-bottom-color: var(--accent);
+    border-bottom-color: #4f46e5;
 }
 
 h1 {
     font-size: 1.8rem;
     font-weight: 700;
-    color: var(--text);
+    color: #1a202c;
     margin-bottom: 6px;
     letter-spacing: -0.5px;
 }
 
 .subtitle {
-    color: var(--text-dim);
+    color: #64748b;
     font-size: 0.95rem;
 }
 
@@ -81,24 +49,23 @@ h1 {
 
 h2 {
     font-size: 1.1rem;
-    color: var(--text);
+    color: #334155;
     margin-bottom: 12px;
     padding-left: 8px;
-    border-left: 3px solid var(--accent);
+    border-left: 3px solid #3b82f6;
     font-weight: 600;
 }
 
 .projects-list {
     list-style: none;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: white;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: var(--shadow);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .project-item {
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid #e2e8f0;
 }
 
 .project-item:last-child {
@@ -111,13 +78,13 @@ h2 {
     align-items: center;
     padding: 14px 16px;
     text-decoration: none;
-    color: var(--text);
+    color: #1e293b;
     transition: background-color 0.2s ease;
     gap: 16px;
 }
 
 .project-item a:hover {
-    background-color: var(--surface-2);
+    background-color: #f8fafc;
 }
 
 .project-info {
@@ -128,23 +95,23 @@ h2 {
 .project-title {
     font-weight: 600;
     font-size: 1rem;
-    color: var(--text);
+    color: #1e293b;
     margin-bottom: 4px;
 }
 
 .project-item a:hover .project-title {
-    color: var(--accent);
+    color: #3b82f6;
 }
 
 .project-description {
     font-size: 0.75rem;
-    color: var(--text-dim);
+    color: #64748b;
     line-height: 1.4;
 }
 
 .project-path {
     font-size: 0.8rem;
-    color: var(--text-dim);
+    color: #94a3b8;
     font-family: "SF Mono", Monaco, Consolas, monospace;
     flex-shrink: 0;
 }
@@ -176,11 +143,9 @@ h2 {
     width: 100%;
     padding: 12px 16px;
     font-size: 1rem;
-    border: 2px solid var(--accent);
+    border: 2px solid #3b82f6;
     border-radius: 8px;
-    background: var(--surface);
-    color: var(--text);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     outline: none;
     font-family: inherit;
 }
@@ -188,22 +153,21 @@ h2 {
 .filter-hint {
     margin-top: 8px;
     font-size: 0.75rem;
-    color: var(--text-dim);
+    color: #64748b;
     text-align: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: white;
     padding: 8px;
     border-radius: 6px;
-    box-shadow: var(--shadow);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .project-item.focused a {
-    background-color: var(--accent-dim);
-    box-shadow: inset 3px 0 0 var(--accent);
+    background-color: #eff6ff;
+    box-shadow: inset 3px 0 0 #3b82f6;
 }
 
 .project-item.focused .project-title {
-    color: var(--accent);
+    color: #3b82f6;
 }
 
 .project-item.hidden {
@@ -218,10 +182,102 @@ footer {
     text-align: center;
     margin-top: 50px;
     padding: 20px;
-    color: var(--text-dim);
+    color: #64748b;
     font-size: 0.85rem;
 }
 
 footer p {
     margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #0f1117;
+        color: #e8e9f0;
+    }
+
+    header a,
+    footer a {
+        color: #6c63ff;
+        border-bottom-color: #6c63ff33;
+    }
+
+    header a:hover,
+    footer a:hover {
+        border-bottom-color: #6c63ff;
+    }
+
+    h1 {
+        color: #e8e9f0;
+    }
+
+    .subtitle {
+        color: #8b8fa8;
+    }
+
+    h2 {
+        color: #e8e9f0;
+        border-left-color: #6c63ff;
+    }
+
+    .projects-list {
+        background: #1a1d27;
+        border: 1px solid #2e3248;
+        box-shadow: 0 1px 3px #0006;
+    }
+
+    .project-item {
+        border-bottom-color: #2e3248;
+    }
+
+    .project-item a {
+        color: #e8e9f0;
+    }
+
+    .project-item a:hover {
+        background-color: #242736;
+    }
+
+    .project-title {
+        color: #e8e9f0;
+    }
+
+    .project-item a:hover .project-title {
+        color: #6c63ff;
+    }
+
+    .project-description {
+        color: #8b8fa8;
+    }
+
+    .project-path {
+        color: #8b8fa8;
+    }
+
+    .filter-input {
+        background: #1a1d27;
+        color: #e8e9f0;
+        border-color: #6c63ff;
+        box-shadow: 0 8px 24px #0009;
+    }
+
+    .filter-hint {
+        background: #1a1d27;
+        color: #8b8fa8;
+        border: 1px solid #2e3248;
+        box-shadow: 0 4px 12px #0006;
+    }
+
+    .project-item.focused a {
+        background-color: #6c63ff33;
+        box-shadow: inset 3px 0 0 #6c63ff;
+    }
+
+    .project-item.focused .project-title {
+        color: #6c63ff;
+    }
+
+    footer {
+        color: #8b8fa8;
+    }
 }
