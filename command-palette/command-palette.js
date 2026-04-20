@@ -25,7 +25,7 @@ class CommandPalette extends HTMLElement {
 
   _buildDOM() {
     const style = document.createElement('style');
-    style.textContent = `
+    style.textContent = /* CSS */`
       command-palette [popover] {
         position: fixed;
         inset: 0;
@@ -115,8 +115,6 @@ class CommandPalette extends HTMLElement {
       }
 
       command-palette .palette-item {
-        display: flex;
-        align-items: center;
         padding: 0.6rem 0.75rem;
         border-radius: 8px;
         cursor: pointer;
@@ -136,7 +134,7 @@ class CommandPalette extends HTMLElement {
       }
 
       command-palette .palette-item[aria-selected="true"] mark {
-        background: transparent;
+        background: var(--accent, #4f46e5);
         color: inherit;
         text-decoration: underline;
         text-underline-offset: 2px;
@@ -154,6 +152,7 @@ class CommandPalette extends HTMLElement {
         color: var(--accent, #4f46e5);
         border-radius: 2px;
         padding: 0;
+        transition: background 0.08s;
       }
 
       command-palette .sr-only {
