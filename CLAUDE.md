@@ -21,3 +21,9 @@ Every tool's CSS must include the following rule to ensure the `hidden` attribut
 ```
 
 Always add this rule near the top of the stylesheet (after the reset/box-sizing rules).
+
+## Web Components
+
+If HTML or CSS is included in the web component code, it should include a command before the template string as `/* HTML */` and `/* CSS */` (the spaces are important) for syntax highlighting.
+
+The script should ALWAYS end in `.wc.js` - this way it can be served with CORS headers.

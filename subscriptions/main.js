@@ -1,3 +1,4 @@
+import "command-palette";
 import { state, DEFAULT_RATE } from './state.js';
 import { db } from './db.js';
 import { render } from './render-calendar.js';
