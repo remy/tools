@@ -153,7 +153,7 @@ class CommandPalette extends HTMLElement {
         background: var(--accent-dim, rgba(79, 70, 229, 0.1));
         color: var(--accent, #4f46e5);
         border-radius: 2px;
-        padding: 0 1px;
+        padding: 0;
       }
 
       command-palette .sr-only {
