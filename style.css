@@ -1,11 +1,43 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+[hidden] {
+    display: none !important;
+}
+
+:root {
+    --bg: #fafafa;
+    --surface: #ffffff;
+    --surface-2: #f4f4f5;
+    --border: #d4d4d8;
+    --text: #18181b;
+    --text-dim: #71717a;
+    --accent: #4f46e5;
+    --accent-dim: #4f46e51a;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1117;
+        --surface: #1a1d27;
+        --surface-2: #242736;
+        --border: #2e3248;
+        --text: #e8e9f0;
+        --text-dim: #8b8fa8;
+        --accent: #6c63ff;
+        --accent-dim: #6c63ff33;
+        --shadow: 0 1px 3px #0006;
+        --shadow-lg: 0 8px 24px #0009;
+    }
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f0 100%);
+    background: var(--bg);
     min-height: 100vh;
     padding: 20px 16px;
-    color: #2c3e50;
+    color: var(--text);
 }
 
 .container {
@@ -17,16 +49,29 @@ header {
     margin-bottom: 30px;
 }
 
+header a,
+footer a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-dim);
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+header a:hover,
+footer a:hover {
+    border-bottom-color: var(--accent);
+}
+
 h1 {
     font-size: 1.8rem;
     font-weight: 700;
-    color: #1a202c;
+    color: var(--text);
     margin-bottom: 6px;
     letter-spacing: -0.5px;
 }
 
 .subtitle {
-    color: #64748b;
+    color: var(--text-dim);
     font-size: 0.95rem;
 }
 
@@ -36,23 +81,24 @@ h1 {
 
 h2 {
     font-size: 1.1rem;
-    color: #334155;
+    color: var(--text);
     margin-bottom: 12px;
     padding-left: 8px;
-    border-left: 3px solid #3b82f6;
+    border-left: 3px solid var(--accent);
     font-weight: 600;
 }
 
 .projects-list {
     list-style: none;
-    background: white;
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
 }
 
 .project-item {
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--border);
 }
 
 .project-item:last-child {
@@ -65,13 +111,13 @@ h2 {
     align-items: center;
     padding: 14px 16px;
     text-decoration: none;
-    color: #1e293b;
+    color: var(--text);
     transition: background-color 0.2s ease;
     gap: 16px;
 }
 
 .project-item a:hover {
-    background-color: #f8fafc;
+    background-color: var(--surface-2);
 }
 
 .project-info {
@@ -82,23 +128,23 @@ h2 {
 .project-title {
     font-weight: 600;
     font-size: 1rem;
-    color: #1e293b;
+    color: var(--text);
     margin-bottom: 4px;
 }
 
 .project-item a:hover .project-title {
-    color: #3b82f6;
+    color: var(--accent);
 }
 
 .project-description {
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--text-dim);
     line-height: 1.4;
 }
 
 .project-path {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: var(--text-dim);
     font-family: "SF Mono", Monaco, Consolas, monospace;
     flex-shrink: 0;
 }
@@ -130,9 +176,11 @@ h2 {
     width: 100%;
     padding: 12px 16px;
     font-size: 1rem;
-    border: 2px solid #3b82f6;
+    border: 2px solid var(--accent);
     border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-lg);
     outline: none;
     font-family: inherit;
 }
@@ -140,21 +188,22 @@ h2 {
 .filter-hint {
     margin-top: 8px;
     font-size: 0.75rem;
-    color: #64748b;
+    color: var(--text-dim);
     text-align: center;
-    background: white;
+    background: var(--surface);
+    border: 1px solid var(--border);
     padding: 8px;
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow);
 }
 
 .project-item.focused a {
-    background-color: #eff6ff;
-    box-shadow: inset 3px 0 0 #3b82f6;
+    background-color: var(--accent-dim);
+    box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .project-item.focused .project-title {
-    color: #3b82f6;
+    color: var(--accent);
 }
 
 .project-item.hidden {
@@ -169,7 +218,7 @@ footer {
     text-align: center;
     margin-top: 50px;
     padding: 20px;
-    color: #64748b;
+    color: var(--text-dim);
     font-size: 0.85rem;
 }
 
