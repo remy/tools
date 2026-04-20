@@ -49,7 +49,9 @@
         }
       }
 
-      *, *::before, *::after {
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
@@ -65,7 +67,9 @@
       }
 
       @media (min-width: 640px) {
-        body { padding: 2rem 1rem 4rem; }
+        body {
+          padding: 2rem 1rem 4rem;
+        }
       }
 
       .container {
@@ -81,7 +85,9 @@
       }
 
       @media (min-width: 640px) {
-        .page-header { margin-bottom: 3rem; }
+        .page-header {
+          margin-bottom: 3rem;
+        }
       }
 
       .page-header h1 {
@@ -90,7 +96,9 @@
         letter-spacing: -0.02em;
         margin-bottom: 0.5rem;
 
-        & span { color: var(--accent); }
+        & span {
+          color: var(--accent);
+        }
       }
 
       .page-header p {
@@ -99,7 +107,9 @@
       }
 
       @media (min-width: 640px) {
-        .page-header p { font-size: 1.05rem; }
+        .page-header p {
+          font-size: 1.05rem;
+        }
       }
 
       .badge {
@@ -124,7 +134,9 @@
       }
 
       @media (min-width: 640px) {
-        .sections { gap: 2rem; }
+        .sections {
+          gap: 2rem;
+        }
       }
 
       /* ─── Card ─── */
@@ -192,7 +204,9 @@
         color: #fff;
         border-color: var(--accent);
 
-        &:hover { opacity: 0.85; }
+        &:hover {
+          opacity: 0.85;
+        }
       }
 
       .btn-outline {
@@ -235,11 +249,25 @@
           font-size: 0.82rem;
         }
 
-        & .kw  { color: var(--syn-kw); }
-        & .attr { color: var(--syn-attr); }
-        & .val  { color: var(--syn-val); }
-        & .tag  { color: var(--syn-tag); }
-        & .cm   { color: var(--syn-cm); }
+        & .kw {
+          color: var(--syn-kw);
+        }
+
+        & .attr {
+          color: var(--syn-attr);
+        }
+
+        & .val {
+          color: var(--syn-val);
+        }
+
+        & .tag {
+          color: var(--syn-tag);
+        }
+
+        & .cm {
+          color: var(--syn-cm);
+        }
 
         & code {
           background: none;
@@ -276,10 +304,23 @@
           gap: 0.75em;
         }
 
-        & .time { color: var(--text-dim); flex-shrink: 0; }
-        & .evt-name { color: var(--accent); }
-        & .evt-state { color: var(--green); }
-        & .empty { color: var(--text-dim); font-style: italic; }
+        & .time {
+          color: var(--text-dim);
+          flex-shrink: 0;
+        }
+
+        & .evt-name {
+          color: var(--accent);
+        }
+
+        & .evt-state {
+          color: var(--green);
+        }
+
+        & .empty {
+          color: var(--text-dim);
+          font-style: italic;
+        }
       }
 
       /* ─── Support callout ─── */
@@ -295,17 +336,31 @@
         font-size: 0.875rem;
         color: var(--text-dim);
 
-        &.supported { border-color: var(--green); }
-        &.unsupported { border-color: var(--orange); }
+        &.supported {
+          border-color: var(--green);
+        }
 
-        & .icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 0.1rem; }
+        &.unsupported {
+          border-color: var(--orange);
+        }
+
+        & .icon {
+          font-size: 1.1rem;
+          flex-shrink: 0;
+          margin-top: 0.1rem;
+        }
 
         & .support-label {
           font-weight: 600;
           margin-bottom: 0.2rem;
 
-          &.yes { color: var(--green); }
-          &.no  { color: var(--orange); }
+          &.yes {
+            color: var(--green);
+          }
+
+          &.no {
+            color: var(--orange);
+          }
         }
       }
     </style>
@@ -326,7 +381,8 @@
         <div class="card">
           <div class="card-header">
             <h2>Try It</h2>
-            <p>Toggle the wake lock to keep your screen awake. The lock is automatically re-acquired when the page regains visibility.</p>
+            <p>Toggle the wake lock to keep your screen awake. The lock is automatically re-acquired when the page
+              regains visibility.</p>
           </div>
           <div class="demo-row">
             <wake-lock>
@@ -343,14 +399,15 @@
         <div class="card">
           <div class="card-header">
             <h2>Usage</h2>
-            <p>Drop in the web component and wrap any clickable element. The <code>&lt;wake-lock&gt;</code> element toggles on click and exposes an <code>active</code> attribute.</p>
+            <p>Drop in the web component and wrap any clickable element. The <code>&lt;wake-lock&gt;</code> element
+              toggles on click and exposes an <code>active</code> attribute.</p>
           </div>
 
           <pre class="code-hint"><code><span class="cm">&lt;!-- 1. Add the component --&gt;</span>
 <span class="tag">&lt;wake-lock&gt;</span>
   <span class="tag">&lt;button&gt;</span>Toggle Wake Lock<span class="tag">&lt;/button&gt;</span>
 <span class="tag">&lt;/wake-lock&gt;</span>
-<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"wake-lock.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"wake-lock.wc.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 
 <span class="cm">&lt;!-- 2. Listen for events --&gt;</span>
 <span class="tag">&lt;script&gt;</span>
@@ -401,14 +458,14 @@ wl.<span class="attr">release</span>()   <span class="cm">// release the wake lo
       </div><!-- /.sections -->
     </div><!-- /.container -->
 
-    <script src="./wake-lock.js"></script>
+    <script src="./wake-lock.wc.js"></script>
     <script>
-      const wl     = document.querySelector('wake-lock');
-      const btn    = document.getElementById('btn-toggle');
-      const logEl  = document.getElementById('event-log');
+      const wl = document.querySelector('wake-lock');
+      const btn = document.getElementById('btn-toggle');
+      const logEl = document.getElementById('event-log');
 
       function addLog(eventName, description) {
-        const time  = new Date().toLocaleTimeString('en-GB', { hour12: false });
+        const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
         const entry = document.createElement('div');
         entry.className = 'entry';
         entry.innerHTML =
@@ -439,23 +496,23 @@ wl.<span class="attr">release</span>()   <span class="cm">// release the wake lo
       });
 
       // ─── Browser support detection ────────────────────────────────────────
-      const box    = document.getElementById('support-box');
-      const icon   = document.getElementById('support-icon');
-      const label  = document.getElementById('support-label');
+      const box = document.getElementById('support-box');
+      const icon = document.getElementById('support-icon');
+      const label = document.getElementById('support-label');
       const detail = document.getElementById('support-detail');
       const supported = 'wakeLock' in navigator;
 
       if (supported) {
         box.classList.add('supported');
-        icon.textContent  = '✓';
+        icon.textContent = '✓';
         label.textContent = 'Wake Lock API supported in this browser';
-        label.className   = 'support-label yes';
+        label.className = 'support-label yes';
         detail.textContent = 'All demos on this page should work correctly.';
       } else {
         box.classList.add('unsupported');
-        icon.textContent  = '⚠';
+        icon.textContent = '⚠';
         label.textContent = 'Wake Lock API not supported in this browser';
-        label.className   = 'support-label no';
+        label.className = 'support-label no';
         detail.textContent = 'Upgrade to Chrome 84+, Edge 84+, or Safari 16.4+ to use the Wake Lock API.';
       }
     </script>
