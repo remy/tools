@@ -384,20 +384,15 @@
         <div class="settings-section" style="margin-top: 0.5rem">
           <h3 class="settings-heading">Sync</h3>
           <label class="field">
-            <span class="field-label">libSQL server URL</span>
-            <input type="url" id="sync-url" placeholder="https://libsql.example.com" autocomplete="off">
+            <span class="field-label">CouchDB URL</span>
+            <input type="url" id="sync-url" placeholder="https://user:pass@couch.example.com/subscription-tracker" autocomplete="off">
           </label>
           <label class="field">
-            <span class="field-label">Auth token (optional)</span>
+            <span class="field-label">Bearer token (optional)</span>
             <input type="password" id="sync-token" autocomplete="off">
           </label>
-          <label class="field">
-            <span class="field-label">Interval (seconds)</span>
-            <input type="number" id="sync-interval" min="1" step="1" value="15">
-          </label>
           <p class="sync-status" id="sync-status" aria-live="polite">Sync disabled.</p>
-          <p class="sync-hint">Server must send CORS headers (sqld itself does not). Configure them on your reverse
-            proxy.</p>
+          <p class="sync-hint">Replicates live against a CouchDB-compatible endpoint. Server must send CORS headers.</p>
           <div class="pop-actions">
             <button class="btn btn-ghost" id="sync-pull" type="button"
               title="Overwrite local with server data; leaves the remote untouched">Pull from server</button>
@@ -410,6 +405,7 @@
 
     <command-palette></command-palette>
 
+    <script src="/vendor/pouchdb/pouchdb.min.js"></script>
     <script type="importmap">
     {
       "imports": {

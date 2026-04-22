@@ -35,7 +35,6 @@ export function openSettings() {
   const cfg = getSyncConfig();
   document.getElementById('sync-url').value = cfg.url;
   document.getElementById('sync-token').value = cfg.token;
-  document.getElementById('sync-interval').value = Math.round((cfg.interval || 15000) / 1000);
 
   if (unsubStatus) unsubStatus();
   unsubStatus = db.onSyncStatus(renderSyncStatus);
@@ -57,10 +56,8 @@ export async function handleSettingsSave() {
 export async function handleSyncSave() {
   const url = document.getElementById('sync-url').value.trim();
   const token = document.getElementById('sync-token').value.trim();
-  const intervalSec = parseInt(document.getElementById('sync-interval').value, 10);
-  const interval = Number.isFinite(intervalSec) && intervalSec > 0 ? intervalSec * 1000 : 15000;
 
-  setSyncConfig({ url, token, interval });
+  setSyncConfig({ url, token });
 
   const btn = document.getElementById('sync-save');
   btn.disabled = true;
