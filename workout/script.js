@@ -519,12 +519,12 @@ document.addEventListener('input', function(e) {
 });
 
 /* ── Scroll gating ──
-   Prevent accidental scroll on mobile during a tap. Scroll is unlocked when
-   either (a) the finger has been held for HOLD_MS, or (b) the finger has
-   moved more than FLICK_PX — so deliberate swipes still scroll immediately
-   while tap jitter (small, brief movements) does not cause scroll. Taps
-   themselves fire normally: preventDefault only blocks scrolling, not the
-   synthesized click. */
+   Prevent accidental scroll on mobile during a tap on the exercise rows
+   (the radio-button-style rows where a quick tap increments the set count).
+   Scroll is unlocked when either (a) the finger has been held for HOLD_MS,
+   or (b) the finger has moved more than FLICK_PX — so deliberate swipes
+   still scroll immediately while tap jitter does not cause scroll. The rest
+   of the page scrolls normally on any touch. */
 (function() {
   const HOLD_MS = 180;
   const FLICK_PX = 14;
@@ -535,7 +535,10 @@ document.addEventListener('input', function(e) {
   let tracking = false;
 
   document.addEventListener('touchstart', function(e) {
-    if (e.touches.length !== 1) { tracking = false; return; }
+    if (e.touches.length !== 1 || !e.target.closest('.exercise-row')) {
+      tracking = false;
+      return;
+    }
     const t = e.touches[0];
     startTime = Date.now();
     startX = t.clientX;
@@ -546,8 +549,6 @@ document.addEventListener('input', function(e) {
 
   document.addEventListener('touchmove', function(e) {
     if (!tracking || e.touches.length !== 1) return;
-    // Let native inputs (number steppers, text selection) behave normally
-    if (e.target.closest('input, textarea, select')) return;
     if (scrollUnlocked) return;
     const t = e.touches[0];
     const moved = Math.hypot(t.clientX - startX, t.clientY - startY);
