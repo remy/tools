@@ -519,15 +519,18 @@ document.addEventListener('input', function(e) {
 });
 
 /* ── Scroll gating ──
-   Prevent accidental scroll on mobile during a tap. Scroll is unlocked when
-   either (a) the finger has been held for HOLD_MS, or (b) the finger has
-   moved more than FLICK_PX — so deliberate swipes still scroll immediately
-   while tap jitter (small, brief movements) does not cause scroll. Taps
-   themselves fire normally: preventDefault only blocks scrolling, not the
-   synthesized click. */
+   Prevent accidental scroll on mobile during a tap on the radio-style
+   bullet at the start of an exercise row. Scroll is unlocked when either
+   (a) the finger has been held for HOLD_MS, or (b) the finger has moved
+   more than FLICK_PX — so deliberate swipes still scroll immediately while
+   tap jitter does not cause scroll. Only the bullet gets gated; tapping
+   the exercise name/text scrolls normally. */
 (function() {
   const HOLD_MS = 180;
   const FLICK_PX = 14;
+  // Bullet is 18px + 2×2 border ≈ 22px; give a small margin so the edge of
+  // the circle isn't impossible to hit, but stop well before the text.
+  const BULLET_HIT_PX = 30;
   let startTime = 0;
   let startX = 0;
   let startY = 0;
@@ -535,8 +538,15 @@ document.addEventListener('input', function(e) {
   let tracking = false;
 
   document.addEventListener('touchstart', function(e) {
-    if (e.touches.length !== 1) { tracking = false; return; }
+    tracking = false;
+    if (e.touches.length !== 1) return;
+    const row = e.target.closest('.exercise-row');
+    if (!row) return;
+    const nameEl = row.querySelector('.ex-name');
+    if (!nameEl) return;
     const t = e.touches[0];
+    const rect = nameEl.getBoundingClientRect();
+    if (t.clientX > rect.left + BULLET_HIT_PX) return;
     startTime = Date.now();
     startX = t.clientX;
     startY = t.clientY;
@@ -546,8 +556,6 @@ document.addEventListener('input', function(e) {
 
   document.addEventListener('touchmove', function(e) {
     if (!tracking || e.touches.length !== 1) return;
-    // Let native inputs (number steppers, text selection) behave normally
-    if (e.target.closest('input, textarea, select')) return;
     if (scrollUnlocked) return;
     const t = e.touches[0];
     const moved = Math.hypot(t.clientX - startX, t.clientY - startY);
