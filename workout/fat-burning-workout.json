@@ -5,16 +5,17 @@
       "label": "Full A",
       "focus": "FULL BODY · MACHINE STRENGTH",
       "exercises": [
-        { "name": "Leg Press", "sets": "3", "reps": "10–12" },
+        { "name": "Leg Press", "sets": "4", "reps": "10–12" },
         { "name": "Machine Chest Press", "sets": "3", "reps": "10–12" },
         { "name": "Chest-Supported Row (machine)", "sets": "3", "reps": "10–12" },
+        { "name": "Seated Leg Curl (machine)", "sets": "3", "reps": "12–15" },
         { "name": "Seated DB Shoulder Press (back supported)", "sets": "3", "reps": "10–12" },
-        { "name": "Pallof Press (cable)", "sets": "2", "reps": "12 / side" }
+        { "name": "DB Bicep Curl", "sets": "3", "reps": "10–12" }
       ],
       "cardio": {
         "icon": "🚴",
         "title": "CARDIO FINISHER",
-        "description": "10 min · Bike · 30 sec hard / 60 sec easy · Keep rest ≤ 60 sec between sets"
+        "description": "15 min · Bike · 30 sec hard / 60 sec easy · Rest ≤ 75 sec between sets"
       }
     },
     {
@@ -22,16 +23,17 @@
       "label": "Full B",
       "focus": "FULL BODY · METABOLIC",
       "exercises": [
-        { "name": "Hack Squat (machine)", "sets": "3", "reps": "12–15" },
+        { "name": "Hack Squat (machine)", "sets": "4", "reps": "10–12" },
         { "name": "Lat Pulldown (cable)", "sets": "3", "reps": "12–15" },
         { "name": "Incline Machine Press", "sets": "3", "reps": "12–15" },
-        { "name": "Cable Lateral Raise", "sets": "2", "reps": "12–15" },
-        { "name": "Dead Bug", "sets": "2", "reps": "10 / side" }
+        { "name": "Leg Extension (machine)", "sets": "3", "reps": "12–15" },
+        { "name": "Cable Lateral Raise", "sets": "3", "reps": "12–15" },
+        { "name": "Cable Tricep Pushdown", "sets": "3", "reps": "12–15" }
       ],
       "cardio": {
         "icon": "🏃",
         "title": "CARDIO FINISHER",
-        "description": "12 min · Treadmill · Incline walk 10–12% at Zone 2 · Keep rest ≤ 60 sec between sets"
+        "description": "15 min · Treadmill · Incline walk 10–12% at Zone 2 · Rest ≤ 75 sec between sets"
       }
     },
     {
@@ -39,16 +41,17 @@
       "label": "Full C",
       "focus": "FULL BODY · GLUTES + CONDITIONING",
       "exercises": [
-        { "name": "Hip Thrust (machine)", "sets": "3", "reps": "10–12" },
+        { "name": "Hip Thrust (machine)", "sets": "4", "reps": "10–12" },
         { "name": "Single-Arm DB Row (chest on incline bench)", "sets": "3", "reps": "10 / side" },
         { "name": "Cable Chest Press", "sets": "3", "reps": "12–15" },
-        { "name": "Step-Up (DB, low box)", "sets": "2", "reps": "10 / side" },
-        { "name": "Bird Dog", "sets": "2", "reps": "8 / side" }
+        { "name": "Step-Up (DB, low box)", "sets": "3", "reps": "10 / side" },
+        { "name": "Face Pull (cable)", "sets": "3", "reps": "12–15" },
+        { "name": "DB Hammer Curl", "sets": "3", "reps": "10–12" }
       ],
       "cardio": {
         "icon": "🚴",
         "title": "CARDIO FINISHER",
-        "description": "10 min · Elliptical or recumbent bike · 40 sec hard / 80 sec easy · Keep rest ≤ 60 sec between sets"
+        "description": "12–15 min · Elliptical or recumbent bike · 40 sec hard / 80 sec easy · Rest ≤ 75 sec between sets"
       }
     }
   ]
