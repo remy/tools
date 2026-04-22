@@ -118,6 +118,7 @@ class SubscriptionDB {
     this._syncHandle = null;
     this._statusListeners = new Set();
     this._lastStatus = null;
+    this._changeSubscribers = new Set();
   }
 
   async open() {
@@ -132,6 +133,30 @@ class SubscriptionDB {
     for (const cb of Array.from(this._statusListeners)) {
       try { cb(s); } catch (err) { console.error(err); }
     }
+  }
+
+  async _attachChange(sub) {
+    const db = await this.open();
+    if (sub.cancelled) return;
+    sub.handle = db.changes({ since: 'now', live: true, include_docs: true })
+      .on('change', (c) => {
+        try { sub.cb(c); } catch (err) { console.error(err); }
+      })
+      .on('error', (err) => console.error('[subs changes]', err));
+  }
+
+  onChange(cb) {
+    const sub = { cb, handle: null, cancelled: false };
+    this._changeSubscribers.add(sub);
+    this._attachChange(sub);
+    return () => {
+      this._changeSubscribers.delete(sub);
+      sub.cancelled = true;
+      if (sub.handle) {
+        try { sub.handle.cancel(); } catch {}
+        sub.handle = null;
+      }
+    };
   }
 
   _startSync() {
@@ -166,11 +191,21 @@ class SubscriptionDB {
       try { this._syncHandle.cancel(); } catch {}
       this._syncHandle = null;
     }
+    for (const sub of this._changeSubscribers) {
+      if (sub.handle) {
+        try { sub.handle.cancel(); } catch {}
+        sub.handle = null;
+      }
+    }
     if (this._db) {
       try { await this._db.close(); } catch {}
       this._db = null;
     }
-    return this.open();
+    const db = await this.open();
+    for (const sub of this._changeSubscribers) {
+      if (!sub.cancelled) this._attachChange(sub);
+    }
+    return db;
   }
 
   onSyncStatus(cb) {
