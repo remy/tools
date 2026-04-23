@@ -8,7 +8,7 @@ import { openQuickAdd, handleQuickAddSubmit, handleSaveAndAddMore } from './popo
 import { openBreakdown } from './popover-breakdown.js';
 import { openDaySheet, getDaySheetDay } from './popover-day.js';
 import { openSettings, handleSettingsSave, handleSyncSave, handleSyncNow, handleSyncPull } from './popover-settings.js';
-import { handleExport, handleImport, handleImportLegacy, handleImportLegacyFile } from './io.js';
+import { handleExport, handleImport } from './io.js';
 
 // ── Favicon preview debounce ──
 let faviconTimer = null;
@@ -186,11 +186,6 @@ export function bindEvents() {
   document.getElementById('btn-export').addEventListener('click', handleExport);
   document.getElementById('btn-import').addEventListener('change', (e) => {
     if (e.target.files[0]) handleImport(e.target.files[0]);
-    e.target.value = '';
-  });
-  document.getElementById('btn-import-legacy').addEventListener('click', handleImportLegacy);
-  document.getElementById('btn-import-legacy-file').addEventListener('change', (e) => {
-    if (e.target.files[0]) handleImportLegacyFile(e.target.files[0]);
     e.target.value = '';
   });
 
