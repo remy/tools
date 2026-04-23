@@ -48,7 +48,7 @@
     view.innerHTML = `
       <article class="article">
         <div class="article__hero">
-          <img src="images/${t.image}" alt="${escapeHtml(t.title)}">
+          <img src="images/${t.image}.avif" alt="${escapeHtml(t.title)}">
           <div class="article__headline">
             <div class="article__num">Story № ${t.number}</div>
             <h1 class="article__title">${escapeHtml(t.title)}</h1>
