@@ -41,7 +41,6 @@ body {
   padding-top: max(12px, env(safe-area-inset-top));
   background: var(--paper);
   border-bottom: 1px solid var(--rule);
-  backdrop-filter: saturate(1.2) blur(8px);
 }
 .topbar__brand {
   display: inline-flex;
