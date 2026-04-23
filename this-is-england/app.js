@@ -2,6 +2,7 @@
   const view = document.getElementById('view');
   const backBtn = document.getElementById('backBtn');
   let TOPICS = [];
+  let HOME_ORDER = [];
 
   const escapeHtml = (s) =>
     String(s).replace(/[&<>"']/g, (c) => ({
@@ -27,7 +28,7 @@
         <p>Fifty tiny stories about the people, places, food, and feelings that make England what it is. Pick a card and wander in.</p>
       </section>
       <section class="grid">
-        ${TOPICS.map((t) => `
+        ${HOME_ORDER.map((t) => `
           <a class="card" href="#/${encodeURIComponent(t.slug)}">
             <img class="card__img" src="images/${t.image}.avif" alt="" loading="lazy" width="400" height="300">
             <div class="card__body">
@@ -117,7 +118,8 @@
   fetch('data.json', { cache: 'no-cache' })
     .then((r) => r.json())
     .then((data) => {
-      TOPICS = shuffle(data.topics);
+      TOPICS = data.topics;
+      HOME_ORDER = shuffle(TOPICS);
       route();
     })
     .catch((err) => {
