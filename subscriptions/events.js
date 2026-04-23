@@ -150,11 +150,19 @@ export function bindEvents() {
   document.getElementById('sub-form').addEventListener('submit', handleSubFormSubmit);
   document.getElementById('sub-delete').addEventListener('click', handleSubDelete);
 
-  // End-date helper buttons
-  document.getElementById('sub-end-today').addEventListener('click', () => {
+  // Start/end-date helper buttons
+  const todayIso = () => {
     const today = new Date();
-    const iso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    document.getElementById('sub-end-date').value = iso;
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  };
+  document.getElementById('sub-start-today').addEventListener('click', () => {
+    document.getElementById('sub-start-date').value = todayIso();
+  });
+  document.getElementById('sub-start-clear').addEventListener('click', () => {
+    document.getElementById('sub-start-date').value = '';
+  });
+  document.getElementById('sub-end-today').addEventListener('click', () => {
+    document.getElementById('sub-end-date').value = todayIso();
   });
   document.getElementById('sub-end-clear').addEventListener('click', () => {
     document.getElementById('sub-end-date').value = '';
