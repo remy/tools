@@ -1,142 +1,79 @@
 import { DB_NAME } from './state.js';
-import { openDatabase } from '../vendor/origin-sql/origin-sql.bundle.js';
 
-const SCHEMA_STATEMENTS = [
-  `CREATE TABLE IF NOT EXISTS subscriptions (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    url TEXT,
-    favicon TEXT,
-    amount REAL NOT NULL,
-    currency TEXT NOT NULL,
-    cycle TEXT NOT NULL,
-    recurring_day INTEGER NOT NULL,
-    recurring_month INTEGER,
-    category TEXT NOT NULL,
-    end_date TEXT,
-    created_at INTEGER
-  )`,
-  `CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT
-  )`,
-];
+const PouchDB = globalThis.PouchDB;
 
 const SYNC_PREFIX = 'subscription-tracker.sync.';
+const SUB_PREFIX = 'sub:';
+const SETTINGS_ID = 'settings';
 
 export function getSyncConfig() {
   const url = localStorage.getItem(SYNC_PREFIX + 'url') || '';
   const token = localStorage.getItem(SYNC_PREFIX + 'token') || '';
-  const interval = parseInt(localStorage.getItem(SYNC_PREFIX + 'interval') || '15000', 10);
-  return { url, token, interval };
+  return { url, token };
 }
 
-export function setSyncConfig({ url, token, interval }) {
+export function setSyncConfig({ url, token }) {
   const setOrClear = (k, v) => {
     if (v) localStorage.setItem(SYNC_PREFIX + k, String(v));
     else localStorage.removeItem(SYNC_PREFIX + k);
   };
   setOrClear('url', url);
   setOrClear('token', token);
-  setOrClear('interval', interval);
 }
 
-function toRow(sub) {
+function toDoc(sub) {
   return {
+    _id: SUB_PREFIX + sub.id,
     id: sub.id,
     name: sub.name,
-    url: sub.url ?? null,
-    favicon: sub.favicon ?? null,
+    url: sub.url ?? '',
+    favicon: sub.favicon ?? '',
     amount: sub.amount,
     currency: sub.currency,
     cycle: sub.cycle,
-    recurring_day: sub.recurringDay,
-    recurring_month: sub.recurringMonth ?? null,
+    recurringDay: sub.recurringDay,
+    recurringMonth: sub.recurringMonth ?? null,
     category: sub.category ?? 'personal',
-    end_date: sub.endDate ?? null,
-    created_at: sub.createdAt ?? Date.now(),
+    endDate: sub.endDate ?? null,
+    createdAt: sub.createdAt ?? Date.now(),
   };
 }
 
-function fromRow(r) {
+function fromDoc(doc) {
   const sub = {
-    id: r.id,
-    name: r.name,
-    url: r.url || '',
-    favicon: r.favicon || '',
-    amount: r.amount,
-    currency: r.currency,
-    cycle: r.cycle,
-    recurringDay: r.recurring_day,
-    category: r.category,
-    createdAt: r.created_at,
+    id: doc.id ?? doc._id.slice(SUB_PREFIX.length),
+    name: doc.name,
+    url: doc.url || '',
+    favicon: doc.favicon || '',
+    amount: doc.amount,
+    currency: doc.currency,
+    cycle: doc.cycle,
+    recurringDay: doc.recurringDay,
+    category: doc.category,
+    createdAt: doc.createdAt,
   };
-  if (r.recurring_month != null) sub.recurringMonth = r.recurring_month;
-  if (r.end_date) sub.endDate = r.end_date;
+  if (doc.recurringMonth != null) sub.recurringMonth = doc.recurringMonth;
+  if (doc.endDate) sub.endDate = doc.endDate;
   return sub;
 }
 
-const INSERT_SUB_SQL = `INSERT OR REPLACE INTO subscriptions
-    (id, name, url, favicon, amount, currency, cycle,
-     recurring_day, recurring_month, category, end_date, created_at)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-function subParams(r) {
-  return [r.id, r.name, r.url, r.favicon, r.amount, r.currency, r.cycle,
-    r.recurring_day, r.recurring_month, r.category, r.end_date, r.created_at];
-}
-
-async function fetchRemoteTables(url, authToken) {
-  const endpoint = new URL('/v2/pipeline', url);
-  const resp = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(authToken ? { authorization: `Bearer ${authToken}` } : {}),
-    },
-    body: JSON.stringify({
-      requests: [
-        {
-          type: 'execute',
-          stmt: {
-            sql: "SELECT name, sql FROM sqlite_master WHERE type = 'table'"
-              + " AND name NOT LIKE '\\_sync\\_%' ESCAPE '\\'"
-              + " AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\'",
-            args: [],
-          },
-        },
-        { type: 'close' },
-      ],
-    }),
-  });
-  if (!resp.ok) throw new Error(`libSQL returned HTTP ${resp.status}`);
-  const json = await resp.json();
-  const res = json.results?.[0];
-  if (res?.type === 'error') {
-    throw new Error(res.error?.message || 'remote schema query failed');
+function remoteDb(cfg) {
+  const opts = {};
+  if (cfg.token) {
+    opts.fetch = (url, init) => {
+      const headers = new Headers(init?.headers || {});
+      headers.set('Authorization', `Bearer ${cfg.token}`);
+      return PouchDB.fetch(url, { ...init, headers });
+    };
   }
-  const result = res?.response?.result;
-  const cols = (result?.cols ?? []).map((c) => c.name);
-  const rows = result?.rows ?? [];
-  const nameIdx = cols.indexOf('name');
-  const sqlIdx = cols.indexOf('sql');
-  return rows
-    .map((r) => ({ name: r[nameIdx]?.value, sql: r[sqlIdx]?.value }))
-    .filter((t) => t.name && t.sql);
+  return new PouchDB(cfg.url, opts);
 }
 
-function toIdempotentCreate(sql) {
-  return sql.replace(
-    /^(\s*CREATE\s+TABLE\s+)(?!IF\s+NOT\s+EXISTS\b)/i,
-    '$1IF NOT EXISTS ',
-  );
-}
-
-// ── One-time migration from the legacy IndexedDB store ──
+// ── Legacy IndexedDB reader ──
 async function readLegacyIdb() {
   if (!('indexedDB' in globalThis)) return null;
   const existing = await new Promise((resolve) => {
-    if (!indexedDB.databases) return resolve(true); // can't tell — try anyway
+    if (!indexedDB.databases) return resolve(true);
     indexedDB.databases().then(
       (list) => resolve(list.some((d) => d.name === DB_NAME)),
       () => resolve(true),
@@ -146,20 +83,17 @@ async function readLegacyIdb() {
 
   return new Promise((resolve) => {
     const req = indexedDB.open(DB_NAME, 1);
-    let opened = null;
     req.onsuccess = () => {
-      opened = req.result;
+      const opened = req.result;
       const stores = opened.objectStoreNames;
       if (!stores.contains('subscriptions') && !stores.contains('settings')) {
         opened.close();
         return resolve(null);
       }
-      const tx = opened.transaction(
-        [stores.contains('subscriptions') ? 'subscriptions' : 'settings'].concat(
-          stores.contains('subscriptions') && stores.contains('settings') ? ['settings'] : [],
-        ),
-        'readonly',
-      );
+      const names = [];
+      if (stores.contains('subscriptions')) names.push('subscriptions');
+      if (stores.contains('settings')) names.push('settings');
+      const tx = opened.transaction(names, 'readonly');
       const subsReq = stores.contains('subscriptions')
         ? tx.objectStore('subscriptions').getAll() : null;
       const setReq = stores.contains('settings')
@@ -171,98 +105,107 @@ async function readLegacyIdb() {
           settings: (setReq?.result || []).reduce((m, r) => { m[r.key] = r.value; return m; }, {}),
         });
       };
-      tx.onerror = () => {
-        opened.close();
-        resolve(null);
-      };
+      tx.onerror = () => { opened.close(); resolve(null); };
     };
     req.onerror = () => resolve(null);
     req.onblocked = () => resolve(null);
   });
 }
 
-async function migrateFromIdb(dbh) {
-  const already = await dbh.query("SELECT value FROM settings WHERE key = 'migratedFromIdb'");
-  if (already.length) return;
-  const legacy = await readLegacyIdb();
-  if (!legacy) {
-    await dbh.exec(
-      'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
-      ['migratedFromIdb', JSON.stringify('1')],
-    );
-    return;
-  }
-  await dbh.transaction(async (tx) => {
-    for (const sub of legacy.subscriptions) {
-      await tx.exec(INSERT_SUB_SQL, subParams(toRow(sub)));
-    }
-    for (const [k, v] of Object.entries(legacy.settings)) {
-      await tx.exec(
-        'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
-        [k, JSON.stringify(v)],
-      );
-    }
-    await tx.exec(
-      'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
-      ['migratedFromIdb', JSON.stringify('1')],
-    );
-  });
-}
-
 class SubscriptionDB {
   constructor() {
-    this._dbPromise = null;
+    this._db = null;
+    this._syncHandle = null;
     this._statusListeners = new Set();
-    this._unsubStatus = null;
     this._lastStatus = null;
+    this._changeSubscribers = new Set();
   }
 
   async open() {
-    if (this._dbPromise) return this._dbPromise;
-    this._dbPromise = (async () => {
-      const cfg = getSyncConfig();
-      const sync = cfg.url
-        ? {
-          url: cfg.url,
-          authToken: cfg.token || undefined,
-          interval: cfg.interval || undefined,
-          syncOnMutation: true,
-        }
-        : undefined;
-      // Schema is applied one statement at a time: origin-sql runs the schema
-      // option through sqlite's single-statement prepare/step, which silently
-      // drops anything after the first semicolon.
-      const dbh = await openDatabase({ name: DB_NAME, sync });
-      for (const sql of SCHEMA_STATEMENTS) await dbh.exec(sql);
-      await migrateFromIdb(dbh);
-      if (sync) {
-        this._unsubStatus = dbh.onSyncStatus((s) => {
-          this._lastStatus = s;
-          for (const cb of Array.from(this._statusListeners)) {
-            try { cb(s); } catch (err) { console.error(err); }
-          }
-        });
-      } else {
-        this._lastStatus = { state: 'disabled' };
-        for (const cb of Array.from(this._statusListeners)) {
-          try { cb(this._lastStatus); } catch (err) { console.error(err); }
-        }
+    if (this._db) return this._db;
+    this._db = new PouchDB(DB_NAME);
+    this._startSync();
+    return this._db;
+  }
+
+  _emitStatus(s) {
+    this._lastStatus = s;
+    for (const cb of Array.from(this._statusListeners)) {
+      try { cb(s); } catch (err) { console.error(err); }
+    }
+  }
+
+  async _attachChange(sub) {
+    const db = await this.open();
+    if (sub.cancelled) return;
+    sub.handle = db.changes({ since: 'now', live: true, include_docs: true })
+      .on('change', (c) => {
+        try { sub.cb(c); } catch (err) { console.error(err); }
+      })
+      .on('error', (err) => console.error('[subs changes]', err));
+  }
+
+  onChange(cb) {
+    const sub = { cb, handle: null, cancelled: false };
+    this._changeSubscribers.add(sub);
+    this._attachChange(sub);
+    return () => {
+      this._changeSubscribers.delete(sub);
+      sub.cancelled = true;
+      if (sub.handle) {
+        try { sub.handle.cancel(); } catch {}
+        sub.handle = null;
       }
-      return dbh;
-    })();
-    return this._dbPromise;
+    };
+  }
+
+  _startSync() {
+    const cfg = getSyncConfig();
+    if (!cfg.url) {
+      this._emitStatus({ state: 'disabled' });
+      return;
+    }
+    let remote;
+    try {
+      remote = remoteDb(cfg);
+    } catch (err) {
+      this._emitStatus({ state: 'error', lastError: err });
+      return;
+    }
+    this._emitStatus({ state: 'syncing' });
+    const handle = this._db.sync(remote, { live: true, retry: true });
+    this._syncHandle = handle;
+    handle
+      .on('change', () => this._emitStatus({ state: 'syncing' }))
+      .on('active', () => this._emitStatus({ state: 'syncing' }))
+      .on('paused', (err) => {
+        if (err) this._emitStatus({ state: 'error', lastError: err });
+        else this._emitStatus({ state: 'idle', lastSyncedAt: Date.now() });
+      })
+      .on('denied', (err) => this._emitStatus({ state: 'error', lastError: err }))
+      .on('error', (err) => this._emitStatus({ state: 'error', lastError: err }));
   }
 
   async reopen() {
-    if (this._unsubStatus) {
-      try { this._unsubStatus(); } catch {}
-      this._unsubStatus = null;
+    if (this._syncHandle) {
+      try { this._syncHandle.cancel(); } catch {}
+      this._syncHandle = null;
     }
-    if (this._dbPromise) {
-      try { const dbh = await this._dbPromise; await dbh.close(); } catch {}
-      this._dbPromise = null;
+    for (const sub of this._changeSubscribers) {
+      if (sub.handle) {
+        try { sub.handle.cancel(); } catch {}
+        sub.handle = null;
+      }
     }
-    return this.open();
+    if (this._db) {
+      try { await this._db.close(); } catch {}
+      this._db = null;
+    }
+    const db = await this.open();
+    for (const sub of this._changeSubscribers) {
+      if (!sub.cancelled) this._attachChange(sub);
+    }
+    return db;
   }
 
   onSyncStatus(cb) {
@@ -274,74 +217,130 @@ class SubscriptionDB {
   }
 
   async syncNow() {
-    const dbh = await this.open();
-    if (!getSyncConfig().url) throw new Error('Sync is not configured');
-    return dbh.sync();
+    const cfg = getSyncConfig();
+    if (!cfg.url) throw new Error('Sync is not configured');
+    const db = await this.open();
+    const remote = remoteDb(cfg);
+    this._emitStatus({ state: 'syncing' });
+    try {
+      const result = await db.sync(remote);
+      this._emitStatus({ state: 'idle', lastSyncedAt: Date.now() });
+      return result;
+    } catch (err) {
+      this._emitStatus({ state: 'error', lastError: err });
+      throw err;
+    }
   }
 
   async pullFromRemote() {
     const cfg = getSyncConfig();
     if (!cfg.url) throw new Error('Sync is not configured');
-    const dbh = await this.open();
-    // origin-sql's pull doesn't auto-create tables that only exist on the
-    // remote — we'd hit "no such table: …" when applying a row. Fetch the
-    // remote schema first and mirror any missing tables locally.
-    const remoteTables = await fetchRemoteTables(cfg.url, cfg.token);
-    for (const t of remoteTables) {
-      await dbh.exec(toIdempotentCreate(t.sql));
+    // Cancel live sync while we rewrite local state.
+    if (this._syncHandle) {
+      try { this._syncHandle.cancel(); } catch {}
+      this._syncHandle = null;
     }
-    // Drop any un-pushed local changes so the subsequent sync() is a pull only.
-    // _sync_meta is internal to origin-sql; deleting pending rows means push()
-    // has nothing to send, while pull() still applies remote ops locally.
-    await dbh.exec('DELETE FROM _sync_meta WHERE synced_at IS NULL');
-    const result = await dbh.sync();
-    return result.pull;
+    const db = await this.open();
+    const remote = remoteDb(cfg);
+    this._emitStatus({ state: 'syncing' });
+    try {
+      // Wipe local docs so the pull replaces rather than merges.
+      const all = await db.allDocs({ include_docs: true });
+      const deletes = all.rows
+        .filter((r) => !r.id.startsWith('_design/'))
+        .map((r) => ({ _id: r.id, _rev: r.doc._rev, _deleted: true }));
+      if (deletes.length) await db.bulkDocs(deletes);
+      const result = await db.replicate.from(remote);
+      this._emitStatus({ state: 'idle', lastSyncedAt: Date.now() });
+      this._startSync();
+      return result;
+    } catch (err) {
+      this._emitStatus({ state: 'error', lastError: err });
+      this._startSync();
+      throw err;
+    }
   }
 
   async getAll() {
-    const dbh = await this.open();
-    const rows = await dbh.query('SELECT * FROM subscriptions ORDER BY created_at ASC');
-    return rows.map(fromRow);
+    const db = await this.open();
+    const res = await db.allDocs({
+      include_docs: true,
+      startkey: SUB_PREFIX,
+      endkey: SUB_PREFIX + '￰',
+    });
+    const subs = res.rows.map((r) => fromDoc(r.doc));
+    subs.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    return subs;
   }
 
   async put(sub) {
-    const dbh = await this.open();
-    await dbh.exec(INSERT_SUB_SQL, subParams(toRow(sub)));
+    const db = await this.open();
+    const doc = toDoc(sub);
+    try {
+      const existing = await db.get(doc._id);
+      doc._rev = existing._rev;
+    } catch (err) {
+      if (err.status !== 404) throw err;
+    }
+    await db.put(doc);
   }
 
   async delete(id) {
-    const dbh = await this.open();
-    await dbh.exec('DELETE FROM subscriptions WHERE id = ?', [id]);
+    const db = await this.open();
+    try {
+      const existing = await db.get(SUB_PREFIX + id);
+      await db.remove(existing);
+    } catch (err) {
+      if (err.status !== 404) throw err;
+    }
   }
 
   async clearAll() {
-    const dbh = await this.open();
-    await dbh.exec('DELETE FROM subscriptions');
+    const db = await this.open();
+    const res = await db.allDocs({
+      include_docs: true,
+      startkey: SUB_PREFIX,
+      endkey: SUB_PREFIX + '￰',
+    });
+    const deletes = res.rows.map((r) => ({
+      _id: r.id, _rev: r.doc._rev, _deleted: true,
+    }));
+    if (deletes.length) await db.bulkDocs(deletes);
+  }
+
+  async _getSettingsDoc() {
+    const db = await this.open();
+    try {
+      return await db.get(SETTINGS_ID);
+    } catch (err) {
+      if (err.status === 404) return { _id: SETTINGS_ID };
+      throw err;
+    }
   }
 
   async getSetting(key) {
-    const dbh = await this.open();
-    const rows = await dbh.query('SELECT value FROM settings WHERE key = ?', [key]);
-    if (!rows.length) return null;
-    try { return JSON.parse(rows[0].value); } catch { return rows[0].value; }
+    const doc = await this._getSettingsDoc();
+    return doc[key] ?? null;
   }
 
   async setSetting(key, value) {
-    const dbh = await this.open();
-    await dbh.exec(
-      'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
-      [key, JSON.stringify(value)],
-    );
+    const db = await this.open();
+    const doc = await this._getSettingsDoc();
+    doc[key] = value;
+    await db.put(doc);
   }
 
   async getAllSettings() {
-    const dbh = await this.open();
-    const rows = await dbh.query('SELECT key, value FROM settings');
-    const map = {};
-    for (const r of rows) {
-      try { map[r.key] = JSON.parse(r.value); } catch { map[r.key] = r.value; }
-    }
-    return map;
+    const doc = await this._getSettingsDoc();
+    const { _id, _rev, ...rest } = doc;
+    return rest;
+  }
+
+  async _writeSettings(settings) {
+    const db = await this.open();
+    const doc = await this._getSettingsDoc();
+    Object.assign(doc, settings);
+    await db.put(doc);
   }
 
   async exportData() {
@@ -359,21 +358,13 @@ class SubscriptionDB {
     if (!data || data.version !== 1 || !Array.isArray(data.subscriptions)) {
       throw new Error('Invalid import file');
     }
-    const dbh = await this.open();
-    await dbh.transaction(async (tx) => {
-      await tx.exec('DELETE FROM subscriptions');
-      for (const sub of data.subscriptions) {
-        await tx.exec(INSERT_SUB_SQL, subParams(toRow(sub)));
-      }
-      if (data.settings) {
-        for (const [k, v] of Object.entries(data.settings)) {
-          await tx.exec(
-            'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
-            [k, JSON.stringify(v)],
-          );
-        }
-      }
-    });
+    const db = await this.open();
+    await this.clearAll();
+    const docs = data.subscriptions.map((s) => toDoc(s));
+    if (docs.length) await db.bulkDocs(docs);
+    if (data.settings && Object.keys(data.settings).length) {
+      await this._writeSettings(data.settings);
+    }
   }
 
   async replaceFromLegacy() {
@@ -381,19 +372,13 @@ class SubscriptionDB {
     const hasData = legacy
       && (legacy.subscriptions.length || Object.keys(legacy.settings).length);
     if (!hasData) throw new Error('No legacy data found in IndexedDB');
-    const dbh = await this.open();
-    await dbh.transaction(async (tx) => {
-      await tx.exec('DELETE FROM subscriptions');
-      for (const sub of legacy.subscriptions) {
-        await tx.exec(INSERT_SUB_SQL, subParams(toRow(sub)));
-      }
-      for (const [k, v] of Object.entries(legacy.settings)) {
-        await tx.exec(
-          'INSERT OR REPLACE INTO settings(key, value) VALUES (?, ?)',
-          [k, JSON.stringify(v)],
-        );
-      }
-    });
+    const db = await this.open();
+    await this.clearAll();
+    const docs = legacy.subscriptions.map((s) => toDoc(s));
+    if (docs.length) await db.bulkDocs(docs);
+    if (Object.keys(legacy.settings).length) {
+      await this._writeSettings(legacy.settings);
+    }
     return { subscriptions: legacy.subscriptions.length };
   }
 }
