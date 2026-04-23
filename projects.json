@@ -154,6 +154,11 @@
     "description": "Calculate tax-inclusive (gross) and tax-exclusive (net) values with customizable tax rates and real-time conversion",
     "title": "Dynamic Tax Calculator"
   },
+  "this-is-england": {
+    "category": "Uncategorized",
+    "description": "Fifty tiny stories about what makes England\u2026 England.",
+    "title": "This is England \u2014 Stories for Curious Kids"
+  },
   "time-add": {
     "category": "Calculators",
     "description": "Add and subtract time durations with hours, minutes, and seconds",
