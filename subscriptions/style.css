@@ -780,7 +780,8 @@ body {
   font-size: 0.75rem;
 }
 
-/* End-date row: date input + small helper buttons */
+/* Start/end-date rows: date input + small helper buttons */
+.start-date-row,
 .end-date-row {
   display: flex;
   gap: 0.375rem;

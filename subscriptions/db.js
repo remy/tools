@@ -34,6 +34,7 @@ function toDoc(sub) {
     recurringDay: sub.recurringDay,
     recurringMonth: sub.recurringMonth ?? null,
     category: sub.category ?? 'personal',
+    startDate: sub.startDate ?? null,
     endDate: sub.endDate ?? null,
     createdAt: sub.createdAt ?? Date.now(),
   };
@@ -53,6 +54,7 @@ function fromDoc(doc) {
     createdAt: doc.createdAt,
   };
   if (doc.recurringMonth != null) sub.recurringMonth = doc.recurringMonth;
+  if (doc.startDate) sub.startDate = doc.startDate;
   if (doc.endDate) sub.endDate = doc.endDate;
   return sub;
 }

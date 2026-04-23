@@ -33,6 +33,7 @@ export function openSubPopover(day, editSub) {
   faviconPreview.hidden = true;
   faviconPreview.src = '';
   document.getElementById('sub-cycle-monthly').checked = true;
+  document.getElementById('sub-start-date').value = '';
   document.getElementById('sub-end-date').value = '';
 
   if (editSub) {
@@ -50,6 +51,7 @@ export function openSubPopover(day, editSub) {
     }
     const catRadio = document.querySelector(`input[name="sub-category-radio"][value="${editSub.category || 'personal'}"]`);
     if (catRadio) catRadio.checked = true;
+    document.getElementById('sub-start-date').value = editSub.startDate || '';
     document.getElementById('sub-end-date').value = editSub.endDate || '';
     document.getElementById('sub-edit-id').value = editSub.id;
     deleteBtn.hidden = false;
@@ -76,6 +78,7 @@ export async function handleSubFormSubmit(e) {
   const id = document.getElementById('sub-edit-id').value || crypto.randomUUID();
   const url = document.getElementById('sub-url').value.trim();
   const cycle = document.getElementById('sub-cycle').value;
+  const startDateRaw = document.getElementById('sub-start-date').value;
   const endDateRaw = document.getElementById('sub-end-date').value;
   const sub = {
     id,
@@ -88,6 +91,7 @@ export async function handleSubFormSubmit(e) {
     recurringDay: parseInt(document.getElementById('sub-day').value, 10),
     recurringMonth: cycle === 'yearly' ? parseInt(document.getElementById('sub-month').value, 10) : undefined,
     category: document.querySelector('input[name="sub-category-radio"]:checked').value,
+    startDate: startDateRaw || undefined,
     endDate: endDateRaw || undefined,
     createdAt: Date.now(),
   };
