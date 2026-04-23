@@ -8,6 +8,15 @@
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[c]));
 
+  const shuffle = (arr) => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
   const renderHome = () => {
     backBtn.hidden = true;
     document.title = 'This is England — Stories for Curious Kids';
@@ -108,7 +117,7 @@
   fetch('data.json', { cache: 'no-cache' })
     .then((r) => r.json())
     .then((data) => {
-      TOPICS = data.topics;
+      TOPICS = shuffle(data.topics);
       route();
     })
     .catch((err) => {
