@@ -8,7 +8,7 @@ import { openQuickAdd, handleQuickAddSubmit, handleSaveAndAddMore } from './popo
 import { openBreakdown } from './popover-breakdown.js';
 import { openDaySheet, getDaySheetDay } from './popover-day.js';
 import { openSettings, handleSettingsSave, handleSyncSave, handleSyncNow, handleSyncPull } from './popover-settings.js';
-import { handleExport, handleImport, handleImportLegacy } from './io.js';
+import { handleExport, handleImport, handleImportLegacy, handleImportLegacyFile } from './io.js';
 
 // ── Favicon preview debounce ──
 let faviconTimer = null;
@@ -189,6 +189,10 @@ export function bindEvents() {
     e.target.value = '';
   });
   document.getElementById('btn-import-legacy').addEventListener('click', handleImportLegacy);
+  document.getElementById('btn-import-legacy-file').addEventListener('change', (e) => {
+    if (e.target.files[0]) handleImportLegacyFile(e.target.files[0]);
+    e.target.value = '';
+  });
 
   // Calendar grid — delegate clicks
   const narrowMedia = window.matchMedia('(max-width: 639px)');

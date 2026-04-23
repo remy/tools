@@ -401,19 +401,34 @@ class SubscriptionDB {
     }
   }
 
-  async replaceFromLegacy() {
+  async getLegacyIdbData() {
     const legacy = await readLegacyIdb();
-    const hasData = legacy
-      && (legacy.subscriptions.length || Object.keys(legacy.settings).length);
-    if (!hasData) throw new Error('No legacy data found in IndexedDB');
+    if (!legacy) return null;
+    const hasData = legacy.subscriptions.length
+      || Object.keys(legacy.settings).length;
+    return hasData ? legacy : null;
+  }
+
+  async replaceFromLegacy(legacy) {
+    if (!legacy) {
+      legacy = await this.getLegacyIdbData();
+      if (!legacy) throw new Error('No legacy data found in IndexedDB');
+    }
+    const subscriptions = Array.isArray(legacy.subscriptions)
+      ? legacy.subscriptions : [];
+    const settings = (legacy.settings && typeof legacy.settings === 'object')
+      ? legacy.settings : {};
+    if (!subscriptions.length && !Object.keys(settings).length) {
+      throw new Error('No subscriptions or settings found in legacy data');
+    }
     const db = await this.open();
     await this.clearAll();
-    const docs = legacy.subscriptions.map((s) => toDoc(s));
+    const docs = subscriptions.map((s) => toDoc(s));
     if (docs.length) await db.bulkDocs(docs);
-    if (Object.keys(legacy.settings).length) {
-      await this._writeSettings(legacy.settings);
+    if (Object.keys(settings).length) {
+      await this._writeSettings(settings);
     }
-    return { subscriptions: legacy.subscriptions.length };
+    return { subscriptions: subscriptions.length };
   }
 }
 
