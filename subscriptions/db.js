@@ -69,49 +69,6 @@ function remoteDb(cfg) {
   return new PouchDB(cfg.url, opts);
 }
 
-// ── Legacy IndexedDB reader ──
-async function readLegacyIdb() {
-  if (!('indexedDB' in globalThis)) return null;
-  const existing = await new Promise((resolve) => {
-    if (!indexedDB.databases) return resolve(true);
-    indexedDB.databases().then(
-      (list) => resolve(list.some((d) => d.name === DB_NAME)),
-      () => resolve(true),
-    );
-  });
-  if (!existing) return null;
-
-  return new Promise((resolve) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onsuccess = () => {
-      const opened = req.result;
-      const stores = opened.objectStoreNames;
-      if (!stores.contains('subscriptions') && !stores.contains('settings')) {
-        opened.close();
-        return resolve(null);
-      }
-      const names = [];
-      if (stores.contains('subscriptions')) names.push('subscriptions');
-      if (stores.contains('settings')) names.push('settings');
-      const tx = opened.transaction(names, 'readonly');
-      const subsReq = stores.contains('subscriptions')
-        ? tx.objectStore('subscriptions').getAll() : null;
-      const setReq = stores.contains('settings')
-        ? tx.objectStore('settings').getAll() : null;
-      tx.oncomplete = () => {
-        opened.close();
-        resolve({
-          subscriptions: subsReq?.result || [],
-          settings: (setReq?.result || []).reduce((m, r) => { m[r.key] = r.value; return m; }, {}),
-        });
-      };
-      tx.onerror = () => { opened.close(); resolve(null); };
-    };
-    req.onerror = () => resolve(null);
-    req.onblocked = () => resolve(null);
-  });
-}
-
 class SubscriptionDB {
   constructor() {
     this._db = null;
@@ -269,26 +226,39 @@ class SubscriptionDB {
   async pullFromRemote() {
     const cfg = getSyncConfig();
     if (!cfg.url) throw new Error('Sync is not configured');
-    // Cancel live sync while we rewrite local state.
+    // Tear down live sync and change feeds before destroying the local DB.
     if (this._syncHandle) {
       try { this._syncHandle.cancel(); } catch {}
       this._syncHandle = null;
     }
-    const db = await this.open();
-    const remote = remoteDb(cfg);
+    for (const sub of this._changeSubscribers) {
+      if (sub.handle) {
+        try { sub.handle.cancel(); } catch {}
+        sub.handle = null;
+      }
+    }
     this._emitStatus({ state: 'syncing' });
     try {
-      // Wipe local docs so the pull replaces rather than merges.
-      const all = await db.allDocs({ include_docs: true });
-      const deletes = all.rows
-        .filter((r) => !r.id.startsWith('_design/'))
-        .map((r) => ({ _id: r.id, _rev: r.doc._rev, _deleted: true }));
-      if (deletes.length) await db.bulkDocs(deletes);
-      const result = await db.replicate.from(remote);
+      // Destroy the local DB entirely so no tombstones are left behind. A
+      // bulk-delete approach creates tombstones that (a) can out-rev the
+      // remote in conflict resolution and (b) get pushed back to the server
+      // once live sync resumes — both of which wipe real data.
+      await this.open();
+      await this._db.destroy();
+      this._db = new PouchDB(DB_NAME);
+      const remote = remoteDb(cfg);
+      const result = await this._db.replicate.from(remote);
+      for (const sub of this._changeSubscribers) {
+        if (!sub.cancelled) this._attachChange(sub);
+      }
       this._emitStatus({ state: 'idle', lastSyncedAt: Date.now() });
       this._startSync();
       return result;
     } catch (err) {
+      if (!this._db) this._db = new PouchDB(DB_NAME);
+      for (const sub of this._changeSubscribers) {
+        if (!sub.cancelled && !sub.handle) this._attachChange(sub);
+      }
       this._emitStatus({ state: 'error', lastError: err });
       this._startSync();
       throw err;
@@ -378,7 +348,7 @@ class SubscriptionDB {
   }
 
   async exportData() {
-    const subscriptions = await this.getAll();
+    const subscriptions = (await this.getAll()).map(({ id, ...rest }) => rest);
     const settings = await this.getAllSettings();
     return {
       version: 1,
@@ -394,42 +364,16 @@ class SubscriptionDB {
     }
     const db = await this.open();
     await this.clearAll();
-    const docs = data.subscriptions.map((s) => toDoc(s));
+    const docs = data.subscriptions.map((s) => toDoc({
+      ...s,
+      id: s.id ?? crypto.randomUUID(),
+    }));
     if (docs.length) await db.bulkDocs(docs);
     if (data.settings && Object.keys(data.settings).length) {
       await this._writeSettings(data.settings);
     }
   }
 
-  async getLegacyIdbData() {
-    const legacy = await readLegacyIdb();
-    if (!legacy) return null;
-    const hasData = legacy.subscriptions.length
-      || Object.keys(legacy.settings).length;
-    return hasData ? legacy : null;
-  }
-
-  async replaceFromLegacy(legacy) {
-    if (!legacy) {
-      legacy = await this.getLegacyIdbData();
-      if (!legacy) throw new Error('No legacy data found in IndexedDB');
-    }
-    const subscriptions = Array.isArray(legacy.subscriptions)
-      ? legacy.subscriptions : [];
-    const settings = (legacy.settings && typeof legacy.settings === 'object')
-      ? legacy.settings : {};
-    if (!subscriptions.length && !Object.keys(settings).length) {
-      throw new Error('No subscriptions or settings found in legacy data');
-    }
-    const db = await this.open();
-    await this.clearAll();
-    const docs = subscriptions.map((s) => toDoc(s));
-    if (docs.length) await db.bulkDocs(docs);
-    if (Object.keys(settings).length) {
-      await this._writeSettings(settings);
-    }
-    return { subscriptions: subscriptions.length };
-  }
 }
 
 export const db = new SubscriptionDB();
