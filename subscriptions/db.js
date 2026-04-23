@@ -116,6 +116,7 @@ class SubscriptionDB {
   constructor() {
     this._db = null;
     this._syncHandle = null;
+    this._pullFirstPromise = null;
     this._statusListeners = new Set();
     this._lastStatus = null;
     this._changeSubscribers = new Set();
@@ -126,6 +127,16 @@ class SubscriptionDB {
     this._db = new PouchDB(DB_NAME);
     this._startSync();
     return this._db;
+  }
+
+  async hasSubscriptions() {
+    const db = await this.open();
+    const res = await db.allDocs({
+      startkey: SUB_PREFIX,
+      endkey: SUB_PREFIX + '￰',
+      limit: 1,
+    });
+    return res.rows.length > 0;
   }
 
   _emitStatus(s) {
@@ -159,7 +170,7 @@ class SubscriptionDB {
     };
   }
 
-  _startSync() {
+  _startSync({ pullFirst = false } = {}) {
     const cfg = getSyncConfig();
     if (!cfg.url) {
       this._emitStatus({ state: 'disabled' });
@@ -173,20 +184,38 @@ class SubscriptionDB {
       return;
     }
     this._emitStatus({ state: 'syncing' });
-    const handle = this._db.sync(remote, { live: true, retry: true });
-    this._syncHandle = handle;
-    handle
-      .on('change', () => this._emitStatus({ state: 'syncing' }))
-      .on('active', () => this._emitStatus({ state: 'syncing' }))
-      .on('paused', (err) => {
-        if (err) this._emitStatus({ state: 'error', lastError: err });
-        else this._emitStatus({ state: 'idle', lastSyncedAt: Date.now() });
-      })
-      .on('denied', (err) => this._emitStatus({ state: 'error', lastError: err }))
-      .on('error', (err) => this._emitStatus({ state: 'error', lastError: err }));
+
+    const startLive = () => {
+      const handle = this._db.sync(remote, { live: true, retry: true });
+      this._syncHandle = handle;
+      handle
+        .on('change', () => this._emitStatus({ state: 'syncing' }))
+        .on('active', () => this._emitStatus({ state: 'syncing' }))
+        .on('paused', (err) => {
+          if (err) this._emitStatus({ state: 'error', lastError: err });
+          else this._emitStatus({ state: 'idle', lastSyncedAt: Date.now() });
+        })
+        .on('denied', (err) => this._emitStatus({ state: 'error', lastError: err }))
+        .on('error', (err) => this._emitStatus({ state: 'error', lastError: err }));
+    };
+
+    if (pullFirst) {
+      // One-time pull before bidirectional live sync — protects fresh clients
+      // from a race where an empty local push wipes the remote.
+      this._pullFirstPromise = this._db.replicate.from(remote)
+        .then(() => { startLive(); })
+        .catch((err) => {
+          this._emitStatus({ state: 'error', lastError: err });
+          // Still start live sync; retry: true will recover transient failures.
+          startLive();
+        })
+        .finally(() => { this._pullFirstPromise = null; });
+    } else {
+      startLive();
+    }
   }
 
-  async reopen() {
+  async reopen({ pullFirst = false } = {}) {
     if (this._syncHandle) {
       try { this._syncHandle.cancel(); } catch {}
       this._syncHandle = null;
@@ -201,11 +230,16 @@ class SubscriptionDB {
       try { await this._db.close(); } catch {}
       this._db = null;
     }
-    const db = await this.open();
+    // Bypass open()'s implicit _startSync so we can pass pullFirst through.
+    this._db = new PouchDB(DB_NAME);
+    this._startSync({ pullFirst });
     for (const sub of this._changeSubscribers) {
       if (!sub.cancelled) this._attachChange(sub);
     }
-    return db;
+    if (this._pullFirstPromise) {
+      try { await this._pullFirstPromise; } catch {}
+    }
+    return this._db;
   }
 
   onSyncStatus(cb) {
@@ -367,19 +401,34 @@ class SubscriptionDB {
     }
   }
 
-  async replaceFromLegacy() {
+  async getLegacyIdbData() {
     const legacy = await readLegacyIdb();
-    const hasData = legacy
-      && (legacy.subscriptions.length || Object.keys(legacy.settings).length);
-    if (!hasData) throw new Error('No legacy data found in IndexedDB');
+    if (!legacy) return null;
+    const hasData = legacy.subscriptions.length
+      || Object.keys(legacy.settings).length;
+    return hasData ? legacy : null;
+  }
+
+  async replaceFromLegacy(legacy) {
+    if (!legacy) {
+      legacy = await this.getLegacyIdbData();
+      if (!legacy) throw new Error('No legacy data found in IndexedDB');
+    }
+    const subscriptions = Array.isArray(legacy.subscriptions)
+      ? legacy.subscriptions : [];
+    const settings = (legacy.settings && typeof legacy.settings === 'object')
+      ? legacy.settings : {};
+    if (!subscriptions.length && !Object.keys(settings).length) {
+      throw new Error('No subscriptions or settings found in legacy data');
+    }
     const db = await this.open();
     await this.clearAll();
-    const docs = legacy.subscriptions.map((s) => toDoc(s));
+    const docs = subscriptions.map((s) => toDoc(s));
     if (docs.length) await db.bulkDocs(docs);
-    if (Object.keys(legacy.settings).length) {
-      await this._writeSettings(legacy.settings);
+    if (Object.keys(settings).length) {
+      await this._writeSettings(settings);
     }
-    return { subscriptions: legacy.subscriptions.length };
+    return { subscriptions: subscriptions.length };
   }
 }
 

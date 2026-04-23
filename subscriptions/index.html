@@ -8,6 +8,7 @@
       content="Track recurring subscription costs with a monthly calendar view, currency conversion, and export/import support.">
     <meta name="category" content="Productivity">
     <title>Subscription Tracker</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="stylesheet" href="style.css">
   </head>
 
@@ -380,6 +381,7 @@
           <button class="btn btn-ghost" id="btn-import-legacy" type="button" style="margin-top: 0.5rem">
             Import legacy data (replace)
           </button>
+          <input type="file" id="btn-import-legacy-file" accept=".json,application/json" hidden>
         </div>
         <div class="settings-section" style="margin-top: 0.5rem">
           <h3 class="settings-heading">Sync</h3>

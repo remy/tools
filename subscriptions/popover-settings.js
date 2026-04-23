@@ -57,13 +57,34 @@ export async function handleSyncSave() {
   const url = document.getElementById('sync-url').value.trim();
   const token = document.getElementById('sync-token').value.trim();
 
-  setSyncConfig({ url, token });
-
   const btn = document.getElementById('sync-save');
   btn.disabled = true;
   try {
-    await db.reopen();
+    // Decide BEFORE writing the new config so the check reflects the current
+    // local DB, not anything pulled in by a freshly-started sync.
+    const hasLocal = url ? await db.hasSubscriptions() : false;
+
+    if (url && hasLocal) {
+      const ok = confirm(
+        'Local subscriptions exist on this device. Saving will merge them with '
+        + "the server's data (last write wins per item).\n\n"
+        + "If you'd rather REPLACE local data with what's on the server, cancel "
+        + "and use \"Pull from server\" instead.\n\nContinue with merge?",
+      );
+      if (!ok) {
+        btn.disabled = false;
+        return;
+      }
+    }
+
+    setSyncConfig({ url, token });
+    // pullFirst when the local DB has nothing to lose — protects fresh
+    // clients from racing an empty push against the initial pull.
+    await db.reopen({ pullFirst: !hasLocal });
     state.subscriptions = await db.getAll();
+    const saved = await db.getAllSettings();
+    if (saved.displayCurrency) state.settings.displayCurrency = saved.displayCurrency;
+    if (saved.exchangeRate) state.settings.exchangeRate = saved.exchangeRate;
     render();
   } catch (err) {
     renderSyncStatus({ state: 'error', lastError: err });
