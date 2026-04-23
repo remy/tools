@@ -17,6 +17,13 @@ header {
     margin-bottom: 30px;
 }
 
+header a,
+footer a {
+    color: #4f46e5;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 h1 {
     font-size: 1.8rem;
     font-weight: 700;
@@ -175,4 +182,90 @@ footer {
 
 footer p {
     margin: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #0f1117;
+        color: #e8e9f0;
+    }
+
+    header a,
+    footer a {
+        color: #6c63ff;
+    }
+
+    h1 {
+        color: #e8e9f0;
+    }
+
+    .subtitle {
+        color: #8b8fa8;
+    }
+
+    h2 {
+        color: #e8e9f0;
+        border-left-color: #6c63ff;
+    }
+
+    .projects-list {
+        background: #1a1d27;
+        border: 1px solid #2e3248;
+        box-shadow: 0 1px 3px #0006;
+    }
+
+    .project-item {
+        border-bottom-color: #2e3248;
+    }
+
+    .project-item a {
+        color: #e8e9f0;
+    }
+
+    .project-item a:hover {
+        background-color: #242736;
+    }
+
+    .project-title {
+        color: #e8e9f0;
+    }
+
+    .project-item a:hover .project-title {
+        color: #6c63ff;
+    }
+
+    .project-description {
+        color: #8b8fa8;
+    }
+
+    .project-path {
+        color: #8b8fa8;
+    }
+
+    .filter-input {
+        background: #1a1d27;
+        color: #e8e9f0;
+        border-color: #6c63ff;
+        box-shadow: 0 8px 24px #0009;
+    }
+
+    .filter-hint {
+        background: #1a1d27;
+        color: #8b8fa8;
+        border: 1px solid #2e3248;
+        box-shadow: 0 4px 12px #0006;
+    }
+
+    .project-item.focused a {
+        background-color: #6c63ff33;
+        box-shadow: inset 3px 0 0 #6c63ff;
+    }
+
+    .project-item.focused .project-title {
+        color: #6c63ff;
+    }
+
+    footer {
+        color: #8b8fa8;
+    }
 }

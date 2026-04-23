@@ -4,6 +4,7 @@ import {
   getFirstDayOfWeek,
   subsForMonth,
   filteredSubs,
+  isSubActive,
   convertAmount,
   formatCurrency,
   escapeHtml,
@@ -37,8 +38,13 @@ export function renderGrid() {
   const prevYear = state.currentMonth === 0 ? state.currentYear - 1 : state.currentYear;
   const prevDays = getDaysInMonth(prevYear, prevMonth);
 
+  // Only render as many weeks as needed — drop any trailing row that would
+  // contain only next-month spill. Months need 4, 5, or 6 weeks.
+  const weeks = Math.ceil((firstDay + daysInMonth) / 7);
+  const totalCells = weeks * 7;
+  grid.style.setProperty('--weeks', weeks);
+
   let html = '';
-  const totalCells = 42;
 
   for (let i = 0; i < totalCells; i++) {
     const dayIndex = i - firstDay + 1;
@@ -75,6 +81,9 @@ export function renderGrid() {
         }
         html += `<span>${escapeHtml(sub.name)}</span></div>`;
       }
+      if (daySubs.length > 3) {
+        html += `<span class="day-sub-more" aria-hidden="true">+${daySubs.length - 3}</span>`;
+      }
       html += '</div>';
     }
 
@@ -88,13 +97,8 @@ export function renderTotal() {
   const { settings } = state;
   let total = 0;
   for (const sub of filteredSubs()) {
-    if (sub.cycle === 'yearly') {
-      if (sub.recurringMonth === state.currentMonth) {
-        total += convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate);
-      }
-    } else {
-      total += convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate);
-    }
+    if (!isSubActive(sub, state.currentYear, state.currentMonth)) continue;
+    total += convertAmount(sub.amount, sub.currency, settings.displayCurrency, settings.exchangeRate);
   }
   document.getElementById('total-amount').textContent =
     formatCurrency(total, settings.displayCurrency);

@@ -6,7 +6,8 @@ import { renderYearView, toggleYearView } from './render-year.js';
 import { openSubPopover, handleSubFormSubmit, handleSubDelete, syncToggleToSelect, updateRenewalVisibility } from './popover-sub.js';
 import { openQuickAdd, handleQuickAddSubmit, handleSaveAndAddMore } from './popover-quickadd.js';
 import { openBreakdown } from './popover-breakdown.js';
-import { openSettings, handleSettingsSave } from './popover-settings.js';
+import { openDaySheet, getDaySheetDay } from './popover-day.js';
+import { openSettings, handleSettingsSave, handleSyncSave, handleSyncNow, handleSyncPull } from './popover-settings.js';
 import { handleExport, handleImport } from './io.js';
 
 // ── Favicon preview debounce ──
@@ -149,6 +150,24 @@ export function bindEvents() {
   document.getElementById('sub-form').addEventListener('submit', handleSubFormSubmit);
   document.getElementById('sub-delete').addEventListener('click', handleSubDelete);
 
+  // Start/end-date helper buttons
+  const todayIso = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  };
+  document.getElementById('sub-start-today').addEventListener('click', () => {
+    document.getElementById('sub-start-date').value = todayIso();
+  });
+  document.getElementById('sub-start-clear').addEventListener('click', () => {
+    document.getElementById('sub-start-date').value = '';
+  });
+  document.getElementById('sub-end-today').addEventListener('click', () => {
+    document.getElementById('sub-end-date').value = todayIso();
+  });
+  document.getElementById('sub-end-clear').addEventListener('click', () => {
+    document.getElementById('sub-end-date').value = '';
+  });
+
   // Toggle group sync for sub form
   for (const radio of document.querySelectorAll('input[name="sub-cycle-radio"]')) {
     radio.addEventListener('change', () => {
@@ -169,6 +188,9 @@ export function bindEvents() {
 
   // Settings
   document.getElementById('settings-save').addEventListener('click', handleSettingsSave);
+  document.getElementById('sync-save').addEventListener('click', handleSyncSave);
+  document.getElementById('sync-now').addEventListener('click', handleSyncNow);
+  document.getElementById('sync-pull').addEventListener('click', handleSyncPull);
   document.getElementById('btn-export').addEventListener('click', handleExport);
   document.getElementById('btn-import').addEventListener('change', (e) => {
     if (e.target.files[0]) handleImport(e.target.files[0]);
@@ -176,7 +198,20 @@ export function bindEvents() {
   });
 
   // Calendar grid — delegate clicks
+  const narrowMedia = window.matchMedia('(max-width: 639px)');
   document.getElementById('calendar-grid').addEventListener('click', (e) => {
+    const cell = e.target.closest('.day-cell');
+    if (!cell || !cell.dataset.day) return;
+    const day = parseInt(cell.dataset.day, 10);
+
+    // Narrow screens: open day sheet for days with subs, add popover otherwise.
+    if (narrowMedia.matches) {
+      if (cell.classList.contains('has-subs')) openDaySheet(day);
+      else openSubPopover(day);
+      return;
+    }
+
+    // Wide screens: existing behaviour — item clicks edit, cell clicks add.
     const subItem = e.target.closest('.day-sub-item');
     if (subItem) {
       const subId = subItem.dataset.subId;
@@ -184,10 +219,34 @@ export function bindEvents() {
       if (sub) openSubPopover(null, sub);
       return;
     }
-    const cell = e.target.closest('.day-cell');
-    if (cell && cell.dataset.day) {
-      openSubPopover(parseInt(cell.dataset.day, 10));
-    }
+    openSubPopover(day);
+  });
+
+  // Day sheet — close, open edit for tapped sub, add-to-this-day
+  document.getElementById('day-sheet-close').addEventListener('click', () =>
+    document.getElementById('day-sheet-popover').hidePopover());
+
+  document.getElementById('day-sheet-list').addEventListener('click', (e) => {
+    const item = e.target.closest('.day-sheet-item');
+    if (!item) return;
+    const sub = state.subscriptions.find(s => s.id === item.dataset.subId);
+    if (!sub) return;
+    document.getElementById('day-sheet-popover').hidePopover();
+    setTimeout(() => openSubPopover(null, sub), 200);
+  });
+
+  document.getElementById('day-sheet-list').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const item = e.target.closest('.day-sheet-item');
+    if (!item) return;
+    e.preventDefault();
+    item.click();
+  });
+
+  document.getElementById('day-sheet-add').addEventListener('click', () => {
+    const day = getDaySheetDay();
+    document.getElementById('day-sheet-popover').hidePopover();
+    setTimeout(() => openSubPopover(day), 200);
   });
 
   // Breakdown — delegate edit/delete

@@ -4,7 +4,8 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A VS Code-style command palette web component with keyboard navigation, filtering, and custom event dispatching">
+    <meta name="description"
+      content="A VS Code-style command palette web component with keyboard navigation, filtering, and custom event dispatching">
     <meta name="category" content="Web Demos">
     <title>Command Palette</title>
     <style>
@@ -20,6 +21,11 @@
         --green: #16a34a;
         --radius: 10px;
         --shadow: 0 8px 32px #0000001a;
+        --syn-kw: #7c3aed;
+        --syn-attr: #1e40af;
+        --syn-val: #166534;
+        --syn-tag: #b91c1c;
+        --syn-cm: #4b5563;
       }
 
       @media (prefers-color-scheme: dark) {
@@ -34,10 +40,17 @@
           --accent-dim: #6c63ff33;
           --green: #22c55e;
           --shadow: 0 8px 32px #0009;
+          --syn-kw: #a78bfa;
+          --syn-attr: #60a5fa;
+          --syn-val: #86efac;
+          --syn-tag: #f87171;
+          --syn-cm: #9ca3af;
         }
       }
 
-      *, *::before, *::after {
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
@@ -53,7 +66,9 @@
       }
 
       @media (min-width: 640px) {
-        body { padding: 2rem 1rem 4rem; }
+        body {
+          padding: 2rem 1rem 4rem;
+        }
       }
 
       .container {
@@ -68,7 +83,9 @@
       }
 
       @media (min-width: 640px) {
-        .page-header { margin-bottom: 3rem; }
+        .page-header {
+          margin-bottom: 3rem;
+        }
       }
 
       .page-header h1 {
@@ -77,7 +94,9 @@
         letter-spacing: -0.02em;
         margin-bottom: 0.5rem;
 
-        & span { color: var(--accent); }
+        & span {
+          color: var(--accent);
+        }
       }
 
       .page-header p {
@@ -86,7 +105,9 @@
       }
 
       @media (min-width: 640px) {
-        .page-header p { font-size: 1.05rem; }
+        .page-header p {
+          font-size: 1.05rem;
+        }
       }
 
       kbd {
@@ -119,7 +140,9 @@
       }
 
       @media (min-width: 640px) {
-        .sections { gap: 2rem; }
+        .sections {
+          gap: 2rem;
+        }
       }
 
       .card {
@@ -178,7 +201,9 @@
         color: #fff;
         border-color: var(--accent);
 
-        &:hover { opacity: 0.85; }
+        &:hover {
+          opacity: 0.85;
+        }
       }
 
       .btn-outline {
@@ -220,11 +245,25 @@
           font-size: 0.82rem;
         }
 
-        & .kw  { color: #a78bfa; }
-        & .attr { color: #60a5fa; }
-        & .val  { color: #86efac; }
-        & .tag  { color: #f87171; }
-        & .cm   { color: #6b7280; }
+        & .kw {
+          color: var(--syn-kw);
+        }
+
+        & .attr {
+          color: var(--syn-attr);
+        }
+
+        & .val {
+          color: var(--syn-val);
+        }
+
+        & .tag {
+          color: var(--syn-tag);
+        }
+
+        & .cm {
+          color: var(--syn-cm);
+        }
 
         & code {
           background: none;
@@ -260,10 +299,23 @@
           gap: 0.75em;
         }
 
-        & .time { color: var(--text-dim); flex-shrink: 0; }
-        & .evt-name { color: var(--accent); }
-        & .evt-desc { color: var(--green); }
-        & .empty { color: var(--text-dim); font-style: italic; }
+        & .time {
+          color: var(--text-dim);
+          flex-shrink: 0;
+        }
+
+        & .evt-name {
+          color: var(--accent);
+        }
+
+        & .evt-desc {
+          color: var(--green);
+        }
+
+        & .empty {
+          color: var(--text-dim);
+          font-style: italic;
+        }
       }
 
       .demo-row {
@@ -281,7 +333,8 @@
       <header class="page-header">
         <div class="badge">Web Component</div>
         <h1>Command <span>Palette</span></h1>
-        <p>A keyboard-driven command palette. Press <kbd>&#8984;</kbd><kbd>K</kbd> or <kbd>Ctrl</kbd><kbd>K</kbd> to open.</p>
+        <p>A keyboard-driven command palette. Press <kbd>&#8984;</kbd><kbd>K</kbd> or <kbd>Ctrl</kbd><kbd>K</kbd> to
+          open.</p>
       </header>
 
       <div class="sections">
@@ -290,7 +343,9 @@
         <div class="card">
           <div class="card-header">
             <h2>Try It</h2>
-            <p>Press <kbd>&#8984;</kbd><kbd>K</kbd> (Mac) or <kbd>Ctrl</kbd><kbd>K</kbd> to open the palette, or use the button below. Type to filter, use arrow keys to navigate, and press <kbd>Enter</kbd> to select. Try "Pick DOM elements" for a drill-down demo.</p>
+            <p>Press <kbd>&#8984;</kbd><kbd>K</kbd> (Mac) or <kbd>Ctrl</kbd><kbd>K</kbd> to open the palette, or use the
+              button below. Type to filter, use arrow keys to navigate, and press <kbd>Enter</kbd> to select. Try "Pick
+              DOM elements" for a drill-down demo.</p>
           </div>
           <div class="demo-row">
             <button class="btn btn-primary" id="btn-open">Open Palette</button>
@@ -319,7 +374,7 @@
 
 <span class="cm">&lt;!-- 2. Add the component --&gt;</span>
 <span class="tag">&lt;command-palette&gt;&lt;/command-palette&gt;</span>
-<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"command-palette.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"command-palette.wc.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 
 <span class="cm">&lt;!-- 3. Listen for events --&gt;</span>
 <span class="tag">&lt;script&gt;</span>
@@ -334,7 +389,8 @@ palette.addEventListener(<span class="val">'save'</span>, () =&gt; {
         <div class="card">
           <div class="card-header">
             <h2>Dynamic Data &amp; Drill-down</h2>
-            <p>Use <code>keepOpen</code> to prevent closing on selection, then <code>setCommands()</code> to swap in new items. Press <kbd>Backspace</kbd> on an empty input to go back.</p>
+            <p>Use <code>keepOpen</code> to prevent closing on selection, then <code>setCommands()</code> to swap in new
+              items. Press <kbd>Backspace</kbd> on an empty input to go back.</p>
           </div>
 
           <pre class="code-hint"><code><span class="cm">// Command with keepOpen stays open on select</span>
@@ -355,7 +411,37 @@ palette.addEventListener(<span class="val">'pick-dom'</span>, () =&gt; {
 <span class="cm">// commands when closed or dismissed</span></code></pre>
         </div>
 
-        <!-- 4: API reference -->
+        <!-- 4: Dynamic base commands -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Dynamic Base Commands</h2>
+            <p>When the root list itself is backed by app state (subscriptions, notes, tabs), use
+              <code>setBaseCommands()</code>. Unlike <code>setCommands()</code>, this replaces the root list — no back
+              button, no reset on close. Pair it with <code>onBeforeOpen</code> for just-in-time refresh.
+            </p>
+          </div>
+
+          <pre class="code-hint"><code><span class="cm">// Refresh the root list whenever the palette is about to open</span>
+palette.<span class="attr">onBeforeOpen</span> = () =&gt; {
+  <span class="kw">const</span> commands = [
+    { name: <span class="val">'quick-add'</span>, description: <span class="val">'Add subscription'</span> },
+    ...state.subscriptions.map(s =&gt; ({
+      name: <span class="val">'edit-sub'</span>,
+      description: <span class="val">`Edit: ${s.name}`</span>,
+      _subId: s.id  <span class="cm">// any extra metadata is preserved in e.detail.command</span>
+    }))
+  ];
+  palette.<span class="attr">setBaseCommands</span>(commands);
+};
+
+<span class="cm">// One listener handles every matching command</span>
+palette.addEventListener(<span class="val">'edit-sub'</span>, (e) =&gt; {
+  <span class="kw">const</span> sub = state.subscriptions.find(s =&gt; s.id === e.detail.command._subId);
+  openEditor(sub);
+});</code></pre>
+        </div>
+
+        <!-- 5: API reference -->
         <div class="card">
           <div class="card-header">
             <h2>API</h2>
@@ -366,7 +452,13 @@ palette.addEventListener(<span class="val">'pick-dom'</span>, () =&gt; {
 palette.<span class="attr">open</span>();
 palette.<span class="attr">close</span>();
 
-<span class="cm">// Replace commands dynamically (resets on close)</span>
+<span class="cm">// Replace the root command list (for dynamic data)</span>
+palette.<span class="attr">setBaseCommands</span>(commands);
+
+<span class="cm">// Called just before open() shows the panel</span>
+palette.<span class="attr">onBeforeOpen</span> = () =&gt; { <span class="cm">/* refresh commands */</span> };
+
+<span class="cm">// Drill-down (adds back button, resets on close)</span>
 palette.<span class="attr">setCommands</span>(commands, {
   placeholder: <span class="val">'Pick something...'</span>,  <span class="cm">// optional</span>
   label: <span class="val">'Elements'</span>               <span class="cm">// optional aria-label</span>
@@ -405,7 +497,7 @@ palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
     </script>
 
     <command-palette></command-palette>
-    <script src="./command-palette.js"></script>
+    <script src="./command-palette.wc.js"></script>
 
     <script>
       const palette = document.querySelector('command-palette');

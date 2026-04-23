@@ -1,43 +1,52 @@
 // vanilla JS only
 
+// Average step length for a person 5'5" tall: 1.651 m × 0.413 ≈ 0.682 m
+const STEP_LENGTH_M = 0.682;
+
 // Conversion factors to meters (base unit)
 const TO_METERS = {
-  m:   1,
-  km:  1000,
-  mi:  1609.344,
-  yd:  0.9144,
-  ft:  0.3048,
-  in:  0.0254,
-  cm:  0.01,
-  mm:  0.001,
-  nmi: 1852,
-  ly:  9.461e15,
+  m:     1,
+  km:    1000,
+  mi:    1609.344,
+  yd:    0.9144,
+  ft:    0.3048,
+  in:    0.0254,
+  cm:    0.01,
+  mm:    0.001,
+  nmi:       1852,
+  steps:     STEP_LENGTH_M,
+  marathons: 42195,
+  ly:        9.461e15,
 };
 
 const UNIT_LABELS = {
-  m:   'Meters',
-  km:  'Kilometers',
-  mi:  'Miles',
-  yd:  'Yards',
-  ft:  'Feet',
-  in:  'Inches',
-  cm:  'Centimeters',
-  mm:  'Millimeters',
-  nmi: 'Nautical Miles',
-  ly:  'Light Years',
+  m:         'Meters',
+  km:        'Kilometers',
+  mi:        'Miles',
+  yd:        'Yards',
+  ft:        'Feet',
+  in:        'Inches',
+  cm:        'Centimeters',
+  mm:        'Millimeters',
+  nmi:       'Nautical Miles',
+  steps:     'Steps',
+  marathons: 'Marathons',
+  ly:        'Light Years',
 };
 
 const UNIT_SHORT = {
-  m:   'm',
-  km:  'km',
-  mi:  'mi',
-  yd:  'yd',
-  ft:  'ft',
-  in:  'in',
-  cm:  'cm',
-  mm:  'mm',
-  nmi: 'nmi',
-  ly:  'ly',
+  m:         'm',
+  km:        'km',
+  mi:        'mi',
+  yd:        'yd',
+  ft:        'ft',
+  in:        'in',
+  cm:        'cm',
+  mm:        'mm',
+  nmi:       'nmi',
+  steps:     'steps',
+  marathons: 'marathons',
+  ly:        'ly',
 };
 
 /** Convert a value from one unit to another via meters */
@@ -209,11 +218,16 @@ function update() {
 
     const valueEl = document.createElement('div');
     valueEl.className = 'result-value';
-    valueEl.textContent = formatNumber(converted);
+    // Steps should always be whole numbers
+    const displayValue = unit === 'steps' ? Math.round(converted) : converted;
+    valueEl.textContent = formatNumber(displayValue);
 
     const unitEl = document.createElement('div');
     unitEl.className = 'result-unit';
-    unitEl.textContent = `${UNIT_LABELS[unit]} (${UNIT_SHORT[unit]})`;
+    // Avoid redundancy when the label and short form are the same (e.g. Steps)
+    unitEl.textContent = UNIT_LABELS[unit].toLowerCase() === UNIT_SHORT[unit].toLowerCase()
+      ? UNIT_LABELS[unit]
+      : `${UNIT_LABELS[unit]} (${UNIT_SHORT[unit]})`;
 
     card.append(valueEl, unitEl);
     resultsGrid.appendChild(card);

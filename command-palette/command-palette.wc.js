@@ -25,7 +25,7 @@ class CommandPalette extends HTMLElement {
 
   _buildDOM() {
     const style = document.createElement('style');
-    style.textContent = `
+    style.textContent = /* CSS */`
       command-palette [popover] {
         position: fixed;
         inset: 0;
@@ -115,8 +115,6 @@ class CommandPalette extends HTMLElement {
       }
 
       command-palette .palette-item {
-        display: flex;
-        align-items: center;
         padding: 0.6rem 0.75rem;
         border-radius: 8px;
         cursor: pointer;
@@ -136,7 +134,7 @@ class CommandPalette extends HTMLElement {
       }
 
       command-palette .palette-item[aria-selected="true"] mark {
-        background: transparent;
+        background: var(--accent, #4f46e5);
         color: inherit;
         text-decoration: underline;
         text-underline-offset: 2px;
@@ -153,7 +151,8 @@ class CommandPalette extends HTMLElement {
         background: var(--accent-dim, rgba(79, 70, 229, 0.1));
         color: var(--accent, #4f46e5);
         border-radius: 2px;
-        padding: 0 1px;
+        padding: 0;
+        transition: background 0.08s;
       }
 
       command-palette .sr-only {
@@ -233,8 +232,27 @@ class CommandPalette extends HTMLElement {
     this._liveRegion.textContent = `${commands.length} items`;
   }
 
+  // Replace the root command list (not a drill-down). Use this when your
+  // commands change over time — e.g. a list backed by application state.
+  // If the palette is open and at the root, it re-filters in place.
+  setBaseCommands(commands) {
+    this._baseCommands = Array.isArray(commands) ? [...commands] : [];
+    if (this._isDrillDown) return;
+    this._commands = [...this._baseCommands];
+    if (!this._input) return;
+    const query = this._input.value.trim().toLowerCase();
+    this._filtered = query
+      ? this._commands.filter((cmd) => cmd.description.toLowerCase().includes(query))
+      : [...this._commands];
+    if (this._selectedIndex >= this._filtered.length) this._selectedIndex = 0;
+    this._render();
+  }
+
   open() {
     if (this._panel.matches(':popover-open')) return;
+    if (typeof this.onBeforeOpen === 'function') {
+      try { this.onBeforeOpen(); } catch (e) { console.error('command-palette: onBeforeOpen threw', e); }
+    }
     this._input.value = '';
     this._filtered = [...this._commands];
     this._selectedIndex = 0;
