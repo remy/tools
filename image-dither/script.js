@@ -7,51 +7,51 @@
 // targeting for mid-tones, skin, skies etc. Index mapping is preserved so the
 // packed .data output is identical regardless of which palette was used.
 const PALETTE_SATURATED = [
-  [0,   0,   0  ],
+  [0, 0, 0],
   [255, 255, 255],
-  [255, 0,   0  ],
-  [0,   255, 0  ],
-  [0,   0,   255],
-  [255, 255, 0  ],
+  [255, 0, 0],
+  [0, 255, 0],
+  [0, 0, 255],
+  [255, 255, 0],
 ];
 const PALETTE_MEASURED = [
-  [46,  44,  66 ],   // black   #2e2c42
+  [46, 44, 66],   // black   #2e2c42
   [211, 214, 205],   // white   #d3d6cd
-  [177, 29,  25 ],   // red     #b11d19
-  [92,  138, 91 ],   // green   #5c8a5b
-  [49,  106, 193],   // blue    #316ac1
-  [217, 199, 1  ],   // yellow  #d9c701
+  [177, 29, 25],   // red     #b11d19
+  [92, 138, 91],   // green   #5c8a5b
+  [49, 106, 193],   // blue    #316ac1
+  [217, 199, 1],   // yellow  #d9c701
 ];
 function paletteByName(name) {
   return name === 'measured' ? PALETTE_MEASURED : PALETTE_SATURATED;
 }
 
 // DOM
-const presetSelect     = document.getElementById('presetSelect');
-const widthInput       = document.getElementById('widthInput');
-const heightInput      = document.getElementById('heightInput');
-const fitSelect        = document.getElementById('fitSelect');
-const bgSelect         = document.getElementById('bgSelect');
-const ditherSelect     = document.getElementById('ditherSelect');
-const spaceSelect      = document.getElementById('spaceSelect');
-const paletteSelect    = document.getElementById('paletteSelect');
-const strengthInput    = document.getElementById('strengthInput');
-const strengthValue    = document.getElementById('strengthValue');
-const brightnessInput  = document.getElementById('brightnessInput');
-const contrastInput    = document.getElementById('contrastInput');
-const saturationInput  = document.getElementById('saturationInput');
-const brightnessValue  = document.getElementById('brightnessValue');
-const contrastValue    = document.getElementById('contrastValue');
-const saturationValue  = document.getElementById('saturationValue');
-const adjustResetBtn   = document.getElementById('adjustResetBtn');
-const uploadZone       = document.getElementById('uploadZone');
-const fileInput        = document.getElementById('fileInput');
-const results          = document.getElementById('results');
-const resultCount      = document.getElementById('resultCount');
-const fileList         = document.getElementById('fileList');
-const clearBtn         = document.getElementById('clearBtn');
-const downloadAllBtn   = document.getElementById('downloadAllBtn');
-const resultTemplate   = document.getElementById('resultTemplate');
+const presetSelect = document.getElementById('presetSelect');
+const widthInput = document.getElementById('widthInput');
+const heightInput = document.getElementById('heightInput');
+const fitSelect = document.getElementById('fitSelect');
+const bgSelect = document.getElementById('bgSelect');
+const ditherSelect = document.getElementById('ditherSelect');
+const spaceSelect = document.getElementById('spaceSelect');
+const paletteSelect = document.getElementById('paletteSelect');
+const strengthInput = document.getElementById('strengthInput');
+const strengthValue = document.getElementById('strengthValue');
+const brightnessInput = document.getElementById('brightnessInput');
+const contrastInput = document.getElementById('contrastInput');
+const saturationInput = document.getElementById('saturationInput');
+const brightnessValue = document.getElementById('brightnessValue');
+const contrastValue = document.getElementById('contrastValue');
+const saturationValue = document.getElementById('saturationValue');
+const adjustResetBtn = document.getElementById('adjustResetBtn');
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const results = document.getElementById('results');
+const resultCount = document.getElementById('resultCount');
+const fileList = document.getElementById('fileList');
+const clearBtn = document.getElementById('clearBtn');
+const downloadAllBtn = document.getElementById('downloadAllBtn');
+const resultTemplate = document.getElementById('resultTemplate');
 
 // State
 const items = []; // { id, file, card, url, blob, width, height }
@@ -84,7 +84,7 @@ strengthInput.addEventListener('change', reprocessAll);
 // Adjustment sliders: update readout live, reprocess on release.
 [
   [brightnessInput, brightnessValue],
-  [contrastInput,   contrastValue],
+  [contrastInput, contrastValue],
   [saturationInput, saturationValue],
 ].forEach(([input, valueEl]) => {
   input.addEventListener('input', () => { valueEl.textContent = input.value; });
@@ -95,7 +95,7 @@ adjustResetBtn.addEventListener('click', () => {
   let changed = false;
   for (const [input, valueEl] of [
     [brightnessInput, brightnessValue],
-    [contrastInput,   contrastValue],
+    [contrastInput, contrastValue],
     [saturationInput, saturationValue],
   ]) {
     if (input.value !== '0') { input.value = '0'; valueEl.textContent = '0'; changed = true; }
@@ -337,7 +337,7 @@ async function processItem(item) {
   setPreviewMode(item.id, item.mode || 'dithered');
 
   // Pack 3-bit data.
-  const packed = pack3Bit(indices);
+  const packed = pack4Bit(indices);
   const blob = new Blob([packed], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
 
@@ -382,7 +382,7 @@ async function processDataItem(item, targetW, targetH) {
   // for a packed file, but keeping both in sync makes the toggle a no-op
   // instead of showing a blank canvas.
   const ditheredCanvas = item.card.querySelector('[data-canvas-dithered]');
-  const sourceCanvas   = item.card.querySelector('[data-canvas-source]');
+  const sourceCanvas = item.card.querySelector('[data-canvas-source]');
   for (const c of [ditheredCanvas, sourceCanvas]) {
     c.width = targetW;
     c.height = targetH;
@@ -454,7 +454,7 @@ function computeFit(srcW, srcH, dstW, dstH, fit) {
 //   saturation: -100 greyscale,           +100 doubles saturation
 function applyAdjustments(imageData) {
   const b = Number(brightnessInput.value) || 0;   // -100..100
-  const c = Number(contrastInput.value)   || 0;   // -100..100
+  const c = Number(contrastInput.value) || 0;   // -100..100
   const s = Number(saturationInput.value) || 0;   // -100..100
   if (b === 0 && c === 0 && s === 0) return;
 
@@ -464,29 +464,29 @@ function applyAdjustments(imageData) {
   const data = imageData.data;
 
   for (let i = 0; i < data.length; i += 4) {
-    let r = data[i], g = data[i+1], bl = data[i+2];
+    let r = data[i], g = data[i + 1], bl = data[i + 2];
 
     // Brightness — simple additive.
-    r  += brightnessAdd;
-    g  += brightnessAdd;
+    r += brightnessAdd;
+    g += brightnessAdd;
     bl += brightnessAdd;
 
     // Contrast — scale around 128.
     if (contrastFactor !== 1) {
-      r  = (r  - 128) * contrastFactor + 128;
-      g  = (g  - 128) * contrastFactor + 128;
+      r = (r - 128) * contrastFactor + 128;
+      g = (g - 128) * contrastFactor + 128;
       bl = (bl - 128) * contrastFactor + 128;
     }
 
     // Saturation — push channels away from (or toward) rec-709 luma.
     if (saturationFactor !== 1) {
       const luma = 0.2126 * r + 0.7152 * g + 0.0722 * bl;
-      r  = luma + (r  - luma) * saturationFactor;
-      g  = luma + (g  - luma) * saturationFactor;
+      r = luma + (r - luma) * saturationFactor;
+      g = luma + (g - luma) * saturationFactor;
       bl = luma + (bl - luma) * saturationFactor;
     }
 
-    data[i]     = clamp255(r);
+    data[i] = clamp255(r);
     data[i + 1] = clamp255(g);
     data[i + 2] = clamp255(bl);
   }
@@ -511,12 +511,12 @@ function srgbByteToLin(v) {
 
 // Linear RGB 0..1 → OKLAB. Matrix constants from Björn Ottosson's reference.
 function lrgbToOklab(r, g, b, out) {
-  const l = Math.cbrt(0.4122214708*r + 0.5363325363*g + 0.0514459929*b);
-  const m = Math.cbrt(0.2119034982*r + 0.6806995451*g + 0.1073969566*b);
-  const s = Math.cbrt(0.0883024619*r + 0.2817188376*g + 0.6299787005*b);
-  out[0] = 0.2104542553*l + 0.7936177850*m - 0.0040720468*s;
-  out[1] = 1.9779984951*l - 2.4285922050*m + 0.4505937099*s;
-  out[2] = 0.0259040371*l + 0.7827717662*m - 0.8086757660*s;
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  out[0] = 0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s;
+  out[1] = 1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s;
+  out[2] = 0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s;
 }
 
 // ── Dithering ────────────────────────────────────────────────────────────────
@@ -536,9 +536,9 @@ function ditherToPalette(imageData, opts) {
   // Precompute palette in the chosen working space.
   //   srgb:  keep 0..255 ints for distance & error
   //   oklab: store linear RGB (for error subtraction) + OKLAB (for distance)
-  const palLin = palette.map(([r,g,b]) => [srgbByteToLin(r), srgbByteToLin(g), srgbByteToLin(b)]);
-  const palOk  = useOklab
-    ? palLin.map(([r,g,b]) => { const o = new Float32Array(3); lrgbToOklab(r,g,b,o); return o; })
+  const palLin = palette.map(([r, g, b]) => [srgbByteToLin(r), srgbByteToLin(g), srgbByteToLin(b)]);
+  const palOk = useOklab
+    ? palLin.map(([r, g, b]) => { const o = new Float32Array(3); lrgbToOklab(r, g, b, o); return o; })
     : null;
 
   // Working buffer: floats in whichever space we diffuse error in.
@@ -546,33 +546,33 @@ function ditherToPalette(imageData, opts) {
   if (useOklab) {
     for (let p = 0; p < pixels; p++) {
       const i = p * 4;
-      buf[p*3  ] = srgbByteToLin(data[i]);
-      buf[p*3+1] = srgbByteToLin(data[i+1]);
-      buf[p*3+2] = srgbByteToLin(data[i+2]);
+      buf[p * 3] = srgbByteToLin(data[i]);
+      buf[p * 3 + 1] = srgbByteToLin(data[i + 1]);
+      buf[p * 3 + 2] = srgbByteToLin(data[i + 2]);
     }
   } else {
     for (let p = 0; p < pixels; p++) {
       const i = p * 4;
-      buf[p*3  ] = data[i];
-      buf[p*3+1] = data[i+1];
-      buf[p*3+2] = data[i+2];
+      buf[p * 3] = data[i];
+      buf[p * 3 + 1] = data[i + 1];
+      buf[p * 3 + 2] = data[i + 2];
     }
   }
 
   const weightSets = {
     floyd: [
-      { dx:  1, dy: 0, w: 7/16 },
-      { dx: -1, dy: 1, w: 3/16 },
-      { dx:  0, dy: 1, w: 5/16 },
-      { dx:  1, dy: 1, w: 1/16 },
+      { dx: 1, dy: 0, w: 7 / 16 },
+      { dx: -1, dy: 1, w: 3 / 16 },
+      { dx: 0, dy: 1, w: 5 / 16 },
+      { dx: 1, dy: 1, w: 1 / 16 },
     ],
     atkinson: [
-      { dx:  1, dy: 0, w: 1/8 },
-      { dx:  2, dy: 0, w: 1/8 },
-      { dx: -1, dy: 1, w: 1/8 },
-      { dx:  0, dy: 1, w: 1/8 },
-      { dx:  1, dy: 1, w: 1/8 },
-      { dx:  0, dy: 2, w: 1/8 },
+      { dx: 1, dy: 0, w: 1 / 8 },
+      { dx: 2, dy: 0, w: 1 / 8 },
+      { dx: -1, dy: 1, w: 1 / 8 },
+      { dx: 0, dy: 1, w: 1 / 8 },
+      { dx: 1, dy: 1, w: 1 / 8 },
+      { dx: 0, dy: 2, w: 1 / 8 },
     ],
   };
   const weights = weightSets[algorithm] || null;
@@ -583,7 +583,7 @@ function ditherToPalette(imageData, opts) {
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const p = y * w + x;
-      const r = buf[p*3], g = buf[p*3+1], b = buf[p*3+2];
+      const r = buf[p * 3], g = buf[p * 3 + 1], b = buf[p * 3 + 2];
 
       let idx;
       if (useOklab) {
@@ -618,7 +618,7 @@ function ditherToPalette(imageData, opts) {
 function diffuse(buf, w, h, x, y, er, eg, eb, weight) {
   if (x < 0 || x >= w || y < 0 || y >= h) return;
   const p = (y * w + x) * 3;
-  buf[p    ] += er * weight;
+  buf[p] += er * weight;
   buf[p + 1] += eg * weight;
   buf[p + 2] += eb * weight;
 }
@@ -628,7 +628,7 @@ function nearestSrgb(r, g, b, palette) {
   for (let i = 0; i < palette.length; i++) {
     const [pr, pg, pb] = palette[i];
     const dr = r - pr, dg = g - pg, db = b - pb;
-    const d = dr*dr + dg*dg + db*db;
+    const d = dr * dr + dg * dg + db * db;
     if (d < bestDist) { bestDist = d; best = i; }
   }
   return best;
@@ -639,7 +639,7 @@ function nearestOklab(pix, palOk) {
   for (let i = 0; i < palOk.length; i++) {
     const pL = palOk[i][0], pA = palOk[i][1], pB = palOk[i][2];
     const dL = pL - pix[0], dA = pA - pix[1], dB = pB - pix[2];
-    const d = dL*dL + dA*dA + dB*dB;
+    const d = dL * dL + dA * dA + dB * dB;
     if (d < bestDist) { bestDist = d; best = i; }
   }
   return best;
@@ -651,11 +651,32 @@ function writeIndicesToImageData(indices, imageData, palette) {
   for (let p = 0; p < indices.length; p++) {
     const [r, g, b] = pal[indices[p]];
     const i = p * 4;
-    data[i    ] = r;
+    data[i] = r;
     data[i + 1] = g;
     data[i + 2] = b;
     data[i + 3] = 255;
   }
+}
+
+const SPECTRA6_NIBBLE = [
+  0xF, // black
+  0x0, // white
+  0x6, // red
+  0x2, // green
+  0xD, // blue
+  0xB, // yellow
+];
+
+function pack4Bit(indices) {
+  const out = new Uint8Array(Math.ceil(indices.length / 2));
+
+  for (let i = 0, j = 0; i < indices.length; i += 2, j++) {
+    const a = SPECTRA6_NIBBLE[indices[i]] & 0x0f;
+    const b = SPECTRA6_NIBBLE[indices[i + 1] ?? 1] & 0x0f; // pad white
+    out[j] = (a << 4) | b;
+  }
+
+  return out;
 }
 
 // ── 3-bit packing ────────────────────────────────────────────────────────────
@@ -663,7 +684,7 @@ function writeIndicesToImageData(indices, imageData, palette) {
 // stream, then splits into bytes (MSB-first). Any trailing partial byte is
 // zero-padded on the right.
 function pack3Bit(indices) {
-  const totalBits  = indices.length * 3;
+  const totalBits = indices.length * 3;
   const totalBytes = Math.ceil(totalBits / 8);
   const out = new Uint8Array(totalBytes);
   let buf = 0;        // up to 10 bits live
