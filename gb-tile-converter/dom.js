@@ -51,6 +51,9 @@ export function initDOM() {
   el.fontModeToggle = document.getElementById('fontModeToggle');
   el.glyphInfo = document.getElementById('glyphInfo');
   el.charMapWrap = document.getElementById('charMapWrap');
+  el.sourcePalette = document.getElementById('sourcePalette');
+  el.sourcePaletteRows = document.getElementById('sourcePaletteRows');
+  el.sourcePaletteReset = document.getElementById('sourcePaletteReset');
 
   ovCtx = el.overviewCanvas.getContext('2d', { willReadFrequently: true });
   gridCtx = el.tileGridCanvas.getContext('2d');
