@@ -71,8 +71,7 @@ body {
   color: #666;
 }
 
-.form-group input,
-.form-group textarea {
+.form-group input {
   width: 100%;
   padding: 10px;
   border: 1px solid #ddd;
@@ -81,7 +80,7 @@ body {
   transition: border-color 0.2s;
 }
 
-.form-group input:focus,
+.form-group input:focus {
   outline: none;
   border-color: #1976d2;
   box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
@@ -99,6 +98,7 @@ body {
   cursor: pointer;
   transition: background-color 0.2s;
   margin-top: 10px;
+  margin-bottom: 4px;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -182,6 +182,7 @@ body {
   flex-direction: column;
   background-color: #fafafa;
   min-width: 0;
+  overflow: hidden;
 }
 
 .toolbar {
@@ -193,6 +194,7 @@ body {
   border-bottom: 1px solid #e0e0e0;
   gap: 12px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .toolbar-left,
@@ -372,42 +374,6 @@ body {
   text-align: center;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  padding: 12px 20px;
-  background-color: #fff;
-  border-top: 1px solid #e0e0e0;
-}
-
-.btn-pagination {
-  padding: 7px 14px;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 13px;
-}
-
-.btn-pagination:hover:not(:disabled) {
-  background-color: #eeeeee;
-}
-
-.btn-pagination:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-number {
-  font-size: 13px;
-  color: #666;
-  min-width: 120px;
-  text-align: center;
-}
-
 .loading-placeholder {
   width: 120px;
   height: 120px;
@@ -421,15 +387,66 @@ body {
   100% { background-position: -200% 0; }
 }
 
+/* ── Response JSON viewer ── */
+
+#responseDetails {
+  flex-shrink: 0;
+  border-top: 2px solid #2d2d2d;
+  background: #1e1e1e;
+}
+
+#responseDetails summary {
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  background: #2d2d2d;
+  color: #9ca3af;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#responseDetails summary::-webkit-details-marker { display: none; }
+
+#responseDetails summary::before {
+  content: '▶';
+  font-size: 9px;
+  display: inline-block;
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+#responseDetails[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.response-body {
+  max-height: 40vh;
+  overflow: auto;
+}
+
+#responseJson {
+  color: #d4d4d4;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px 15px;
+  margin: 0;
+  white-space: pre;
+}
+
 /* ── Query filter / field list ── */
 
 .query-filter {
   position: sticky;
-  top: -20px; /* counteract sidebar padding */
+  top: -20px;
   z-index: 10;
   background: #fff;
   padding: 12px 0 10px;
-  margin-top: 12px;
+  margin-top: 8px;
   border-top: 1px solid #e0e0e0;
   border-bottom: 1px solid #e0e0e0;
   margin-bottom: 2px;

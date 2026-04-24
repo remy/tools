@@ -52,8 +52,6 @@
             <strong>Keyboard Shortcuts:</strong>
             <div class="shortcut">A - Select all</div>
             <div class="shortcut">Esc - Deselect all</div>
-            <div class="shortcut">N - Next page</div>
-            <div class="shortcut">Shift+N - Previous page</div>
             <div class="shortcut">Shift+Click - Open in Immich</div>
           </div>
           <button id="toggleSidebarBtn" class="btn-secondary" style="width: 100%; margin-top: 1rem;">Hide
@@ -95,11 +93,12 @@
 
         <div id="gallery" tabindex="-1" class="gallery"></div>
 
-        <div class="pagination">
-          <button id="prevPageBtn" class="btn-pagination" disabled>Previous</button>
-          <span id="pageNumber" class="page-number"></span>
-          <button id="nextPageBtn" class="btn-pagination" disabled>Next</button>
-        </div>
+        <details id="responseDetails">
+          <summary>Response JSON <span id="responseInfo"></span></summary>
+          <div class="response-body">
+            <pre id="responseJson">Run a search to see the raw API response here.</pre>
+          </div>
+        </details>
       </div>
     </div>
 

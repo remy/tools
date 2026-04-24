@@ -1,8 +1,11 @@
 const $ = (s, ctx = document) => ctx.querySelector(s);
 
 const DOWNLOAD_BATCH_SIZE = 100;
+const DEFAULT_PAGE_SIZE = 250;
 
 const SEARCH_FIELDS = [
+  { key: 'size', label: 'Size (per page)', type: 'number', min: 1, max: 1000, description: `Results per request (default: ${DEFAULT_PAGE_SIZE}). Auto-paginates unless Page is set.` },
+  { key: 'page', label: 'Page', type: 'number', min: 1, description: 'Page number. If set, only that page is fetched (no auto-pagination).' },
   { key: 'type', label: 'Type', type: 'enum', options: ['IMAGE', 'VIDEO', 'AUDIO', 'OTHER'], description: 'Asset type filter' },
   { key: 'isFavorite', label: 'Is Favorite', type: 'boolean', description: 'Filter by favorite status' },
   { key: 'isMotion', label: 'Is Motion', type: 'boolean', description: 'Filter by motion photo status' },
@@ -55,8 +58,7 @@ class ImmichMetadataSearch {
     this.proxy = '';
     this.allAssets = [];
     this.selectedAssets = new Set();
-    this.currentPage = 0;
-    this.pageSize = 250;
+    this.lastResponses = [];
     this.isLoading = false;
     this.isDownloading = false;
 
@@ -83,12 +85,12 @@ class ImmichMetadataSearch {
     this.status = $('#status');
     this.gallery = $('#gallery');
     this.pageInfo = $('#pageInfo');
-    this.pageNumber = $('#pageNumber');
-    this.prevPageBtn = $('#prevPageBtn');
-    this.nextPageBtn = $('#nextPageBtn');
     this.sidebar = document.querySelector('.sidebar');
     this.toggleSidebarBtn = $('#toggleSidebarBtn');
     this.showConfigBtn = $('#showConfigBtn');
+    this.responseDetails = $('#responseDetails');
+    this.responseJson = $('#responseJson');
+    this.responseInfo = $('#responseInfo');
   }
 
   // ── Field form ──────────────────────────────────────────────
@@ -298,7 +300,6 @@ class ImmichMetadataSearch {
       const labelEl = row.querySelector('.field-label');
       const label = labelEl ? labelEl.textContent.toLowerCase() : '';
       const matches = key.includes(q) || label.includes(q);
-      // Always show rows that have a value set so active filters stay visible
       row.hidden = !matches && !row.classList.contains('has-value');
     }
   }
@@ -326,8 +327,6 @@ class ImmichMetadataSearch {
     });
     this.selectAllBtn.addEventListener('click', () => this.selectAll());
     this.deselectAllBtn.addEventListener('click', () => this.deselectAll());
-    this.prevPageBtn.addEventListener('click', () => this.previousPage());
-    this.nextPageBtn.addEventListener('click', () => this.nextPage());
 
     this.fieldFilterInput.addEventListener('input', () =>
       this.filterFields(this.fieldFilterInput.value)
@@ -388,16 +387,6 @@ class ImmichMetadataSearch {
   handleKeyShortcuts(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
-    if (e.code === 'KeyN') {
-      if (e.shiftKey) {
-        e.preventDefault();
-        this.previousPage();
-      } else if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.preventDefault();
-        this.nextPage();
-      }
-    }
-
     if (e.code === 'KeyA' && !e.ctrlKey && !e.metaKey && !e.altKey) {
       e.preventDefault();
       this.selectAll();
@@ -455,14 +444,16 @@ class ImmichMetadataSearch {
     this.searchBtn.disabled = true;
     this.allAssets = [];
     this.selectedAssets.clear();
+    this.lastResponses = [];
     this.renderGallery();
+    this.updateResponseViewer();
     this.setStatus('Searching…', 'loading');
 
     try {
       const queryBody = this.buildQueryBody();
       this.allAssets = await this.fetchAllAssets(queryBody);
-      this.currentPage = 0;
       this.renderGallery();
+      this.updateResponseViewer();
       this.setStatus(
         this.allAssets.length
           ? `Found ${this.allAssets.length} asset${this.allAssets.length !== 1 ? 's' : ''}`
@@ -472,6 +463,7 @@ class ImmichMetadataSearch {
     } catch (error) {
       console.error('Search error:', error);
       this.setStatus(`Error: ${error.message}`, 'error');
+      this.updateResponseViewer();
     } finally {
       this.isLoading = false;
       this.searchBtn.disabled = false;
@@ -481,47 +473,66 @@ class ImmichMetadataSearch {
 
   async fetchAllAssets(queryBody) {
     const allAssets = [];
-    let page = 1;
-    const size = 250;
+    const { page: userPage, size: userSize, ...baseQuery } = queryBody;
+    const singlePageMode = userPage !== undefined;
+    const size = userSize ?? DEFAULT_PAGE_SIZE;
+    let page = userPage ?? 1;
 
     while (true) {
       const { url, headers } = this.getApiConfig('/api/search/metadata');
       const response = await fetch(url, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ ...queryBody, page, size }),
+        body: JSON.stringify({ ...baseQuery, page, size }),
       });
 
       if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        this.lastResponses.push({ error: true, status: response.status, statusText: response.statusText, body: text });
         throw new Error(`API error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
+      this.lastResponses.push(data);
+
       const items = data?.assets?.items ?? [];
       if (!items.length) break;
 
       allAssets.push(...items);
       this.setStatus(`Loading… ${allAssets.length} assets found`, 'loading');
 
-      if (!data.assets.nextPage) break;
+      if (singlePageMode || !data.assets.nextPage) break;
       page = parseInt(data.assets.nextPage, 10);
     }
 
     return allAssets;
   }
 
+  updateResponseViewer() {
+    if (!this.lastResponses.length) {
+      this.responseJson.textContent = 'Run a search to see the raw API response here.';
+      this.responseInfo.textContent = '';
+      return;
+    }
+    const payload = this.lastResponses.length === 1 ? this.lastResponses[0] : this.lastResponses;
+    this.responseJson.textContent = JSON.stringify(payload, null, 2);
+    const pages = this.lastResponses.length;
+    const bytes = this.responseJson.textContent.length;
+    this.responseInfo.textContent = `— ${pages} page${pages !== 1 ? 's' : ''}, ${this.formatBytes(bytes)}`;
+  }
+
+  formatBytes(n) {
+    if (n < 1024) return `${n} B`;
+    if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+    return `${(n / 1024 / 1024).toFixed(2)} MB`;
+  }
+
   // ── Gallery ──────────────────────────────────────────────────
 
-  renderGallery(scroll = false) {
-    const startIdx = this.currentPage * this.pageSize;
-    const endIdx = Math.min(startIdx + this.pageSize, this.allAssets.length);
-    const pageAssets = this.allAssets.slice(startIdx, endIdx);
-
-    if (scroll) this.gallery.scrollTop = 0;
-
+  renderGallery() {
     this.gallery.innerHTML = '';
 
-    if (!pageAssets.length) {
+    if (!this.allAssets.length) {
       const empty = document.createElement('div');
       empty.className = 'gallery-empty';
       empty.innerHTML = `
@@ -530,37 +541,40 @@ class ImmichMetadataSearch {
         </svg>
         <p>Run a search to see results here</p>`;
       this.gallery.appendChild(empty);
-    } else {
-      pageAssets.forEach((asset) => {
-        const item = document.createElement('div');
-        item.className = 'gallery-item';
-        item.dataset.assetId = asset.id;
-        if (this.selectedAssets.has(asset.id)) item.classList.add('selected');
-
-        const placeholder = document.createElement('div');
-        placeholder.className = 'loading-placeholder';
-        item.appendChild(placeholder);
-
-        const img = document.createElement('img');
-        img.alt = asset.originalFileName || asset.id;
-        img.loading = 'lazy';
-        img.onload = () => placeholder.remove();
-        img.onerror = () => placeholder.remove();
-        img.src = this.getThumbnailUrl(asset.id);
-        item.appendChild(img);
-
-        item.addEventListener('click', (e) => {
-          if (e.shiftKey || e.metaKey) {
-            window.open(`${this.host}/photos/${asset.id}`, '_blank');
-          } else {
-            this.toggleSelection(asset.id);
-          }
-        });
-
-        this.gallery.appendChild(item);
-      });
+      this.updateUI();
+      return;
     }
 
+    const frag = document.createDocumentFragment();
+    this.allAssets.forEach((asset) => {
+      const item = document.createElement('div');
+      item.className = 'gallery-item';
+      item.dataset.assetId = asset.id;
+      if (this.selectedAssets.has(asset.id)) item.classList.add('selected');
+
+      const placeholder = document.createElement('div');
+      placeholder.className = 'loading-placeholder';
+      item.appendChild(placeholder);
+
+      const img = document.createElement('img');
+      img.alt = asset.originalFileName || asset.id;
+      img.loading = 'lazy';
+      img.onload = () => placeholder.remove();
+      img.onerror = () => placeholder.remove();
+      img.src = this.getThumbnailUrl(asset.id);
+      item.appendChild(img);
+
+      item.addEventListener('click', (e) => {
+        if (e.shiftKey || e.metaKey) {
+          window.open(`${this.host}/photos/${asset.id}`, '_blank');
+        } else {
+          this.toggleSelection(asset.id);
+        }
+      });
+
+      frag.appendChild(item);
+    });
+    this.gallery.appendChild(frag);
     this.updateUI();
   }
 
@@ -570,20 +584,8 @@ class ImmichMetadataSearch {
   }
 
   updateUI() {
-    const totalPages = Math.ceil(this.allAssets.length / this.pageSize);
-    const startIdx = this.currentPage * this.pageSize + 1;
-    const endIdx = Math.min((this.currentPage + 1) * this.pageSize, this.allAssets.length);
-
-    this.pageNumber.textContent =
-      this.allAssets.length > 0
-        ? `Page ${this.currentPage + 1} of ${Math.max(totalPages, 1)} (${startIdx}–${endIdx} of ${this.allAssets.length})`
-        : '';
-
     this.pageInfo.textContent =
       this.selectedAssets.size > 0 ? `${this.selectedAssets.size} selected` : '';
-
-    this.prevPageBtn.disabled = this.currentPage === 0;
-    this.nextPageBtn.disabled = this.currentPage >= totalPages - 1;
 
     const hasAssets = this.allAssets.length > 0;
     this.downloadAllBtn.disabled = !hasAssets || this.isDownloading;
@@ -593,23 +595,6 @@ class ImmichMetadataSearch {
 
     this.selectAllBtn.disabled = !hasAssets;
     this.deselectAllBtn.disabled = this.selectedAssets.size === 0;
-
-    this.gallery.focus();
-  }
-
-  previousPage() {
-    if (this.currentPage > 0) {
-      this.currentPage--;
-      this.renderGallery(true);
-    }
-  }
-
-  nextPage() {
-    const totalPages = Math.ceil(this.allAssets.length / this.pageSize);
-    if (this.currentPage < totalPages - 1) {
-      this.currentPage++;
-      this.renderGallery(true);
-    }
   }
 
   toggleSelection(assetId) {
