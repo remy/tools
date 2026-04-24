@@ -79,6 +79,11 @@
     "description": "Visual debugger for Home Assistant Assist intent recognition templates",
     "title": "HA Intent Parser Visualizer"
   },
+  "image-dither": {
+    "category": "Developer Tools",
+    "description": "Dither images to a 6-colour e-paper palette and pack them as 3-bit raw data for direct-to-screen upload.",
+    "title": "Image Dither \u2014 6-colour e-paper packer"
+  },
   "immich-album": {
     "category": "Immich",
     "description": "Browser-based tool to bulk manage Immich albums - filter, delete, merge, and rename albums with regex and asset count filtering",
