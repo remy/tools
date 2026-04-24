@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dither images to a 6-colour e-paper palette and pack them as 3-bit raw data for direct-to-screen upload.">
+  <meta name="category" content="Developer Tools">
+  <title>Image Dither &mdash; 6-colour e-paper packer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Image Dither</h1>
+    <p class="subtitle">
+      Convert images to a 6-colour palette (black, white, red, green, blue, yellow) and pack as
+      3-bit raw <code>.data</code> files for direct e-paper upload.
+    </p>
+
+    <section class="settings">
+      <h2 class="section-title">Output</h2>
+      <div class="settings-grid">
+        <label class="field">
+          <span class="field-label">Preset</span>
+          <select id="presetSelect">
+            <option value="800x480">Landscape 800 &times; 480 (EL073TF1)</option>
+            <option value="480x800">Portrait 480 &times; 800 (EL073TF1)</option>
+            <option value="1600x1200">Landscape 1600 &times; 1200 (13.3")</option>
+            <option value="1200x1600">Portrait 1200 &times; 1600 (13.3")</option>
+            <option value="custom">Custom&hellip;</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Width</span>
+          <input type="number" id="widthInput" min="1" max="4096" value="800" step="1">
+        </label>
+
+        <label class="field">
+          <span class="field-label">Height</span>
+          <input type="number" id="heightInput" min="1" max="4096" value="480" step="1">
+        </label>
+
+        <label class="field">
+          <span class="field-label">Fit</span>
+          <select id="fitSelect">
+            <option value="cover" selected>Cover (crop)</option>
+            <option value="contain">Contain (letterbox)</option>
+            <option value="stretch">Stretch</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Background</span>
+          <select id="bgSelect">
+            <option value="white" selected>White</option>
+            <option value="black">Black</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Dither</span>
+          <select id="ditherSelect">
+            <option value="floyd" selected>Floyd&ndash;Steinberg</option>
+            <option value="atkinson">Atkinson</option>
+            <option value="none">None (nearest)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Colour match</span>
+          <select id="spaceSelect">
+            <option value="oklab" selected>OKLAB (perceptual)</option>
+            <option value="srgb">sRGB (fast)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Palette</span>
+          <select id="paletteSelect">
+            <option value="measured" selected>Measured Spectra 6</option>
+            <option value="saturated">Saturated (pure RGB)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Dither strength <span class="field-value" id="strengthValue">85</span></span>
+          <input type="range" id="strengthInput" min="0" max="100" step="1" value="85">
+        </label>
+      </div>
+
+      <div class="adjust-header">
+        <h2 class="section-title">Adjustments</h2>
+        <button type="button" class="btn btn-ghost btn-sm" id="adjustResetBtn">Reset</button>
+      </div>
+      <div class="settings-grid">
+        <label class="field">
+          <span class="field-label">Brightness <span class="field-value" id="brightnessValue">0</span></span>
+          <input type="range" id="brightnessInput" min="-100" max="100" step="1" value="0">
+        </label>
+        <label class="field">
+          <span class="field-label">Contrast <span class="field-value" id="contrastValue">0</span></span>
+          <input type="range" id="contrastInput" min="-100" max="100" step="1" value="0">
+        </label>
+        <label class="field">
+          <span class="field-label">Saturation <span class="field-value" id="saturationValue">0</span></span>
+          <input type="range" id="saturationInput" min="-100" max="100" step="1" value="0">
+        </label>
+      </div>
+    </section>
+
+    <section class="upload-zone" id="uploadZone">
+      <div class="upload-inner">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+          <polyline points="8 12 12 8 16 12"/>
+          <line x1="12" y1="8" x2="12" y2="20"/>
+        </svg>
+        <p>Drop images or <code>.data</code> files here, or <label class="file-label" for="fileInput">browse</label></p>
+        <p class="hint">PNG, JPG, GIF, WebP, or pre-packed <code>.data</code> (decoded using the current W&times;H).</p>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,.data,application/octet-stream" multiple hidden>
+    </section>
+
+    <section class="results" id="results" hidden>
+      <div class="results-header">
+        <h2 class="section-title">Processed files <span class="count" id="resultCount"></span></h2>
+        <div class="results-actions">
+          <button class="btn btn-ghost btn-sm" id="clearBtn">Clear all</button>
+          <button class="btn btn-primary btn-sm" id="downloadAllBtn">Download all</button>
+        </div>
+      </div>
+      <ul class="file-list" id="fileList"></ul>
+    </section>
+
+    <template id="resultTemplate">
+      <li class="file-card">
+        <div class="file-preview" data-preview>
+          <canvas class="preview-canvas" data-canvas-dithered></canvas>
+          <canvas class="preview-canvas" data-canvas-source hidden></canvas>
+          <div class="preview-overlay" data-status>
+            <span class="spinner" aria-hidden="true"></span>
+            <span class="status-text">Processing&hellip;</span>
+          </div>
+          <div class="preview-toggle" role="tablist" aria-label="Preview mode">
+            <button type="button" class="toggle-btn" data-mode="dithered" aria-pressed="true">Dithered</button>
+            <button type="button" class="toggle-btn" data-mode="source" aria-pressed="false">Source</button>
+          </div>
+        </div>
+        <div class="file-body">
+          <div class="file-name" data-name></div>
+          <div class="file-meta" data-meta></div>
+          <div class="file-actions">
+            <a class="btn btn-primary btn-sm download-link" data-download hidden download>Download .data</a>
+            <button class="btn btn-ghost btn-sm" data-remove>Remove</button>
+          </div>
+        </div>
+      </li>
+    </template>
+  </div>
+
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
