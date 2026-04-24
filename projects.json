@@ -94,6 +94,11 @@
     "description": "Bulk rotate images in Immich. Select multiple thumbnails to rotate clockwise or counter-clockwise en masse via the API.",
     "title": "Immich Mass Rotate"
   },
+  "immich-metadata-search": {
+    "category": "Immich",
+    "description": "Search Immich assets using arbitrary metadata queries and download all matching results as a zip file via the API.",
+    "title": "Immich Metadata Search"
+  },
   "json-schema": {
     "category": "Developer Tools",
     "description": "Validate JSON against a schema with real-time error reporting and syntax highlighting",
