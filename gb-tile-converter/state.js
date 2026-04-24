@@ -52,4 +52,6 @@ export const state = {
   fontBold: false,
   fontMode: false,      // VWF mode toggle
   glyphWidths: [],      // per-tile width (0-8), only used in fontMode
+  sourceColors: [],     // detected dominant colors in the source image: [{r,g,b,count}, ...]
+  paletteMapping: [],   // DMG index (0-3) for each entry in sourceColors
 };

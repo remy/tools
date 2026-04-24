@@ -34,6 +34,8 @@ export function saveState() {
       fontBold: state.fontBold,
       fontMode: state.fontMode,
       glyphWidths: state.glyphWidths,
+      sourceColors: state.sourceColors,
+      paletteMapping: state.paletteMapping,
     };
     // Store image as data URL if present
     if (state.image) {
@@ -79,6 +81,8 @@ export function restoreState() {
     state.imageFileName = data.imageFileName || '';
     state.fontMode = data.fontMode || false;
     state.glyphWidths = data.glyphWidths || [];
+    state.sourceColors = Array.isArray(data.sourceColors) ? data.sourceColors : [];
+    state.paletteMapping = Array.isArray(data.paletteMapping) ? data.paletteMapping : [];
 
     el.varName.value = state.varName;
     el.fontModeToggle.checked = state.fontMode;

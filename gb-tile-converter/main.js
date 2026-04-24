@@ -9,6 +9,7 @@ import { onDragStart, onDragMove, onDragEnd } from './canvas-drag.js';
 import { renderTileGrid, setMode, GRID_TILE_SIZE } from './tile-grid.js';
 import { renderTileZoom, paintPixel, selectTile, panTile, invertPalette } from './tile-zoom.js';
 import { addTile, deleteTile, updateTileNav } from './tile-edit.js';
+import { renderSourcePalette, resetSourcePalette, setEditorTab } from './source-palette.js';
 import { restoreState, scheduleSave, updateFormatToggle } from './persistence.js';
 
 // ---- Init ----
@@ -88,9 +89,12 @@ el.resetPositionBtn.addEventListener('click', () => {
   state.offsetX = 0;
   state.offsetY = 0;
   state.imageScale = 1;
+  state.sourceColors = [];
+  state.paletteMapping = [];
   renderOverview();
-  quantize();
+  quantize({ detect: true });
   renderCharMap();
+  renderSourcePalette();
   if (state.mode === 'editor') {
     renderTileGrid();
     renderTileZoom();
@@ -135,7 +139,12 @@ el.overviewModeBtn.addEventListener('click', () => setMode('overview'));
 el.tileEditModeBtn.addEventListener('click', () => {
   if (!state.tileData.length) return;
   setMode('editor');
+  renderSourcePalette();
 });
+
+el.sourcePaletteReset.addEventListener('click', resetSourcePalette);
+el.tabPixels.addEventListener('click', () => setEditorTab('pixels'));
+el.tabColours.addEventListener('click', () => setEditorTab('colours'));
 
 // ---- Tile grid click ----
 
@@ -455,6 +464,7 @@ function applyFontMode() {
   }
 
   renderCharMap();
+  renderSourcePalette();
   renderTileGrid();
   if (state.tileData.length) renderTileZoom();
   updateTileNav();
@@ -537,3 +547,4 @@ restoreState();
 if (state.fontMode) applyFontMode();
 applyTileMapMode();
 updateImageInfo();
+renderSourcePalette();
