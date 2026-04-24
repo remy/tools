@@ -10,20 +10,27 @@ const PALETTE = [
 ];
 
 // DOM
-const presetSelect   = document.getElementById('presetSelect');
-const widthInput     = document.getElementById('widthInput');
-const heightInput    = document.getElementById('heightInput');
-const fitSelect      = document.getElementById('fitSelect');
-const bgSelect       = document.getElementById('bgSelect');
-const ditherSelect   = document.getElementById('ditherSelect');
-const uploadZone     = document.getElementById('uploadZone');
-const fileInput      = document.getElementById('fileInput');
-const results        = document.getElementById('results');
-const resultCount    = document.getElementById('resultCount');
-const fileList       = document.getElementById('fileList');
-const clearBtn       = document.getElementById('clearBtn');
-const downloadAllBtn = document.getElementById('downloadAllBtn');
-const resultTemplate = document.getElementById('resultTemplate');
+const presetSelect     = document.getElementById('presetSelect');
+const widthInput       = document.getElementById('widthInput');
+const heightInput      = document.getElementById('heightInput');
+const fitSelect        = document.getElementById('fitSelect');
+const bgSelect         = document.getElementById('bgSelect');
+const ditherSelect     = document.getElementById('ditherSelect');
+const brightnessInput  = document.getElementById('brightnessInput');
+const contrastInput    = document.getElementById('contrastInput');
+const saturationInput  = document.getElementById('saturationInput');
+const brightnessValue  = document.getElementById('brightnessValue');
+const contrastValue    = document.getElementById('contrastValue');
+const saturationValue  = document.getElementById('saturationValue');
+const adjustResetBtn   = document.getElementById('adjustResetBtn');
+const uploadZone       = document.getElementById('uploadZone');
+const fileInput        = document.getElementById('fileInput');
+const results          = document.getElementById('results');
+const resultCount      = document.getElementById('resultCount');
+const fileList         = document.getElementById('fileList');
+const clearBtn         = document.getElementById('clearBtn');
+const downloadAllBtn   = document.getElementById('downloadAllBtn');
+const resultTemplate   = document.getElementById('resultTemplate');
 
 // State
 const items = []; // { id, file, card, url, blob, width, height }
@@ -49,6 +56,28 @@ presetSelect.addEventListener('change', () => {
 
 [widthInput, heightInput, fitSelect, bgSelect, ditherSelect].forEach(el => {
   el.addEventListener('change', reprocessAll);
+});
+
+// Adjustment sliders: update readout live, reprocess on release.
+[
+  [brightnessInput, brightnessValue],
+  [contrastInput,   contrastValue],
+  [saturationInput, saturationValue],
+].forEach(([input, valueEl]) => {
+  input.addEventListener('input', () => { valueEl.textContent = input.value; });
+  input.addEventListener('change', reprocessAll);
+});
+
+adjustResetBtn.addEventListener('click', () => {
+  let changed = false;
+  for (const [input, valueEl] of [
+    [brightnessInput, brightnessValue],
+    [contrastInput,   contrastValue],
+    [saturationInput, saturationValue],
+  ]) {
+    if (input.value !== '0') { input.value = '0'; valueEl.textContent = '0'; changed = true; }
+  }
+  if (changed) reprocessAll();
 });
 
 applyPreset();
@@ -101,27 +130,34 @@ downloadAllBtn.addEventListener('click', () => {
 
 // ── File handling ────────────────────────────────────────────────────────────
 function addFiles(fileList) {
-  const images = Array.from(fileList).filter(f => f.type.startsWith('image/'));
-  for (const file of images) {
-    const item = createItem(file);
+  for (const file of fileList) {
+    const isData = isDataFile(file);
+    if (!isData && !file.type.startsWith('image/')) continue;
+    const item = createItem(file, isData);
     items.push(item);
   }
   updateResultsVisibility();
   processQueue();
 }
 
-function createItem(file) {
+function isDataFile(file) {
+  return /\.data$/i.test(file.name);
+}
+
+function createItem(file, isData) {
   const fragment = resultTemplate.content.cloneNode(true);
   const card = fragment.querySelector('.file-card');
   card.querySelector('[data-name]').textContent = file.name;
-  card.querySelector('[data-meta]').textContent = formatBytes(file.size) + ' source';
+  const tag = isData ? '.data' : 'source';
+  card.querySelector('[data-meta]').textContent = `${formatBytes(file.size)} ${tag}`;
+  if (isData) card.classList.add('is-data');
   const id = nextId++;
   card.querySelector('[data-remove]').addEventListener('click', () => removeItem(id));
   card.querySelectorAll('.toggle-btn').forEach(btn => {
     btn.addEventListener('click', () => setPreviewMode(id, btn.dataset.mode));
   });
   document.getElementById('fileList').appendChild(card);
-  return { id, file, card, blob: null, url: null, mode: 'dithered' };
+  return { id, file, card, blob: null, url: null, mode: 'dithered', isData: !!isData };
 }
 
 function setPreviewMode(id, mode) {
@@ -229,6 +265,11 @@ async function processItem(item) {
   const targetH = Math.max(1, Math.floor(Number(heightInput.value) || 0));
   if (!targetW || !targetH) throw new Error('Invalid size');
 
+  if (item.isData) {
+    await processDataItem(item, targetW, targetH);
+    return;
+  }
+
   const bitmap = await loadBitmap(item.file);
   const canvas = document.createElement('canvas');
   canvas.width = targetW;
@@ -245,13 +286,16 @@ async function processItem(item) {
   ctx.drawImage(bitmap, sx, sy, sw, sh, dx, dy, dw, dh);
   if (bitmap.close) bitmap.close();
 
-  // Snapshot the source (resized) image for the compare view.
+  const imageData = ctx.getImageData(0, 0, targetW, targetH);
+  applyAdjustments(imageData);
+
+  // Snapshot the adjusted source for the compare view (this is what feeds the dither).
+  ctx.putImageData(imageData, 0, 0);
   const sourceCanvas = item.card.querySelector('[data-canvas-source]');
   sourceCanvas.width = targetW;
   sourceCanvas.height = targetH;
   sourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
 
-  const imageData = ctx.getImageData(0, 0, targetW, targetH);
   const indices = ditherToPalette(imageData, ditherSelect.value);
 
   writeIndicesToImageData(indices, imageData);
@@ -279,6 +323,51 @@ async function processItem(item) {
   item.card.querySelector('[data-meta]').textContent =
     `${targetW}×${targetH} • ${formatBytes(blob.size)} .data`;
 
+  hideStatus(item);
+}
+
+// Preview an already-packed .data file. Uses the current W/H — the file size
+// must match the expected byte count for those dimensions or we surface an
+// error so the user can pick the right preset.
+async function processDataItem(item, targetW, targetH) {
+  const totalPixels = targetW * targetH;
+  const expectedBytes = Math.ceil(totalPixels * 3 / 8);
+  const bytes = new Uint8Array(await item.file.arrayBuffer());
+  if (bytes.length !== expectedBytes) {
+    throw new Error(
+      `Expected ${expectedBytes} bytes for ${targetW}×${targetH}, got ${bytes.length}`
+    );
+  }
+
+  const indices = unpack3Bit(bytes, totalPixels);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  const imageData = ctx.createImageData(targetW, targetH);
+  writeIndicesToImageData(indices, imageData);
+  ctx.putImageData(imageData, 0, 0);
+
+  // Both preview canvases show the decoded image — there's no "before dither"
+  // for a packed file, but keeping both in sync makes the toggle a no-op
+  // instead of showing a blank canvas.
+  const ditheredCanvas = item.card.querySelector('[data-canvas-dithered]');
+  const sourceCanvas   = item.card.querySelector('[data-canvas-source]');
+  for (const c of [ditheredCanvas, sourceCanvas]) {
+    c.width = targetW;
+    c.height = targetH;
+    c.getContext('2d').drawImage(canvas, 0, 0);
+  }
+  setPreviewMode(item.id, item.mode || 'dithered');
+
+  item.card.querySelector('[data-meta]').textContent =
+    `${targetW}×${targetH} • ${formatBytes(bytes.length)} .data (preview)`;
+
+  // No export — the file is already in device format. Keep the download button
+  // hidden for data-source items so we don't double-wrap it.
+  item.blob = null;
+  item.url = null;
   hideStatus(item);
 }
 
@@ -327,6 +416,55 @@ function computeFit(srcW, srcH, dstW, dstH, fit) {
   const dx = (dstW - dw) / 2;
   const dy = (dstH - dh) / 2;
   return { sx: 0, sy: 0, sw: srcW, sh: srcH, dx, dy, dw, dh };
+}
+
+// ── Pre-dither image adjustments ────────────────────────────────────────────
+// Slider values are -100..100 and map to intuitive "percent change" ranges:
+//   brightness: -100 subtracts 128, +100 adds 128
+//   contrast:   -100 flattens to mid-grey, +100 doubles contrast
+//   saturation: -100 greyscale,           +100 doubles saturation
+function applyAdjustments(imageData) {
+  const b = Number(brightnessInput.value) || 0;   // -100..100
+  const c = Number(contrastInput.value)   || 0;   // -100..100
+  const s = Number(saturationInput.value) || 0;   // -100..100
+  if (b === 0 && c === 0 && s === 0) return;
+
+  const brightnessAdd = b * 1.28;                  // 0..±128
+  const contrastFactor = 1 + c / 100;              // 0..2
+  const saturationFactor = 1 + s / 100;            // 0..2
+  const data = imageData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i], g = data[i+1], bl = data[i+2];
+
+    // Brightness — simple additive.
+    r  += brightnessAdd;
+    g  += brightnessAdd;
+    bl += brightnessAdd;
+
+    // Contrast — scale around 128.
+    if (contrastFactor !== 1) {
+      r  = (r  - 128) * contrastFactor + 128;
+      g  = (g  - 128) * contrastFactor + 128;
+      bl = (bl - 128) * contrastFactor + 128;
+    }
+
+    // Saturation — push channels away from (or toward) rec-709 luma.
+    if (saturationFactor !== 1) {
+      const luma = 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+      r  = luma + (r  - luma) * saturationFactor;
+      g  = luma + (g  - luma) * saturationFactor;
+      bl = luma + (bl - luma) * saturationFactor;
+    }
+
+    data[i]     = clamp255(r);
+    data[i + 1] = clamp255(g);
+    data[i + 2] = clamp255(bl);
+  }
+}
+
+function clamp255(v) {
+  return v < 0 ? 0 : v > 255 ? 255 : v | 0;
 }
 
 // ── Dithering ────────────────────────────────────────────────────────────────
@@ -449,6 +587,23 @@ function pack3Bit(indices) {
     out[bi++] = (buf << (8 - bits)) & 0xff;
   }
   return out;
+}
+
+// Reverse of pack3Bit: pulls 3-bit palette indices from an MSB-first stream.
+// Stops at totalPixels so trailing zero-pad bits aren't decoded as an extra pixel.
+function unpack3Bit(bytes, totalPixels) {
+  const indices = new Uint8Array(totalPixels);
+  let buf = 0, bits = 0, pi = 0;
+  for (let i = 0; i < bytes.length && pi < totalPixels; i++) {
+    buf = (buf << 8) | bytes[i];
+    bits += 8;
+    while (bits >= 3 && pi < totalPixels) {
+      bits -= 3;
+      indices[pi++] = (buf >> bits) & 0b111;
+      buf &= (1 << bits) - 1;
+    }
+  }
+  return indices;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

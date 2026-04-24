@@ -66,6 +66,25 @@
           </select>
         </label>
       </div>
+
+      <div class="adjust-header">
+        <h2 class="section-title">Adjustments</h2>
+        <button type="button" class="btn btn-ghost btn-sm" id="adjustResetBtn">Reset</button>
+      </div>
+      <div class="settings-grid">
+        <label class="field">
+          <span class="field-label">Brightness <span class="field-value" id="brightnessValue">0</span></span>
+          <input type="range" id="brightnessInput" min="-100" max="100" step="1" value="0">
+        </label>
+        <label class="field">
+          <span class="field-label">Contrast <span class="field-value" id="contrastValue">0</span></span>
+          <input type="range" id="contrastInput" min="-100" max="100" step="1" value="0">
+        </label>
+        <label class="field">
+          <span class="field-label">Saturation <span class="field-value" id="saturationValue">0</span></span>
+          <input type="range" id="saturationInput" min="-100" max="100" step="1" value="0">
+        </label>
+      </div>
     </section>
 
     <section class="upload-zone" id="uploadZone">
@@ -75,10 +94,10 @@
           <polyline points="8 12 12 8 16 12"/>
           <line x1="12" y1="8" x2="12" y2="20"/>
         </svg>
-        <p>Drop images here or <label class="file-label" for="fileInput">browse</label></p>
-        <p class="hint">PNG, JPG, GIF, WebP. Everything runs locally in your browser.</p>
+        <p>Drop images or <code>.data</code> files here, or <label class="file-label" for="fileInput">browse</label></p>
+        <p class="hint">PNG, JPG, GIF, WebP, or pre-packed <code>.data</code> (decoded using the current W&times;H).</p>
       </div>
-      <input type="file" id="fileInput" accept="image/*" multiple hidden>
+      <input type="file" id="fileInput" accept="image/*,.data,application/octet-stream" multiple hidden>
     </section>
 
     <section class="results" id="results" hidden>

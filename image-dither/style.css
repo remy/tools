@@ -148,6 +148,36 @@ h1 {
   cursor: not-allowed;
 }
 
+.field input[type="range"] {
+  padding: 0;
+  height: 1.75rem;
+  border: none;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+.field-value {
+  float: right;
+  color: var(--text);
+  font-weight: 500;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.adjust-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.adjust-header .section-title {
+  margin-bottom: 0;
+}
+
 /* Upload zone */
 .upload-zone {
   border: 2px dashed var(--border);
@@ -304,6 +334,13 @@ h1 {
 .toggle-btn[aria-pressed="true"] {
   background: rgba(255, 255, 255, 0.95);
   color: #000;
+}
+
+/* .data items are already in device format — hide the source toggle (both
+   canvases show identical decoded pixels) and the no-op export button. */
+.file-card.is-data .preview-toggle,
+.file-card.is-data .download-link {
+  display: none;
 }
 
 .preview-overlay {
