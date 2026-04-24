@@ -307,7 +307,8 @@ body {
   }
 
   .tile-editor-right {
-    flex: 0 0 auto;
+    flex: 0 0 320px;
+    width: 320px;
   }
 }
 
