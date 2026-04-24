@@ -10,12 +10,15 @@ const DMG_TITLES = ['White', 'Light', 'Dark', 'Black'];
 export function renderSourcePalette() {
   if (!el.sourcePalette) return;
 
-  // Hide in font mode or when no image has been detected
-  if (state.fontMode || !state.sourceColors.length) {
-    el.sourcePalette.hidden = true;
+  // The Colours tab is only meaningful in tile mode once an image has
+  // produced detected source colours. In font mode the DMG palette isn't
+  // used, so the tab is hidden entirely and we fall back to the Pixels tab.
+  const available = !state.fontMode && state.sourceColors.length > 0;
+  if (el.editorTabs) el.editorTabs.hidden = !available;
+  if (!available) {
+    setEditorTab('pixels');
     return;
   }
-  el.sourcePalette.hidden = false;
 
   el.sourcePaletteRows.innerHTML = '';
   for (let i = 0; i < state.sourceColors.length; i++) {
@@ -52,6 +55,15 @@ export function renderSourcePalette() {
 
     el.sourcePaletteRows.appendChild(row);
   }
+}
+
+export function setEditorTab(which) {
+  if (!el.tabPixels) return;
+  const colours = which === 'colours';
+  el.tabPixels.classList.toggle('active', !colours);
+  el.tabColours.classList.toggle('active', colours);
+  el.pixelsPanel.hidden = colours;
+  el.coloursPanel.hidden = !colours;
 }
 
 function assignMapping(sourceIdx, dmgIdx) {

@@ -9,7 +9,7 @@ import { onDragStart, onDragMove, onDragEnd } from './canvas-drag.js';
 import { renderTileGrid, setMode, GRID_TILE_SIZE } from './tile-grid.js';
 import { renderTileZoom, paintPixel, selectTile, panTile, invertPalette } from './tile-zoom.js';
 import { addTile, deleteTile, updateTileNav } from './tile-edit.js';
-import { renderSourcePalette, resetSourcePalette } from './source-palette.js';
+import { renderSourcePalette, resetSourcePalette, setEditorTab } from './source-palette.js';
 import { restoreState, scheduleSave, updateFormatToggle } from './persistence.js';
 
 // ---- Init ----
@@ -143,6 +143,8 @@ el.tileEditModeBtn.addEventListener('click', () => {
 });
 
 el.sourcePaletteReset.addEventListener('click', resetSourcePalette);
+el.tabPixels.addEventListener('click', () => setEditorTab('pixels'));
+el.tabColours.addEventListener('click', () => setEditorTab('colours'));
 
 // ---- Tile grid click ----
 

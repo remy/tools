@@ -68,23 +68,31 @@
           </div>
         </div>
         <div class="tile-editor-right">
-          <div class="tile-zoom-wrap">
-            <canvas id="tileZoomCanvas" width="320" height="320"></canvas>
+          <div class="editor-tabs" id="editorTabs" hidden>
+            <button id="tabPixels" class="editor-tab active" type="button">Pixels</button>
+            <button id="tabColours" class="editor-tab" type="button" title="Remap the detected source colours to DMG palette slots">Colours</button>
           </div>
-          <div class="glyph-info" id="glyphInfo" hidden></div>
-          <div class="palette-picker">
-            <span class="palette-label">Palette:</span>
-            <button class="palette-btn" data-color="0" title="White"></button>
-            <button class="palette-btn" data-color="1" title="Light"></button>
-            <button class="palette-btn" data-color="2" title="Dark"></button>
-            <button class="palette-btn active" data-color="3" title="Black"></button>
-          </div>
-          <div class="source-palette" id="sourcePalette" hidden>
-            <div class="source-palette-header">
-              <span class="source-palette-label">Source &rarr; DMG</span>
-              <button id="sourcePaletteReset" class="btn btn-sm btn-secondary" title="Restore the automatic source-to-DMG mapping">Auto</button>
+          <div id="pixelsPanel" class="editor-tab-panel">
+            <div class="tile-zoom-wrap">
+              <canvas id="tileZoomCanvas" width="320" height="320"></canvas>
             </div>
-            <div class="source-palette-rows" id="sourcePaletteRows"></div>
+            <div class="glyph-info" id="glyphInfo" hidden></div>
+            <div class="palette-picker">
+              <span class="palette-label">Palette:</span>
+              <button class="palette-btn" data-color="0" title="White"></button>
+              <button class="palette-btn" data-color="1" title="Light"></button>
+              <button class="palette-btn" data-color="2" title="Dark"></button>
+              <button class="palette-btn active" data-color="3" title="Black"></button>
+            </div>
+          </div>
+          <div id="coloursPanel" class="editor-tab-panel" hidden>
+            <div class="source-palette" id="sourcePalette">
+              <div class="source-palette-header">
+                <span class="source-palette-label">Source &rarr; DMG</span>
+                <button id="sourcePaletteReset" class="btn btn-sm btn-secondary" title="Restore the automatic source-to-DMG mapping">Auto</button>
+              </div>
+              <div class="source-palette-rows" id="sourcePaletteRows"></div>
+            </div>
           </div>
         </div>
       </div>
