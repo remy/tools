@@ -161,7 +161,7 @@ class ImmichDedupe {
   }
 
   getThumbnailUrl(assetId) {
-    const endpoint = `/api/assets/${assetId}/thumbnail?size=preview&apiKey=${this.apiKey}`;
+    const endpoint = `/api/assets/${assetId}/thumbnail?size=preview&edited=true&apiKey=${this.apiKey}`;
     if (this.useProxy) {
       return `${this.proxy}${endpoint}`;
     }

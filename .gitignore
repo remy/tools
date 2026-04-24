@@ -3,3 +3,4 @@
 movies/cineworld-events/*
 .playwright-screenshots/
 .playwright-mcp/
+*.local.json

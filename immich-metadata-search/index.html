@@ -6,14 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
       content="Search Immich assets using arbitrary metadata queries and download the results as a zip file.">
-    <title>Immich Metadata Search</title>
+    <title>Immich Metadata Search &amp; Download</title>
     <link rel="stylesheet" href="styles.css">
   </head>
 
   <body>
     <div class="container">
       <div class="sidebar">
-        <h1>Immich Metadata Search</h1>
+        <h1>Search &amp; Download</h1>
 
         <div class="form-group">
           <label for="host">Immich Host</label>
@@ -87,13 +87,13 @@
             <div id="pageInfo" class="page-info"></div>
             <button id="downloadSelectedBtn" class="btn-download" disabled>
               <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.84v6h5.66V9h3.84L12 2z" fill="currentColor"/>
+                <path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.84v6h5.66V9h3.84L12 2z" fill="currentColor" />
               </svg>
               Download Selected
             </button>
             <button id="downloadAllBtn" class="btn-download btn-download-all" disabled>
               <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.84v6h5.66V9h3.84L12 2z" fill="currentColor"/>
+                <path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.84v6h5.66V9h3.84L12 2z" fill="currentColor" />
               </svg>
               Download All
             </button>
@@ -112,7 +112,7 @@
     </div>
 
     <script src="app.js"></script>
-  <script>navigator.serviceWorker?.register("/sw.js")</script>
-</body>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
 
 </html>

@@ -269,6 +269,10 @@ body {
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+
+  svg {
+    transform: rotate(180deg);
+  }
 }
 
 .btn-download:hover:not(:disabled) {
@@ -341,7 +345,7 @@ body {
 .gallery-item img {
   width: 120px;
   height: 120px;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 
@@ -384,8 +388,12 @@ body {
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* ── Response JSON viewer ── */
@@ -410,7 +418,9 @@ body {
   gap: 7px;
 }
 
-#responseDetails summary::-webkit-details-marker { display: none; }
+#responseDetails summary::-webkit-details-marker {
+  display: none;
+}
 
 #responseDetails summary::before {
   content: '▶';
@@ -577,7 +587,7 @@ select.field-input {
   cursor: pointer;
 }
 
-input[type="datetime-local"].field-input {
+input[type='datetime-local'].field-input {
   font-size: 12px;
 }
 

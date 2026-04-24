@@ -657,7 +657,7 @@ class ImmichMetadataSearch {
 
   getThumbnailUrl(assetId) {
     const base = this.useProxy ? this.proxy : this.host;
-    return `${base}/api/assets/${assetId}/thumbnail?apiKey=${this.apiKey}`;
+    return `${base}/api/assets/${assetId}/thumbnail?apiKey=${this.apiKey}&edited=true&preview=true`;
   }
 
   updateUI() {

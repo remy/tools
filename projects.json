@@ -97,7 +97,7 @@
   "immich-metadata-search": {
     "category": "Immich",
     "description": "Search Immich assets using arbitrary metadata queries and download the results as a zip file.",
-    "title": "Immich Metadata Search"
+    "title": "Immich Metadata Search & Download"
   },
   "json-schema": {
     "category": "Developer Tools",
