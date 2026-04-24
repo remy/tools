@@ -1,6 +1,12 @@
-// 6-colour palette — index order matters (matches device spec).
-// 0=Black, 1=White, 2=Red, 3=Green, 4=Blue, 5=Yellow
-const PALETTE = [
+// 6-colour palettes — index order matches device spec:
+// 0=Black, 1=White, 2=Red, 3=Green, 4=Blue, 5=Yellow.
+//
+// "Saturated" uses the pure RGB corners (what the spec labels each index).
+// "Measured" uses real Spectra-6 panel values (sampled from hardware), which
+// models what the screen will actually render and gives visibly better dither
+// targeting for mid-tones, skin, skies etc. Index mapping is preserved so the
+// packed .data output is identical regardless of which palette was used.
+const PALETTE_SATURATED = [
   [0,   0,   0  ],
   [255, 255, 255],
   [255, 0,   0  ],
@@ -8,6 +14,17 @@ const PALETTE = [
   [0,   0,   255],
   [255, 255, 0  ],
 ];
+const PALETTE_MEASURED = [
+  [46,  44,  66 ],   // black   #2e2c42
+  [211, 214, 205],   // white   #d3d6cd
+  [177, 29,  25 ],   // red     #b11d19
+  [92,  138, 91 ],   // green   #5c8a5b
+  [49,  106, 193],   // blue    #316ac1
+  [217, 199, 1  ],   // yellow  #d9c701
+];
+function paletteByName(name) {
+  return name === 'measured' ? PALETTE_MEASURED : PALETTE_SATURATED;
+}
 
 // DOM
 const presetSelect     = document.getElementById('presetSelect');
@@ -16,6 +33,10 @@ const heightInput      = document.getElementById('heightInput');
 const fitSelect        = document.getElementById('fitSelect');
 const bgSelect         = document.getElementById('bgSelect');
 const ditherSelect     = document.getElementById('ditherSelect');
+const spaceSelect      = document.getElementById('spaceSelect');
+const paletteSelect    = document.getElementById('paletteSelect');
+const strengthInput    = document.getElementById('strengthInput');
+const strengthValue    = document.getElementById('strengthValue');
 const brightnessInput  = document.getElementById('brightnessInput');
 const contrastInput    = document.getElementById('contrastInput');
 const saturationInput  = document.getElementById('saturationInput');
@@ -54,9 +75,11 @@ presetSelect.addEventListener('change', () => {
   reprocessAll();
 });
 
-[widthInput, heightInput, fitSelect, bgSelect, ditherSelect].forEach(el => {
-  el.addEventListener('change', reprocessAll);
-});
+[widthInput, heightInput, fitSelect, bgSelect, ditherSelect, spaceSelect, paletteSelect]
+  .forEach(el => el.addEventListener('change', reprocessAll));
+
+strengthInput.addEventListener('input', () => { strengthValue.textContent = strengthInput.value; });
+strengthInput.addEventListener('change', reprocessAll);
 
 // Adjustment sliders: update readout live, reprocess on release.
 [
@@ -296,9 +319,15 @@ async function processItem(item) {
   sourceCanvas.height = targetH;
   sourceCanvas.getContext('2d').drawImage(canvas, 0, 0);
 
-  const indices = ditherToPalette(imageData, ditherSelect.value);
+  const renderPalette = paletteByName(paletteSelect.value);
+  const indices = ditherToPalette(imageData, {
+    algorithm: ditherSelect.value,
+    space: spaceSelect.value,
+    palette: renderPalette,
+    strength: Math.max(0, Math.min(1, Number(strengthInput.value) / 100)),
+  });
 
-  writeIndicesToImageData(indices, imageData);
+  writeIndicesToImageData(indices, imageData, renderPalette);
   ctx.putImageData(imageData, 0, 0);
 
   const ditheredCanvas = item.card.querySelector('[data-canvas-dithered]');
@@ -346,7 +375,7 @@ async function processDataItem(item, targetW, targetH) {
   canvas.height = targetH;
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   const imageData = ctx.createImageData(targetW, targetH);
-  writeIndicesToImageData(indices, imageData);
+  writeIndicesToImageData(indices, imageData, paletteByName(paletteSelect.value));
   ctx.putImageData(imageData, 0, 0);
 
   // Both preview canvases show the decoded image — there's no "before dither"
@@ -467,63 +496,118 @@ function clamp255(v) {
   return v < 0 ? 0 : v > 255 ? 255 : v | 0;
 }
 
+// ── Colour space helpers ─────────────────────────────────────────────────────
+// sRGB byte → linear RGB in 0..1. Precomputed LUT for the common int path.
+const SRGB_TO_LIN = new Float32Array(256);
+for (let i = 0; i < 256; i++) {
+  const v = i / 255;
+  SRGB_TO_LIN[i] = v > 0.04045 ? Math.pow((v + 0.055) / 1.055, 2.4) : v / 12.92;
+}
+function srgbByteToLin(v) {
+  if (v >= 0 && v <= 255 && (v | 0) === v) return SRGB_TO_LIN[v];
+  const c = Math.max(0, Math.min(255, v)) / 255;
+  return c > 0.04045 ? Math.pow((c + 0.055) / 1.055, 2.4) : c / 12.92;
+}
+
+// Linear RGB 0..1 → OKLAB. Matrix constants from Björn Ottosson's reference.
+function lrgbToOklab(r, g, b, out) {
+  const l = Math.cbrt(0.4122214708*r + 0.5363325363*g + 0.0514459929*b);
+  const m = Math.cbrt(0.2119034982*r + 0.6806995451*g + 0.1073969566*b);
+  const s = Math.cbrt(0.0883024619*r + 0.2817188376*g + 0.6299787005*b);
+  out[0] = 0.2104542553*l + 0.7936177850*m - 0.0040720468*s;
+  out[1] = 1.9779984951*l - 2.4285922050*m + 0.4505937099*s;
+  out[2] = 0.0259040371*l + 0.7827717662*m - 0.8086757660*s;
+}
+
 // ── Dithering ────────────────────────────────────────────────────────────────
 // Returns a Uint8Array of palette indices (one per pixel, length = w*h).
-function ditherToPalette(imageData, algorithm) {
+// Options:
+//   algorithm: 'floyd' | 'atkinson' | 'none'
+//   space:     'srgb' | 'oklab'   (nearest-match + error-diffusion space)
+//   palette:   PALETTE_SATURATED | PALETTE_MEASURED
+//   strength:  0..1 — Floyd/Atkinson error scaling (reduces worm artifacts)
+function ditherToPalette(imageData, opts) {
   const { data, width: w, height: h } = imageData;
+  const { algorithm, space, palette, strength } = opts;
   const pixels = w * h;
   const indices = new Uint8Array(pixels);
+  const useOklab = space === 'oklab';
 
-  if (algorithm === 'none') {
+  // Precompute palette in the chosen working space.
+  //   srgb:  keep 0..255 ints for distance & error
+  //   oklab: store linear RGB (for error subtraction) + OKLAB (for distance)
+  const palLin = palette.map(([r,g,b]) => [srgbByteToLin(r), srgbByteToLin(g), srgbByteToLin(b)]);
+  const palOk  = useOklab
+    ? palLin.map(([r,g,b]) => { const o = new Float32Array(3); lrgbToOklab(r,g,b,o); return o; })
+    : null;
+
+  // Working buffer: floats in whichever space we diffuse error in.
+  const buf = new Float32Array(pixels * 3);
+  if (useOklab) {
     for (let p = 0; p < pixels; p++) {
       const i = p * 4;
-      indices[p] = nearestPaletteIndex(data[i], data[i+1], data[i+2]);
+      buf[p*3  ] = srgbByteToLin(data[i]);
+      buf[p*3+1] = srgbByteToLin(data[i+1]);
+      buf[p*3+2] = srgbByteToLin(data[i+2]);
     }
-    return indices;
+  } else {
+    for (let p = 0; p < pixels; p++) {
+      const i = p * 4;
+      buf[p*3  ] = data[i];
+      buf[p*3+1] = data[i+1];
+      buf[p*3+2] = data[i+2];
+    }
   }
 
-  // Working buffer (Float32) so errors can be diffused cleanly.
-  const buf = new Float32Array(pixels * 3);
-  for (let p = 0; p < pixels; p++) {
-    const i = p * 4;
-    buf[p*3  ] = data[i];
-    buf[p*3+1] = data[i+1];
-    buf[p*3+2] = data[i+2];
-  }
+  const weightSets = {
+    floyd: [
+      { dx:  1, dy: 0, w: 7/16 },
+      { dx: -1, dy: 1, w: 3/16 },
+      { dx:  0, dy: 1, w: 5/16 },
+      { dx:  1, dy: 1, w: 1/16 },
+    ],
+    atkinson: [
+      { dx:  1, dy: 0, w: 1/8 },
+      { dx:  2, dy: 0, w: 1/8 },
+      { dx: -1, dy: 1, w: 1/8 },
+      { dx:  0, dy: 1, w: 1/8 },
+      { dx:  1, dy: 1, w: 1/8 },
+      { dx:  0, dy: 2, w: 1/8 },
+    ],
+  };
+  const weights = weightSets[algorithm] || null;
+  const effStrength = weights ? strength : 0;
 
-  if (algorithm === 'floyd') {
-    // Floyd–Steinberg: 7/16 right, 3/16 bottom-left, 5/16 bottom, 1/16 bottom-right.
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const p = y * w + x;
-        const r = buf[p*3], g = buf[p*3+1], b = buf[p*3+2];
-        const idx = nearestPaletteIndex(r, g, b);
-        indices[p] = idx;
-        const [pr, pg, pb] = PALETTE[idx];
-        const er = r - pr, eg = g - pg, eb = b - pb;
-        diffuse(buf, w, h, x + 1, y,     er, eg, eb, 7/16);
-        diffuse(buf, w, h, x - 1, y + 1, er, eg, eb, 3/16);
-        diffuse(buf, w, h, x,     y + 1, er, eg, eb, 5/16);
-        diffuse(buf, w, h, x + 1, y + 1, er, eg, eb, 1/16);
+  const okPix = useOklab ? new Float32Array(3) : null;
+
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const p = y * w + x;
+      const r = buf[p*3], g = buf[p*3+1], b = buf[p*3+2];
+
+      let idx;
+      if (useOklab) {
+        // Clamp to the lRGB unit cube before projecting into OKLAB — error
+        // diffusion can otherwise push values outside the displayable range
+        // and distort the distance metric.
+        const lr = r < 0 ? 0 : r > 1 ? 1 : r;
+        const lg = g < 0 ? 0 : g > 1 ? 1 : g;
+        const lb = b < 0 ? 0 : b > 1 ? 1 : b;
+        lrgbToOklab(lr, lg, lb, okPix);
+        idx = nearestOklab(okPix, palOk);
+      } else {
+        idx = nearestSrgb(r, g, b, palette);
       }
-    }
-  } else if (algorithm === 'atkinson') {
-    // Atkinson (1/8 each to 6 neighbours, 6/8 of error preserved = softer).
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const p = y * w + x;
-        const r = buf[p*3], g = buf[p*3+1], b = buf[p*3+2];
-        const idx = nearestPaletteIndex(r, g, b);
-        indices[p] = idx;
-        const [pr, pg, pb] = PALETTE[idx];
-        const er = r - pr, eg = g - pg, eb = b - pb;
-        const k = 1/8;
-        diffuse(buf, w, h, x + 1, y,     er, eg, eb, k);
-        diffuse(buf, w, h, x + 2, y,     er, eg, eb, k);
-        diffuse(buf, w, h, x - 1, y + 1, er, eg, eb, k);
-        diffuse(buf, w, h, x,     y + 1, er, eg, eb, k);
-        diffuse(buf, w, h, x + 1, y + 1, er, eg, eb, k);
-        diffuse(buf, w, h, x,     y + 2, er, eg, eb, k);
+      indices[p] = idx;
+
+      if (effStrength > 0) {
+        const ref = useOklab ? palLin[idx] : palette[idx];
+        const er = (r - ref[0]) * effStrength;
+        const eg = (g - ref[1]) * effStrength;
+        const eb = (b - ref[2]) * effStrength;
+        for (const { dx, dy, w: wt } of weights) {
+          diffuse(buf, w, h, x + dx, y + dy, er, eg, eb, wt);
+        }
       }
     }
   }
@@ -539,11 +623,10 @@ function diffuse(buf, w, h, x, y, er, eg, eb, weight) {
   buf[p + 2] += eb * weight;
 }
 
-function nearestPaletteIndex(r, g, b) {
-  let best = 0;
-  let bestDist = Infinity;
-  for (let i = 0; i < PALETTE.length; i++) {
-    const [pr, pg, pb] = PALETTE[i];
+function nearestSrgb(r, g, b, palette) {
+  let best = 0, bestDist = Infinity;
+  for (let i = 0; i < palette.length; i++) {
+    const [pr, pg, pb] = palette[i];
     const dr = r - pr, dg = g - pg, db = b - pb;
     const d = dr*dr + dg*dg + db*db;
     if (d < bestDist) { bestDist = d; best = i; }
@@ -551,10 +634,22 @@ function nearestPaletteIndex(r, g, b) {
   return best;
 }
 
-function writeIndicesToImageData(indices, imageData) {
+function nearestOklab(pix, palOk) {
+  let best = 0, bestDist = Infinity;
+  for (let i = 0; i < palOk.length; i++) {
+    const pL = palOk[i][0], pA = palOk[i][1], pB = palOk[i][2];
+    const dL = pL - pix[0], dA = pA - pix[1], dB = pB - pix[2];
+    const d = dL*dL + dA*dA + dB*dB;
+    if (d < bestDist) { bestDist = d; best = i; }
+  }
+  return best;
+}
+
+function writeIndicesToImageData(indices, imageData, palette) {
+  const pal = palette || PALETTE_SATURATED;
   const { data } = imageData;
   for (let p = 0; p < indices.length; p++) {
-    const [r, g, b] = PALETTE[indices[p]];
+    const [r, g, b] = pal[indices[p]];
     const i = p * 4;
     data[i    ] = r;
     data[i + 1] = g;

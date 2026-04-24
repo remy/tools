@@ -65,6 +65,27 @@
             <option value="none">None (nearest)</option>
           </select>
         </label>
+
+        <label class="field">
+          <span class="field-label">Colour match</span>
+          <select id="spaceSelect">
+            <option value="oklab" selected>OKLAB (perceptual)</option>
+            <option value="srgb">sRGB (fast)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Palette</span>
+          <select id="paletteSelect">
+            <option value="measured" selected>Measured Spectra 6</option>
+            <option value="saturated">Saturated (pure RGB)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Dither strength <span class="field-value" id="strengthValue">85</span></span>
+          <input type="range" id="strengthInput" min="0" max="100" step="1" value="85">
+        </label>
       </div>
 
       <div class="adjust-header">
