@@ -3,6 +3,11 @@ const $ = (s, ctx = document) => ctx.querySelector(s);
 const DOWNLOAD_BATCH_SIZE = 100;
 const DEFAULT_PAGE_SIZE = 250;
 
+const DEFAULT_CUSTOM_FILTER = `// "assets" is the raw items array from the /search/metadata response.
+// Return an array of assets to render & download.
+// Example: return assets.filter(a => a.exifInfo?.fNumber < 2.8);
+return assets;`;
+
 const SEARCH_FIELDS = [
   { key: 'size', label: 'Size (per page)', type: 'number', min: 1, max: 1000, description: `Results per request (default: ${DEFAULT_PAGE_SIZE}). Auto-paginates unless Page is set.` },
   { key: 'page', label: 'Page', type: 'number', min: 1, description: 'Page number. If set, only that page is fetched (no auto-pagination).' },
@@ -56,6 +61,7 @@ class ImmichMetadataSearch {
     this.apiKey = '';
     this.useProxy = false;
     this.proxy = '';
+    this.rawAssets = [];
     this.allAssets = [];
     this.selectedAssets = new Set();
     this.lastResponses = [];
@@ -91,6 +97,9 @@ class ImmichMetadataSearch {
     this.responseDetails = $('#responseDetails');
     this.responseJson = $('#responseJson');
     this.responseInfo = $('#responseInfo');
+    this.customFilterInput = $('#customFilter');
+    this.applyFilterBtn = $('#applyFilterBtn');
+    this.filterError = $('#filterError');
   }
 
   // ── Field form ──────────────────────────────────────────────
@@ -314,6 +323,60 @@ class ImmichMetadataSearch {
     this.saveFieldValues();
   }
 
+  // ── Custom JS filter ─────────────────────────────────────────
+
+  applyCustomFilter(rawAssets) {
+    const code = this.customFilterInput.value.trim();
+    this.filterError.hidden = true;
+    this.filterError.textContent = '';
+
+    if (!code) return rawAssets.slice();
+
+    try {
+      const fn = new Function('assets', code);
+      const result = fn(rawAssets.slice());
+      if (!Array.isArray(result)) {
+        throw new Error(`Filter must return an array (got ${typeof result})`);
+      }
+      return result;
+    } catch (err) {
+      this.filterError.textContent = `${err.name}: ${err.message}`;
+      this.filterError.hidden = false;
+      console.error('Custom filter error:', err);
+      return null;
+    }
+  }
+
+  reapplyFilter() {
+    if (!this.rawAssets.length) return;
+    const filtered = this.applyCustomFilter(this.rawAssets);
+    if (filtered === null) {
+      // On error fall back to raw so the user can still inspect the data.
+      this.allAssets = this.rawAssets.slice();
+    } else {
+      this.allAssets = filtered;
+    }
+    // Drop selections that are no longer visible.
+    const visibleIds = new Set(this.allAssets.map((a) => a.id));
+    for (const id of this.selectedAssets) {
+      if (!visibleIds.has(id)) this.selectedAssets.delete(id);
+    }
+    this.renderGallery();
+    this.setStatus(this.filterStatusMessage(), this.filterError.hidden ? 'success' : 'error');
+  }
+
+  filterStatusMessage() {
+    const raw = this.rawAssets.length;
+    const filtered = this.allAssets.length;
+    if (!this.filterError.hidden) return 'Filter errored — showing raw results';
+    if (raw === filtered) return `Found ${raw} asset${raw !== 1 ? 's' : ''}`;
+    return `Filtered ${filtered} of ${raw} asset${raw !== 1 ? 's' : ''}`;
+  }
+
+  saveCustomFilter() {
+    localStorage.setItem('metaSearch_customFilter', this.customFilterInput.value);
+  }
+
   // ── Connection / persistence ─────────────────────────────────
 
   attachEventListeners() {
@@ -332,6 +395,15 @@ class ImmichMetadataSearch {
       this.filterFields(this.fieldFilterInput.value)
     );
     this.clearFieldsBtn.addEventListener('click', () => this.clearAllFields());
+
+    this.customFilterInput.addEventListener('input', () => this.saveCustomFilter());
+    this.customFilterInput.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        this.reapplyFilter();
+      }
+    });
+    this.applyFilterBtn.addEventListener('click', () => this.reapplyFilter());
 
     this.useProxyInput.addEventListener('change', () => {
       this.proxyGroup.hidden = !this.useProxyInput.checked;
@@ -374,6 +446,9 @@ class ImmichMetadataSearch {
     }
 
     this.loadFieldValues();
+
+    const savedFilter = localStorage.getItem('metaSearch_customFilter');
+    this.customFilterInput.value = savedFilter ?? DEFAULT_CUSTOM_FILTER;
   }
 
   toggleSidebar() {
@@ -442,6 +517,7 @@ class ImmichMetadataSearch {
 
     this.isLoading = true;
     this.searchBtn.disabled = true;
+    this.rawAssets = [];
     this.allAssets = [];
     this.selectedAssets.clear();
     this.lastResponses = [];
@@ -451,15 +527,16 @@ class ImmichMetadataSearch {
 
     try {
       const queryBody = this.buildQueryBody();
-      this.allAssets = await this.fetchAllAssets(queryBody);
+      this.rawAssets = await this.fetchAllAssets(queryBody);
+      const filtered = this.applyCustomFilter(this.rawAssets);
+      this.allAssets = filtered === null ? this.rawAssets.slice() : filtered;
       this.renderGallery();
       this.updateResponseViewer();
-      this.setStatus(
-        this.allAssets.length
-          ? `Found ${this.allAssets.length} asset${this.allAssets.length !== 1 ? 's' : ''}`
-          : 'No assets found',
-        this.allAssets.length ? 'success' : 'info'
-      );
+      if (!this.rawAssets.length) {
+        this.setStatus('No assets found', 'info');
+      } else {
+        this.setStatus(this.filterStatusMessage(), this.filterError.hidden ? 'success' : 'error');
+      }
     } catch (error) {
       console.error('Search error:', error);
       this.setStatus(`Error: ${error.message}`, 'error');
@@ -595,6 +672,7 @@ class ImmichMetadataSearch {
 
     this.selectAllBtn.disabled = !hasAssets;
     this.deselectAllBtn.disabled = this.selectedAssets.size === 0;
+    this.applyFilterBtn.disabled = this.rawAssets.length === 0;
   }
 
   toggleSelection(assetId) {

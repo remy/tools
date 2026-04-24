@@ -579,3 +579,60 @@ select.field-input {
 input[type="datetime-local"].field-input {
   font-size: 12px;
 }
+
+/* ── Custom JS filter ── */
+
+.custom-filter {
+  margin-bottom: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.custom-filter .filter-header {
+  margin-bottom: 6px;
+}
+
+#applyFilterBtn:not(:disabled) {
+  color: #1976d2;
+  cursor: pointer;
+}
+
+#applyFilterBtn:disabled {
+  color: #bbb;
+  cursor: not-allowed;
+}
+
+#customFilter {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  min-height: 90px;
+  background: #fafafa;
+  color: #333;
+  transition: border-color 0.15s;
+}
+
+#customFilter:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+  background: #fff;
+}
+
+.filter-error {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: #ffebee;
+  color: #c62828;
+  font-size: 11px;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
