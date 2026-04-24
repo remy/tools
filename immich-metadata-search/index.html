@@ -35,12 +35,17 @@
           <input type="text" id="proxy" placeholder="http://localhost:3000" />
         </div>
 
-        <div class="form-group">
-          <label for="query">Search Query (JSON)</label>
-          <textarea id="query" rows="12" spellcheck="false" placeholder='{"type": "IMAGE"}'></textarea>
+        <button id="searchBtn" class="btn-primary">Search</button>
+
+        <div class="query-filter">
+          <div class="filter-header">
+            <span>Filters</span>
+            <button id="clearFieldsBtn" class="btn-clear-fields" type="button">Clear all</button>
+          </div>
+          <input type="search" id="fieldFilter" placeholder="Filter fields…" autocomplete="off" />
         </div>
 
-        <button id="searchBtn" class="btn-primary">Search</button>
+        <div id="searchFields" class="search-fields"></div>
 
         <div class="controls">
           <div class="control-info">

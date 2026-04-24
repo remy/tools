@@ -1,8 +1,51 @@
 const $ = (s, ctx = document) => ctx.querySelector(s);
 
-const DEFAULT_QUERY = JSON.stringify({ type: 'IMAGE' }, null, 2);
-
 const DOWNLOAD_BATCH_SIZE = 100;
+
+const SEARCH_FIELDS = [
+  { key: 'type', label: 'Type', type: 'enum', options: ['IMAGE', 'VIDEO', 'AUDIO', 'OTHER'], description: 'Asset type filter' },
+  { key: 'isFavorite', label: 'Is Favorite', type: 'boolean', description: 'Filter by favorite status' },
+  { key: 'isMotion', label: 'Is Motion', type: 'boolean', description: 'Filter by motion photo status' },
+  { key: 'isEncoded', label: 'Is Encoded', type: 'boolean', description: 'Filter by encoded status' },
+  { key: 'isOffline', label: 'Is Offline', type: 'boolean', description: 'Filter by offline status' },
+  { key: 'isNotInAlbum', label: 'Not In Album', type: 'boolean', description: 'Filter assets not in any album' },
+  { key: 'withDeleted', label: 'With Deleted', type: 'boolean', description: 'Include deleted assets' },
+  { key: 'withExif', label: 'With EXIF', type: 'boolean', description: 'Include EXIF data in response' },
+  { key: 'withPeople', label: 'With People', type: 'boolean', description: 'Include people data in response' },
+  { key: 'withStacked', label: 'With Stacked', type: 'boolean', description: 'Include stacked assets' },
+  { key: 'takenAfter', label: 'Taken After', type: 'datetime', description: 'Filter by taken date (after)' },
+  { key: 'takenBefore', label: 'Taken Before', type: 'datetime', description: 'Filter by taken date (before)' },
+  { key: 'createdAfter', label: 'Created After', type: 'datetime', description: 'Filter by creation date (after)' },
+  { key: 'createdBefore', label: 'Created Before', type: 'datetime', description: 'Filter by creation date (before)' },
+  { key: 'updatedAfter', label: 'Updated After', type: 'datetime', description: 'Filter by update date (after)' },
+  { key: 'updatedBefore', label: 'Updated Before', type: 'datetime', description: 'Filter by update date (before)' },
+  { key: 'trashedAfter', label: 'Trashed After', type: 'datetime', description: 'Filter by trash date (after)' },
+  { key: 'trashedBefore', label: 'Trashed Before', type: 'datetime', description: 'Filter by trash date (before)' },
+  { key: 'city', label: 'City', type: 'string', nullable: true, description: 'Filter by city name' },
+  { key: 'country', label: 'Country', type: 'string', nullable: true, description: 'Filter by country name' },
+  { key: 'state', label: 'State / Province', type: 'string', nullable: true, description: 'Filter by state/province name' },
+  { key: 'make', label: 'Camera Make', type: 'string', description: 'Filter by camera make' },
+  { key: 'model', label: 'Camera Model', type: 'string', nullable: true, description: 'Filter by camera model' },
+  { key: 'lensModel', label: 'Lens Model', type: 'string', nullable: true, description: 'Filter by lens model' },
+  { key: 'rating', label: 'Rating', type: 'number', nullable: true, min: 1, max: 5, description: 'Filter by rating [1–5], or ∅ for unrated' },
+  { key: 'order', label: 'Sort Order', type: 'enum', options: ['asc', 'desc'], description: 'Sort order' },
+  { key: 'visibility', label: 'Visibility', type: 'enum', options: ['archive', 'hidden', 'locked', 'timeline'], description: 'Filter by visibility' },
+  { key: 'originalFileName', label: 'File Name', type: 'string', description: 'Filter by original file name' },
+  { key: 'originalPath', label: 'Original Path', type: 'string', description: 'Filter by original file path' },
+  { key: 'description', label: 'Description', type: 'string', description: 'Filter by description text' },
+  { key: 'ocr', label: 'OCR Text', type: 'string', description: 'Filter by OCR text content' },
+  { key: 'checksum', label: 'Checksum', type: 'string', description: 'Filter by file checksum' },
+  { key: 'id', label: 'Asset ID', type: 'string', description: 'Filter by asset ID' },
+  { key: 'libraryId', label: 'Library ID', type: 'string', nullable: true, description: 'Library ID to filter by' },
+  { key: 'deviceId', label: 'Device ID', type: 'string', description: 'Device ID to filter by' },
+  { key: 'deviceAssetId', label: 'Device Asset ID', type: 'string', description: 'Filter by device asset ID' },
+  { key: 'albumIds', label: 'Album IDs', type: 'uuid-array', description: 'Filter by album IDs (comma-separated)' },
+  { key: 'personIds', label: 'Person IDs', type: 'uuid-array', description: 'Filter by person IDs (comma-separated)' },
+  { key: 'tagIds', label: 'Tag IDs', type: 'uuid-array', nullable: true, description: 'Filter by tag IDs (comma-separated)' },
+  { key: 'encodedVideoPath', label: 'Encoded Video Path', type: 'string', description: 'Filter by encoded video file path' },
+  { key: 'previewPath', label: 'Preview Path', type: 'string', description: 'Filter by preview file path' },
+  { key: 'thumbnailPath', label: 'Thumbnail Path', type: 'string', description: 'Filter by thumbnail file path' },
+];
 
 class ImmichMetadataSearch {
   constructor() {
@@ -18,6 +61,7 @@ class ImmichMetadataSearch {
     this.isDownloading = false;
 
     this.initElements();
+    this.renderFields();
     this.attachEventListeners();
     this.loadFromLocalStorage();
   }
@@ -25,7 +69,9 @@ class ImmichMetadataSearch {
   initElements() {
     this.hostInput = $('#host');
     this.apiKeyInput = $('#apiKey');
-    this.queryInput = $('#query');
+    this.fieldFilterInput = $('#fieldFilter');
+    this.searchFieldsContainer = $('#searchFields');
+    this.clearFieldsBtn = $('#clearFieldsBtn');
     this.useProxyInput = $('#useProxy');
     this.proxyInput = $('#proxy');
     this.proxyGroup = $('#proxyGroup');
@@ -45,15 +91,237 @@ class ImmichMetadataSearch {
     this.showConfigBtn = $('#showConfigBtn');
   }
 
+  // ── Field form ──────────────────────────────────────────────
+
+  renderFields() {
+    this.searchFieldsContainer.innerHTML = '';
+    for (const field of SEARCH_FIELDS) {
+      const row = document.createElement('div');
+      row.className = 'field-row';
+      row.dataset.key = field.key;
+
+      const header = document.createElement('div');
+      header.className = 'field-header';
+
+      const label = document.createElement('label');
+      label.className = 'field-label';
+      label.htmlFor = `field-${field.key}`;
+      label.textContent = field.label;
+      label.title = field.description;
+      header.appendChild(label);
+
+      if (field.nullable) {
+        const nullBtn = document.createElement('button');
+        nullBtn.type = 'button';
+        nullBtn.className = 'null-btn';
+        nullBtn.textContent = '∅ null';
+        nullBtn.title = `Match assets where "${field.label}" is null`;
+        nullBtn.addEventListener('click', () => this.toggleNull(field.key));
+        header.appendChild(nullBtn);
+      }
+
+      row.appendChild(header);
+
+      const input = this.createFieldInput(field);
+      input.id = `field-${field.key}`;
+      input.addEventListener('change', () => this.onFieldChange(field.key, row));
+      input.addEventListener('input', () => this.onFieldChange(field.key, row));
+      row.appendChild(input);
+
+      this.searchFieldsContainer.appendChild(row);
+    }
+  }
+
+  createFieldInput(field) {
+    if (field.type === 'enum') {
+      const sel = document.createElement('select');
+      sel.className = 'field-input';
+      const blank = document.createElement('option');
+      blank.value = '';
+      blank.textContent = '—';
+      sel.appendChild(blank);
+      for (const opt of field.options) {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        sel.appendChild(o);
+      }
+      return sel;
+    }
+
+    if (field.type === 'boolean') {
+      const sel = document.createElement('select');
+      sel.className = 'field-input';
+      for (const [val, text] of [['', '—'], ['true', 'Yes (true)'], ['false', 'No (false)']]) {
+        const o = document.createElement('option');
+        o.value = val;
+        o.textContent = text;
+        sel.appendChild(o);
+      }
+      return sel;
+    }
+
+    if (field.type === 'datetime') {
+      const inp = document.createElement('input');
+      inp.type = 'datetime-local';
+      inp.className = 'field-input';
+      return inp;
+    }
+
+    if (field.type === 'number') {
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.className = 'field-input';
+      if (field.min !== undefined) inp.min = field.min;
+      if (field.max !== undefined) inp.max = field.max;
+      inp.placeholder = field.description;
+      return inp;
+    }
+
+    if (field.type === 'uuid-array') {
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'field-input';
+      inp.placeholder = 'uuid, uuid, …';
+      return inp;
+    }
+
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'field-input';
+    return inp;
+  }
+
+  onFieldChange(key, row) {
+    row.classList.toggle('has-value', this.getFieldValue(key) !== undefined);
+    this.saveFieldValues();
+  }
+
+  toggleNull(key) {
+    const row = this.searchFieldsContainer.querySelector(`[data-key="${key}"]`);
+    if (!row) return;
+    const nullBtn = row.querySelector('.null-btn');
+    const input = row.querySelector('.field-input');
+    const isNull = nullBtn.classList.toggle('active');
+    if (input) {
+      input.disabled = isNull;
+      if (isNull) input.value = '';
+    }
+    row.classList.toggle('has-value', isNull);
+    this.saveFieldValues();
+  }
+
+  getFieldValue(key) {
+    const row = this.searchFieldsContainer.querySelector(`[data-key="${key}"]`);
+    if (!row) return undefined;
+
+    const nullBtn = row.querySelector('.null-btn');
+    if (nullBtn?.classList.contains('active')) return null;
+
+    const input = row.querySelector('.field-input');
+    if (!input || input.value === '') return undefined;
+
+    const field = SEARCH_FIELDS.find((f) => f.key === key);
+    if (field.type === 'boolean') return input.value === 'true';
+    if (field.type === 'number') return Number(input.value);
+    if (field.type === 'datetime') {
+      try { return new Date(input.value).toISOString(); } catch { return undefined; }
+    }
+    if (field.type === 'uuid-array') {
+      const arr = input.value.split(',').map((s) => s.trim()).filter(Boolean);
+      return arr.length ? arr : undefined;
+    }
+    return input.value;
+  }
+
+  setFieldValue(key, value) {
+    const row = this.searchFieldsContainer.querySelector(`[data-key="${key}"]`);
+    if (!row) return;
+
+    const nullBtn = row.querySelector('.null-btn');
+    const input = row.querySelector('.field-input');
+
+    if (value === null && nullBtn) {
+      nullBtn.classList.add('active');
+      if (input) { input.disabled = true; input.value = ''; }
+      row.classList.add('has-value');
+      return;
+    }
+
+    if (!input) return;
+
+    const field = SEARCH_FIELDS.find((f) => f.key === key);
+    if (field.type === 'boolean') {
+      input.value = value === true ? 'true' : 'false';
+    } else if (field.type === 'datetime') {
+      try { input.value = new Date(value).toISOString().slice(0, 16); } catch { /* skip */ }
+    } else if (field.type === 'uuid-array') {
+      input.value = Array.isArray(value) ? value.join(', ') : String(value);
+    } else {
+      input.value = String(value);
+    }
+
+    row.classList.toggle('has-value', input.value !== '');
+  }
+
+  buildQueryBody() {
+    const body = {};
+    for (const field of SEARCH_FIELDS) {
+      const value = this.getFieldValue(field.key);
+      if (value !== undefined) body[field.key] = value;
+    }
+    return body;
+  }
+
+  saveFieldValues() {
+    localStorage.setItem('metaSearch_fields', JSON.stringify(this.buildQueryBody()));
+  }
+
+  loadFieldValues() {
+    const raw = localStorage.getItem('metaSearch_fields');
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw);
+      for (const field of SEARCH_FIELDS) {
+        if (Object.prototype.hasOwnProperty.call(saved, field.key)) {
+          this.setFieldValue(field.key, saved[field.key]);
+        }
+      }
+    } catch { /* ignore corrupt data */ }
+  }
+
+  filterFields(query) {
+    const q = query.toLowerCase().trim();
+    for (const row of this.searchFieldsContainer.querySelectorAll('.field-row')) {
+      if (!q) { row.hidden = false; continue; }
+      const key = row.dataset.key.toLowerCase();
+      const labelEl = row.querySelector('.field-label');
+      const label = labelEl ? labelEl.textContent.toLowerCase() : '';
+      const matches = key.includes(q) || label.includes(q);
+      // Always show rows that have a value set so active filters stay visible
+      row.hidden = !matches && !row.classList.contains('has-value');
+    }
+  }
+
+  clearAllFields() {
+    for (const row of this.searchFieldsContainer.querySelectorAll('.field-row')) {
+      const input = row.querySelector('.field-input');
+      if (input) { input.value = ''; input.disabled = false; }
+      row.querySelector('.null-btn')?.classList.remove('active');
+      row.classList.remove('has-value');
+    }
+    this.saveFieldValues();
+  }
+
+  // ── Connection / persistence ─────────────────────────────────
+
   attachEventListeners() {
     this.searchBtn.addEventListener('click', () => this.search());
     this.downloadAllBtn.addEventListener('click', () =>
       this.downloadAssets(this.allAssets, 'all')
     );
     this.downloadSelectedBtn.addEventListener('click', () => {
-      const selected = this.allAssets.filter((a) =>
-        this.selectedAssets.has(a.id)
-      );
+      const selected = this.allAssets.filter((a) => this.selectedAssets.has(a.id));
       this.downloadAssets(selected, 'selected');
     });
     this.selectAllBtn.addEventListener('click', () => this.selectAll());
@@ -61,19 +329,20 @@ class ImmichMetadataSearch {
     this.prevPageBtn.addEventListener('click', () => this.previousPage());
     this.nextPageBtn.addEventListener('click', () => this.nextPage());
 
+    this.fieldFilterInput.addEventListener('input', () =>
+      this.filterFields(this.fieldFilterInput.value)
+    );
+    this.clearFieldsBtn.addEventListener('click', () => this.clearAllFields());
+
     this.useProxyInput.addEventListener('change', () => {
       this.proxyGroup.hidden = !this.useProxyInput.checked;
       localStorage.setItem('metaSearch_useProxy', this.useProxyInput.checked);
     });
-
     this.hostInput.addEventListener('change', () =>
       localStorage.setItem('metaSearch_host', this.hostInput.value)
     );
     this.apiKeyInput.addEventListener('change', () =>
       localStorage.setItem('metaSearch_apiKey', this.apiKeyInput.value)
-    );
-    this.queryInput.addEventListener('change', () =>
-      localStorage.setItem('metaSearch_query', this.queryInput.value)
     );
     this.proxyInput.addEventListener('change', () =>
       localStorage.setItem('metaSearch_proxy', this.proxyInput.value)
@@ -88,15 +357,12 @@ class ImmichMetadataSearch {
   loadFromLocalStorage() {
     const host = localStorage.getItem('metaSearch_host');
     const apiKey = localStorage.getItem('metaSearch_apiKey');
-    const query = localStorage.getItem('metaSearch_query');
     const useProxy = localStorage.getItem('metaSearch_useProxy') === 'true';
     const proxy = localStorage.getItem('metaSearch_proxy');
-    const sidebarHidden =
-      localStorage.getItem('metaSearch_sidebarHidden') === 'true';
+    const sidebarHidden = localStorage.getItem('metaSearch_sidebarHidden') === 'true';
 
     if (host) this.hostInput.value = host;
     if (apiKey) this.apiKeyInput.value = apiKey;
-    this.queryInput.value = query || DEFAULT_QUERY;
     if (proxy) this.proxyInput.value = proxy;
 
     this.useProxyInput.checked = useProxy;
@@ -107,6 +373,8 @@ class ImmichMetadataSearch {
       this.toggleSidebarBtn.textContent = 'Show Config';
       this.showConfigBtn.hidden = false;
     }
+
+    this.loadFieldValues();
   }
 
   toggleSidebar() {
@@ -118,7 +386,7 @@ class ImmichMetadataSearch {
   }
 
   handleKeyShortcuts(e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
     if (e.code === 'KeyN') {
       if (e.shiftKey) {
@@ -165,6 +433,8 @@ class ImmichMetadataSearch {
     };
   }
 
+  // ── Search ───────────────────────────────────────────────────
+
   async search() {
     this.host = this.hostInput.value.trim();
     this.apiKey = this.apiKeyInput.value.trim();
@@ -173,14 +443,6 @@ class ImmichMetadataSearch {
 
     if (!this.host || !this.apiKey) {
       this.setStatus('Please fill in host and API key', 'error');
-      return;
-    }
-
-    let queryBody;
-    try {
-      queryBody = JSON.parse(this.queryInput.value);
-    } catch (e) {
-      this.setStatus(`Invalid JSON: ${e.message}`, 'error');
       return;
     }
 
@@ -197,6 +459,7 @@ class ImmichMetadataSearch {
     this.setStatus('Searching…', 'loading');
 
     try {
+      const queryBody = this.buildQueryBody();
       this.allAssets = await this.fetchAllAssets(queryBody);
       this.currentPage = 0;
       this.renderGallery();
@@ -246,6 +509,8 @@ class ImmichMetadataSearch {
 
     return allAssets;
   }
+
+  // ── Gallery ──────────────────────────────────────────────────
 
   renderGallery(scroll = false) {
     const startIdx = this.currentPage * this.pageSize;
@@ -307,10 +572,7 @@ class ImmichMetadataSearch {
   updateUI() {
     const totalPages = Math.ceil(this.allAssets.length / this.pageSize);
     const startIdx = this.currentPage * this.pageSize + 1;
-    const endIdx = Math.min(
-      (this.currentPage + 1) * this.pageSize,
-      this.allAssets.length
-    );
+    const endIdx = Math.min((this.currentPage + 1) * this.pageSize, this.allAssets.length);
 
     this.pageNumber.textContent =
       this.allAssets.length > 0
@@ -325,18 +587,9 @@ class ImmichMetadataSearch {
 
     const hasAssets = this.allAssets.length > 0;
     this.downloadAllBtn.disabled = !hasAssets || this.isDownloading;
-    this.downloadAllBtn.textContent = '';
-    this.downloadAllBtn.insertAdjacentHTML(
-      'afterbegin',
-      `<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.84v6h5.66V9h3.84L12 2z" fill="currentColor"/></svg> Download All (${this.allAssets.length})`
-    );
-    this.downloadSelectedBtn.disabled =
-      this.selectedAssets.size === 0 || this.isDownloading;
-    this.downloadSelectedBtn.textContent = '';
-    this.downloadSelectedBtn.insertAdjacentHTML(
-      'afterbegin',
-      `<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.84v6h5.66V9h3.84L12 2z" fill="currentColor"/></svg> Download Selected (${this.selectedAssets.size})`
-    );
+    this.downloadAllBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.84v6h5.66V9h3.84L12 2z" fill="currentColor"/></svg> Download All (${this.allAssets.length})`;
+    this.downloadSelectedBtn.disabled = this.selectedAssets.size === 0 || this.isDownloading;
+    this.downloadSelectedBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.84v6h5.66V9h3.84L12 2z" fill="currentColor"/></svg> Download Selected (${this.selectedAssets.size})`;
 
     this.selectAllBtn.disabled = !hasAssets;
     this.deselectAllBtn.disabled = this.selectedAssets.size === 0;
@@ -372,19 +625,17 @@ class ImmichMetadataSearch {
 
   selectAll() {
     this.allAssets.forEach((a) => this.selectedAssets.add(a.id));
-    this.gallery
-      .querySelectorAll('.gallery-item')
-      .forEach((el) => el.classList.add('selected'));
+    this.gallery.querySelectorAll('.gallery-item').forEach((el) => el.classList.add('selected'));
     this.updateUI();
   }
 
   deselectAll() {
     this.selectedAssets.clear();
-    this.gallery
-      .querySelectorAll('.gallery-item')
-      .forEach((el) => el.classList.remove('selected'));
+    this.gallery.querySelectorAll('.gallery-item').forEach((el) => el.classList.remove('selected'));
     this.updateUI();
   }
+
+  // ── Download ─────────────────────────────────────────────────
 
   async downloadAssets(assets, label = 'search') {
     if (!assets.length) return;
@@ -415,9 +666,7 @@ class ImmichMetadataSearch {
         });
 
         if (!response.ok) {
-          throw new Error(
-            `Download failed (${response.status}): ${response.statusText}`
-          );
+          throw new Error(`Download failed (${response.status}): ${response.statusText}`);
         }
 
         const blob = await response.blob();

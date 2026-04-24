@@ -81,15 +81,7 @@ body {
   transition: border-color 0.2s;
 }
 
-.form-group textarea {
-  resize: vertical;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-  line-height: 1.5;
-  min-height: 120px;
-}
-
 .form-group input:focus,
-.form-group textarea:focus {
   outline: none;
   border-color: #1976d2;
   box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
@@ -427,4 +419,146 @@ body {
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* ── Query filter / field list ── */
+
+.query-filter {
+  position: sticky;
+  top: -20px; /* counteract sidebar padding */
+  z-index: 10;
+  background: #fff;
+  padding: 12px 0 10px;
+  margin-top: 12px;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 2px;
+}
+
+.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+}
+
+.btn-clear-fields {
+  background: none;
+  border: none;
+  color: #1976d2;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-transform: none;
+}
+
+.btn-clear-fields:hover {
+  text-decoration: underline;
+}
+
+#fieldFilter {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  transition: border-color 0.2s;
+}
+
+#fieldFilter:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.search-fields {
+  margin-bottom: 16px;
+}
+
+.field-row {
+  padding: 7px 0 7px 6px;
+  border-bottom: 1px solid #f0f0f0;
+  border-left: 3px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.field-row.has-value {
+  border-left-color: #1976d2;
+}
+
+.field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #777;
+  letter-spacing: 0.3px;
+  cursor: default;
+}
+
+.null-btn {
+  font-size: 10px;
+  padding: 1px 5px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  line-height: 1.6;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.null-btn:hover {
+  border-color: #bbb;
+  color: #666;
+}
+
+.null-btn.active {
+  background: #1976d2;
+  color: #fff;
+  border-color: #1565c0;
+}
+
+.field-input {
+  width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 13px;
+  background: #fff;
+  color: #333;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+}
+
+.field-input:disabled {
+  background: #f5f5f5;
+  color: #bbb;
+  cursor: not-allowed;
+}
+
+select.field-input {
+  cursor: pointer;
+}
+
+input[type="datetime-local"].field-input {
+  font-size: 12px;
 }
