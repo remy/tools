@@ -230,6 +230,21 @@ details.panel > .panel-body {
   font-size: 0.75rem;
   font-weight: 500;
   color: var(--text2);
+
+  &.is-success {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+}
+
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
 }
 
 .drop-zone {

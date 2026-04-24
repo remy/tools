@@ -62,26 +62,30 @@
       </div>
     </details>
 
-    <section class="panel" id="endpoints-panel" hidden>
-      <header class="panel-header">
-        <div class="panel-title">
-          <h2>Endpoints</h2>
+    <details class="panel" id="endpoints-panel" hidden open>
+      <summary>
+        <span>
+          <span>Endpoints</span>
           <span class="pill" id="selection-meta">0 selected</span>
-        </div>
-        <div class="panel-actions">
-          <label class="field search-field">
-            <input id="search-input" type="search" placeholder="Filter endpoints…">
-          </label>
-          <button class="btn" id="select-all-btn" type="button">Select all</button>
-          <button class="btn" id="select-none-btn" type="button">Clear</button>
-          <label class="checkbox-inline" title="Group endpoints by their first tag (or path prefix).">
-            <input type="checkbox" id="group-by-tag" checked>
-            <span>Group by tag</span>
-          </label>
-        </div>
-      </header>
+        </span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </summary>
+      <div class="panel-toolbar">
+        <label class="field search-field">
+          <input id="search-input" type="search" placeholder="Filter endpoints…">
+        </label>
+        <button class="btn" id="select-all-btn" type="button">Select all</button>
+        <button class="btn" id="select-none-btn" type="button">Clear</button>
+        <label class="checkbox-inline" title="Group endpoints by their first tag (or path prefix).">
+          <input type="checkbox" id="group-by-tag" checked>
+          <span>Group by tag</span>
+        </label>
+      </div>
       <div id="endpoints-list" class="endpoints-list"></div>
-    </section>
+    </details>
 
     <section class="panel" id="output-panel" hidden>
       <header class="panel-header">
