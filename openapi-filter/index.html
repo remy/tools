@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Paste an OpenAPI 3.x JSON schema, pick the endpoints you care about, and export a trimmed schema containing only those operations and the components they depend on.">
+  <meta name="category" content="Developer Tools">
+  <title>OpenAPI Schema Filter</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 13h12v-2H6v2zm-3-7v2h18V6H3zm7 12h4v-2h-4v2z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>OpenAPI Schema Filter</h1>
+        <p class="subtitle">Paste an OpenAPI 3.x schema, pick the endpoints you want, and export a trimmed schema with only the paths and components they reference.</p>
+      </div>
+      <button class="btn-icon" id="theme-btn" title="Toggle theme" aria-label="Toggle theme">
+        <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/>
+          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
+          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
+          <line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/>
+          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
+          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
+        </svg>
+        <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden>
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+    </header>
+
+    <details class="panel" id="input-panel" open>
+      <summary>
+        <span>
+          <span id="input-summary-label">Input schema</span>
+          <span class="pill" id="input-meta" hidden></span>
+        </span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </summary>
+      <div class="panel-body">
+        <div class="drop-zone" id="drop-zone">
+          <span>Drop an <code>openapi.json</code> file here, or click to browse</span>
+          <input type="file" id="file-input" accept=".json,application/json" hidden>
+        </div>
+        <textarea id="schema-input" spellcheck="false"
+                  placeholder="Or paste your OpenAPI 3.x JSON schema here…"></textarea>
+        <div class="input-footer">
+          <div id="parse-status" class="status" role="status" aria-live="polite">Waiting for input.</div>
+          <div class="input-actions">
+            <button class="btn" id="load-sample-btn" type="button">Load sample</button>
+            <button class="btn" id="clear-btn" type="button" hidden>Clear</button>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <section class="panel" id="endpoints-panel" hidden>
+      <header class="panel-header">
+        <div class="panel-title">
+          <h2>Endpoints</h2>
+          <span class="pill" id="selection-meta">0 selected</span>
+        </div>
+        <div class="panel-actions">
+          <label class="field search-field">
+            <input id="search-input" type="search" placeholder="Filter endpoints…">
+          </label>
+          <button class="btn" id="select-all-btn" type="button">Select all</button>
+          <button class="btn" id="select-none-btn" type="button">Clear</button>
+          <label class="checkbox-inline" title="Group endpoints by their first tag (or path prefix).">
+            <input type="checkbox" id="group-by-tag" checked>
+            <span>Group by tag</span>
+          </label>
+        </div>
+      </header>
+      <div id="endpoints-list" class="endpoints-list"></div>
+    </section>
+
+    <section class="panel" id="output-panel" hidden>
+      <header class="panel-header">
+        <div class="panel-title">
+          <h2>Trimmed schema</h2>
+          <span class="pill" id="output-meta"></span>
+        </div>
+        <div class="panel-actions">
+          <button class="btn btn-primary" id="copy-btn" type="button">Copy JSON</button>
+          <button class="btn" id="download-btn" type="button">Download</button>
+        </div>
+      </header>
+      <pre id="output-preview" class="output-preview"></pre>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
