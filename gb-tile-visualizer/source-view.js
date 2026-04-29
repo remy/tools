@@ -17,7 +17,9 @@ export function renderSource() {
   for (let ai = 0; ai < arrays.length; ai++) {
     const arr = arrays[ai];
     // Number of hex positions per tile (not expanded bytes)
-    const valsPerTile = arr.mode === 'raw' ? 64 : (arr.wide ? 8 : 16);
+    const valsPerTile = arr.mode === 'raw' ? 64
+      : arr.mode === '1bpp' ? (arr.wide ? 4 : 8)
+      : (arr.wide ? 8 : 16);
     for (let bi = 0; bi < arr.hexPositions.length; bi++) {
       const tileIdx = Math.floor(bi / valsPerTile);
       hexMap.set(arr.hexPositions[bi].pos, {

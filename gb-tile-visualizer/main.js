@@ -4,6 +4,8 @@ import { el, initDOM } from './dom.js';
 import { selectTile, tileGridPosition, renderTileGrid } from './tile-grid.js';
 import { paintPixel, panTile } from './tile-zoom.js';
 import { loadFile, loadSource, handleCopy, handleDownload, handleReset } from './file-io.js';
+import { scanSource } from './scanner.js';
+import { renderSource } from './source-view.js';
 
 initDOM();
 
@@ -97,6 +99,23 @@ el.tileZoomCanvas.addEventListener('touchend', () => { state.painting = false; }
 el.clusterToggle.addEventListener('change', () => {
   state.cluster2x2 = el.clusterToggle.checked;
   renderTileGrid();
+});
+
+// ---- Parser mode toggle ----
+el.parserMode.addEventListener('change', () => {
+  state.parserMode = el.parserMode.value;
+  if (!state.currentSource) return;
+  state.arrays = scanSource(state.currentSource, state.parserMode);
+  state.selectedArray = 0;
+  state.selectedTile = 0;
+  if (state.arrays.length > 0) {
+    el.editorPanel.hidden = false;
+    selectTile(0, 0);
+  } else {
+    el.editorPanel.hidden = true;
+    el.editorInfo.textContent = 'No tile data found';
+  }
+  renderSource();
 });
 
 // ---- Palette buttons ----

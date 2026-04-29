@@ -12,7 +12,7 @@ export function loadSource(text, fileName) {
   state.selectedArray = 0;
   state.selectedTile = 0;
 
-  state.arrays = scanSource(text);
+  state.arrays = scanSource(text, state.parserMode);
 
   el.fileName.textContent = state.fileName;
   el.dropZone.classList.add('compact');
