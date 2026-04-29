@@ -1,4 +1,4 @@
-// ---- 2BPP Encoding/Decoding ----
+// ---- 2BPP & 1BPP Encoding/Decoding ----
 
 export function encodeTile(tile) {
   const bytes = new Uint8Array(16);
@@ -25,6 +25,33 @@ export function decodeTile(bytes, offset) {
       const bit = 7 - col;
       const color = ((hi >> bit) & 1) << 1 | ((lo >> bit) & 1);
       tileRow.push(color);
+    }
+    tile.push(tileRow);
+  }
+  return tile;
+}
+
+// 1BPP: 8 bytes per tile, one byte per row, MSB = leftmost pixel.
+// Bit 0 → DMG color 0 (lightest), bit 1 → DMG color 3 (darkest) for contrast.
+export function encode1bppTile(tile) {
+  const bytes = new Uint8Array(8);
+  for (let row = 0; row < 8; row++) {
+    let b = 0;
+    for (let col = 0; col < 8; col++) {
+      if (tile[row][col]) b |= (1 << (7 - col));
+    }
+    bytes[row] = b;
+  }
+  return bytes;
+}
+
+export function decode1bppTile(bytes, offset) {
+  const tile = [];
+  for (let row = 0; row < 8; row++) {
+    const tileRow = [];
+    const b = bytes[offset + row];
+    for (let col = 0; col < 8; col++) {
+      tileRow.push(((b >> (7 - col)) & 1) ? 3 : 0);
     }
     tile.push(tileRow);
   }

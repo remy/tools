@@ -54,11 +54,19 @@ export function drawZoomHighlight() {
 }
 
 export function byteIdxToPixelRegion(arr, byteIdx) {
-  const valsPerTile = arr.mode === 'raw' ? 64 : (arr.wide ? 8 : 16);
+  const valsPerTile = arr.mode === 'raw' ? 64
+    : arr.mode === '1bpp' ? (arr.wide ? 4 : 8)
+    : (arr.wide ? 8 : 16);
   const localIdx = byteIdx % valsPerTile;
   if (arr.mode === 'raw') {
     // Each value is one pixel
     return { row: Math.floor(localIdx / 8), col: localIdx % 8, w: 1, h: 1 };
+  }
+  if (arr.mode === '1bpp') {
+    // 8-bit: 1 byte per row; 16-bit: 1 value per 2 rows
+    return arr.wide
+      ? { row: localIdx * 2, col: 0, w: 8, h: 2 }
+      : { row: localIdx, col: 0, w: 8, h: 1 };
   }
   if (arr.wide) {
     // 16-bit value: lo+hi byte pair = one full row of 8 pixels

@@ -27,6 +27,13 @@
     <div class="toolbar">
       <span class="file-name" id="fileName"></span>
       <div class="toolbar-actions">
+        <label class="parser-toggle" title="Tile data format">
+          Parser:
+          <select id="parserMode" class="btn btn-sm">
+            <option value="2bpp">2BPP</option>
+            <option value="1bpp">1BPP</option>
+          </select>
+        </label>
         <button class="btn btn-sm" id="copyBtn" title="Copy source">Copy</button>
         <button class="btn btn-sm" id="downloadBtn" title="Download modified source">Download</button>
         <button class="btn btn-sm btn-ghost" id="resetBtn" title="Reset to original">Reset</button>

@@ -1,5 +1,5 @@
 // ---- Source Code Scanning ----
-import { decodeTile } from './codec.js';
+import { decodeTile, decode1bppTile } from './codec.js';
 
 export function findArrayBody(source, matchIndex, matchLength) {
   const braceStart = matchIndex + matchLength - 1;
@@ -52,7 +52,7 @@ export function extractValues(body, braceStart) {
   return null;
 }
 
-export function scanSource(source) {
+export function scanSource(source, parserMode = '2bpp') {
   const arrays = [];
   const arrayPattern = /(?:(?:static|const|extern)\s+)*(?:(?:static|const)\s+)*(?:unsigned\s+char|uint8_t|UINT8|UBYTE|BYTE|u8)\s+(\w+)\s*\[[\w\s]*\]\s*(?:\[[\w\s]*\]\s*)*=\s*\{/g;
   let match;
@@ -90,9 +90,15 @@ export function scanSource(source) {
     const count = values.length;
 
     let tiles = [];
-    let mode; // '2bpp' or 'raw'
+    let mode; // '2bpp', '1bpp', or 'raw'
 
-    if (count % 16 === 0 && !allPixelRange) {
+    if (parserMode === '1bpp') {
+      if (count % 8 !== 0) continue;
+      mode = '1bpp';
+      for (let t = 0; t < count; t += 8) {
+        tiles.push(decode1bppTile(values, t));
+      }
+    } else if (count % 16 === 0 && !allPixelRange) {
       // Standard 2BPP tile data
       mode = '2bpp';
       for (let t = 0; t < count; t += 16) {

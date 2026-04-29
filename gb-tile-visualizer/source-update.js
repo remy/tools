@@ -1,7 +1,7 @@
 // ---- Update Source from Tile Edit ----
 import { state } from './state.js';
 import { el } from './dom.js';
-import { encodeTile } from './codec.js';
+import { encodeTile, encode1bppTile } from './codec.js';
 import { scanSource } from './scanner.js';
 import { renderSource } from './source-view.js';
 import { drawTileToCanvas } from './tile-grid.js';
@@ -26,6 +26,20 @@ export function updateSourceFromTile(arrayIdx, tileIdx) {
     } else {
       startVal = tileIdx * 16;
       valCount = 16;
+      newValues = Array.from(encoded);
+    }
+  } else if (arr.mode === '1bpp') {
+    const encoded = encode1bppTile(tile);
+    if (arr.wide) {
+      startVal = tileIdx * 4;
+      valCount = 4;
+      newValues = [];
+      for (let r = 0; r < 4; r++) {
+        newValues.push(encoded[r * 2] | (encoded[r * 2 + 1] << 8));
+      }
+    } else {
+      startVal = tileIdx * 8;
+      valCount = 8;
       newValues = Array.from(encoded);
     }
   } else {
@@ -65,7 +79,7 @@ export function updateSourceFromTile(arrayIdx, tileIdx) {
   // If any value changed length, re-scan to fix all positions
   if (lengthChanged) {
     const savedArrays = state.arrays.map(a => ({ tiles: a.tiles, mode: a.mode, format: a.format, wide: a.wide }));
-    state.arrays = scanSource(src);
+    state.arrays = scanSource(src, state.parserMode);
     for (let i = 0; i < state.arrays.length && i < savedArrays.length; i++) {
       state.arrays[i].tiles = savedArrays[i].tiles;
       state.arrays[i].mode = savedArrays[i].mode;

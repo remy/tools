@@ -23,6 +23,7 @@ export function initDOM() {
   el.nextTileBtn = document.getElementById('nextTileBtn');
   el.tileCounter = document.getElementById('tileCounter');
   el.clusterToggle = document.getElementById('clusterToggle');
+  el.parserMode = document.getElementById('parserMode');
 
   gridCtx = el.tileGridCanvas.getContext('2d', { willReadFrequently: true });
   zoomCtx = el.tileZoomCanvas.getContext('2d', { willReadFrequently: true });

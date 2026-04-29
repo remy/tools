@@ -13,4 +13,5 @@ export const state = {
   painting: false,
   hoveredPixels: null, // { row, col, w, h } region to highlight on zoom canvas
   cluster2x2: false,
+  parserMode: '2bpp', // '2bpp' (default, auto-detects raw) or '1bpp'
 };
