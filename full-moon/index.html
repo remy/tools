@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple page that tells you whether it is a full moon today, and when the next full moon is.">
+    <meta name="category" content="Productivity">
+    <title>Is there a full moon?</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --bg-2: #131a33;
+        --text: #e8ecff;
+        --text-dim: #9aa3c7;
+        --accent: #ffd97a;
+        --moon: #f5e9c2;
+        --moon-shadow: #c8b88a;
+        --crater: #d9c994;
+        --radius: 14px;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        min-height: 100dvh;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: var(--text);
+        line-height: 1.5;
+        background:
+          radial-gradient(ellipse at top, #1c2552 0%, var(--bg) 60%, #05070f 100%);
+        background-attachment: fixed;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Star backdrop */
+      .stars {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        background-image:
+          radial-gradient(1px 1px at 13% 22%, #fff8, transparent 60%),
+          radial-gradient(1px 1px at 27% 71%, #ffffffb3, transparent 60%),
+          radial-gradient(1.5px 1.5px at 41% 14%, #fff, transparent 60%),
+          radial-gradient(1px 1px at 56% 47%, #ffffff99, transparent 60%),
+          radial-gradient(1px 1px at 64% 81%, #fffc, transparent 60%),
+          radial-gradient(1.5px 1.5px at 73% 31%, #fff, transparent 60%),
+          radial-gradient(1px 1px at 81% 60%, #ffffff80, transparent 60%),
+          radial-gradient(1px 1px at 89% 12%, #fffd, transparent 60%),
+          radial-gradient(1px 1px at 6% 53%, #ffffffaa, transparent 60%),
+          radial-gradient(1px 1px at 33% 91%, #fff, transparent 60%),
+          radial-gradient(1px 1px at 49% 8%, #ffffff70, transparent 60%),
+          radial-gradient(1.5px 1.5px at 95% 75%, #fff, transparent 60%);
+      }
+
+      main {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        width: 100%;
+        max-width: 760px;
+        margin-inline: auto;
+        padding: 2rem 1.25rem 3rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1.75rem;
+      }
+
+      .moon-wrap {
+        width: clamp(180px, 45vw, 280px);
+        aspect-ratio: 1;
+        position: relative;
+        filter: drop-shadow(0 0 40px #ffd97a55) drop-shadow(0 0 14px #ffffff33);
+      }
+
+      .moon-wrap.is-no {
+        filter: drop-shadow(0 0 18px #6b78b333);
+      }
+
+      .moon-svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      h1.answer {
+        font-size: clamp(2.5rem, 9vw, 4.5rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+      }
+
+      h1.answer .yes {
+        color: var(--accent);
+        text-shadow: 0 0 30px #ffd97a55;
+      }
+
+      h1.answer .no {
+        color: var(--text);
+      }
+
+      .question {
+        font-size: clamp(1rem, 3vw, 1.25rem);
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-weight: 600;
+      }
+
+      .next {
+        background: #ffffff0a;
+        border: 1px solid #ffffff1a;
+        border-radius: var(--radius);
+        padding: 1.1rem 1.4rem;
+        max-width: 32rem;
+        width: 100%;
+        backdrop-filter: blur(6px);
+      }
+
+      .next-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: var(--text-dim);
+        margin-bottom: 0.4rem;
+      }
+
+      .next-relative {
+        font-size: clamp(1.4rem, 4.5vw, 1.9rem);
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.01em;
+      }
+
+      .next-date {
+        font-size: 0.9rem;
+        color: var(--accent);
+        margin-top: 0.3rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="stars" aria-hidden="true"></div>
+
+    <main>
+      <div class="moon-wrap" id="moon" aria-hidden="true">
+        <svg class="moon-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="moonFill" cx="35%" cy="35%" r="75%">
+              <stop offset="0%" stop-color="#fff8e0" />
+              <stop offset="55%" stop-color="#f5e9c2" />
+              <stop offset="100%" stop-color="#c8b88a" />
+            </radialGradient>
+            <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="60%" stop-color="#ffd97a00" />
+              <stop offset="100%" stop-color="#ffd97a55" />
+            </radialGradient>
+          </defs>
+          <circle cx="100" cy="100" r="98" fill="url(#moonGlow)" />
+          <circle cx="100" cy="100" r="80" fill="url(#moonFill)" />
+          <g fill="#c8b88a" fill-opacity="0.55">
+            <circle cx="78" cy="72" r="9" />
+            <circle cx="125" cy="88" r="6" />
+            <circle cx="92" cy="118" r="11" />
+            <circle cx="135" cy="135" r="7" />
+            <circle cx="65" cy="135" r="5" />
+            <circle cx="115" cy="58" r="4" />
+            <circle cx="60" cy="95" r="3" />
+            <circle cx="148" cy="108" r="3.5" />
+            <circle cx="105" cy="148" r="4" />
+          </g>
+          <g fill="#fff7d6" fill-opacity="0.4">
+            <circle cx="74" cy="68" r="3" />
+            <circle cx="89" cy="113" r="4" />
+            <circle cx="123" cy="86" r="2" />
+          </g>
+        </svg>
+      </div>
+
+      <p class="question">Is there a full moon?</p>
+      <h1 class="answer" id="answer">…</h1>
+
+      <div class="next">
+        <div class="next-label">Next full moon</div>
+        <div class="next-relative" id="next-relative"></div>
+        <div class="next-date" id="next-date">…</div>
+      </div>
+    </main>
+
+    <script>
+      // Each entry is in Java's Date.toString() format: "Sat Jan 03 10:04:15 EST 2026"
+      const FULL_MOONS_RAW = `Sat Jan 03 10:04:15 EST 2026
+Sun Feb 01 22:10:36 EST 2026
+Tue Mar 03 11:39:12 EST 2026
+Thu Apr 02 03:13:20 EDT 2026
+Fri May 01 18:24:43 EDT 2026
+Sun May 31 09:46:46 EDT 2026
+Tue Jun 30 00:58:10 EDT 2026
+Wed Jul 29 15:37:11 EDT 2026
+Fri Aug 28 05:19:57 EDT 2026
+Sat Sep 26 17:50:21 EDT 2026
+Mon Oct 26 05:13:07 EDT 2026
+Tue Nov 24 14:55:02 EST 2026
+Thu Dec 24 01:29:47 EST 2026
+Fri Jan 22 12:18:32 EST 2027
+Sat Feb 20 23:24:11 EST 2027
+Mon Mar 22 11:44:02 EDT 2027
+Tue Apr 20 23:27:26 EDT 2027
+Thu May 20 11:59:28 EDT 2027
+Sat Jun 19 01:45:12 EDT 2027
+Sun Jul 18 16:46:16 EDT 2027
+Tue Aug 17 08:30:22 EDT 2027
+Thu Sep 16 00:05:23 EDT 2027
+Fri Oct 15 14:48:56 EDT 2027
+Sun Nov 14 03:27:49 EST 2027
+Mon Dec 13 16:10:37 EST 2027
+Wed Jan 12 04:04:33 EST 2028
+Thu Feb 10 15:04:37 EST 2028
+Sat Mar 11 01:06:31 EST 2028
+Sun Apr 09 11:26:59 EDT 2028
+Mon May 08 20:49:24 EDT 2028
+Wed Jun 07 07:09:36 EDT 2028
+Thu Jul 06 19:12:07 EDT 2028
+Sat Aug 05 09:11:36 EDT 2028
+Mon Sep 04 00:49:34 EDT 2028
+Tue Oct 03 17:26:52 EDT 2028
+Thu Nov 02 10:19:02 EDT 2028
+Sat Dec 02 01:41:40 EST 2028
+Sun Dec 31 16:49:45 EST 2028
+Tue Jan 30 06:04:49 EST 2029
+Wed Feb 28 17:11:27 EST 2029
+Fri Mar 30 03:27:30 EDT 2029
+Sat Apr 28 11:37:44 EDT 2029
+Sun May 27 19:38:16 EDT 2029
+Tue Jun 26 04:23:06 EDT 2029
+Wed Jul 25 14:36:42 EDT 2029
+Fri Aug 24 02:52:16 EDT 2029
+Sat Sep 22 17:30:26 EDT 2029
+Mon Oct 22 10:29:04 EDT 2029
+Wed Nov 21 04:04:35 EST 2029
+Thu Dec 20 22:47:56 EST 2029
+Sat Jan 19 15:56:09 EST 2030
+Mon Feb 18 06:22:06 EST 2030
+Tue Mar 19 18:58:37 EDT 2030
+Thu Apr 18 04:21:40 EDT 2030
+Fri May 17 12:20:05 EDT 2030
+Sat Jun 15 19:41:07 EDT 2030
+Mon Jul 15 03:11:50 EDT 2030
+Tue Aug 13 11:44:17 EDT 2030
+Wed Sep 11 22:17:33 EDT 2030
+Fri Oct 11 11:46:52 EDT 2030
+Sun Nov 10 03:31:34 EST 2030
+Mon Dec 09 22:42:08 EST 2030
+Wed Jan 08 18:27:24 EST 2031
+Fri Feb 07 12:48:19 EST 2031
+Sun Mar 09 05:32:15 EDT 2031
+Mon Apr 07 18:23:52 EDT 2031
+Wed May 07 04:42:03 EDT 2031
+Thu Jun 05 13:00:03 EDT 2031
+Fri Jul 04 20:02:21 EDT 2031
+Sun Aug 03 02:46:30 EDT 2031
+Mon Sep 01 10:21:08 EDT 2031
+Tue Sep 30 19:58:02 EDT 2031
+Thu Oct 30 08:33:05 EDT 2031
+Fri Nov 28 23:19:21 EST 2031
+Sun Dec 28 17:33:51 EST 2031
+Tue Jan 27 12:53:01 EST 2032
+Thu Feb 26 07:43:54 EST 2032
+Sat Mar 27 01:47:40 EDT 2032
+Sun Apr 25 16:11:49 EDT 2032
+Tue May 25 03:39:39 EDT 2032
+Wed Jun 23 12:34:54 EDT 2032
+Thu Jul 22 19:53:59 EDT 2032
+Sat Aug 21 02:49:09 EDT 2032
+Sun Sep 19 10:31:57 EDT 2032
+Mon Oct 18 19:59:13 EDT 2032
+Wed Nov 17 06:42:54 EST 2032
+Thu Dec 16 20:49:44 EST 2032
+Sat Jan 15 13:07:43 EST 2033
+Mon Feb 14 07:04:42 EST 2033
+Wed Mar 16 02:37:59 EDT 2033
+Thu Apr 14 20:18:36 EDT 2033
+Sat May 14 11:44:53 EDT 2033
+Mon Jun 13 00:21:44 EDT 2033
+Tue Jul 12 10:31:06 EDT 2033
+Wed Aug 10 19:10:19 EDT 2033
+Fri Sep 09 03:22:51 EDT 2033
+Sat Oct 08 11:59:39 EDT 2033
+Sun Nov 06 20:33:10 EST 2033
+Tue Dec 06 07:23:12 EST 2033
+Wed Jan 04 19:48:22 EST 2034
+Fri Feb 03 10:05:55 EST 2034
+Sun Mar 05 02:11:30 EST 2034
+Mon Apr 03 20:20:03 EDT 2034
+Wed May 03 13:17:02 EDT 2034
+Fri Jun 02 04:55:39 EDT 2034
+Sat Jul 01 18:46:23 EDT 2034
+Mon Jul 31 06:56:35 EDT 2034
+Tue Aug 29 17:51:31 EDT 2034
+Thu Sep 28 03:58:46 EDT 2034
+Fri Oct 27 13:44:07 EDT 2034
+Sat Nov 25 22:33:46 EST 2034
+Mon Dec 25 08:56:11 EST 2034
+Tue Jan 23 20:18:14 EST 2035
+Thu Feb 22 08:55:11 EST 2035
+Fri Mar 23 23:42:56 EDT 2035
+Sun Apr 22 14:21:18 EDT 2035
+Tue May 22 05:26:19 EDT 2035
+Wed Jun 20 20:38:10 EDT 2035
+Fri Jul 20 11:38:00 EDT 2035
+Sun Aug 19 02:01:59 EDT 2035
+Mon Sep 17 15:25:34 EDT 2035
+Wed Oct 17 03:37:40 EDT 2035
+Thu Nov 15 13:51:01 EST 2035
+Sat Dec 15 00:35:23 EST 2035
+Sun Jan 13 11:18:08 EST 2036
+Mon Feb 11 22:10:13 EST 2036
+Wed Mar 12 10:10:33 EDT 2036
+Thu Apr 10 21:23:29 EDT 2036
+Sat May 10 09:10:28 EDT 2036
+Sun Jun 08 22:03:04 EDT 2036
+Tue Jul 08 12:20:46 EDT 2036
+Thu Aug 07 03:50:43 EDT 2036
+Fri Sep 05 19:47:35 EDT 2036
+Sun Oct 05 11:17:19 EDT 2036
+Tue Nov 04 00:46:27 EST 2036
+Wed Dec 03 14:10:39 EST 2036
+Fri Jan 02 02:37:14 EST 2037
+Sat Jan 31 14:05:42 EST 2037
+Mon Mar 02 00:29:23 EST 2037
+Tue Mar 31 10:54:43 EDT 2037
+Wed Apr 29 19:55:08 EDT 2037
+Fri May 29 05:25:29 EDT 2037
+Sat Jun 27 16:21:25 EDT 2037
+Mon Jul 27 05:16:53 EDT 2037
+Tue Aug 25 20:11:19 EDT 2037
+Thu Sep 24 12:33:52 EDT 2037
+Sat Oct 24 05:38:52 EDT 2037
+Sun Nov 22 21:37:44 EST 2037
+Tue Dec 22 13:41:07 EST 2037`;
+
+      const MONTHS = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+      const TZ_OFFSET_MIN = { EST: -5 * 60, EDT: -4 * 60 };
+
+      function parseFullMoon(line) {
+        // "Sat Jan 03 10:04:15 EST 2026"
+        const parts = line.trim().split(/\s+/);
+        if (parts.length !== 6) return null;
+        const [, mon, day, time, tz, year] = parts;
+        const [h, m, s] = time.split(':').map(Number);
+        const offsetMin = TZ_OFFSET_MIN[tz];
+        if (offsetMin === undefined) return null;
+        // Build the UTC timestamp: local time - offset = UTC
+        const utcMs = Date.UTC(Number(year), MONTHS[mon], Number(day), h, m, s) - offsetMin * 60 * 1000;
+        return new Date(utcMs);
+      }
+
+      const moons = FULL_MOONS_RAW.split('\n').map(parseFullMoon).filter(Boolean);
+
+      function isFullMoonNow(now, moons, windowHours = 12) {
+        const windowMs = windowHours * 3600 * 1000;
+        return moons.some((m) => Math.abs(m.getTime() - now.getTime()) <= windowMs);
+      }
+
+      function nextFullMoon(now, moons) {
+        return moons.find((m) => m.getTime() > now.getTime()) || null;
+      }
+
+      function relativeDays(from, to) {
+        // Calendar-day difference in user's local timezone
+        const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        const diffMs = startOfDay(to) - startOfDay(from);
+        return Math.round(diffMs / (24 * 3600 * 1000));
+      }
+
+      function formatRelative(days) {
+        if (days === 0) return 'today';
+        if (days === 1) return 'tomorrow';
+        if (days === -1) return 'yesterday';
+        if (days > 0) return `in ${days} days`;
+        return `${Math.abs(days)} days ago`;
+      }
+
+      function render() {
+        const now = new Date();
+        const isFull = isFullMoonNow(now, moons);
+        const next = nextFullMoon(now, moons);
+
+        const answerEl = document.getElementById('answer');
+        const moonEl = document.getElementById('moon');
+        if (isFull) {
+          answerEl.innerHTML = '<span class="yes">Yes</span>';
+          moonEl.classList.remove('is-no');
+        } else {
+          answerEl.innerHTML = '<span class="no">No</span>';
+          moonEl.classList.add('is-no');
+        }
+
+        const dateEl = document.getElementById('next-date');
+        const relEl = document.getElementById('next-relative');
+        if (next) {
+          const fmt = new Intl.DateTimeFormat(undefined, {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          });
+          dateEl.textContent = fmt.format(next);
+          const days = relativeDays(now, next);
+          relEl.textContent = formatRelative(days);
+        } else {
+          dateEl.textContent = 'No more full moons in the data set.';
+          relEl.textContent = '';
+        }
+      }
+
+      render();
+      // Re-render around midnight so the relative day stays fresh
+      setInterval(render, 60 * 1000);
+    </script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
