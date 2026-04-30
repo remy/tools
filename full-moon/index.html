@@ -144,34 +144,17 @@
         margin-bottom: 0.4rem;
       }
 
-      .next-date {
-        font-size: clamp(1.05rem, 3vw, 1.2rem);
-        font-weight: 600;
-        color: var(--text);
-      }
-
       .next-relative {
-        font-size: 0.95rem;
+        font-size: clamp(1.4rem, 4.5vw, 1.9rem);
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.01em;
+      }
+
+      .next-date {
+        font-size: 0.9rem;
         color: var(--accent);
-        margin-top: 0.25rem;
-      }
-
-      footer {
-        position: relative;
-        z-index: 1;
-        text-align: center;
-        padding: 1.25rem;
-        font-size: 0.8rem;
-        color: var(--text-dim);
-      }
-
-      footer a {
-        color: var(--accent);
-        text-decoration: none;
-      }
-
-      footer a:hover {
-        text-decoration: underline;
+        margin-top: 0.3rem;
       }
     </style>
   </head>
@@ -219,14 +202,10 @@
 
       <div class="next">
         <div class="next-label">Next full moon</div>
-        <div class="next-date" id="next-date">…</div>
         <div class="next-relative" id="next-relative"></div>
+        <div class="next-date" id="next-date">…</div>
       </div>
     </main>
-
-    <footer>
-      <a href="../">More tools</a>
-    </footer>
 
     <script>
       // Each entry is in Java's Date.toString() format: "Sat Jan 03 10:04:15 EST 2026"
