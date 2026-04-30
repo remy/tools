@@ -49,6 +49,11 @@
     "description": "Drop a pixel font file and generate an 8x8 grid representation of each glyph. Supports TTF, OTF, WOFF, and WOFF2 formats.",
     "title": "Font Grid Generator"
   },
+  "full-moon": {
+    "category": "Productivity",
+    "description": "A simple page that tells you whether it is a full moon today, and when the next full moon is.",
+    "title": "Is there a full moon?"
+  },
   "gb-font-extractor": {
     "category": "Developer Tools",
     "description": "Game Boy variable-width font editor. Extract bitmap data and glyph widths from a font image using magenta (#FF00FF) width markers. Generates C arrays for VWF engines.",
