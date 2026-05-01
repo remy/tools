@@ -34,6 +34,11 @@
     "description": "Play the classic numbers round from Countdown - reach the target using arithmetic operations",
     "title": "Countdown: The Number Experience"
   },
+  "css-anchor": {
+    "category": "Web Demos",
+    "description": "Interactive playground for CSS Anchor Positioning \u2014 drag the anchor, try every position-area, fallback, and visibility combo.",
+    "title": "CSS Anchor Positioning Playground"
+  },
   "distance-time-converter": {
     "category": "Calculators",
     "description": "Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed to calculate how long a journey will take.",
