@@ -768,8 +768,16 @@ body {
 }
 
 /* Output options popover */
+#optionsBtn {
+  anchor-name: --options-btn;
+}
+
 .options-popover {
   position: fixed;
+  position-anchor: --options-btn;
+  top: calc(anchor(bottom) + 4px);
+  left: anchor(left);
+  position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
   margin: 0;
   padding: var(--space-sm);
   background: var(--colour-block-bg);

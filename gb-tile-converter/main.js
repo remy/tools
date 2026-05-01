@@ -357,31 +357,6 @@ function applyTileMapMode() {
   el.formatToggleBtn.hidden = state.tileMap || state.fontMode || state.bpp1;
 }
 
-// ---- Output options popover positioning ----
-
-function positionOptionsPopover() {
-  const btnRect = el.optionsBtn.getBoundingClientRect();
-  let left = btnRect.left;
-  const w = el.optionsPopover.offsetWidth;
-  if (w && left + w > window.innerWidth - 8) {
-    left = Math.max(8, window.innerWidth - 8 - w);
-  }
-  el.optionsPopover.style.top = `${btnRect.bottom + 4}px`;
-  el.optionsPopover.style.left = `${left}px`;
-}
-
-el.optionsPopover.addEventListener('beforetoggle', e => {
-  if (e.newState === 'open') {
-    positionOptionsPopover();
-    // Re-measure once the popover is in the top layer so we can clamp its right edge.
-    requestAnimationFrame(positionOptionsPopover);
-    window.addEventListener('scroll', positionOptionsPopover, { passive: true, capture: true });
-    window.addEventListener('resize', positionOptionsPopover);
-  } else {
-    window.removeEventListener('scroll', positionOptionsPopover, { capture: true });
-    window.removeEventListener('resize', positionOptionsPopover);
-  }
-});
 
 // ---- 1bpp toggle ----
 
