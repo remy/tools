@@ -1,6 +1,6 @@
 import { state, FONT_CSS, FIRST_CHAR } from './state.js';
 import { el, initDOM } from './dom.js';
-import { calcAllWidths, findInvalid1bppTiles } from './color.js';
+import { calcAllWidths, analyze1bpp } from './color.js';
 import { onHeaderInput, updateOutput } from './header.js';
 import { applyZoom, renderOverview, quantize, updateImageInfo } from './overview.js';
 import { loadImageFromBlob, loadImageFile } from './image-io.js';
@@ -360,12 +360,12 @@ function applyTileMapMode() {
 // ---- 1bpp toggle ----
 
 function validate1bpp() {
-  const bad = findInvalid1bppTiles(state.tileData);
-  if (bad.length) {
-    const list = bad.length > 20
-      ? bad.slice(0, 20).join(', ') + `, … (+${bad.length - 20} more)`
-      : bad.join(', ');
-    alert(`1bpp output requires every pixel to be color 0 or color 3.\n\nTile${bad.length === 1 ? '' : 's'} with invalid colors: ${list}`);
+  const { badTiles } = analyze1bpp(state.tileData);
+  if (badTiles.length) {
+    const list = badTiles.length > 20
+      ? badTiles.slice(0, 20).join(', ') + `, … (+${badTiles.length - 20} more)`
+      : badTiles.join(', ');
+    alert(`1bpp output requires no more than 2 distinct colors across the tile set.\n\nTile${badTiles.length === 1 ? '' : 's'} introducing extra colors: ${list}`);
     return false;
   }
   return true;

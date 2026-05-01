@@ -186,34 +186,53 @@ export function decodeTile(bytes, offset) {
 }
 
 // 1bpp encode: 8 bytes per tile, one byte per row.
-// Color 0 → bit 0, color 3 → bit 1. Other colors are invalid (validate first).
-export function encodeTile1bpp(tile) {
+// hiColor maps to bit 1; everything else (typically the one other color in use) maps to bit 0.
+export function encodeTile1bpp(tile, hiColor) {
   const bytes = new Uint8Array(8);
   for (let row = 0; row < 8; row++) {
     let b = 0;
     for (let col = 0; col < 8; col++) {
-      if (tile[row][col] === 3) b |= (1 << (7 - col));
+      if (tile[row][col] === hiColor) b |= (1 << (7 - col));
     }
     bytes[row] = b;
   }
   return bytes;
 }
 
-// Returns array of indices for tiles that contain pixels other than 0 or 3.
-export function findInvalid1bppTiles(tileData) {
-  const bad = [];
+// Inspect tileData for 1bpp output:
+// - hiColor: the color that maps to bit 1 (highest-valued color in use, i.e. darkest in DMG).
+// - badTiles: indices of tiles introducing a 3rd/4th color (only set when > 2 distinct
+//   colors are used across the whole set; the 2 most-used colors are kept).
+export function analyze1bpp(tileData) {
+  const counts = [0, 0, 0, 0];
+  for (const tile of tileData) {
+    for (const row of tile) {
+      for (const c of row) counts[c]++;
+    }
+  }
+  const used = [];
+  for (let i = 0; i < 4; i++) if (counts[i] > 0) used.push(i);
+
+  if (used.length <= 2) {
+    return { hiColor: used.length ? used[used.length - 1] : 3, badTiles: [] };
+  }
+
+  const sortedByFreq = [...used].sort((a, b) => counts[b] - counts[a]);
+  const keep = new Set([sortedByFreq[0], sortedByFreq[1]]);
+  const hiColor = Math.max(...keep);
+
+  const badTiles = [];
   for (let i = 0; i < tileData.length; i++) {
     const tile = tileData[i];
     let invalid = false;
     for (let r = 0; r < 8 && !invalid; r++) {
       for (let c = 0; c < 8; c++) {
-        const v = tile[r][c];
-        if (v !== 0 && v !== 3) { invalid = true; break; }
+        if (!keep.has(tile[r][c])) { invalid = true; break; }
       }
     }
-    if (invalid) bad.push(i);
+    if (invalid) badTiles.push(i);
   }
-  return bad;
+  return { hiColor, badTiles };
 }
 
 // Font-mode encode: magenta (2) → color 0 in output

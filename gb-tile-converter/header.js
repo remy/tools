@@ -1,6 +1,6 @@
 import { state, FIRST_CHAR } from './state.js';
 import { el } from './dom.js';
-import { encodeTile, decodeTile, encodeTileFont, decodeTileFont, encodeTile1bpp, calcAllWidths } from './color.js';
+import { encodeTile, decodeTile, encodeTileFont, decodeTileFont, encodeTile1bpp, analyze1bpp, calcAllWidths } from './color.js';
 import { dedupeTiles } from './dedupe.js';
 import { renderTileGrid } from './tile-grid.js';
 import { renderTileZoom } from './tile-zoom.js';
@@ -74,8 +74,8 @@ function hexBytes(enc) {
   return hex;
 }
 
-function encodeForOutput(tile) {
-  return state.bpp1 ? encodeTile1bpp(tile) : encodeTile(tile);
+function encodeForOutput(tile, hiColor) {
+  return state.bpp1 ? encodeTile1bpp(tile, hiColor) : encodeTile(tile);
 }
 
 function generateTileMapHeader() {
@@ -84,11 +84,12 @@ function generateTileMapHeader() {
   const count = uniqueTiles.length;
   const bytesPerTile = state.bpp1 ? 8 : 16;
   const totalBytes = count * bytesPerTile;
+  const hiColor = state.bpp1 ? analyze1bpp(uniqueTiles).hiColor : 0;
 
   // Unique tile data (flat hex format)
   const tileLines = [];
   for (let i = 0; i < count; i++) {
-    const enc = encodeForOutput(uniqueTiles[i]);
+    const enc = encodeForOutput(uniqueTiles[i], hiColor);
     tileLines.push(`    /* tile ${i} */\n    ${hexBytes(enc).join(', ')}`);
   }
   const tileArr = `static const uint8_t ${name}[] = {\n${tileLines.join(',\n')}\n};`;
@@ -129,6 +130,7 @@ function generateTileHeader() {
   const totalBytes = count * bytesPerTile;
   const bppNote = state.bpp1 ? ' (1bpp)' : '';
   const comment = `// ${count} tile${count !== 1 ? 's' : ''}, ${totalBytes} bytes${bppNote}`;
+  const hiColor = state.bpp1 ? analyze1bpp(state.tileData).hiColor : 0;
 
   // 1bpp uses flat layout only — grouped pairs the two bitplanes, which don't exist here.
   if (state.outputFormat === 'grouped' && !state.bpp1) {
@@ -153,7 +155,7 @@ function generateTileHeader() {
   const tileLines = [];
   for (let i = 0; i < count; i++) {
     const t = order ? order[i] : i;
-    const enc = encodeForOutput(state.tileData[t]);
+    const enc = encodeForOutput(state.tileData[t], hiColor);
     tileLines.push(`    /* tile ${t} */\n    ${hexBytes(enc).join(', ')}`);
   }
   return `static const uint8_t ${name}[] = {\n${tileLines.join(',\n')}\n};\n${comment}`;
