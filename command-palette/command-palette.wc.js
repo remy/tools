@@ -11,12 +11,15 @@ class CommandPalette extends HTMLElement {
     this._handlePanelKeydown = this._handlePanelKeydown.bind(this);
     this._handleInput = this._handleInput.bind(this);
     this._handleClick = this._handleClick.bind(this);
+    this._handleBackdropClick = this._handleBackdropClick.bind(this);
+    this._handleCommand = this._handleCommand.bind(this);
   }
 
   connectedCallback() {
     this._buildDOM();
     this._loadCommands();
     document.addEventListener('keydown', this._handleGlobalKeydown);
+    this.addEventListener('command', this._handleCommand);
   }
 
   disconnectedCallback() {
@@ -26,7 +29,7 @@ class CommandPalette extends HTMLElement {
   _buildDOM() {
     const style = document.createElement('style');
     style.textContent = /* CSS */`
-      command-palette [popover] {
+      command-palette dialog.palette-dialog {
         position: fixed;
         inset: 0;
         margin: 15vh auto auto;
@@ -42,7 +45,7 @@ class CommandPalette extends HTMLElement {
         overflow: hidden;
       }
 
-      command-palette [popover]::backdrop {
+      command-palette dialog.palette-dialog::backdrop {
         background: rgba(0, 0, 0, 0.5);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
@@ -167,8 +170,8 @@ class CommandPalette extends HTMLElement {
     `;
     this.appendChild(style);
 
-    this._panel = document.createElement('div');
-    this._panel.setAttribute('popover', 'auto');
+    this._panel = document.createElement('dialog');
+    this._panel.className = 'palette-dialog';
     this._panel.innerHTML = `
       <div class="palette-input-wrap">
         <span class="palette-icon">&rsaquo;</span>
@@ -189,13 +192,12 @@ class CommandPalette extends HTMLElement {
     this._input.addEventListener('input', this._handleInput);
     this._panel.addEventListener('keydown', this._handlePanelKeydown);
     this._list.addEventListener('click', this._handleClick);
+    this._panel.addEventListener('click', this._handleBackdropClick);
     this._backBtn.addEventListener('click', () => this._resetToBase());
 
-    this._panel.addEventListener('toggle', (e) => {
-      if (e.newState === 'closed') {
-        this._input.value = '';
-        this._resetState();
-      }
+    this._panel.addEventListener('close', () => {
+      this._input.value = '';
+      this._resetState();
     });
   }
 
@@ -249,7 +251,7 @@ class CommandPalette extends HTMLElement {
   }
 
   open() {
-    if (this._panel.matches(':popover-open')) return;
+    if (this._panel.open) return;
     if (typeof this.onBeforeOpen === 'function') {
       try { this.onBeforeOpen(); } catch (e) { console.error('command-palette: onBeforeOpen threw', e); }
     }
@@ -257,13 +259,13 @@ class CommandPalette extends HTMLElement {
     this._filtered = [...this._commands];
     this._selectedIndex = 0;
     this._render();
-    this._panel.showPopover();
+    this._panel.showModal();
     this._input.focus();
   }
 
   close() {
-    if (!this._panel.matches(':popover-open')) return;
-    this._panel.hidePopover();
+    if (!this._panel.open) return;
+    this._panel.close();
   }
 
   _resetState() {
@@ -288,12 +290,22 @@ class CommandPalette extends HTMLElement {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault();
       e.stopPropagation();
-      if (this._panel.matches(':popover-open')) {
+      if (this._panel.open) {
         this.close();
       } else {
         this.open();
       }
     }
+  }
+
+  _handleBackdropClick(e) {
+    if (e.target === this._panel) this._panel.close();
+  }
+
+  _handleCommand(e) {
+    if (e.command === '--open') this.open();
+    else if (e.command === '--close') this.close();
+    else if (e.command === '--toggle') this._panel.open ? this.close() : this.open();
   }
 
   _handlePanelKeydown(e) {

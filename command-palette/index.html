@@ -348,7 +348,7 @@
               DOM elements" for a drill-down demo.</p>
           </div>
           <div class="demo-row">
-            <button class="btn btn-primary" id="btn-open">Open Palette</button>
+            <button class="btn btn-primary" commandfor="palette" command="--open">Open Palette</button>
             <button class="btn btn-outline" id="btn-clear">Clear Log</button>
           </div>
 
@@ -469,7 +469,14 @@ palette.<span class="attr">setCommands</span>(commands, {
 palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
   console.log(e.detail.command);
   <span class="cm">// { name: "theme-toggle", description: "Toggle theme" }</span>
-});</code></pre>
+});
+
+<span class="cm">// Declarative open / close via the Invoker Commands API:</span>
+<span class="cm">// works with any element that has an id.</span>
+<span class="tag">&lt;command-palette</span> <span class="attr">id</span>=<span class="val">"palette"</span><span class="tag">&gt;&lt;/command-palette&gt;</span>
+<span class="tag">&lt;button</span> <span class="attr">commandfor</span>=<span class="val">"palette"</span> <span class="attr">command</span>=<span class="val">"--open"</span><span class="tag">&gt;</span>Open<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;button</span> <span class="attr">commandfor</span>=<span class="val">"palette"</span> <span class="attr">command</span>=<span class="val">"--toggle"</span><span class="tag">&gt;</span>Toggle<span class="tag">&lt;/button&gt;</span>
+<span class="cm">// Supported custom commands: --open, --close, --toggle</span></code></pre>
         </div>
 
       </div>
@@ -496,7 +503,7 @@ palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
     ]
     </script>
 
-    <command-palette></command-palette>
+    <command-palette id="palette"></command-palette>
     <script src="./command-palette.wc.js"></script>
 
     <script>
@@ -534,10 +541,6 @@ palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
       // Handle the secondary selection
       palette.addEventListener('element-picked', (e) => {
         addLogEntry('element-picked', e.detail.command.description);
-      });
-
-      document.getElementById('btn-open').addEventListener('click', () => {
-        palette.open();
       });
 
       document.getElementById('btn-clear').addEventListener('click', () => {

@@ -22,6 +22,22 @@ Every tool's CSS must include the following rule to ensure the `hidden` attribut
 
 Always add this rule near the top of the stylesheet (after the reset/box-sizing rules).
 
+## Modal dialogs
+
+For modal-type UI (command palettes, modals, drawers, confirmations) use the native `<dialog>` element opened with `.showModal()` rather than the popover API. `<dialog>` makes the rest of the page `inert` automatically (so background content is not focusable or interactive), is exposed correctly to assistive technology, traps focus, and provides built-in Escape-to-dismiss.
+
+Wire up backdrop click-to-dismiss explicitly — `<dialog>` does not do this for you:
+
+```js
+dialog.addEventListener('click', (e) => {
+  if (e.target === dialog) dialog.close();
+});
+```
+
+This works as long as the dialog has no padding (or the inner content fills it), so the only clicks whose `target` is the dialog itself are the ones on the backdrop.
+
+Reserve `popover="auto"` for non-modal UI (menus, tooltips, dropdowns) where the rest of the page should remain interactive.
+
 ## Web Components
 
 If HTML or CSS is included in the web component code, it should include a command before the template string as `/* HTML */` and `/* CSS */` (the spaces are important) for syntax highlighting.
