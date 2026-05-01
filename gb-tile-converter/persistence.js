@@ -24,6 +24,7 @@ export function saveState() {
       clusterW: state.clusterW,
       clusterH: state.clusterH,
       tileMap: state.tileMap,
+      bpp1: state.bpp1,
       tilesX: state.tilesX,
       tilesY: state.tilesY,
       canvasW: state.canvasW,
@@ -70,9 +71,11 @@ export function restoreState() {
     state.clusterW = data.clusterW || 1;
     state.clusterH = data.clusterH || 1;
     state.tileMap = !!data.tileMap;
+    state.bpp1 = !!data.bpp1;
     el.clusterW.value = state.clusterW;
     el.clusterH.value = state.clusterH;
     el.tileMapToggle.checked = state.tileMap;
+    el.bpp1Toggle.checked = state.bpp1;
     updateFormatToggle();
     state.tilesX = data.tilesX || 0;
     state.tilesY = data.tilesY || 0;

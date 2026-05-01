@@ -185,6 +185,37 @@ export function decodeTile(bytes, offset) {
   return tile;
 }
 
+// 1bpp encode: 8 bytes per tile, one byte per row.
+// Color 0 → bit 0, color 3 → bit 1. Other colors are invalid (validate first).
+export function encodeTile1bpp(tile) {
+  const bytes = new Uint8Array(8);
+  for (let row = 0; row < 8; row++) {
+    let b = 0;
+    for (let col = 0; col < 8; col++) {
+      if (tile[row][col] === 3) b |= (1 << (7 - col));
+    }
+    bytes[row] = b;
+  }
+  return bytes;
+}
+
+// Returns array of indices for tiles that contain pixels other than 0 or 3.
+export function findInvalid1bppTiles(tileData) {
+  const bad = [];
+  for (let i = 0; i < tileData.length; i++) {
+    const tile = tileData[i];
+    let invalid = false;
+    for (let r = 0; r < 8 && !invalid; r++) {
+      for (let c = 0; c < 8; c++) {
+        const v = tile[r][c];
+        if (v !== 0 && v !== 3) { invalid = true; break; }
+      }
+    }
+    if (invalid) bad.push(i);
+  }
+  return bad;
+}
+
 // Font-mode encode: magenta (2) → color 0 in output
 export function encodeTileFont(tile) {
   const bytes = new Uint8Array(16);
