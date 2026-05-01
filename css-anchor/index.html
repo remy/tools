@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="Interactive playground for CSS Anchor Positioning — drag the anchor, try every position-area, fallback, and visibility combo.">
+    <meta name="category" content="Web Demos">
+    <title>CSS Anchor Positioning Playground</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="container">
+      <header class="page-header">
+        <div class="badge">Web Platform</div>
+        <h1>CSS <span>Anchor</span> Playground</h1>
+        <p>Drag the anchor inside the scrollable canvas, then change every <code>position-area</code>,
+          <code>position-try-fallbacks</code>, <code>position-visibility</code>, and <code>anchor-size()</code> combo to
+          see how the popup behaves at the edges.</p>
+      </header>
+
+      <div class="playground">
+        <aside class="controls">
+          <section class="control-group">
+            <h3>position-area</h3>
+            <div class="area-grid" role="radiogroup" aria-label="position-area">
+              <button type="button" class="area-cell" data-area="top span-left" title="top span-left" aria-label="top span-left"><span aria-hidden="true">↖</span></button>
+              <button type="button" class="area-cell" data-area="top" title="top" aria-label="top"><span aria-hidden="true">↑</span></button>
+              <button type="button" class="area-cell" data-area="top span-right" title="top span-right" aria-label="top span-right"><span aria-hidden="true">↗</span></button>
+              <button type="button" class="area-cell" data-area="left" title="left" aria-label="left"><span aria-hidden="true">←</span></button>
+              <button type="button" class="area-cell" data-area="center" title="center" aria-label="center"><span aria-hidden="true">⚫︎</span></button>
+              <button type="button" class="area-cell" data-area="right" title="right" aria-label="right"><span aria-hidden="true">→</span></button>
+              <button type="button" class="area-cell" data-area="bottom span-left" title="bottom span-left" aria-label="bottom span-left"><span aria-hidden="true">↙</span></button>
+              <button type="button" class="area-cell" data-area="bottom" title="bottom" aria-label="bottom"><span aria-hidden="true">↓</span></button>
+              <button type="button" class="area-cell" data-area="bottom span-right" title="bottom span-right" aria-label="bottom span-right"><span aria-hidden="true">↘</span></button>
+            </div>
+            <div class="area-current"><code data-current-area></code></div>
+          </section>
+
+          <section class="control-group">
+            <h3>position-try-fallbacks</h3>
+            <div class="checks">
+              <label class="check">
+                <input type="checkbox" data-fallback value="flip-block">
+                <span><code>flip-block</code></span>
+              </label>
+              <label class="check">
+                <input type="checkbox" data-fallback value="flip-inline">
+                <span><code>flip-inline</code></span>
+              </label>
+              <label class="check">
+                <input type="checkbox" data-fallback value="flip-start">
+                <span><code>flip-start</code></span>
+              </label>
+            </div>
+            <p class="hint">Scroll the anchor near an edge to see the popup flip.</p>
+          </section>
+
+          <section class="control-group">
+            <h3>position-visibility</h3>
+            <div class="radios">
+              <label class="radio">
+                <input type="radio" name="vis" value="always" checked>
+                <span><code>always</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="vis" value="anchors-visible">
+                <span><code>anchors-visible</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="vis" value="no-overflow">
+                <span><code>no-overflow</code></span>
+              </label>
+            </div>
+            <p class="hint">Scroll the anchor off-screen to see this in action.</p>
+          </section>
+
+          <section class="control-group">
+            <h3>anchor-size()</h3>
+            <div class="checks">
+              <label class="check">
+                <input type="checkbox" data-size="width">
+                <span>match anchor <code>width</code></span>
+              </label>
+              <label class="check">
+                <input type="checkbox" data-size="height">
+                <span>match anchor <code>height</code></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="control-group">
+            <h3>margin</h3>
+            <div class="margin-row">
+              <input type="range" min="0" max="40" step="1" value="8" data-margin>
+              <output data-margin-out>8px</output>
+            </div>
+          </section>
+
+          <section class="control-group">
+            <button type="button" class="reset-btn" data-reset>Reset anchor position</button>
+          </section>
+
+          <section class="support" data-support>
+            <span class="support-icon">🔍</span>
+            <div>
+              <div class="support-label">Checking browser support…</div>
+              <div class="support-detail"></div>
+            </div>
+          </section>
+        </aside>
+
+        <div class="canvas-wrap" data-canvas-wrap>
+          <div class="canvas" data-canvas>
+            <div class="watermark">scroll me — drag the anchor anywhere</div>
+            <div class="anchor" data-anchor tabindex="0" role="button" aria-label="Anchor (drag to move)">
+              <span>⚓</span>
+              <span class="anchor-label">anchor</span>
+            </div>
+            <div class="popup" data-popup>
+              <strong>Anchored popup</strong>
+              <span class="popup-meta" data-popup-meta></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span>Generated CSS</span>
+            <button type="button" class="copy-btn" data-copy>Copy</button>
+          </div>
+          <pre><code data-code></code></pre>
+        </div>
+      </div>
+
+      <footer>
+        Spec: <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Anchor_positioning" target="_blank"
+          rel="noopener">MDN — Anchor positioning</a>
+      </footer>
+    </div>
+
+    <script src="css-anchor.wc.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
