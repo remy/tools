@@ -112,14 +112,17 @@
         <div class="output-controls">
           <label for="varName" class="sr-only">Variable name</label>
           <input type="text" id="varName" class="input input-sm" value="tile_data" spellcheck="false" placeholder="variable name">
-          <label class="cluster-label">Cluster
-            <input type="number" id="clusterW" class="input input-sm cluster-input" value="1" min="1" max="64">
-            &times;
-            <input type="number" id="clusterH" class="input input-sm cluster-input" value="1" min="1" max="64">
-          </label>
-          <label class="font-mode-label" title="Emit unique tiles + tilemap"><input type="checkbox" id="tileMapToggle"> TileMap</label>
-          <label class="font-mode-label" title="1 bit per pixel output (colors 0 &amp; 3 only, 8 bytes per tile)"><input type="checkbox" id="bpp1Toggle"> 1bpp</label>
-          <label class="font-mode-label" title="Variable-width font mode"><input type="checkbox" id="fontModeToggle"> VWF</label>
+          <button type="button" id="optionsBtn" class="btn btn-sm btn-secondary" popovertarget="outputOptionsPopover" aria-haspopup="true">Options &#9662;</button>
+          <div id="outputOptionsPopover" class="options-popover" popover>
+            <label class="font-mode-label" title="Variable-width font mode"><input type="checkbox" id="fontModeToggle"> VWF</label>
+            <label class="font-mode-label" title="1 bit per pixel output (8 bytes per tile, max 2 distinct colors)"><input type="checkbox" id="bpp1Toggle"> 1bpp</label>
+            <label class="font-mode-label" title="Emit unique tiles + tilemap"><input type="checkbox" id="tileMapToggle"> TileMap</label>
+            <label class="cluster-label">Cluster
+              <input type="number" id="clusterW" class="input input-sm cluster-input" value="1" min="1" max="64">
+              &times;
+              <input type="number" id="clusterH" class="input input-sm cluster-input" value="1" min="1" max="64">
+            </label>
+          </div>
           <button id="formatToggleBtn" class="btn btn-sm btn-secondary">Flat</button>
           <button id="copyOutputBtn" class="btn btn-sm btn-primary">Copy</button>
         </div>

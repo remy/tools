@@ -36,6 +36,8 @@ export function initDOM() {
   el.tileMapToggle = document.getElementById('tileMapToggle');
   el.bpp1Toggle = document.getElementById('bpp1Toggle');
   el.formatToggleBtn = document.getElementById('formatToggleBtn');
+  el.optionsBtn = document.getElementById('optionsBtn');
+  el.optionsPopover = document.getElementById('outputOptionsPopover');
   el.copyOutputBtn = document.getElementById('copyOutputBtn');
   el.headerOutput = document.getElementById('headerOutput');
   el.parseStatus = document.getElementById('parseStatus');

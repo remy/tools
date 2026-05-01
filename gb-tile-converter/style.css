@@ -767,3 +767,22 @@ body {
   accent-color: var(--colour-primary);
 }
 
+/* Output options popover */
+.options-popover {
+  position: fixed;
+  margin: 0;
+  padding: var(--space-sm);
+  background: var(--colour-block-bg);
+  border: 1px solid var(--colour-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 24px var(--colour-shadow);
+  display: none;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 12rem;
+}
+
+.options-popover:popover-open {
+  display: flex;
+}
+

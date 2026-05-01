@@ -357,6 +357,23 @@ function applyTileMapMode() {
   el.formatToggleBtn.hidden = state.tileMap || state.fontMode || state.bpp1;
 }
 
+// ---- Output options popover positioning ----
+
+el.optionsPopover.addEventListener('beforetoggle', e => {
+  if (e.newState !== 'open') return;
+  const rect = el.optionsBtn.getBoundingClientRect();
+  el.optionsPopover.style.top = `${rect.bottom + 4}px`;
+  el.optionsPopover.style.left = `${rect.left}px`;
+  // After the popover renders, nudge it back if it overflows the right edge.
+  requestAnimationFrame(() => {
+    const pr = el.optionsPopover.getBoundingClientRect();
+    const overflow = pr.right - (window.innerWidth - 8);
+    if (overflow > 0) {
+      el.optionsPopover.style.left = `${Math.max(8, rect.left - overflow)}px`;
+    }
+  });
+});
+
 // ---- 1bpp toggle ----
 
 function validate1bpp() {
