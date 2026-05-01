@@ -16,25 +16,57 @@
       <header class="page-header">
         <div class="badge">Web Platform</div>
         <h1>CSS <span>Anchor</span> Playground</h1>
-        <p>Drag the anchor inside the scrollable canvas, then change every <code>position-area</code>,
-          <code>position-try-fallbacks</code>, <code>position-visibility</code>, and <code>anchor-size()</code> combo to
-          see how the popup behaves at the edges.</p>
+        <p>Drag the anchor inside the scrollable canvas, then tweak every anchor positioning property to see how the
+          popup behaves.</p>
       </header>
 
       <div class="playground">
         <aside class="controls">
+
+          <section class="control-group">
+            <h3>presets</h3>
+            <select class="text-input" data-preset>
+              <option value="">Custom…</option>
+              <option value="tooltip">Tooltip (top)</option>
+              <option value="dropdown">Dropdown (matches anchor width)</option>
+              <option value="submenu">Submenu (right, auto-flip)</option>
+              <option value="caption">Caption (below, anchor width)</option>
+              <option value="side-panel">Side panel (right, full height)</option>
+              <option value="auto-flip">Smart auto-flip (all fallbacks)</option>
+            </select>
+            <p class="hint">Picks sensible defaults for common UI patterns.</p>
+          </section>
+
+          <section class="control-group">
+            <h3>anchor-name</h3>
+            <div class="input-row">
+              <input type="text" class="text-input" data-anchor-name value="--my-anchor" spellcheck="false"
+                autocomplete="off">
+            </div>
+            <p class="hint"><code>position-anchor</code> on the popup is kept in sync.</p>
+          </section>
+
           <section class="control-group">
             <h3>position-area</h3>
             <div class="area-grid" role="radiogroup" aria-label="position-area">
-              <button type="button" class="area-cell" data-area="top span-left" title="top span-left" aria-label="top span-left"><span aria-hidden="true">↖</span></button>
-              <button type="button" class="area-cell" data-area="top" title="top" aria-label="top"><span aria-hidden="true">↑</span></button>
-              <button type="button" class="area-cell" data-area="top span-right" title="top span-right" aria-label="top span-right"><span aria-hidden="true">↗</span></button>
-              <button type="button" class="area-cell" data-area="left" title="left" aria-label="left"><span aria-hidden="true">←</span></button>
-              <button type="button" class="area-cell" data-area="center" title="center" aria-label="center"><span aria-hidden="true">⚫︎</span></button>
-              <button type="button" class="area-cell" data-area="right" title="right" aria-label="right"><span aria-hidden="true">→</span></button>
-              <button type="button" class="area-cell" data-area="bottom span-left" title="bottom span-left" aria-label="bottom span-left"><span aria-hidden="true">↙</span></button>
-              <button type="button" class="area-cell" data-area="bottom" title="bottom" aria-label="bottom"><span aria-hidden="true">↓</span></button>
-              <button type="button" class="area-cell" data-area="bottom span-right" title="bottom span-right" aria-label="bottom span-right"><span aria-hidden="true">↘</span></button>
+              <button type="button" class="area-cell" data-area="top span-left" title="top span-left"
+                aria-label="top span-left"><span aria-hidden="true">↖</span></button>
+              <button type="button" class="area-cell" data-area="top" title="top" aria-label="top"><span
+                  aria-hidden="true">↑</span></button>
+              <button type="button" class="area-cell" data-area="top span-right" title="top span-right"
+                aria-label="top span-right"><span aria-hidden="true">↗</span></button>
+              <button type="button" class="area-cell" data-area="left" title="left" aria-label="left"><span
+                  aria-hidden="true">←</span></button>
+              <button type="button" class="area-cell" data-area="center" title="center" aria-label="center"><span
+                  aria-hidden="true">⚫︎</span></button>
+              <button type="button" class="area-cell" data-area="right" title="right" aria-label="right"><span
+                  aria-hidden="true">→</span></button>
+              <button type="button" class="area-cell" data-area="bottom span-left" title="bottom span-left"
+                aria-label="bottom span-left"><span aria-hidden="true">↙</span></button>
+              <button type="button" class="area-cell" data-area="bottom" title="bottom" aria-label="bottom"><span
+                  aria-hidden="true">↓</span></button>
+              <button type="button" class="area-cell" data-area="bottom span-right" title="bottom span-right"
+                aria-label="bottom span-right"><span aria-hidden="true">↘</span></button>
             </div>
             <div class="area-current"><code data-current-area></code></div>
           </section>
@@ -59,6 +91,33 @@
           </section>
 
           <section class="control-group">
+            <h3>position-try-order</h3>
+            <div class="radios">
+              <label class="radio">
+                <input type="radio" name="try-order" value="normal" checked>
+                <span><code>normal</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="try-order" value="most-width">
+                <span><code>most-width</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="try-order" value="most-height">
+                <span><code>most-height</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="try-order" value="most-block-size">
+                <span><code>most-block-size</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="try-order" value="most-inline-size">
+                <span><code>most-inline-size</code></span>
+              </label>
+            </div>
+            <p class="hint">Controls which fallback position is chosen when multiple fit.</p>
+          </section>
+
+          <section class="control-group">
             <h3>position-visibility</h3>
             <div class="radios">
               <label class="radio">
@@ -78,15 +137,45 @@
           </section>
 
           <section class="control-group">
-            <h3>anchor-size()</h3>
-            <div class="checks">
-              <label class="check">
-                <input type="checkbox" data-size="width">
-                <span>match anchor <code>width</code></span>
+            <h3>anchor-size() — width axis</h3>
+            <div class="radios">
+              <label class="radio">
+                <input type="radio" name="size-w" value="" checked>
+                <span>none</span>
               </label>
-              <label class="check">
-                <input type="checkbox" data-size="height">
-                <span>match anchor <code>height</code></span>
+              <label class="radio">
+                <input type="radio" name="size-w" value="width">
+                <span><code>anchor-size(width)</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="size-w" value="inline">
+                <span><code>anchor-size(inline)</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="size-w" value="self-width">
+                <span><code>anchor-size(self-width)</code></span>
+              </label>
+            </div>
+          </section>
+
+          <section class="control-group">
+            <h3>anchor-size() — height axis</h3>
+            <div class="radios">
+              <label class="radio">
+                <input type="radio" name="size-h" value="" checked>
+                <span>none</span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="size-h" value="height">
+                <span><code>anchor-size(height)</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="size-h" value="block">
+                <span><code>anchor-size(block)</code></span>
+              </label>
+              <label class="radio">
+                <input type="radio" name="size-h" value="self-height">
+                <span><code>anchor-size(self-height)</code></span>
               </label>
             </div>
           </section>
@@ -112,26 +201,33 @@
           </section>
         </aside>
 
-        <div class="canvas-wrap" data-canvas-wrap>
-          <div class="canvas" data-canvas>
-            <div class="watermark">scroll me — drag the anchor anywhere</div>
-            <div class="anchor" data-anchor tabindex="0" role="button" aria-label="Anchor (drag to move)">
-              <span>⚓</span>
-              <span class="anchor-label">anchor</span>
-            </div>
-            <div class="popup" data-popup>
-              <strong>Anchored popup</strong>
-              <span class="popup-meta" data-popup-meta></span>
+        <div class="right-column">
+          <div class="canvas-wrap" data-canvas-wrap>
+            <div class="canvas" data-canvas>
+              <div class="watermark">scroll me — drag the anchor anywhere</div>
+              <div class="anchor" data-anchor tabindex="0" role="button" aria-label="Anchor (drag to move)">
+                <span>⚓</span>
+                <span class="anchor-label">anchor</span>
+              </div>
+              <div class="popup" data-popup>
+                <strong>Anchored popup</strong>
+                <span class="popup-meta" data-popup-meta></span>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="code-block">
-          <div class="code-header">
-            <span>Generated CSS</span>
-            <button type="button" class="copy-btn" data-copy>Copy</button>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-tabs" role="tablist">
+                <button type="button" class="code-tab is-active" role="tab" aria-selected="true"
+                  data-tab="css">CSS</button>
+                <button type="button" class="code-tab" role="tab" aria-selected="false" data-tab="html">HTML</button>
+              </div>
+              <button type="button" class="copy-btn" data-copy>Copy</button>
+            </div>
+            <pre class="code-panel" data-panel="css" role="tabpanel"><code data-code></code></pre>
+            <pre class="code-panel" data-panel="html" role="tabpanel" hidden><code data-html-code></code></pre>
           </div>
-          <pre><code data-code></code></pre>
         </div>
       </div>
 
@@ -141,7 +237,7 @@
       </footer>
     </div>
 
-    <script src="css-anchor.wc.js"></script>
+    <script src="css-anchor.js"></script>
     <script>navigator.serviceWorker?.register("/sw.js")</script>
   </body>
 
