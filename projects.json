@@ -160,7 +160,7 @@
     "title": "AFI Quote Master"
   },
   "social-replies": {
-    "category": "Developer Tools",
+    "category": "Productivity",
     "description": "Fetch replies from Bluesky and Mastodon posts and extract structured information using Gemini, with prompt presets, IndexedDB caching, downloads and cost tracking.",
     "title": "Social Replies"
   },

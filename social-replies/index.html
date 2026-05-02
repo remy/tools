@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Fetch replies from Bluesky and Mastodon posts and extract structured information using Gemini, with prompt presets, IndexedDB caching, downloads and cost tracking.">
-  <meta name="category" content="Developer Tools">
+  <meta name="category" content="Productivity">
   <title>Social Replies</title>
   <style>
     *,
@@ -81,7 +81,7 @@
       line-height: 1.5;
       color: var(--colour-text);
       background: var(--colour-bg);
-      padding: var(--space-lg);
+      padding: var(--space-md);
     }
 
     input,
@@ -107,74 +107,77 @@
     }
 
     header {
-      margin-bottom: var(--space-xl);
-      padding-bottom: var(--space-lg);
+      margin-bottom: var(--space-lg);
+      padding-bottom: var(--space-md);
       border-bottom: 1px solid var(--colour-border);
     }
 
     header h1 {
       font-family: Georgia, "Times New Roman", Times, serif;
-      font-size: 1.75rem;
+      font-size: 1.5rem;
       font-weight: 700;
       letter-spacing: -0.01em;
     }
 
     header p {
-      margin-top: var(--space-xs);
-      font-size: 0.9rem;
+      margin-top: 2px;
+      font-size: 0.85rem;
       color: var(--colour-text-secondary);
     }
 
     main {
       display: flex;
       flex-direction: column;
-      gap: var(--space-xl);
+      gap: var(--space-md);
     }
 
     section {
       background: var(--colour-block-bg);
       border: 1px solid var(--colour-block-border);
       border-radius: 0.5rem;
-      padding: var(--space-lg);
+      padding: var(--space-md);
       box-shadow: 0 1px 2px var(--colour-shadow);
     }
 
     @media (min-width: 640px) {
       body {
-        padding: var(--space-2xl) var(--space-lg);
+        padding: var(--space-lg);
       }
 
       section {
-        padding: var(--space-xl);
+        padding: var(--space-lg);
       }
     }
 
     section h2 {
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
-      margin-bottom: var(--space-md);
+      margin-bottom: var(--space-sm);
     }
 
     label {
       display: block;
-      font-size: 0.875rem;
-      font-weight: 500;
-      margin-bottom: var(--space-xs);
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: var(--colour-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .hint {
       display: block;
-      margin-top: var(--space-xs);
-      font-size: 0.8rem;
-      color: var(--colour-text-secondary);
+      margin-top: 4px;
+      font-size: 0.75rem;
+      color: var(--colour-text-tertiary);
     }
 
     input[type="text"],
     input[type="password"],
     textarea {
       width: 100%;
-      padding: var(--space-sm) var(--space-md);
-      font-size: 0.95rem;
+      padding: 0.45rem 0.6rem;
+      font-size: 0.9rem;
       color: var(--colour-text);
       background: var(--colour-bg);
       border: 1px solid var(--colour-border);
@@ -191,20 +194,20 @@
 
     textarea {
       font-family: var(--mono);
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       resize: vertical;
-      min-height: 5rem;
+      min-height: 4.5rem;
     }
 
     .url-list {
       display: flex;
       flex-direction: column;
-      gap: var(--space-xs);
+      gap: 6px;
     }
 
     .url-row {
       display: flex;
-      gap: var(--space-xs);
+      gap: 6px;
     }
 
     .url-row input {
@@ -216,50 +219,59 @@
       align-items: center;
       justify-content: center;
       gap: var(--space-xs);
-      padding: 0.55rem var(--space-lg);
-      font-size: 0.9rem;
-      font-weight: 500;
-      border: 1px solid transparent;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: 1px solid var(--colour-border);
       border-radius: 0.375rem;
-      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 1px 0 var(--colour-shadow);
+      transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.05s ease, opacity 0.12s ease;
       text-decoration: none;
+      line-height: 1.2;
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
     }
 
     .btn-primary {
       background: var(--colour-primary);
       color: white;
+      border-color: var(--colour-primary);
     }
 
     .btn-primary:hover {
       background: var(--colour-primary-hover);
+      border-color: var(--colour-primary-hover);
     }
 
     .btn-secondary {
-      background: var(--colour-bg-secondary);
+      background: var(--colour-block-bg);
       color: var(--colour-text);
-      border-color: var(--colour-border);
     }
 
     .btn-secondary:hover {
-      background: var(--colour-bg-tertiary);
+      background: var(--colour-bg-secondary);
+      border-color: var(--colour-text-tertiary);
     }
 
     .btn-ghost {
-      background: transparent;
+      background: var(--colour-bg-secondary);
       color: var(--colour-text-secondary);
-      border-color: var(--colour-border);
     }
 
     .btn-ghost:hover {
+      background: var(--colour-bg-tertiary);
       color: var(--colour-text);
-      border-color: var(--colour-text);
     }
 
     .btn-danger-ghost {
-      background: transparent;
+      background: var(--colour-block-bg);
       color: var(--colour-text-tertiary);
-      border-color: var(--colour-border);
-      padding: 0 var(--space-md);
+      padding: 0 0.6rem;
+      font-size: 1rem;
+      font-weight: 400;
     }
 
     .btn-danger-ghost:hover {
@@ -268,18 +280,20 @@
     }
 
     .btn-add {
-      background: transparent;
+      background: var(--colour-bg-secondary);
       color: var(--colour-text-secondary);
       border: 1px dashed var(--colour-border);
       border-radius: 0.375rem;
-      padding: 0.45rem var(--space-md);
-      font-size: 0.85rem;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.8rem;
       align-self: flex-start;
+      margin-top: var(--space-xs);
     }
 
     .btn-add:hover {
       color: var(--colour-primary);
       border-color: var(--colour-primary);
+      background: var(--colour-primary-light);
     }
 
     .btn:disabled {
@@ -302,7 +316,7 @@
     .tabs {
       display: flex;
       gap: 0;
-      margin-bottom: var(--space-md);
+      margin-bottom: var(--space-sm);
       border-bottom: 1px solid var(--colour-border);
     }
 
@@ -310,8 +324,8 @@
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
-      padding: var(--space-sm) var(--space-lg);
-      font-size: 0.9rem;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.85rem;
       color: var(--colour-text-secondary);
       margin-bottom: -1px;
     }
@@ -325,30 +339,36 @@
     .field-stack {
       display: flex;
       flex-direction: column;
-      gap: var(--space-md);
+      gap: var(--space-sm);
     }
 
     #log {
       font-family: var(--mono);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--colour-text-secondary);
       background: var(--colour-bg-secondary);
       border: 1px solid var(--colour-border);
       border-radius: 0.375rem;
-      padding: var(--space-md);
+      padding: var(--space-sm) var(--space-md);
       white-space: pre-wrap;
-      max-height: 12rem;
+      max-height: 10rem;
       overflow-y: auto;
+      margin-top: var(--space-sm);
     }
 
     .stats {
       display: flex;
       flex-wrap: wrap;
-      gap: var(--space-md) var(--space-xl);
-      padding: var(--space-md);
+      gap: var(--space-sm) var(--space-lg);
+      padding: var(--space-sm) var(--space-md);
       background: var(--colour-bg-secondary);
       border-radius: 0.375rem;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
+      margin-bottom: var(--space-sm);
+    }
+
+    .download-row {
+      margin-bottom: var(--space-sm);
     }
 
     .stats .stat {
@@ -379,8 +399,12 @@
       background: var(--colour-bg-secondary);
       border: 1px solid var(--colour-border);
       border-radius: 0.375rem;
-      padding: var(--space-md);
+      padding: var(--space-sm);
       font-size: 0.85rem;
+    }
+
+    .item-list {
+      gap: 6px;
     }
 
     #results-output pre {
@@ -399,7 +423,7 @@
       background: var(--colour-block-bg);
       border: 1px solid var(--colour-block-border);
       border-radius: 0.375rem;
-      padding: var(--space-md);
+      padding: var(--space-sm) var(--space-md);
     }
 
     .item-title {
@@ -483,8 +507,8 @@
           <div class="field-stack">
             <div>
               <label for="simple-goal">What are you trying to collect?</label>
-              <textarea id="simple-goal" rows="3" placeholder="e.g. clothing stores in England — name, type (high street/online/vintage/etc), and UK URL"></textarea>
-              <p class="hint">A full prompt is built from this and sent to Gemini.</p>
+              <input type="text" id="simple-goal" placeholder="e.g. clothing store, coffee shop, bookshop">
+              <p class="hint">A short noun — gets slotted into a prompt asking where to find it in England.</p>
             </div>
           </div>
         </div>
@@ -537,7 +561,7 @@
           </div>
         </div>
 
-        <div class="btn-row" style="margin-top: var(--space-md); margin-bottom: var(--space-md);">
+        <div class="btn-row download-row">
           <button class="btn btn-secondary" id="download-text" type="button">Download .txt</button>
           <button class="btn btn-secondary" id="download-html" type="button">Download .html</button>
           <button class="btn btn-secondary" id="download-json" type="button">Download .json</button>
@@ -556,19 +580,18 @@
     const PRICE_INPUT_PER_M = 0.10;
     const PRICE_OUTPUT_PER_M = 0.40;
 
-    const DEFAULT_DETAILED_PROMPT = `You are analysing social media replies to a post.
+    const DEFAULT_DETAILED_PROMPT = `You are analysing social media replies to a post asking where to find a thing in England.
 
-Extract every relevant mention into a structured list.
+Find every mention of a thing, the thing store, brand, or shop.
 
-Return a JSON array where each item has:
-- "name": the thing's name
-- "url": canonical URL if available, otherwise empty string
-- "type": short category label
+For each unique store found, return a JSON array where each item has:
+- "name": the thing name
+- "url": the UK website URL — prefer .co.uk if it exists, otherwise use the main URL
 
 Rules:
-- Deduplicate — one entry per item
-- If none found, return []
-- Reply with ONLY the raw JSON array, no markdown, no explanation`;
+- Deduplicate: list each thing once only
+- If no things are mentioned, return []
+- Reply with ONLY the raw JSON array, no markdown fences, no explanation`;
 
     const $ = id => document.getElementById(id);
 
@@ -651,23 +674,19 @@ Rules:
       localStorage.setItem('detailed-prompt', DEFAULT_DETAILED_PROMPT);
     });
 
-    function buildSimplePrompt(goal) {
-      return `You are analysing social media replies to a post.
+    function buildSimplePrompt(thing) {
+      return `You are analysing social media replies to a post asking where to find a ${thing} in England.
 
-Goal: ${goal}
+Find every mention of a ${thing}, the ${thing} store, brand, or shop.
 
-Extract every relevant mention into a structured list.
-
-Return a JSON array where each item has:
-- "name": the thing's name
-- "url": canonical URL if available, otherwise empty string
-- "type": short category label that fits the goal
+For each unique store found, return a JSON array where each item has:
+- "name": the ${thing} name
+- "url": the UK website URL — prefer .co.uk if it exists, otherwise use the main URL
 
 Rules:
-- Deduplicate — one entry per item
-- Stay strictly on-topic for the goal above
-- If none found, return []
-- Reply with ONLY the raw JSON array, no markdown, no explanation`;
+- Deduplicate: list each ${thing} once only
+- If no ${thing}s are mentioned, return []
+- Reply with ONLY the raw JSON array, no markdown fences, no explanation`;
     }
 
     function getActivePrompt() {
