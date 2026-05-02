@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Finder</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap');
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --bg: #0f0f0f;
+        --surface: #1a1a1a;
+        --border: #2e2e2e;
+        --text: #e8e8e8;
+        --muted: #666;
+        --accent: #c8f060;
+        --danger: #ff6b6b;
+        --mono: 'IBM Plex Mono', monospace;
+        --sans: 'IBM Plex Sans', sans-serif;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--mono);
+        min-height: 100vh;
+        padding: 2rem 1rem;
+      }
+
+      header {
+        max-width: 680px;
+        margin: 0 auto 3rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 1.5rem;
+      }
+
+      header h1 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--accent);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      header p {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 0.4rem;
+        font-family: var(--sans);
+      }
+
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+      }
+
+      input[type="text"],
+      input[type="password"] {
+        width: 100%;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        padding: 0.6rem 0.75rem;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+
+      input:focus {
+        border-color: var(--accent);
+      }
+
+      input::placeholder {
+        color: var(--muted);
+      }
+
+      .url-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .url-row {
+        display: flex;
+        gap: 0.4rem;
+      }
+
+      .url-row input {
+        flex: 1;
+      }
+
+      .btn-remove {
+        background: none;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 1rem;
+        padding: 0 0.6rem;
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s;
+        line-height: 1;
+      }
+
+      .btn-remove:hover {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+
+      .btn-add {
+        background: none;
+        border: 1px dashed var(--border);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        padding: 0.45rem 0.75rem;
+        cursor: pointer;
+        text-align: left;
+        transition: color 0.15s, border-color 0.15s;
+      }
+
+      .btn-add:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+
+      .key-note {
+        font-size: 0.72rem;
+        color: var(--muted);
+        font-family: var(--sans);
+      }
+
+      .key-note span {
+        color: #e8a030;
+      }
+
+      #run {
+        background: var(--accent);
+        color: #0f0f0f;
+        border: none;
+        font-family: var(--mono);
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        transition: opacity 0.15s;
+        align-self: flex-start;
+      }
+
+      #run:hover {
+        opacity: 0.85;
+      }
+
+      #run:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      #log {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 1rem;
+        font-size: 0.75rem;
+        color: var(--muted);
+        min-height: 4rem;
+        white-space: pre-wrap;
+        line-height: 1.6;
+        display: none;
+      }
+
+      #log.active {
+        display: block;
+      }
+
+      #results {
+        display: none;
+      }
+
+      #results.active {
+        display: block;
+      }
+
+      #results h2 {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-bottom: 1rem;
+      }
+
+      .store-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .store {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        padding: 0.75rem 1rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.2rem 1rem;
+        align-items: start;
+      }
+
+      .store-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .store-type {
+        font-size: 0.7rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        grid-column: 1;
+      }
+
+      .store-url {
+        grid-column: 1 / -1;
+        font-size: 0.75rem;
+        color: var(--accent);
+        text-decoration: none;
+        word-break: break-all;
+        margin-top: 0.2rem;
+      }
+
+      .store-url:hover {
+        text-decoration: underline;
+      }
+
+      .empty {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-family: var(--sans);
+        padding: 1rem 0;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <header>
+      <h1>Shop Finder</h1>
+      <p>Extracts clothing store recommendations from Bluesky &amp; Mastodon replies via Gemini.</p>
+    </header>
+
+    <main>
+      <section id="key-section">
+        <label>Gemini API Key</label>
+        <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off">
+        <p class="key-note"><span>⚠</span> Key is stored in localStorage and sent directly to Google. Personal use only.
+        </p>
+      </section>
+
+      <section>
+        <label>Bluesky Post URLs</label>
+        <div class="url-list" id="bsky-urls"></div>
+        <button class="btn-add" id="bsky-add">+ add URL</button>
+      </section>
+
+      <section>
+        <label>Mastodon Post URLs</label>
+        <div class="url-list" id="masto-urls"></div>
+        <button class="btn-add" id="masto-add">+ add URL</button>
+      </section>
+
+      <button id="run">Fetch &amp; Analyse</button>
+
+      <pre id="log"></pre>
+
+      <section id="results">
+        <h2>Stores found</h2>
+        <div class="store-list" id="store-list"></div>
+      </section>
+    </main>
+
+    <script>
+      const BSKY_API = 'https://public.api.bsky.app/xrpc';
+      const GEMINI_MODEL = 'gemini-2.5-flash-lite';
+
+      const $ = id => document.getElementById(id);
+
+      // --- Persist key ---
+      const keyInput = $('gemini-key');
+      keyInput.value = localStorage.getItem('gemini-key') ?? '';
+      keyInput.addEventListener('change', () => localStorage.setItem('gemini-key', keyInput.value.trim()));
+
+      // --- URL list helpers ---
+      function addUrlRow(containerId, value = '') {
+        const container = $(containerId);
+        const row = document.createElement('div');
+        row.className = 'url-row';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = value;
+        input.placeholder = containerId === 'bsky-urls'
+          ? 'https://bsky.app/profile/.../post/...'
+          : 'https://instance.social/@user/123456';
+
+        const btn = document.createElement('button');
+        btn.className = 'btn-remove';
+        btn.textContent = '×';
+        btn.addEventListener('click', () => row.remove());
+
+        row.append(input, btn);
+        container.appendChild(row);
+        return input;
+      }
+
+      function getUrls(containerId) {
+        return [...$(containerId).querySelectorAll('input')]
+          .map(i => i.value.trim())
+          .filter(Boolean);
+      }
+
+      $('bsky-add').addEventListener('click', () => addUrlRow('bsky-urls'));
+      $('masto-add').addEventListener('click', () => addUrlRow('masto-urls'));
+
+      // Pre-populate with the known posts
+      addUrlRow('bsky-urls', 'https://bsky.app/profile/remysharp.com/post/3mksvusotvs2i');
+      addUrlRow('masto-urls', 'https://front-end.social/@rem/116501074025067345');
+
+      // --- Logging ---
+      const logEl = $('log');
+      function log(msg) {
+        logEl.classList.add('active');
+        logEl.textContent += msg + '\n';
+      }
+      function clearLog() {
+        logEl.textContent = '';
+        logEl.classList.remove('active');
+      }
+
+      // --- Fetch helper ---
+      // Surfaces CORS/network errors and non-2xx responses with as much detail as possible
+      async function safeFetch(url, opts) {
+        let res;
+        try {
+          res = await fetch(url, opts);
+        } catch (e) {
+          // TypeError: Failed to fetch = almost always a CORS block or network error
+          const isCors = e instanceof TypeError && e.message.includes('fetch');
+          throw new Error(
+            `Network error fetching ${url}\n` +
+            (isCors ? '  → Likely a CORS block. Check the browser console (Network tab) for details.\n' : '') +
+            `  → ${e.message}`
+          );
+        }
+
+        if (!res.ok) {
+          let body = '';
+          try { body = await res.text(); } catch { }
+          throw new Error(
+            `HTTP ${res.status} ${res.statusText} from ${url}\n` +
+            (body ? `  → ${body.slice(0, 300)}` : '')
+          );
+        }
+
+        return res;
+      }
+
+      // --- Bluesky ---
+      async function resolveBlueskyDid(handle) {
+        const url = `${BSKY_API}/app.bsky.actor.getProfile?actor=${handle}`;
+        const res = await safeFetch(url);
+        const data = await res.json();
+        if (!data.did) throw new Error(`No DID in profile response for "${handle}": ${JSON.stringify(data)}`);
+        return data.did;
+      }
+
+      async function getBlueskyReplies(url) {
+        const match = url.match(/profile\/([^/]+)\/post\/([^/]+)/);
+        if (!match) throw new Error(`Unrecognised Bluesky URL: ${url}`);
+        const [, handle, rkey] = match;
+
+        const did = await resolveBlueskyDid(handle);
+        const atUri = encodeURIComponent(`at://${did}/app.bsky.feed.post/${rkey}`);
+        const threadUrl = `${BSKY_API}/app.bsky.feed.getPostThread?uri=${atUri}&depth=100`;
+
+        const res = await safeFetch(threadUrl);
+        const body = await res.json();
+        const { thread } = body;
+        if (!thread) throw new Error(`No thread in response: ${JSON.stringify(body).slice(0, 200)}`);
+
+        const texts = [];
+        function collectReplies(node) {
+          for (const reply of node?.replies ?? []) {
+            const text = reply.post?.record?.text;
+            if (text) texts.push(text);
+            collectReplies(reply);
+          }
+        }
+        collectReplies(thread);
+        return texts;
+      }
+
+      // --- Mastodon ---
+      function stripHtml(html) {
+        return html
+          .replace(/<br\s*\/?>/gi, ' ')
+          .replace(/<[^>]+>/g, '')
+          .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+          .replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+          .trim();
+      }
+
+      async function getMastodonReplies(url) {
+        const match = url.match(/^(https:\/\/[^/]+)\/@[^/]+\/(\d+)/);
+        if (!match) throw new Error(`Unrecognised Mastodon URL: ${url}`);
+        const [, instance, statusId] = match;
+
+        const contextUrl = `${instance}/api/v1/statuses/${statusId}/context`;
+        const res = await safeFetch(contextUrl);
+        const body = await res.json();
+        if (!body.descendants) throw new Error(`No descendants in response: ${JSON.stringify(body).slice(0, 200)}`);
+        return body.descendants.map(r => stripHtml(r.content)).filter(Boolean);
+      }
+
+      // --- Gemini ---
+      async function extractStores(texts, apiKey) {
+        const combined = texts.join('\n---\n');
+
+        const prompt = `You are analysing social media replies to a post asking where to buy clothes in England.
+
+Find every mention of a clothing store, brand, or shop — including online retailers, high street, second-hand/vintage, and independents.
+
+Return a JSON array where each item has:
+- "name": store name
+- "url": UK website URL (prefer .co.uk if it exists)
+- "type": one of: high street, online, vintage, sportswear, independent, marketplace
+
+Rules:
+- Deduplicate — one entry per store
+- If none found, return []
+- Reply with ONLY the raw JSON array, no markdown, no explanation
+
+Replies:
+${combined}`;
+
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { temperature: 0 },
+            }),
+          }
+        );
+
+        const data = await res.json();
+        if (data.error) throw new Error(`Gemini: ${data.error.message}`);
+
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]';
+        return JSON.parse(raw.replace(/```json|```/g, '').trim());
+      }
+
+      // --- Render results ---
+      function renderStores(stores) {
+        const list = $('store-list');
+        const results = $('results');
+        list.innerHTML = '';
+
+        if (!stores.length) {
+          list.innerHTML = '<p class="empty">No clothing stores found in these replies.</p>';
+        } else {
+          for (const s of stores) {
+            const el = document.createElement('div');
+            el.className = 'store';
+            el.innerHTML = `
+        <span class="store-name">${s.name}</span>
+        <span class="store-type">${s.type ?? ''}</span>
+        ${s.url ? `<a class="store-url" href="${s.url}" target="_blank" rel="noopener">${s.url}</a>` : ''}
+      `;
+            list.appendChild(el);
+          }
+        }
+
+        results.classList.add('active');
+      }
+
+      // --- Run ---
+      $('run').addEventListener('click', async () => {
+        const apiKey = keyInput.value.trim();
+        if (!apiKey) { alert('Enter your Gemini API key first.'); return; }
+
+        const bskyUrls = getUrls('bsky-urls');
+        const mastoUrls = getUrls('masto-urls');
+        if (!bskyUrls.length && !mastoUrls.length) { alert('Add at least one post URL.'); return; }
+
+        const btn = $('run');
+        btn.disabled = true;
+        clearLog();
+        $('results').classList.remove('active');
+
+        const allTexts = [];
+
+        try {
+          for (const url of bskyUrls) {
+            log(`Fetching Bluesky: ${url}`);
+            try {
+              const texts = await getBlueskyReplies(url);
+              log(`  → ${texts.length} replies`);
+              allTexts.push(...texts);
+            } catch (e) {
+              log(`  ✗ ${e.message}`);
+            }
+          }
+
+          for (const url of mastoUrls) {
+            log(`Fetching Mastodon: ${url}`);
+            try {
+              const texts = await getMastodonReplies(url);
+              log(`  → ${texts.length} replies`);
+              allTexts.push(...texts);
+            } catch (e) {
+              log(`  ✗ ${e.message}`);
+            }
+          }
+
+          if (!allTexts.length) {
+            log('No replies found.');
+            return;
+          }
+
+          log(`\nTotal: ${allTexts.length} replies — sending to Gemini...`);
+          const stores = await extractStores(allTexts, apiKey);
+          log(`Done — ${stores.length} store(s) found.\n`);
+          renderStores(stores);
+
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+
+</html>
