@@ -159,6 +159,10 @@
     "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
     "title": "AFI Quote Master"
   },
+  "social-replies": {
+    "category": "Uncategorized",
+    "title": "Shop Finder"
+  },
   "subscriptions": {
     "category": "Productivity",
     "description": "Track recurring subscription costs with a monthly calendar view, currency conversion, and export/import support.",
