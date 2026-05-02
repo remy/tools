@@ -1,570 +1,1074 @@
 <!DOCTYPE html>
 <html lang="en">
 
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Finder</title>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap');
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fetch replies from Bluesky and Mastodon posts and extract structured information using Gemini, with prompt presets, IndexedDB caching, downloads and cost tracking.">
+  <meta name="category" content="Developer Tools">
+  <title>Social Replies</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+    [hidden] {
+      display: none !important;
+    }
 
+    :root {
+      --colour-primary: #2563eb;
+      --colour-primary-hover: #1d4ed8;
+      --colour-primary-light: #dbeafe;
+      --colour-accent: #0891b2;
+      --colour-accent-hover: #0e7490;
+      --colour-bg: #fafafa;
+      --colour-bg-secondary: #f4f4f5;
+      --colour-bg-tertiary: #e4e4e7;
+      --colour-border: #d4d4d8;
+      --colour-text: #18181b;
+      --colour-text-secondary: #52525b;
+      --colour-text-tertiary: #a1a1aa;
+      --colour-block-bg: #ffffff;
+      --colour-block-border: #e4e4e7;
+      --colour-success: #10b981;
+      --colour-warning: #f59e0b;
+      --colour-warning-light: #fef3c7;
+      --colour-error: #ef4444;
+      --colour-error-light: #fee2e2;
+      --colour-shadow: rgba(0, 0, 0, 0.08);
+
+      --space-xs: 0.25rem;
+      --space-sm: 0.5rem;
+      --space-md: 0.75rem;
+      --space-lg: 1rem;
+      --space-xl: 1.5rem;
+      --space-2xl: 2rem;
+      --space-3xl: 3rem;
+
+      --mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #0f0f0f;
-        --surface: #1a1a1a;
-        --border: #2e2e2e;
-        --text: #e8e8e8;
-        --muted: #666;
-        --accent: #c8f060;
-        --danger: #ff6b6b;
-        --mono: 'IBM Plex Mono', monospace;
-        --sans: 'IBM Plex Sans', sans-serif;
+        --colour-bg: #0a0a0a;
+        --colour-bg-secondary: #171717;
+        --colour-bg-tertiary: #262626;
+        --colour-border: #404040;
+        --colour-text: #fafafa;
+        --colour-text-secondary: #a1a1aa;
+        --colour-text-tertiary: #71717a;
+        --colour-block-bg: #171717;
+        --colour-block-border: #262626;
+        --colour-shadow: rgba(0, 0, 0, 0.5);
+        --colour-warning-light: #3a2a05;
+        --colour-error-light: #3a0e0e;
       }
+    }
 
+    html {
+      -webkit-text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: var(--colour-text);
+      background: var(--colour-bg);
+      padding: var(--space-lg);
+    }
+
+    input,
+    button,
+    textarea,
+    select {
+      font: inherit;
+      color: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    a {
+      color: var(--colour-primary);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 760px;
+      margin-inline: auto;
+    }
+
+    header {
+      margin-bottom: var(--space-xl);
+      padding-bottom: var(--space-lg);
+      border-bottom: 1px solid var(--colour-border);
+    }
+
+    header h1 {
+      font-family: Georgia, "Times New Roman", Times, serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    header p {
+      margin-top: var(--space-xs);
+      font-size: 0.9rem;
+      color: var(--colour-text-secondary);
+    }
+
+    main {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xl);
+    }
+
+    section {
+      background: var(--colour-block-bg);
+      border: 1px solid var(--colour-block-border);
+      border-radius: 0.5rem;
+      padding: var(--space-lg);
+      box-shadow: 0 1px 2px var(--colour-shadow);
+    }
+
+    @media (min-width: 640px) {
       body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--mono);
-        min-height: 100vh;
-        padding: 2rem 1rem;
-      }
-
-      header {
-        max-width: 680px;
-        margin: 0 auto 3rem;
-        border-bottom: 1px solid var(--border);
-        padding-bottom: 1.5rem;
-      }
-
-      header h1 {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--accent);
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-      }
-
-      header p {
-        font-size: 0.8rem;
-        color: var(--muted);
-        margin-top: 0.4rem;
-        font-family: var(--sans);
-      }
-
-      main {
-        max-width: 680px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 2rem;
+        padding: var(--space-2xl) var(--space-lg);
       }
 
       section {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
+        padding: var(--space-xl);
       }
+    }
 
-      label {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-      }
+    section h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: var(--space-md);
+    }
 
-      input[type="text"],
-      input[type="password"] {
-        width: 100%;
-        background: var(--surface);
-        border: 1px solid var(--border);
-        color: var(--text);
-        font-family: var(--mono);
-        font-size: 0.82rem;
-        padding: 0.6rem 0.75rem;
-        outline: none;
-        transition: border-color 0.15s;
-      }
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: var(--space-xs);
+    }
 
-      input:focus {
-        border-color: var(--accent);
-      }
+    .hint {
+      display: block;
+      margin-top: var(--space-xs);
+      font-size: 0.8rem;
+      color: var(--colour-text-secondary);
+    }
 
-      input::placeholder {
-        color: var(--muted);
-      }
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      padding: var(--space-sm) var(--space-md);
+      font-size: 0.95rem;
+      color: var(--colour-text);
+      background: var(--colour-bg);
+      border: 1px solid var(--colour-border);
+      border-radius: 0.375rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
 
-      .url-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-      }
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--colour-primary);
+      box-shadow: 0 0 0 3px var(--colour-primary-light);
+    }
 
-      .url-row {
-        display: flex;
-        gap: 0.4rem;
-      }
+    textarea {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      resize: vertical;
+      min-height: 5rem;
+    }
 
-      .url-row input {
-        flex: 1;
-      }
+    .url-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xs);
+    }
 
-      .btn-remove {
-        background: none;
-        border: 1px solid var(--border);
-        color: var(--muted);
-        font-family: var(--mono);
-        font-size: 1rem;
-        padding: 0 0.6rem;
-        cursor: pointer;
-        transition: color 0.15s, border-color 0.15s;
-        line-height: 1;
-      }
+    .url-row {
+      display: flex;
+      gap: var(--space-xs);
+    }
 
-      .btn-remove:hover {
-        color: var(--danger);
-        border-color: var(--danger);
-      }
+    .url-row input {
+      flex: 1;
+    }
 
-      .btn-add {
-        background: none;
-        border: 1px dashed var(--border);
-        color: var(--muted);
-        font-family: var(--mono);
-        font-size: 0.75rem;
-        padding: 0.45rem 0.75rem;
-        cursor: pointer;
-        text-align: left;
-        transition: color 0.15s, border-color 0.15s;
-      }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-xs);
+      padding: 0.55rem var(--space-lg);
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: 1px solid transparent;
+      border-radius: 0.375rem;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+      text-decoration: none;
+    }
 
-      .btn-add:hover {
-        color: var(--accent);
-        border-color: var(--accent);
-      }
+    .btn-primary {
+      background: var(--colour-primary);
+      color: white;
+    }
 
-      .key-note {
-        font-size: 0.72rem;
-        color: var(--muted);
-        font-family: var(--sans);
-      }
+    .btn-primary:hover {
+      background: var(--colour-primary-hover);
+    }
 
-      .key-note span {
-        color: #e8a030;
-      }
+    .btn-secondary {
+      background: var(--colour-bg-secondary);
+      color: var(--colour-text);
+      border-color: var(--colour-border);
+    }
 
-      #run {
-        background: var(--accent);
-        color: #0f0f0f;
-        border: none;
-        font-family: var(--mono);
-        font-size: 0.85rem;
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        padding: 0.75rem 1.5rem;
-        cursor: pointer;
-        transition: opacity 0.15s;
-        align-self: flex-start;
-      }
+    .btn-secondary:hover {
+      background: var(--colour-bg-tertiary);
+    }
 
-      #run:hover {
-        opacity: 0.85;
-      }
+    .btn-ghost {
+      background: transparent;
+      color: var(--colour-text-secondary);
+      border-color: var(--colour-border);
+    }
 
-      #run:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
+    .btn-ghost:hover {
+      color: var(--colour-text);
+      border-color: var(--colour-text);
+    }
 
-      #log {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        padding: 1rem;
-        font-size: 0.75rem;
-        color: var(--muted);
-        min-height: 4rem;
-        white-space: pre-wrap;
-        line-height: 1.6;
-        display: none;
-      }
+    .btn-danger-ghost {
+      background: transparent;
+      color: var(--colour-text-tertiary);
+      border-color: var(--colour-border);
+      padding: 0 var(--space-md);
+    }
 
-      #log.active {
-        display: block;
-      }
+    .btn-danger-ghost:hover {
+      color: var(--colour-error);
+      border-color: var(--colour-error);
+    }
 
-      #results {
-        display: none;
-      }
+    .btn-add {
+      background: transparent;
+      color: var(--colour-text-secondary);
+      border: 1px dashed var(--colour-border);
+      border-radius: 0.375rem;
+      padding: 0.45rem var(--space-md);
+      font-size: 0.85rem;
+      align-self: flex-start;
+    }
 
-      #results.active {
-        display: block;
-      }
+    .btn-add:hover {
+      color: var(--colour-primary);
+      border-color: var(--colour-primary);
+    }
 
-      #results h2 {
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--muted);
-        margin-bottom: 1rem;
-      }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-      .store-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      align-items: center;
+    }
 
-      .store {
-        background: var(--surface);
-        border: 1px solid var(--border);
-        padding: 0.75rem 1rem;
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 0.2rem 1rem;
-        align-items: start;
-      }
+    .key-warning {
+      color: var(--colour-warning);
+      font-weight: 500;
+    }
 
-      .store-name {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--text);
-      }
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: var(--space-md);
+      border-bottom: 1px solid var(--colour-border);
+    }
 
-      .store-type {
-        font-size: 0.7rem;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        grid-column: 1;
-      }
+    .tab {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: var(--space-sm) var(--space-lg);
+      font-size: 0.9rem;
+      color: var(--colour-text-secondary);
+      margin-bottom: -1px;
+    }
 
-      .store-url {
-        grid-column: 1 / -1;
-        font-size: 0.75rem;
-        color: var(--accent);
-        text-decoration: none;
-        word-break: break-all;
-        margin-top: 0.2rem;
-      }
+    .tab[aria-selected="true"] {
+      color: var(--colour-primary);
+      border-bottom-color: var(--colour-primary);
+      font-weight: 600;
+    }
 
-      .store-url:hover {
-        text-decoration: underline;
-      }
+    .field-stack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
 
-      .empty {
-        font-size: 0.8rem;
-        color: var(--muted);
-        font-family: var(--sans);
-        padding: 1rem 0;
-      }
-    </style>
-  </head>
+    #log {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--colour-text-secondary);
+      background: var(--colour-bg-secondary);
+      border: 1px solid var(--colour-border);
+      border-radius: 0.375rem;
+      padding: var(--space-md);
+      white-space: pre-wrap;
+      max-height: 12rem;
+      overflow-y: auto;
+    }
 
-  <body>
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-md) var(--space-xl);
+      padding: var(--space-md);
+      background: var(--colour-bg-secondary);
+      border-radius: 0.375rem;
+      font-size: 0.85rem;
+    }
 
+    .stats .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--colour-text-tertiary);
+    }
+
+    .stat-value {
+      font-family: var(--mono);
+      font-weight: 600;
+    }
+
+    .stat-value.cached {
+      color: var(--colour-success);
+    }
+
+    #results-output {
+      max-height: 28rem;
+      overflow-y: auto;
+      background: var(--colour-bg-secondary);
+      border: 1px solid var(--colour-border);
+      border-radius: 0.375rem;
+      padding: var(--space-md);
+      font-size: 0.85rem;
+    }
+
+    #results-output pre {
+      font-family: var(--mono);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .item {
+      background: var(--colour-block-bg);
+      border: 1px solid var(--colour-block-border);
+      border-radius: 0.375rem;
+      padding: var(--space-md);
+    }
+
+    .item-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .item-meta {
+      font-size: 0.75rem;
+      color: var(--colour-text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .item-link {
+      display: block;
+      margin-top: var(--space-xs);
+      font-size: 0.8rem;
+      word-break: break-all;
+    }
+
+    .empty {
+      color: var(--colour-text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .alert {
+      padding: var(--space-md);
+      border-radius: 0.375rem;
+      border-left: 4px solid;
+      font-size: 0.85rem;
+    }
+
+    .alert-warning {
+      background: var(--colour-warning-light);
+      border-color: var(--colour-warning);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
     <header>
-      <h1>Shop Finder</h1>
-      <p>Extracts clothing store recommendations from Bluesky &amp; Mastodon replies via Gemini.</p>
+      <h1>Social Replies</h1>
+      <p>Fetch replies from Bluesky &amp; Mastodon posts and extract structured data with Gemini.</p>
     </header>
 
     <main>
       <section id="key-section">
-        <label>Gemini API Key</label>
-        <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off">
-        <p class="key-note"><span>⚠</span> Key is stored in localStorage and sent directly to Google. Personal use only.
-        </p>
+        <h2>Gemini API key</h2>
+        <div class="field-stack">
+          <input type="password" id="gemini-key" placeholder="AIza..." autocomplete="off">
+          <p class="hint"><span class="key-warning">⚠</span> Stored in localStorage and sent directly to Google. Personal use only. Uses <code>gemini-2.5-flash-lite</code>.</p>
+        </div>
       </section>
 
       <section>
-        <label>Bluesky Post URLs</label>
-        <div class="url-list" id="bsky-urls"></div>
-        <button class="btn-add" id="bsky-add">+ add URL</button>
+        <h2>Posts to fetch</h2>
+        <div class="field-stack">
+          <div>
+            <label>Bluesky post URLs</label>
+            <div class="url-list" id="bsky-urls"></div>
+            <button class="btn-add" id="bsky-add" type="button">+ add URL</button>
+          </div>
+          <div>
+            <label>Mastodon post URLs</label>
+            <div class="url-list" id="masto-urls"></div>
+            <button class="btn-add" id="masto-add" type="button">+ add URL</button>
+          </div>
+        </div>
       </section>
 
       <section>
-        <label>Mastodon Post URLs</label>
-        <div class="url-list" id="masto-urls"></div>
-        <button class="btn-add" id="masto-add">+ add URL</button>
+        <h2>Prompt</h2>
+        <div class="tabs" role="tablist">
+          <button class="tab" id="tab-simple" role="tab" aria-selected="true" aria-controls="panel-simple">Simple</button>
+          <button class="tab" id="tab-detailed" role="tab" aria-selected="false" aria-controls="panel-detailed">Detailed</button>
+        </div>
+
+        <div id="panel-simple" role="tabpanel" aria-labelledby="tab-simple">
+          <div class="field-stack">
+            <div>
+              <label for="simple-goal">What are you trying to collect?</label>
+              <textarea id="simple-goal" rows="3" placeholder="e.g. clothing stores in England — name, type (high street/online/vintage/etc), and UK URL"></textarea>
+              <p class="hint">A full prompt is built from this and sent to Gemini.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-detailed" role="tabpanel" aria-labelledby="tab-detailed" hidden>
+          <div class="field-stack">
+            <div>
+              <label for="detailed-prompt">Full prompt</label>
+              <textarea id="detailed-prompt" rows="12"></textarea>
+              <p class="hint">Replies are appended to the end of this prompt under <code>Replies:</code>. Reply with raw JSON for nicer rendering.</p>
+            </div>
+            <div>
+              <button class="btn btn-ghost btn-sm" id="reset-detailed" type="button">Reset to default</button>
+            </div>
+          </div>
+        </div>
       </section>
 
-      <button id="run">Fetch &amp; Analyse</button>
+      <section>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="run">Fetch &amp; Analyse</button>
+          <button class="btn btn-ghost" id="clear-cache" type="button">Clear cache</button>
+        </div>
+        <pre id="log" hidden></pre>
+      </section>
 
-      <pre id="log"></pre>
+      <section id="results-section" hidden>
+        <h2>Results</h2>
 
-      <section id="results">
-        <h2>Stores found</h2>
-        <div class="store-list" id="store-list"></div>
+        <div class="stats" id="stats">
+          <div class="stat">
+            <span class="stat-label">Replies</span>
+            <span class="stat-value" id="stat-replies">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Input tokens</span>
+            <span class="stat-value" id="stat-input">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Output tokens</span>
+            <span class="stat-value" id="stat-output">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Cost (USD)</span>
+            <span class="stat-value" id="stat-cost">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Source</span>
+            <span class="stat-value" id="stat-source">—</span>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: var(--space-md); margin-bottom: var(--space-md);">
+          <button class="btn btn-secondary" id="download-text" type="button">Download .txt</button>
+          <button class="btn btn-secondary" id="download-html" type="button">Download .html</button>
+          <button class="btn btn-secondary" id="download-json" type="button">Download .json</button>
+        </div>
+
+        <div id="results-output"></div>
       </section>
     </main>
+  </div>
 
-    <script>
-      const BSKY_API = 'https://public.api.bsky.app/xrpc';
-      const GEMINI_MODEL = 'gemini-2.5-flash-lite';
+  <script>
+    const BSKY_API = 'https://public.api.bsky.app/xrpc';
+    const GEMINI_MODEL = 'gemini-2.5-flash-lite';
 
-      const $ = id => document.getElementById(id);
+    // Gemini 2.5 Flash Lite pricing (USD per 1M tokens)
+    const PRICE_INPUT_PER_M = 0.10;
+    const PRICE_OUTPUT_PER_M = 0.40;
 
-      // --- Persist key ---
-      const keyInput = $('gemini-key');
-      keyInput.value = localStorage.getItem('gemini-key') ?? '';
-      keyInput.addEventListener('change', () => localStorage.setItem('gemini-key', keyInput.value.trim()));
+    const DEFAULT_DETAILED_PROMPT = `You are analysing social media replies to a post.
 
-      // --- URL list helpers ---
-      function addUrlRow(containerId, value = '') {
-        const container = $(containerId);
-        const row = document.createElement('div');
-        row.className = 'url-row';
-
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = value;
-        input.placeholder = containerId === 'bsky-urls'
-          ? 'https://bsky.app/profile/.../post/...'
-          : 'https://instance.social/@user/123456';
-
-        const btn = document.createElement('button');
-        btn.className = 'btn-remove';
-        btn.textContent = '×';
-        btn.addEventListener('click', () => row.remove());
-
-        row.append(input, btn);
-        container.appendChild(row);
-        return input;
-      }
-
-      function getUrls(containerId) {
-        return [...$(containerId).querySelectorAll('input')]
-          .map(i => i.value.trim())
-          .filter(Boolean);
-      }
-
-      $('bsky-add').addEventListener('click', () => addUrlRow('bsky-urls'));
-      $('masto-add').addEventListener('click', () => addUrlRow('masto-urls'));
-
-      // Pre-populate with the known posts
-      addUrlRow('bsky-urls', 'https://bsky.app/profile/remysharp.com/post/3mksvusotvs2i');
-      addUrlRow('masto-urls', 'https://front-end.social/@rem/116501074025067345');
-
-      // --- Logging ---
-      const logEl = $('log');
-      function log(msg) {
-        logEl.classList.add('active');
-        logEl.textContent += msg + '\n';
-      }
-      function clearLog() {
-        logEl.textContent = '';
-        logEl.classList.remove('active');
-      }
-
-      // --- Fetch helper ---
-      // Surfaces CORS/network errors and non-2xx responses with as much detail as possible
-      async function safeFetch(url, opts) {
-        let res;
-        try {
-          res = await fetch(url, opts);
-        } catch (e) {
-          // TypeError: Failed to fetch = almost always a CORS block or network error
-          const isCors = e instanceof TypeError && e.message.includes('fetch');
-          throw new Error(
-            `Network error fetching ${url}\n` +
-            (isCors ? '  → Likely a CORS block. Check the browser console (Network tab) for details.\n' : '') +
-            `  → ${e.message}`
-          );
-        }
-
-        if (!res.ok) {
-          let body = '';
-          try { body = await res.text(); } catch { }
-          throw new Error(
-            `HTTP ${res.status} ${res.statusText} from ${url}\n` +
-            (body ? `  → ${body.slice(0, 300)}` : '')
-          );
-        }
-
-        return res;
-      }
-
-      // --- Bluesky ---
-      async function resolveBlueskyDid(handle) {
-        const url = `${BSKY_API}/app.bsky.actor.getProfile?actor=${handle}`;
-        const res = await safeFetch(url);
-        const data = await res.json();
-        if (!data.did) throw new Error(`No DID in profile response for "${handle}": ${JSON.stringify(data)}`);
-        return data.did;
-      }
-
-      async function getBlueskyReplies(url) {
-        const match = url.match(/profile\/([^/]+)\/post\/([^/]+)/);
-        if (!match) throw new Error(`Unrecognised Bluesky URL: ${url}`);
-        const [, handle, rkey] = match;
-
-        const did = await resolveBlueskyDid(handle);
-        const atUri = encodeURIComponent(`at://${did}/app.bsky.feed.post/${rkey}`);
-        const threadUrl = `${BSKY_API}/app.bsky.feed.getPostThread?uri=${atUri}&depth=100`;
-
-        const res = await safeFetch(threadUrl);
-        const body = await res.json();
-        const { thread } = body;
-        if (!thread) throw new Error(`No thread in response: ${JSON.stringify(body).slice(0, 200)}`);
-
-        const texts = [];
-        function collectReplies(node) {
-          for (const reply of node?.replies ?? []) {
-            const text = reply.post?.record?.text;
-            if (text) texts.push(text);
-            collectReplies(reply);
-          }
-        }
-        collectReplies(thread);
-        return texts;
-      }
-
-      // --- Mastodon ---
-      function stripHtml(html) {
-        return html
-          .replace(/<br\s*\/?>/gi, ' ')
-          .replace(/<[^>]+>/g, '')
-          .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-          .replace(/&#39;/g, "'").replace(/&apos;/g, "'")
-          .trim();
-      }
-
-      async function getMastodonReplies(url) {
-        const match = url.match(/^(https:\/\/[^/]+)\/@[^/]+\/(\d+)/);
-        if (!match) throw new Error(`Unrecognised Mastodon URL: ${url}`);
-        const [, instance, statusId] = match;
-
-        const contextUrl = `${instance}/api/v1/statuses/${statusId}/context`;
-        const res = await safeFetch(contextUrl);
-        const body = await res.json();
-        if (!body.descendants) throw new Error(`No descendants in response: ${JSON.stringify(body).slice(0, 200)}`);
-        return body.descendants.map(r => stripHtml(r.content)).filter(Boolean);
-      }
-
-      // --- Gemini ---
-      async function extractStores(texts, apiKey) {
-        const combined = texts.join('\n---\n');
-
-        const prompt = `You are analysing social media replies to a post asking where to buy clothes in England.
-
-Find every mention of a clothing store, brand, or shop — including online retailers, high street, second-hand/vintage, and independents.
+Extract every relevant mention into a structured list.
 
 Return a JSON array where each item has:
-- "name": store name
-- "url": UK website URL (prefer .co.uk if it exists)
-- "type": one of: high street, online, vintage, sportswear, independent, marketplace
+- "name": the thing's name
+- "url": canonical URL if available, otherwise empty string
+- "type": short category label
 
 Rules:
-- Deduplicate — one entry per store
+- Deduplicate — one entry per item
 - If none found, return []
-- Reply with ONLY the raw JSON array, no markdown, no explanation
+- Reply with ONLY the raw JSON array, no markdown, no explanation`;
 
-Replies:
-${combined}`;
+    const $ = id => document.getElementById(id);
 
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }],
-              generationConfig: { temperature: 0 },
-            }),
-          }
+    // --- API key persistence ---
+    const keyInput = $('gemini-key');
+    keyInput.value = localStorage.getItem('gemini-key') ?? '';
+    keyInput.addEventListener('change', () => {
+      localStorage.setItem('gemini-key', keyInput.value.trim());
+    });
+
+    // --- URL list helpers ---
+    function addUrlRow(containerId, value = '') {
+      const container = $(containerId);
+      const row = document.createElement('div');
+      row.className = 'url-row';
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = value;
+      input.placeholder = containerId === 'bsky-urls'
+        ? 'https://bsky.app/profile/.../post/...'
+        : 'https://instance.social/@user/123456';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-danger-ghost';
+      btn.setAttribute('aria-label', 'Remove URL');
+      btn.textContent = '×';
+      btn.addEventListener('click', () => row.remove());
+
+      row.append(input, btn);
+      container.appendChild(row);
+      return input;
+    }
+
+    function getUrls(containerId) {
+      return [...$(containerId).querySelectorAll('input')]
+        .map(i => i.value.trim())
+        .filter(Boolean);
+    }
+
+    $('bsky-add').addEventListener('click', () => addUrlRow('bsky-urls'));
+    $('masto-add').addEventListener('click', () => addUrlRow('masto-urls'));
+    addUrlRow('bsky-urls');
+    addUrlRow('masto-urls');
+
+    // --- Prompt mode tabs ---
+    const tabSimple = $('tab-simple');
+    const tabDetailed = $('tab-detailed');
+    const panelSimple = $('panel-simple');
+    const panelDetailed = $('panel-detailed');
+    const detailedPrompt = $('detailed-prompt');
+    const simpleGoal = $('simple-goal');
+
+    detailedPrompt.value = localStorage.getItem('detailed-prompt') ?? DEFAULT_DETAILED_PROMPT;
+    simpleGoal.value = localStorage.getItem('simple-goal') ?? '';
+
+    detailedPrompt.addEventListener('change', () => {
+      localStorage.setItem('detailed-prompt', detailedPrompt.value);
+    });
+    simpleGoal.addEventListener('change', () => {
+      localStorage.setItem('simple-goal', simpleGoal.value);
+    });
+
+    function setMode(mode) {
+      const isSimple = mode === 'simple';
+      tabSimple.setAttribute('aria-selected', String(isSimple));
+      tabDetailed.setAttribute('aria-selected', String(!isSimple));
+      panelSimple.hidden = !isSimple;
+      panelDetailed.hidden = isSimple;
+      localStorage.setItem('prompt-mode', mode);
+    }
+
+    tabSimple.addEventListener('click', () => setMode('simple'));
+    tabDetailed.addEventListener('click', () => setMode('detailed'));
+    setMode(localStorage.getItem('prompt-mode') ?? 'simple');
+
+    $('reset-detailed').addEventListener('click', () => {
+      detailedPrompt.value = DEFAULT_DETAILED_PROMPT;
+      localStorage.setItem('detailed-prompt', DEFAULT_DETAILED_PROMPT);
+    });
+
+    function buildSimplePrompt(goal) {
+      return `You are analysing social media replies to a post.
+
+Goal: ${goal}
+
+Extract every relevant mention into a structured list.
+
+Return a JSON array where each item has:
+- "name": the thing's name
+- "url": canonical URL if available, otherwise empty string
+- "type": short category label that fits the goal
+
+Rules:
+- Deduplicate — one entry per item
+- Stay strictly on-topic for the goal above
+- If none found, return []
+- Reply with ONLY the raw JSON array, no markdown, no explanation`;
+    }
+
+    function getActivePrompt() {
+      const mode = tabSimple.getAttribute('aria-selected') === 'true' ? 'simple' : 'detailed';
+      if (mode === 'simple') {
+        const goal = simpleGoal.value.trim();
+        if (!goal) throw new Error('Describe what you are trying to collect.');
+        return buildSimplePrompt(goal);
+      }
+      const prompt = detailedPrompt.value.trim();
+      if (!prompt) throw new Error('Detailed prompt is empty.');
+      return prompt;
+    }
+
+    // --- Logging ---
+    const logEl = $('log');
+    function log(msg) {
+      logEl.hidden = false;
+      logEl.textContent += msg + '\n';
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+    function clearLog() {
+      logEl.textContent = '';
+      logEl.hidden = true;
+    }
+
+    // --- Fetch helpers ---
+    async function safeFetch(url, opts) {
+      let res;
+      try {
+        res = await fetch(url, opts);
+      } catch (e) {
+        const isCors = e instanceof TypeError && e.message.includes('fetch');
+        throw new Error(
+          `Network error fetching ${url}\n` +
+          (isCors ? '  → Likely a CORS block. Check the Network tab for details.\n' : '') +
+          `  → ${e.message}`
         );
-
-        const data = await res.json();
-        if (data.error) throw new Error(`Gemini: ${data.error.message}`);
-
-        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]';
-        return JSON.parse(raw.replace(/```json|```/g, '').trim());
       }
-
-      // --- Render results ---
-      function renderStores(stores) {
-        const list = $('store-list');
-        const results = $('results');
-        list.innerHTML = '';
-
-        if (!stores.length) {
-          list.innerHTML = '<p class="empty">No clothing stores found in these replies.</p>';
-        } else {
-          for (const s of stores) {
-            const el = document.createElement('div');
-            el.className = 'store';
-            el.innerHTML = `
-        <span class="store-name">${s.name}</span>
-        <span class="store-type">${s.type ?? ''}</span>
-        ${s.url ? `<a class="store-url" href="${s.url}" target="_blank" rel="noopener">${s.url}</a>` : ''}
-      `;
-            list.appendChild(el);
-          }
-        }
-
-        results.classList.add('active');
+      if (!res.ok) {
+        let body = '';
+        try { body = await res.text(); } catch { }
+        throw new Error(
+          `HTTP ${res.status} ${res.statusText} from ${url}\n` +
+          (body ? `  → ${body.slice(0, 300)}` : '')
+        );
       }
+      return res;
+    }
 
-      // --- Run ---
-      $('run').addEventListener('click', async () => {
-        const apiKey = keyInput.value.trim();
-        if (!apiKey) { alert('Enter your Gemini API key first.'); return; }
+    // --- Bluesky ---
+    async function resolveBlueskyDid(handle) {
+      const url = `${BSKY_API}/app.bsky.actor.getProfile?actor=${handle}`;
+      const res = await safeFetch(url);
+      const data = await res.json();
+      if (!data.did) throw new Error(`No DID for handle "${handle}"`);
+      return data.did;
+    }
 
-        const bskyUrls = getUrls('bsky-urls');
-        const mastoUrls = getUrls('masto-urls');
-        if (!bskyUrls.length && !mastoUrls.length) { alert('Add at least one post URL.'); return; }
+    async function getBlueskyReplies(url) {
+      const match = url.match(/profile\/([^/]+)\/post\/([^/]+)/);
+      if (!match) throw new Error(`Unrecognised Bluesky URL: ${url}`);
+      const [, handle, rkey] = match;
+      const did = await resolveBlueskyDid(handle);
+      const atUri = encodeURIComponent(`at://${did}/app.bsky.feed.post/${rkey}`);
+      const threadUrl = `${BSKY_API}/app.bsky.feed.getPostThread?uri=${atUri}&depth=100`;
+      const res = await safeFetch(threadUrl);
+      const { thread } = await res.json();
+      if (!thread) throw new Error(`No thread for ${url}`);
 
-        const btn = $('run');
-        btn.disabled = true;
-        clearLog();
-        $('results').classList.remove('active');
-
-        const allTexts = [];
-
-        try {
-          for (const url of bskyUrls) {
-            log(`Fetching Bluesky: ${url}`);
-            try {
-              const texts = await getBlueskyReplies(url);
-              log(`  → ${texts.length} replies`);
-              allTexts.push(...texts);
-            } catch (e) {
-              log(`  ✗ ${e.message}`);
-            }
-          }
-
-          for (const url of mastoUrls) {
-            log(`Fetching Mastodon: ${url}`);
-            try {
-              const texts = await getMastodonReplies(url);
-              log(`  → ${texts.length} replies`);
-              allTexts.push(...texts);
-            } catch (e) {
-              log(`  ✗ ${e.message}`);
-            }
-          }
-
-          if (!allTexts.length) {
-            log('No replies found.');
-            return;
-          }
-
-          log(`\nTotal: ${allTexts.length} replies — sending to Gemini...`);
-          const stores = await extractStores(allTexts, apiKey);
-          log(`Done — ${stores.length} store(s) found.\n`);
-          renderStores(stores);
-
-        } finally {
-          btn.disabled = false;
+      const texts = [];
+      (function collect(node) {
+        for (const reply of node?.replies ?? []) {
+          const text = reply.post?.record?.text;
+          if (text) texts.push(text);
+          collect(reply);
         }
+      })(thread);
+      return texts;
+    }
+
+    // --- Mastodon ---
+    function stripHtml(html) {
+      return html
+        .replace(/<br\s*\/?>/gi, ' ')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+        .replace(/&#39;/g, "'").replace(/&apos;/g, "'")
+        .trim();
+    }
+
+    async function getMastodonReplies(url) {
+      const match = url.match(/^(https:\/\/[^/]+)\/@[^/]+\/(\d+)/);
+      if (!match) throw new Error(`Unrecognised Mastodon URL: ${url}`);
+      const [, instance, statusId] = match;
+      const res = await safeFetch(`${instance}/api/v1/statuses/${statusId}/context`);
+      const body = await res.json();
+      if (!body.descendants) throw new Error(`No descendants for ${url}`);
+      return body.descendants.map(r => stripHtml(r.content)).filter(Boolean);
+    }
+
+    // --- IndexedDB cache ---
+    const DB_NAME = 'social-replies';
+    const STORE = 'cache';
+
+    function openDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          req.result.createObjectStore(STORE, { keyPath: 'key' });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
       });
-    </script>
-  </body>
+    }
+
+    async function cacheGet(key) {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readonly');
+        const req = tx.objectStore(STORE).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function cachePut(record) {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(record);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function cacheClear() {
+      const db = await openDb();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function hashKey(prompt, replies) {
+      const text = prompt + '\n\n' + replies.join('\n---\n');
+      const buf = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest('SHA-256', buf);
+      return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    $('clear-cache').addEventListener('click', async () => {
+      await cacheClear();
+      log('Cache cleared.');
+    });
+
+    // --- Gemini ---
+    async function callGemini(prompt, apiKey) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0 },
+          }),
+        }
+      );
+      const data = await res.json();
+      if (data.error) throw new Error(`Gemini: ${data.error.message}`);
+      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+      const usage = data.usageMetadata ?? {};
+      return {
+        raw,
+        inputTokens: usage.promptTokenCount ?? 0,
+        outputTokens: usage.candidatesTokenCount ?? 0,
+      };
+    }
+
+    function tryParseJson(raw) {
+      const stripped = raw.replace(/```json|```/g, '').trim();
+      try { return JSON.parse(stripped); } catch { return null; }
+    }
+
+    function calcCost(inputTokens, outputTokens) {
+      return (inputTokens / 1_000_000) * PRICE_INPUT_PER_M
+           + (outputTokens / 1_000_000) * PRICE_OUTPUT_PER_M;
+    }
+
+    // --- Render ---
+    let lastResult = null;
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function renderResults(parsed, raw) {
+      const out = $('results-output');
+      out.innerHTML = '';
+
+      if (Array.isArray(parsed) && parsed.length) {
+        const list = document.createElement('div');
+        list.className = 'item-list';
+        for (const item of parsed) {
+          const el = document.createElement('div');
+          el.className = 'item';
+          const name = item?.name ?? item?.title ?? JSON.stringify(item);
+          const type = item?.type ?? item?.category ?? '';
+          const url = item?.url ?? item?.link ?? '';
+          el.innerHTML =
+            `<div class="item-title">${escapeHtml(name)}</div>` +
+            (type ? `<div class="item-meta">${escapeHtml(type)}</div>` : '') +
+            (url ? `<a class="item-link" href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a>` : '');
+          list.appendChild(el);
+        }
+        out.appendChild(list);
+      } else if (Array.isArray(parsed) && !parsed.length) {
+        out.innerHTML = '<p class="empty">No items found in these replies.</p>';
+      } else {
+        const pre = document.createElement('pre');
+        pre.textContent = raw;
+        out.appendChild(pre);
+      }
+    }
+
+    function setStat(id, value, opts = {}) {
+      const el = $(id);
+      el.textContent = value;
+      el.classList.toggle('cached', !!opts.cached);
+    }
+
+    function showStats({ replies, inputTokens, outputTokens, cost, cached }) {
+      $('results-section').hidden = false;
+      setStat('stat-replies', replies);
+      setStat('stat-input', inputTokens.toLocaleString());
+      setStat('stat-output', outputTokens.toLocaleString());
+      setStat('stat-cost', cached ? '$0.00 (cached)' : '$' + cost.toFixed(6), { cached });
+      setStat('stat-source', cached ? 'cache' : 'gemini', { cached });
+    }
+
+    // --- Downloads ---
+    function download(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function resultAsText(result) {
+      const { parsed, raw } = result;
+      if (!Array.isArray(parsed)) return raw;
+      return parsed.map(item => {
+        const name = item?.name ?? item?.title ?? '';
+        const type = item?.type ?? item?.category ?? '';
+        const url = item?.url ?? item?.link ?? '';
+        return [name, type && `(${type})`, url].filter(Boolean).join(' — ');
+      }).join('\n');
+    }
+
+    function resultAsHtml(result) {
+      const { parsed, raw } = result;
+      const body = Array.isArray(parsed)
+        ? `<ul>\n` + parsed.map(item => {
+            const name = escapeHtml(item?.name ?? item?.title ?? '');
+            const type = escapeHtml(item?.type ?? item?.category ?? '');
+            const url = item?.url ?? item?.link ?? '';
+            const link = url ? ` — <a href="${escapeHtml(url)}">${escapeHtml(url)}</a>` : '';
+            const cat = type ? ` <em>(${type})</em>` : '';
+            return `  <li><strong>${name}</strong>${cat}${link}</li>`;
+          }).join('\n') + `\n</ul>`
+        : `<pre>${escapeHtml(raw)}</pre>`;
+      return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>Social Replies — Results</title>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem;line-height:1.5}li{margin:.4rem 0}</style>
+</head>
+<body>
+<h1>Social Replies — Results</h1>
+${body}
+</body>
+</html>`;
+    }
+
+    $('download-text').addEventListener('click', () => {
+      if (!lastResult) return;
+      download('social-replies.txt', resultAsText(lastResult), 'text/plain');
+    });
+    $('download-html').addEventListener('click', () => {
+      if (!lastResult) return;
+      download('social-replies.html', resultAsHtml(lastResult), 'text/html');
+    });
+    $('download-json').addEventListener('click', () => {
+      if (!lastResult) return;
+      const content = Array.isArray(lastResult.parsed)
+        ? JSON.stringify(lastResult.parsed, null, 2)
+        : lastResult.raw;
+      download('social-replies.json', content, 'application/json');
+    });
+
+    // --- Run ---
+    $('run').addEventListener('click', async () => {
+      const apiKey = keyInput.value.trim();
+      if (!apiKey) { alert('Enter your Gemini API key first.'); return; }
+
+      let promptTemplate;
+      try {
+        promptTemplate = getActivePrompt();
+      } catch (e) {
+        alert(e.message);
+        return;
+      }
+
+      const bskyUrls = getUrls('bsky-urls');
+      const mastoUrls = getUrls('masto-urls');
+      if (!bskyUrls.length && !mastoUrls.length) { alert('Add at least one post URL.'); return; }
+
+      const btn = $('run');
+      btn.disabled = true;
+      clearLog();
+      $('results-section').hidden = true;
+
+      const allTexts = [];
+      try {
+        for (const url of bskyUrls) {
+          log(`Fetching Bluesky: ${url}`);
+          try {
+            const texts = await getBlueskyReplies(url);
+            log(`  → ${texts.length} replies`);
+            allTexts.push(...texts);
+          } catch (e) {
+            log(`  ✗ ${e.message}`);
+          }
+        }
+        for (const url of mastoUrls) {
+          log(`Fetching Mastodon: ${url}`);
+          try {
+            const texts = await getMastodonReplies(url);
+            log(`  → ${texts.length} replies`);
+            allTexts.push(...texts);
+          } catch (e) {
+            log(`  ✗ ${e.message}`);
+          }
+        }
+
+        if (!allTexts.length) {
+          log('No replies found.');
+          return;
+        }
+
+        const fullPrompt = `${promptTemplate}\n\nReplies:\n${allTexts.join('\n---\n')}`;
+        const key = await hashKey(promptTemplate, allTexts);
+
+        const cached = await cacheGet(key);
+        if (cached) {
+          log(`Cache hit — skipping Gemini call.`);
+          const parsed = tryParseJson(cached.raw);
+          lastResult = { parsed, raw: cached.raw };
+          renderResults(parsed, cached.raw);
+          showStats({
+            replies: allTexts.length,
+            inputTokens: cached.inputTokens,
+            outputTokens: cached.outputTokens,
+            cost: 0,
+            cached: true,
+          });
+          return;
+        }
+
+        log(`Total: ${allTexts.length} replies — calling Gemini...`);
+        const { raw, inputTokens, outputTokens } = await callGemini(fullPrompt, apiKey);
+        const cost = calcCost(inputTokens, outputTokens);
+        log(`Done — ${inputTokens} input + ${outputTokens} output tokens, $${cost.toFixed(6)}`);
+
+        await cachePut({ key, raw, inputTokens, outputTokens, createdAt: Date.now() });
+
+        const parsed = tryParseJson(raw);
+        lastResult = { parsed, raw };
+        renderResults(parsed, raw);
+        showStats({
+          replies: allTexts.length,
+          inputTokens,
+          outputTokens,
+          cost,
+          cached: false,
+        });
+      } catch (e) {
+        log(`✗ ${e.message}`);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
 
 </html>
