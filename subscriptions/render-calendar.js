@@ -16,12 +16,24 @@ export function render() {
   renderTotal();
 }
 
+const narrowMQ = window.matchMedia('(max-width: 639px)');
+narrowMQ.addEventListener('change', renderHeader);
+
 export function renderHeader() {
+  const el = document.getElementById('month-title');
   if (state.viewMode === 'year') {
-    document.getElementById('month-title').textContent = state.yearViewYear;
+    el.textContent = state.yearViewYear;
+    return;
+  }
+  const narrow = narrowMQ.matches;
+  const month = narrow
+    ? MONTH_NAMES[state.currentMonth].slice(0, 3)
+    : MONTH_NAMES[state.currentMonth];
+  if (state.currentYear === new Date().getFullYear()) {
+    el.textContent = month;
   } else {
-    document.getElementById('month-title').textContent =
-      `${MONTH_NAMES[state.currentMonth]} ${state.currentYear}`;
+    const year = narrow ? `'${String(state.currentYear).slice(-2)}` : state.currentYear;
+    el.textContent = `${month} ${year}`;
   }
 }
 
