@@ -17,11 +17,13 @@ export function render() {
 }
 
 export function renderHeader() {
+  const currentYear = new Date().getFullYear();
   if (state.viewMode === 'year') {
     document.getElementById('month-title').textContent = state.yearViewYear;
   } else {
+    const month = MONTH_NAMES[state.currentMonth];
     document.getElementById('month-title').textContent =
-      `${MONTH_NAMES[state.currentMonth]} ${state.currentYear}`;
+      state.currentYear === currentYear ? month : `${month} ${state.currentYear}`;
   }
 }
 
