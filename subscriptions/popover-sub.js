@@ -68,7 +68,7 @@ export function openSubPopover(day, editSub) {
   }
   updateRenewalVisibility('sub-cycle-radio', 'sub-month');
 
-  popover.showPopover();
+  popover.showModal();
   setTimeout(() => document.getElementById('sub-name').focus(), 50);
 }
 
@@ -99,7 +99,7 @@ export async function handleSubFormSubmit(e) {
   await db.put(sub);
   state.subscriptions = await db.getAll();
   render();
-  document.getElementById('sub-popover').hidePopover();
+  document.getElementById('sub-popover').close();
 }
 
 export async function handleSubDelete() {
@@ -108,5 +108,5 @@ export async function handleSubDelete() {
   await db.delete(id);
   state.subscriptions = await db.getAll();
   render();
-  document.getElementById('sub-popover').hidePopover();
+  document.getElementById('sub-popover').close();
 }

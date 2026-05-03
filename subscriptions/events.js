@@ -137,8 +137,11 @@ export function bindEvents() {
   document.getElementById('btn-settings').addEventListener('click', openSettings);
 
   // Popover close buttons
-  document.getElementById('sub-popover-close').addEventListener('click', () =>
-    document.getElementById('sub-popover').hidePopover());
+  const subDialog = document.getElementById('sub-popover');
+  document.getElementById('sub-popover-close').addEventListener('click', () => subDialog.close());
+  subDialog.addEventListener('click', (e) => {
+    if (e.target === subDialog) subDialog.close();
+  });
   document.getElementById('quick-add-close').addEventListener('click', () =>
     document.getElementById('quick-add-popover').hidePopover());
   document.getElementById('breakdown-close').addEventListener('click', () =>
