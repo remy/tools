@@ -8,10 +8,12 @@ import { escHtml, slotsLabel, uid } from './utils.js';
 import { removeItem } from './render-input.js';
 import { renderCurrentView } from './router.js';
 
+let backdropClickBound = false;
+
 export function openItemModal(editId) {
-  const overlay = document.getElementById('modal-overlay');
-  const title   = document.getElementById('modal-title');
-  const body    = document.getElementById('modal-body');
+  const dialog = document.getElementById('item-dialog');
+  const title  = document.getElementById('dialog-title');
+  const body   = document.getElementById('dialog-body');
 
   const item = editId ? state.items.find(i => i.id === editId) : null;
   title.textContent = item ? `Edit: ${item.name}` : 'Add Food Item';
@@ -24,7 +26,7 @@ export function openItemModal(editId) {
     <form id="item-form" autocomplete="off">
       <div class="form-group">
         <label class="form-label" for="if-name">Name</label>
-        <input class="input" id="if-name" type="text" placeholder="e.g. Turkey, Roast Potatoes\u2026"
+        <input class="input" id="if-name" type="text" placeholder="e.g. Turkey, Roast Potatoes…"
           value="${escHtml(item?.name || '')}" maxlength="60" required>
       </div>
 
@@ -50,7 +52,7 @@ export function openItemModal(editId) {
           </div>
           <span class="slot-label" id="slot-label">${slotsLabel(defSlots)}</span>
         </div>
-        <span class="form-hint">1 slot = half a shelf \u00b7 2 slots = full shelf</span>
+        <span class="form-hint">1 slot = half a shelf · 2 slots = full shelf</span>
         <input type="hidden" id="if-slots" value="${defSlots}">
       </div>
 
@@ -99,7 +101,7 @@ export function openItemModal(editId) {
         </div>
       </div>
 
-      <div class="modal-footer">
+      <div class="dialog-footer">
         ${item ? `<button type="button" class="btn btn-danger btn-sm" id="btn-delete-item" data-id="${item.id}">Delete</button>` : ''}
         <button type="button" class="btn btn-ghost" id="btn-cancel-modal">Cancel</button>
         <button type="submit" class="btn btn-primary">${item ? 'Save changes' : 'Add item'}</button>
@@ -107,8 +109,22 @@ export function openItemModal(editId) {
     </form>
   `;
 
-  overlay.classList.remove('hidden');
-  document.getElementById('if-name').focus();
+  if (!dialog.open) dialog.showModal();
+  // Reset scroll: browsers preserve scroll position across openings, and
+  // autofocusing a field below the fold also drags the scroll down.
+  body.scrollTop = 0;
+  dialog.scrollTop = 0;
+  document.getElementById('if-name').focus({ preventScroll: true });
+
+  // Backdrop click-to-dismiss: only fires when the click target is the
+  // dialog itself (i.e. the backdrop area, not any child content).
+  if (!backdropClickBound) {
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+    document.getElementById('dialog-close').addEventListener('click', () => dialog.close());
+    backdropClickBound = true;
+  }
 
   // Cook type selection
   document.getElementById('cook-type-grid').addEventListener('click', e => {
@@ -164,15 +180,13 @@ export function openItemModal(editId) {
   });
 
   document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
-  document.getElementById('modal-close').addEventListener('click', closeModal);
   document.getElementById('btn-delete-item')?.addEventListener('click', e => {
     removeItem(e.target.dataset.id);
     closeModal();
   });
-
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); }, { once: true });
 }
 
 export function closeModal() {
-  document.getElementById('modal-overlay').classList.add('hidden');
+  const dialog = document.getElementById('item-dialog');
+  if (dialog?.open) dialog.close();
 }

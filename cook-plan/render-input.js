@@ -2,11 +2,12 @@
 // Cook Planner — render-input.js
 // =============================================
 
-import { state, saveState, resetState } from './state.js';
-import { COOK_TYPE_MAP } from './constants.js';
+import { state, saveState, resetState, _setState } from './state.js';
+import { COOK_TYPE_MAP, DEFAULT_STATE } from './constants.js';
 import { escHtml, formatDuration, toggleTheme } from './utils.js';
 import { openItemModal } from './item-modal.js';
-import { showScheduleView } from './router.js';
+import { openApplianceDialog } from './appliance-popover.js';
+import { showScheduleView, showInputView } from './router.js';
 import { computeSchedule } from './schedule.js';
 
 export function renderInputView() {
@@ -24,7 +25,7 @@ export function renderInputView() {
         </header>
 
         <div class="setup-card">
-          <button class="btn-icon setup-gear" popovertarget="appl-popover"
+          <button class="btn-icon setup-gear" id="btn-open-appl"
             title="Configure appliances" aria-label="Configure appliances">\u2699</button>
           <div class="setup-row">
             <div class="setup-field">
@@ -58,6 +59,7 @@ export function renderInputView() {
           </button>
           ${state.items.length > 0 ? `<button class="btn btn-ghost btn-sm" id="btn-new-cook" style="text-align:center">Start a new cook</button>` : ''}
           ${state.items.length > 0 ? `<button class="btn btn-ghost btn-sm" id="btn-export">\u2b07 Export JSON</button>` : ''}
+          <button class="btn btn-ghost btn-sm" id="btn-import">\u2b06 Import JSON</button>
         </div>
       </div>
     </div>
@@ -119,6 +121,8 @@ export function bindInputEvents() {
     openItemModal(null);
   });
 
+  document.getElementById('btn-open-appl')?.addEventListener('click', openApplianceDialog);
+
   document.getElementById('btn-generate')?.addEventListener('click', () => {
     state.view = 'schedule';
     saveState();
@@ -133,6 +137,7 @@ export function bindInputEvents() {
   });
 
   document.getElementById('btn-export')?.addEventListener('click', exportJSON);
+  document.getElementById('btn-import')?.addEventListener('click', importJSON);
 
   document.getElementById('btn-theme-toggle')?.addEventListener('click', toggleTheme);
 
@@ -161,4 +166,29 @@ export function exportJSON() {
   a.download = `cook-plan-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export function importJSON() {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.addEventListener('change', async () => {
+    const file = inp.files?.[0];
+    if (!file) return;
+    try {
+      const data = JSON.parse(await file.text());
+      // Accept either a full export ({state, schedule}) or a bare state object
+      const incoming = data.state || data;
+      if (!incoming || !Array.isArray(incoming.items)) {
+        throw new Error('No items[] in JSON');
+      }
+      _setState({ ...DEFAULT_STATE, ...incoming, items: incoming.items });
+      saveState();
+      if (state.view === 'schedule' && state.items.length > 0) showScheduleView();
+      else showInputView();
+    } catch (err) {
+      alert('Could not import JSON: ' + err.message);
+    }
+  });
+  inp.click();
 }

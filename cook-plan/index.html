@@ -11,16 +11,20 @@
 </head>
 <body>
   <div id="app"></div>
-  <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 class="modal-title" id="modal-title">Add Food Item</h2>
-        <button class="btn-icon modal-close" id="modal-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="modal-body" id="modal-body"></div>
+  <dialog id="item-dialog" class="dialog" aria-labelledby="dialog-title">
+    <div class="dialog-header">
+      <h2 class="dialog-title" id="dialog-title">Add Food Item</h2>
+      <button class="btn-icon dialog-close" id="dialog-close" aria-label="Close">&times;</button>
     </div>
-  </div>
-  <div id="appl-popover" popover></div>
+    <div class="dialog-body" id="dialog-body"></div>
+  </dialog>
+  <dialog id="appl-dialog" class="dialog dialog-appl" aria-labelledby="appl-dialog-title">
+    <div class="dialog-header">
+      <h2 class="dialog-title" id="appl-dialog-title">Appliances</h2>
+      <button class="btn-icon dialog-close" id="appl-dialog-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="dialog-body" id="appl-dialog-body"></div>
+  </dialog>
   <script type="module" src="main.js"></script>
 <script>navigator.serviceWorker?.register("/sw.js")</script>
 </body>

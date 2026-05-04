@@ -2,12 +2,65 @@
 // Cook Planner — clock.js
 // =============================================
 
-import { escHtml, formatCountdown, nowMins } from './utils.js';
+import { escHtml, formatCountdown, formatTime, nowMins } from './utils.js';
 
 // Module-private state
 let clockInterval = null;
 let chimesFired = new Set();
 let nextDayOffset = 0;  // 1440 if the schedule is for the next calendar day
+
+// In-memory notification stack — never persisted. When a chime fires we push
+// the event so the user can see what triggered the sound when they tab back in.
+let notifications = [];
+const MAX_NOTIFICATIONS = 20;
+
+function addNotification(ev) {
+  const id = chimeKey(ev);
+  if (notifications.some(n => n.id === id)) return;
+  notifications.unshift({
+    id,
+    label: ev.label,
+    sub: ev.sub,
+    type: ev.type,
+    time: ev.time,
+  });
+  if (notifications.length > MAX_NOTIFICATIONS) {
+    notifications = notifications.slice(0, MAX_NOTIFICATIONS);
+  }
+  renderNotifications();
+}
+
+export function dismissNotification(id) {
+  notifications = notifications.filter(n => n.id !== id);
+  renderNotifications();
+}
+
+export function clearNotifications() {
+  notifications = [];
+  renderNotifications();
+}
+
+export function renderNotifications() {
+  const el = document.getElementById('notifications');
+  if (!el) return;
+  if (notifications.length === 0) {
+    el.innerHTML = '';
+    el.hidden = true;
+    return;
+  }
+  el.hidden = false;
+  el.innerHTML = notifications.map(n => `
+    <div class="notification notification-${n.type}">
+      <div class="notification-time">${formatTime(n.time)}</div>
+      <div class="notification-content">
+        <div class="notification-label">${escHtml(n.label)}</div>
+        ${n.sub ? `<div class="notification-sub">${escHtml(n.sub)}</div>` : ''}
+      </div>
+      <button class="notification-dismiss" data-id="${escHtml(n.id)}"
+        aria-label="Dismiss" title="Dismiss (shift-click to dismiss all)">✕</button>
+    </div>
+  `).join('');
+}
 
 export function getNextDayOffset() {
   return nextDayOffset;
@@ -113,6 +166,7 @@ function updateClock(events) {
       if (!chimesFired.has(key)) {
         chimesFired.add(key);
         playChime(ev.type);
+        addNotification(ev);
       }
     }
   }
@@ -127,12 +181,12 @@ function updateClock(events) {
     const nextS = next.time * 60 + nextDayOffset * 60;  // account for next-day offset
     const diffS = nextS - nowS;
     clockNextEl.innerHTML = `
-      <div class="clock-next-label">Next:</div>
-      <div class="clock-next-event">${escHtml(next.label)}</div>
+      <div class="clock-next-label">Next in</div>
       <div class="clock-next-countdown">${diffS > 0 ? formatCountdown(diffS) : 'NOW'}</div>
+      <div class="clock-next-event">${escHtml(next.label)}</div>
     `;
   } else if (events.some(ev => ev.type === 'serve' && ev.time <= nowM)) {
-    clockNextEl.innerHTML = `<div class="clock-next-event" style="font-size:1.25rem">\ud83c\udf7d Enjoy your meal!</div>`;
+    clockNextEl.innerHTML = `<div class="clock-next-event clock-next-event-large">\ud83c\udf7d Enjoy your meal!</div>`;
   } else {
     clockNextEl.innerHTML = '';
   }

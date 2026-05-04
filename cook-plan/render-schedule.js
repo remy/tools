@@ -8,7 +8,7 @@ import { escHtml, formatTime, formatDuration, nowMins, toggleTheme } from './uti
 import { applianceConfig } from './appliances.js';
 import { applianceLabel, mergedLabel, mergedSub } from './events.js';
 import { computeSchedule } from './schedule.js';
-import { startClock, stopClock, getNextDayOffset } from './clock.js';
+import { startClock, stopClock, getNextDayOffset, dismissNotification, clearNotifications, renderNotifications } from './clock.js';
 import { toggleWakeLock, releaseWakeLock } from './wake-lock.js';
 import { showInputView } from './router.js';
 import { exportJSON } from './render-input.js';
@@ -33,14 +33,17 @@ export function renderScheduleView() {
           <!-- Clock bar -->
           <div class="clock-bar" id="clock-bar">
             <div class="clock-bar-top">
-              <div>
-                <div class="clock-time" id="clock-time">--:--:--</div>
-                <div class="clock-date" id="clock-date"></div>
-              </div>
+              <div class="clock-next" id="clock-next"></div>
               <button class="wake-lock-btn" id="wake-lock-btn">\ud83d\udd06 Keep awake</button>
             </div>
-            <div class="clock-next" id="clock-next"></div>
+            <div class="clock-now">
+              <span class="clock-time" id="clock-time">--:--:--</span>
+              <span class="clock-date" id="clock-date"></span>
+            </div>
           </div>
+
+          <!-- Notifications: in-memory only, populated as chimes fire -->
+          <div class="notifications" id="notifications" hidden></div>
 
           <!-- Serve summary -->
           <div class="serve-summary">
@@ -86,6 +89,9 @@ export function renderScheduleView() {
 
   bindScheduleEvents(items, events);
   startClock(events);
+  // Re-paint any notifications that survived the re-render (e.g. after toggling
+  // an override). The notification stack itself is module-private to clock.js.
+  renderNotifications();
 }
 
 export function renderConflicts(conflicts) {
@@ -144,7 +150,8 @@ export function renderTimeline(events, items) {
       const sub   = mergedSub(type, evs);
 
       // Override inputs (one per event in this cluster that canOverride)
-      const overrideHtml = evs.filter(e => e.canOverride && e.itemId).map(ev => {
+      const overridable = evs.filter(e => e.canOverride && e.itemId);
+      const overrideHtml = overridable.map(ev => {
         const item = items.find(i => i.id === ev.itemId);
         const override = item?.overrideCookStart || '';
         const namePrefix = evs.length > 1 ? `<span class="override-name">${escHtml(ev.itemName)}:</span> ` : '';
@@ -157,6 +164,11 @@ export function renderTimeline(events, items) {
         `;
       }).join('');
 
+      // Edit toggle: only present when at least one event in the cluster can be overridden
+      const editBtn = overridable.length > 0
+        ? `<button type="button" class="tl-edit" aria-label="Edit cook start" title="Edit cook start">\u270f\ufe0f Edit</button>`
+        : '';
+
       // Hidden trackers so the clock updater can find each original event
       const trackers = evs.map(ev =>
         `<span class="tl-tracker" data-item="${ev.itemId || ''}" data-type="${ev.type}" aria-hidden="true"></span>`
@@ -166,6 +178,7 @@ export function renderTimeline(events, items) {
         <div class="tl-sub-event tl-type-${type}" data-item="${evs[0].itemId || ''}" data-type="${type}">
           ${trackers}
           ${chip ? `<span class="tl-chip">${chip}</span>` : ''}
+          ${editBtn}
           <div class="tl-label">${escHtml(label)}</div>
           ${sub ? `<div class="tl-sub">${escHtml(sub)}</div>` : ''}
           ${overrideHtml}
@@ -263,9 +276,17 @@ export function bindScheduleEvents(items, events) {
     if (confirm('Start a new cook? This will clear all items and settings.')) {
       stopClock();
       releaseWakeLock();
+      clearNotifications();
       resetState();
       showInputView();
     }
+  });
+
+  document.getElementById('notifications')?.addEventListener('click', e => {
+    const btn = e.target.closest('.notification-dismiss');
+    if (!btn) return;
+    if (e.shiftKey) clearNotifications();
+    else dismissNotification(btn.dataset.id);
   });
 
   document.getElementById('btn-share')?.addEventListener('click', async () => {
@@ -284,28 +305,47 @@ export function bindScheduleEvents(items, events) {
 
   document.getElementById('wake-lock-btn')?.addEventListener('click', toggleWakeLock);
 
-  // Override inputs
-  document.getElementById('timeline')?.addEventListener('change', e => {
-    const input = e.target.closest('.override-input');
-    if (!input) return;
-    const id = input.dataset.id;
-    const item = state.items.find(i => i.id === id);
-    if (item) {
-      item.overrideCookStart = input.value || null;
-      saveState();
-      renderScheduleView();
-    }
-  });
-
+  // Edit / save toggle for override inputs (commits on save click)
   document.getElementById('timeline')?.addEventListener('click', e => {
+    const editBtn = e.target.closest('.tl-edit');
+    if (editBtn) {
+      const subEvent = editBtn.closest('.tl-sub-event');
+      if (!subEvent) return;
+      const editing = subEvent.classList.toggle('editing');
+      if (editing) {
+        editBtn.innerHTML = '💾 Save';
+        editBtn.setAttribute('aria-label', 'Save cook start');
+        // Focus the first input so the user can pick a time straight away
+        subEvent.querySelector('.override-input')?.focus();
+      } else {
+        // Commit any changed values then re-render the schedule
+        let changed = false;
+        subEvent.querySelectorAll('.override-input').forEach(inp => {
+          const id = inp.dataset.id;
+          const item = state.items.find(i => i.id === id);
+          const newVal = inp.value || null;
+          if (item && (item.overrideCookStart || null) !== newVal) {
+            item.overrideCookStart = newVal;
+            changed = true;
+          }
+        });
+        if (changed) {
+          saveState();
+          renderScheduleView();
+        }
+      }
+      return;
+    }
+
     const clearBtn = e.target.closest('.btn-clear-override');
-    if (!clearBtn) return;
-    const id = clearBtn.dataset.id;
-    const item = state.items.find(i => i.id === id);
-    if (item) {
-      item.overrideCookStart = null;
-      saveState();
-      renderScheduleView();
+    if (clearBtn) {
+      const id = clearBtn.dataset.id;
+      const item = state.items.find(i => i.id === id);
+      if (item) {
+        item.overrideCookStart = null;
+        saveState();
+        renderScheduleView();
+      }
     }
   });
 }

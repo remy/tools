@@ -42,7 +42,16 @@ export function computeSchedule() {
 
   const assigned = assignAppliances(snapped);
   const conflicts = detectConflicts(assigned);
-  const events = buildEvents(assigned, target);
+  // In start mode, target is when cooking begins; serve happens when the
+  // longest item finishes. In end mode, target is the serve time itself.
+  // Either way, an override that pushes an item past the nominal serve time
+  // must shift SERVE later — eating before something is ready makes no sense.
+  const baseServe = state.mode === 'start' ? startModeFinish : target;
+  const lastFinish = assigned.length > 0
+    ? Math.max(...assigned.map(it => it._s.setEnd))
+    : baseServe;
+  const serveTime = Math.max(baseServe, lastFinish);
+  const events = buildEvents(assigned, serveTime);
 
   // If every scheduled event is more than 60 minutes in the past, the schedule
   // must be for the next calendar day -- offset all "now" comparisons by +1 day.

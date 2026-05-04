@@ -5,7 +5,7 @@
 import { COOK_TYPE_MAP } from './constants.js';
 import { formatDuration } from './utils.js';
 
-export function buildEvents(items, target) {
+export function buildEvents(items, serveTime) {
   const events = [];
 
   for (const item of items) {
@@ -19,6 +19,21 @@ export function buildEvents(items, target) {
         type: 'prep',
         label: `Prep ${item.name}`,
         sub: formatDuration(item.prepTime),
+        itemId: item.id,
+        itemName: item.name,
+      });
+    }
+
+    // Prep-only items have no cook stage -- emit a prep event at cookStart
+    // so the schedule shows when to actually start preparing them, not just
+    // when they should be ready.
+    if (item.cookType === 'none' && item.cookTime > 0) {
+      events.push({
+        time: cookStart,
+        endTime: cookEnd,
+        type: 'prep',
+        label: `Prep ${item.name}`,
+        sub: formatDuration(item.cookTime),
         itemId: item.id,
         itemName: item.name,
       });
@@ -84,12 +99,19 @@ export function buildEvents(items, target) {
     });
   }
 
+  // Cooked items that are already done before serve get a "ready and waiting"
+  // note. Prep-only items aren't included \u2014 they're not "out of the oven".
+  const restingNotes = items
+    .filter(it => it.cookType !== 'none' && it.cookTime > 0 && it._s.setEnd < serveTime)
+    .map(it => `${it.name} been out ${formatDuration(serveTime - it._s.setEnd)}`)
+    .join(' \u00b7 ');
+
   events.push({
-    time: target,
-    endTime: target,
+    time: serveTime,
+    endTime: serveTime,
     type: 'serve',
     label: '\ud83c\udf7d SERVE',
-    sub: null,
+    sub: restingNotes || null,
     itemId: null,
   });
 
