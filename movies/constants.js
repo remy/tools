@@ -1,5 +1,7 @@
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
+export const TMDB_API_KEY = '6911fa67c402155ce188714fd20a40fa';
+
 export const BRIGHTON_CINEMAS = [
   {
     id: '008',

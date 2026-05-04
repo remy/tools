@@ -1,4 +1,5 @@
 import { TMDBService } from './tmdb-service.js';
+import { TMDB_API_KEY } from './constants.js';
 import { loadAllMovieData, prefetchCineworldArtwork } from './data-loader.js';
 import {
   escapeHtml,
@@ -18,9 +19,7 @@ export class MovieScheduleApp extends HTMLElement {
     this.loading = true;
     this.error = '';
     this.tmdbService = new TMDBService();
-
-    const storedKey = localStorage.getItem('tmdb_api_key') || '';
-    this.tmdbService.setApiKey(storedKey);
+    this.tmdbService.setApiKey(TMDB_API_KEY);
 
     this.renderShell();
     this.loadData();
@@ -43,10 +42,7 @@ export class MovieScheduleApp extends HTMLElement {
           </label>
 
           <details class="tmdb-config" id="tmdb-config">
-            <summary class="tmdb-summary">TMDB settings (optional)</summary>
-            <label class="field" for="tmdb-key">
-              <input id="tmdb-key" class="input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Optional: for descriptions, cast, director" />
-            </label>
+            <summary class="tmdb-summary">TMDB settings</summary>
             <button id="reset-cache-btn" class="button" type="button">Reset cache</button>
           </details>
 
@@ -70,34 +66,6 @@ export class MovieScheduleApp extends HTMLElement {
     searchInput?.addEventListener('input', (event) => {
       this.searchQuery = event.target.value;
       this.renderMovies();
-    });
-
-    const tmdbConfig = this.querySelector('#tmdb-config');
-    const tmdbInput = this.querySelector('#tmdb-key');
-    tmdbInput.value = this.tmdbService.apiKey;
-
-    const updateTmdbKey = (rawValue, { refresh = false } = {}) => {
-      const key = rawValue.trim();
-      const hadKey = this.tmdbService.hasKey;
-      localStorage.setItem('tmdb_api_key', key);
-      this.tmdbService.setApiKey(key);
-      if (tmdbConfig) {
-        tmdbConfig.open = Boolean(key);
-      }
-      if (!hadKey && key) {
-        this.doPrefetchArtwork();
-      }
-      if (refresh) {
-        this.refreshCards();
-      }
-    };
-
-    tmdbInput.addEventListener('input', (event) => {
-      updateTmdbKey(event.target.value, { refresh: false });
-    });
-
-    tmdbInput.addEventListener('change', (event) => {
-      updateTmdbKey(event.target.value, { refresh: true });
     });
 
     const resetCacheBtn = this.querySelector('#reset-cache-btn');
