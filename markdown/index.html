@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="Drop a Markdown file or paste text and render it instantly with tables and syntax highlighting." />
+    <meta name="category" content="Developer Tools" />
+    <title>Markdown</title>
+    <link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232563eb' d='M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm3 11V9l3 3 3-3v7h2V8h-2l-3 3-3-3H4v8h2zm12-1l-3-3h2V8h2v4h2l-3 3z'/%3E%3C/svg%3E">
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/styles/github.min.css">
+    <link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/styles/github-dark.min.css"
+      media="(prefers-color-scheme: dark)">
+    <style>
+      :root {
+        --colour-bg: #fafafa;
+        --colour-bg-secondary: #f4f4f5;
+        --colour-border: #d4d4d8;
+        --colour-text: #18181b;
+        --colour-text-secondary: #52525b;
+        --colour-primary: #2563eb;
+        --colour-primary-hover: #1d4ed8;
+        --colour-primary-light: #dbeafe;
+        --colour-block-bg: #ffffff;
+        --colour-block-border: #e4e4e7;
+        --colour-shadow: rgba(0, 0, 0, 0.08);
+
+        --space-xs: 0.25rem;
+        --space-sm: 0.5rem;
+        --space-md: 0.75rem;
+        --space-lg: 1rem;
+        --space-xl: 1.5rem;
+        --space-2xl: 2rem;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --colour-bg: #0a0a0a;
+          --colour-bg-secondary: #171717;
+          --colour-border: #2a2a2a;
+          --colour-text: #fafafa;
+          --colour-text-secondary: #a1a1aa;
+          --colour-primary-light: #1e3a8a;
+          --colour-block-bg: #141414;
+          --colour-block-border: #262626;
+          --colour-shadow: rgba(0, 0, 0, 0.5);
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        color: var(--colour-text);
+        background: var(--colour-bg);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        min-height: 100vh;
+      }
+
+      /* Drop overlay — covers the page during drag */
+      body.dragover::after {
+        content: "Drop your Markdown file";
+        position: fixed;
+        inset: var(--space-lg);
+        border: 3px dashed var(--colour-primary);
+        background: var(--colour-primary-light);
+        color: var(--colour-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        z-index: 1000;
+        pointer-events: none;
+      }
+
+      /* Empty state — centered prompt */
+      .empty {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-lg);
+      }
+
+      .empty-card {
+        width: 100%;
+        max-width: 32rem;
+        background: var(--colour-block-bg);
+        border: 2px dashed var(--colour-border);
+        border-radius: 0.75rem;
+        padding: var(--space-2xl);
+        text-align: center;
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+      }
+
+      .empty-card:hover,
+      .empty-card:focus-visible {
+        border-color: var(--colour-primary);
+        background: var(--colour-block-bg);
+        outline: none;
+        transform: translateY(-1px);
+      }
+
+      .empty-icon {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 auto var(--space-lg);
+        color: var(--colour-primary);
+      }
+
+      .empty-title {
+        font-family: Georgia, "Times New Roman", Times, serif;
+        font-weight: 700;
+        font-size: 1.5rem;
+        letter-spacing: -0.01em;
+        margin-bottom: var(--space-sm);
+      }
+
+      .empty-text {
+        color: var(--colour-text-secondary);
+        font-size: 0.9375rem;
+      }
+
+      .empty-text kbd {
+        display: inline-block;
+        padding: 0.1em 0.4em;
+        margin: 0 0.1em;
+        font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Monaco, Consolas, monospace;
+        font-size: 0.8125rem;
+        background: var(--colour-bg-secondary);
+        border: 1px solid var(--colour-border);
+        border-radius: 0.25rem;
+        color: var(--colour-text);
+      }
+
+      /* Loaded state */
+      .container {
+        max-width: 80ch;
+        margin-inline: auto;
+        padding: var(--space-lg);
+      }
+
+      @media (min-width: 768px) {
+        .container {
+          padding: var(--space-2xl);
+        }
+      }
+
+      .clear-btn {
+        position: fixed;
+        top: var(--space-lg);
+        right: var(--space-lg);
+        z-index: 10;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-xs);
+        padding: 0.5rem var(--space-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: 1px solid var(--colour-border);
+        background: var(--colour-block-bg);
+        color: var(--colour-text);
+        border-radius: 0.375rem;
+        cursor: pointer;
+        box-shadow: 0 1px 3px var(--colour-shadow);
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+
+      .clear-btn:hover {
+        background: var(--colour-bg-secondary);
+        border-color: var(--colour-text-secondary);
+      }
+
+      /* Markdown content styles */
+      .preview h1,
+      .preview h2,
+      .preview h3,
+      .preview h4,
+      .preview h5,
+      .preview h6 {
+        font-family: Georgia, "Times New Roman", Times, serif;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        letter-spacing: -0.01em;
+      }
+
+      .preview> :first-child {
+        margin-top: 0;
+      }
+
+      .preview h1 {
+        font-size: 2rem;
+      }
+
+      .preview h2 {
+        font-size: 1.5rem;
+      }
+
+      .preview h3 {
+        font-size: 1.25rem;
+      }
+
+      .preview h4 {
+        font-size: 1.125rem;
+      }
+
+      .preview p {
+        margin-bottom: 1em;
+      }
+
+      .preview a {
+        color: var(--colour-primary);
+        text-decoration: underline;
+      }
+
+      .preview a:hover {
+        color: var(--colour-primary-hover);
+      }
+
+      .preview ul,
+      .preview ol {
+        margin-bottom: 1em;
+        padding-left: 1.5em;
+      }
+
+      .preview li {
+        margin-bottom: 0.25em;
+      }
+
+      .preview blockquote {
+        margin: 1em 0;
+        padding: 0.5em var(--space-lg);
+        border-left: 4px solid var(--colour-border);
+        color: var(--colour-text-secondary);
+        font-style: italic;
+      }
+
+      .preview hr {
+        margin: 2em 0;
+        border: none;
+        border-top: 1px solid var(--colour-border);
+      }
+
+      .preview img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.375rem;
+        margin: 1em 0;
+      }
+
+      .preview code {
+        font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Monaco, Consolas, monospace;
+        font-size: 0.875em;
+        padding: 0.15em 0.35em;
+        background: var(--colour-bg-secondary);
+        border-radius: 0.25rem;
+      }
+
+      .preview pre {
+        margin: 1em 0;
+        padding: var(--space-lg);
+        background: var(--colour-bg-secondary);
+        border: 1px solid var(--colour-block-border);
+        border-radius: 0.5rem;
+        overflow-x: auto;
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+
+      .preview pre code,
+      .preview pre code.hljs {
+        padding: 0;
+        background: transparent;
+        font-size: inherit;
+      }
+
+      .preview table {
+        width: 100%;
+        margin: 1em 0;
+        border-collapse: collapse;
+        font-size: 0.9375rem;
+      }
+
+      .preview th,
+      .preview td {
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid var(--colour-border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .preview th {
+        background: var(--colour-bg-secondary);
+        font-weight: 600;
+      }
+
+      .preview tbody tr:nth-child(even) {
+        background: var(--colour-bg-secondary);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="empty" id="empty">
+      <button class="empty-card" id="empty-card" type="button" aria-label="Open a Markdown file">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+          <path
+            d="M20.56 18H3.44C2.65 18 2 17.37 2 16.59V7.41C2 6.63 2.65 6 3.44 6H20.56C21.35 6 22 6.63 22 7.41V16.59C22 17.37 21.35 18 20.56 18M6.81 15.19V11.53L8.73 13.88L10.65 11.53V15.19H12.58V8.81H10.65L8.73 11.16L6.81 8.81H4.89V15.19H6.81M19.69 12H17.77V8.81H15.85V12H13.92L16.81 15.28L19.69 12Z" />
+        </svg>
+        <div class="empty-title">Markdown</div>
+        <p class="empty-text">
+          Drop a file anywhere, paste text with <kbd>⌘</kbd>+<kbd>V</kbd>, or click to open a file.
+        </p>
+      </button>
+    </div>
+
+    <button class="clear-btn" id="clear-btn" type="button" hidden>Clear</button>
+
+    <div class="container" hidden id="container">
+      <article class="preview" id="preview"></article>
+    </div>
+
+    <input type="file" id="file-input" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+
+    <script type="module">
+      import markdownit from 'https://esm.sh/markdown-it@14.1.0';
+      import hljs from 'https://esm.sh/highlight.js@11.10.0';
+
+      const md = markdownit({
+        html: false,
+        linkify: true,
+        typographer: true,
+        breaks: false,
+        highlight(str, lang) {
+          if (lang && hljs.getLanguage(lang)) {
+            try {
+              return hljs.highlight(str, { language: lang, ignoreIllegals: true }).value;
+            } catch (_) { /* fall through */ }
+          }
+          try {
+            return hljs.highlightAuto(str).value;
+          } catch (_) {
+            return '';
+          }
+        },
+      });
+
+      const empty = document.getElementById('empty');
+      const emptyCard = document.getElementById('empty-card');
+      const container = document.getElementById('container');
+      const preview = document.getElementById('preview');
+      const clearBtn = document.getElementById('clear-btn');
+      const fileInput = document.getElementById('file-input');
+
+      const STORAGE_KEY = 'markdown-tool:input';
+
+      function setMarkdown(text) {
+        const trimmed = (text ?? '').replace(/^﻿/, '');
+        if (!trimmed.trim()) {
+          clearMarkdown();
+          return;
+        }
+        preview.innerHTML = md.render(trimmed);
+        empty.hidden = true;
+        container.hidden = false;
+        clearBtn.hidden = false;
+        try { localStorage.setItem(STORAGE_KEY, trimmed); } catch (_) { /* ignore */ }
+      }
+
+      function clearMarkdown() {
+        preview.innerHTML = '';
+        empty.hidden = false;
+        container.hidden = true;
+        clearBtn.hidden = true;
+        try { localStorage.removeItem(STORAGE_KEY); } catch (_) { /* ignore */ }
+      }
+
+      function loadFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => setMarkdown(String(reader.result ?? ''));
+        reader.readAsText(file);
+      }
+
+      // File picker
+      emptyCard.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        loadFile(fileInput.files[0]);
+        fileInput.value = '';
+      });
+
+      // Clear
+      clearBtn.addEventListener('click', clearMarkdown);
+
+      // Drag & drop on the whole page
+      let dragDepth = 0;
+      window.addEventListener('dragenter', (e) => {
+        if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+        e.preventDefault();
+        dragDepth++;
+        document.body.classList.add('dragover');
+      });
+      window.addEventListener('dragover', (e) => {
+        if (Array.from(e.dataTransfer?.types || []).includes('Files')) {
+          e.preventDefault();
+        }
+      });
+      window.addEventListener('dragleave', (e) => {
+        if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+        dragDepth = Math.max(0, dragDepth - 1);
+        if (dragDepth === 0) document.body.classList.remove('dragover');
+      });
+      window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragDepth = 0;
+        document.body.classList.remove('dragover');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) loadFile(file);
+      });
+
+      // Paste anywhere on the page
+      window.addEventListener('paste', (e) => {
+        // If the user is pasting into a real input (e.g. a future use), don't hijack
+        const target = e.target;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+          return;
+        }
+        const clipboard = e.clipboardData;
+        if (!clipboard) return;
+
+        // Prefer file paste (e.g. dragging a .md from Finder into clipboard tools)
+        const file = Array.from(clipboard.files || [])[0];
+        if (file) {
+          e.preventDefault();
+          loadFile(file);
+          return;
+        }
+
+        const text = clipboard.getData('text/plain');
+        if (text) {
+          e.preventDefault();
+          setMarkdown(text);
+        }
+      });
+
+      // Restore previous content
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) setMarkdown(saved);
+      } catch (_) { /* ignore */ }
+    </script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>

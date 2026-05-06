@@ -114,6 +114,11 @@
     "description": "Validate JSON against a schema with real-time error reporting and syntax highlighting",
     "title": "VS Code JSON Validator"
   },
+  "markdown": {
+    "category": "Developer Tools",
+    "description": "Drop a Markdown file or paste text and render it instantly with tables and syntax highlighting.",
+    "title": "Markdown"
+  },
   "merge": {
     "category": "Developer Tools",
     "description": "Upload two text files, view a colour-coded diff, and selectively apply individual changes from file 1 into file 2 with live re-diffing.",
