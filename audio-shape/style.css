@@ -200,6 +200,26 @@ input[type="range"] {
   }
 }
 
+.play-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.is-playing .play-dot {
+  opacity: 1;
+  animation: pulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 0 0 currentColor;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6); }
+  50%      { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text);
@@ -277,24 +297,48 @@ input[type="range"] {
 
 dialog {
   border: 1px solid var(--border);
-  border-radius: var(--radius);
   padding: 0;
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow);
-  width: min(28rem, calc(100% - 2rem));
-  max-width: 28rem;
+
+  /* Mobile: full-screen */
+  width: 100dvw;
+  max-width: 100dvw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  inset: 0;
+  border: none;
+  border-radius: 0;
 
   &::backdrop {
     background: rgba(0, 0, 0, 0.45);
     backdrop-filter: blur(2px);
+  }
+
+  @media (min-width: 640px) {
+    width: min(28rem, calc(100% - 2rem));
+    max-width: 28rem;
+    height: auto;
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    inset: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
   }
 }
 
 .dialog-form {
   display: flex;
   flex-direction: column;
+  height: 100%;
+
+  @media (min-width: 640px) {
+    height: auto;
+  }
 }
+
 
 .dialog-header {
   display: flex;
@@ -330,6 +374,8 @@ dialog {
   display: flex;
   flex-direction: column;
   gap: 0.875rem;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .dialog-footer {

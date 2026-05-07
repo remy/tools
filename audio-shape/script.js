@@ -20,7 +20,7 @@ const HIT_RADIUS = 14;
 const HANDLE_RADIUS = 7;
 const SAMPLE_COUNT = 512;
 const HARMONICS = 128;
-const DEFAULT_GAIN = 0.15;
+const DEFAULT_GAIN = 0.2;
 
 const POINT_COLOURS = {
   smooth: '#10b981',
@@ -44,6 +44,8 @@ let pointer = {
   movedSinceDown: false,
   downId: null,
   downAt: 0,
+  downPx: 0,
+  downPy: 0,
 };
 
 let editingId = null;
@@ -64,21 +66,25 @@ function ensureAudio() {
   return audio;
 }
 
-async function toggleConnect() {
+const connectLabel = connectBtn.querySelector('.btn-label');
+
+function toggleConnect() {
   const a = ensureAudio();
   if (connected) {
     a.gain.disconnect();
     connected = false;
-    connectBtn.textContent = 'Connect to speakers';
+    connectLabel.textContent = 'Connect';
     connectBtn.classList.remove('is-active');
+    document.body.classList.remove('is-playing');
   } else {
-    if (a.context.state === 'suspended') {
-      await a.context.resume();
-    }
     a.gain.connect(a.context.destination);
+    if (a.context.state === 'suspended') {
+      a.context.resume();
+    }
     connected = true;
-    connectBtn.textContent = 'Disconnect';
+    connectLabel.textContent = 'Disconnect';
     connectBtn.classList.add('is-active');
+    document.body.classList.add('is-playing');
   }
 }
 
@@ -397,6 +403,8 @@ canvas.addEventListener('pointerdown', (e) => {
   pointer.active = true;
   pointer.movedSinceDown = false;
   pointer.downAt = performance.now();
+  pointer.downPx = px;
+  pointer.downPy = py;
   if (hit) {
     pointer.downId = hit.id;
     pointer.draggingId = hit.id;
@@ -410,19 +418,17 @@ canvas.addEventListener('pointermove', (e) => {
   if (!pointer.active) return;
   const { px, py } = eventToCanvas(e);
   if (pointer.draggingId != null) {
-    const moveThreshold = 3 * dpr;
-    const data = canvasToData(px, py);
-    const p = state.points.find(p => p.id === pointer.draggingId);
-    if (p) {
-      const c = dataToCanvas(p.x, p.y);
-      if (!pointer.movedSinceDown) {
-        if (Math.abs(c.px - px) > moveThreshold || Math.abs(c.py - py) > moveThreshold) {
-          pointer.movedSinceDown = true;
-        }
+    const moveThreshold = 6 * dpr;
+    if (!pointer.movedSinceDown) {
+      const dx = px - pointer.downPx;
+      const dy = py - pointer.downPy;
+      if (dx * dx + dy * dy > moveThreshold * moveThreshold) {
+        pointer.movedSinceDown = true;
       }
-      if (pointer.movedSinceDown) {
-        updatePoint(pointer.draggingId, { x: data.x, y: data.y });
-      }
+    }
+    if (pointer.movedSinceDown) {
+      const data = canvasToData(px, py);
+      updatePoint(pointer.draggingId, { x: data.x, y: data.y });
     }
   }
 });
