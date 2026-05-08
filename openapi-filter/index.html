@@ -97,11 +97,16 @@
           <span class="pill" id="output-meta"></span>
         </div>
         <div class="panel-actions">
+          <div class="tab-group" role="tablist">
+            <button class="tab is-active" id="tab-docs" type="button" role="tab" aria-selected="true">Docs</button>
+            <button class="tab" id="tab-json" type="button" role="tab" aria-selected="false">JSON</button>
+          </div>
           <button class="btn btn-primary" id="copy-btn" type="button">Copy JSON</button>
           <button class="btn" id="download-btn" type="button">Download</button>
         </div>
       </header>
-      <pre id="output-preview" class="output-preview"></pre>
+      <div id="output-docs" class="output-docs"></div>
+      <pre id="output-preview" class="output-preview" hidden></pre>
     </section>
   </div>
 
