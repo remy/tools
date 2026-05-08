@@ -43,6 +43,7 @@ export const state = {
   clusterW: 1,
   clusterH: 1,
   tileMap: false,       // TileMap mode: emit unique tiles + tilemap
+  bpp1: false,          // 1bpp output: 8 bytes per tile (colors 0 & 3 only)
   painting: false,
   zoom: 1,
   imageScale: 1,

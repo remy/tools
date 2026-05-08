@@ -1,6 +1,6 @@
 import { state, FONT_CSS, FIRST_CHAR } from './state.js';
 import { el, initDOM } from './dom.js';
-import { calcAllWidths } from './color.js';
+import { calcAllWidths, analyze1bpp } from './color.js';
 import { onHeaderInput, updateOutput } from './header.js';
 import { applyZoom, renderOverview, quantize, updateImageInfo } from './overview.js';
 import { loadImageFromBlob, loadImageFile } from './image-io.js';
@@ -353,9 +353,34 @@ el.tileMapToggle.addEventListener('change', () => {
 function applyTileMapMode() {
   // Cluster ordering has no meaning when tiles are deduplicated.
   clusterLabel.hidden = state.tileMap || state.fontMode;
-  // Flat/grouped formatting is replaced by a fixed layout in TileMap mode.
-  el.formatToggleBtn.hidden = state.tileMap || state.fontMode;
+  // Flat/grouped formatting is replaced by a fixed layout in TileMap or 1bpp mode.
+  el.formatToggleBtn.hidden = state.tileMap || state.fontMode || state.bpp1;
 }
+
+
+// ---- 1bpp toggle ----
+
+function validate1bpp() {
+  const { badTiles } = analyze1bpp(state.tileData);
+  if (badTiles.length) {
+    const list = badTiles.length > 20
+      ? badTiles.slice(0, 20).join(', ') + `, … (+${badTiles.length - 20} more)`
+      : badTiles.join(', ');
+    alert(`1bpp output requires no more than 2 distinct colors across the tile set.\n\nTile${badTiles.length === 1 ? '' : 's'} introducing extra colors: ${list}`);
+    return false;
+  }
+  return true;
+}
+
+el.bpp1Toggle.addEventListener('change', () => {
+  if (el.bpp1Toggle.checked && !validate1bpp()) {
+    el.bpp1Toggle.checked = false;
+    return;
+  }
+  state.bpp1 = el.bpp1Toggle.checked;
+  applyTileMapMode();
+  updateOutput();
+});
 
 // ---- Format toggle ----
 
@@ -422,6 +447,7 @@ function applyFontMode() {
   clusterLabel.hidden = on || state.tileMap;
   el.formatToggleBtn.hidden = on || state.tileMap;
   el.tileMapToggle.parentElement.hidden = on;
+  el.bpp1Toggle.parentElement.hidden = on;
 
   // Update palette buttons: show 3 in font mode, 4 in tile mode
   el.paletteButtons.forEach(btn => {

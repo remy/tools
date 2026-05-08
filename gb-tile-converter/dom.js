@@ -34,6 +34,7 @@ export function initDOM() {
   el.clusterW = document.getElementById('clusterW');
   el.clusterH = document.getElementById('clusterH');
   el.tileMapToggle = document.getElementById('tileMapToggle');
+  el.bpp1Toggle = document.getElementById('bpp1Toggle');
   el.formatToggleBtn = document.getElementById('formatToggleBtn');
   el.copyOutputBtn = document.getElementById('copyOutputBtn');
   el.headerOutput = document.getElementById('headerOutput');
