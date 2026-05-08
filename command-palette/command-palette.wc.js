@@ -29,6 +29,28 @@ class CommandPalette extends HTMLElement {
   _buildDOM() {
     const style = document.createElement('style');
     style.textContent = /* CSS */`
+      command-palette {
+        --cp-surface: #ffffff;
+        --cp-surface-2: #f4f4f5;
+        --cp-border: #d4d4d8;
+        --cp-text: #18181b;
+        --cp-text-dim: #71717a;
+        --cp-accent: #4f46e5;
+        --cp-accent-dim: rgba(79, 70, 229, 0.1);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        command-palette {
+          --cp-surface: #1a1d27;
+          --cp-surface-2: #242736;
+          --cp-border: #2e3248;
+          --cp-text: #e8e9f0;
+          --cp-text-dim: #8b8fa8;
+          --cp-accent: #6c63ff;
+          --cp-accent-dim: rgba(108, 99, 255, 0.2);
+        }
+      }
+
       command-palette dialog.palette-dialog {
         position: fixed;
         inset: 0;
@@ -36,11 +58,11 @@ class CommandPalette extends HTMLElement {
         width: 90vw;
         max-width: 520px;
         height: fit-content;
-        border: 1px solid var(--border, #d4d4d8);
+        border: 1px solid var(--border, var(--cp-border));
         border-radius: 12px;
         padding: 0;
-        background: var(--surface, #ffffff);
-        color: var(--text, #18181b);
+        background: var(--surface, var(--cp-surface));
+        color: var(--text, var(--cp-text));
         box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
         overflow: hidden;
       }
@@ -54,23 +76,23 @@ class CommandPalette extends HTMLElement {
       command-palette .palette-input-wrap {
         display: flex;
         align-items: center;
-        border-bottom: 1px solid var(--border, #d4d4d8);
+        border-bottom: 1px solid var(--border, var(--cp-border));
         padding: 0 1rem;
         gap: 0.5rem;
       }
 
       command-palette .palette-icon {
         flex-shrink: 0;
-        color: var(--text-dim, #71717a);
+        color: var(--text-dim, var(--cp-text-dim));
         font-size: 1rem;
         line-height: 1;
       }
 
       command-palette .palette-back {
         flex-shrink: 0;
-        background: var(--accent-dim, rgba(79, 70, 229, 0.1));
-        color: var(--accent, #4f46e5);
-        border: 1px solid var(--accent, #4f46e5);
+        background: var(--accent-dim, var(--cp-accent-dim));
+        color: var(--accent, var(--cp-accent));
+        border: 1px solid var(--accent, var(--cp-accent));
         border-radius: 4px;
         padding: 0.1em 0.5em;
         font-size: 0.75rem;
@@ -89,7 +111,7 @@ class CommandPalette extends HTMLElement {
         border: none;
         outline: none;
         background: transparent;
-        color: var(--text, #18181b);
+        color: var(--text, var(--cp-text));
         font-family: inherit;
         font-size: 1rem;
         padding: 0.875rem 0;
@@ -97,18 +119,18 @@ class CommandPalette extends HTMLElement {
       }
 
       command-palette .palette-input::placeholder {
-        color: var(--text-dim, #71717a);
+        color: var(--text-dim, var(--cp-text-dim));
       }
 
       command-palette .palette-kbd {
         flex-shrink: 0;
-        background: var(--surface-2, #f4f4f5);
-        border: 1px solid var(--border, #d4d4d8);
+        background: var(--surface-2, var(--cp-surface-2));
+        border: 1px solid var(--border, var(--cp-border));
         border-radius: 4px;
         padding: 0.15em 0.4em;
         font-size: 0.75rem;
         font-family: inherit;
-        color: var(--text-dim, #71717a);
+        color: var(--text-dim, var(--cp-text-dim));
       }
 
       command-palette .palette-list {
@@ -127,17 +149,17 @@ class CommandPalette extends HTMLElement {
       }
 
       command-palette .palette-item:hover {
-        background: var(--accent-dim, rgba(79, 70, 229, 0.1));
+        background: var(--accent-dim, var(--cp-accent-dim));
       }
 
       command-palette .palette-item[aria-selected="true"] {
-        background: var(--accent, #4f46e5);
+        background: var(--accent, var(--cp-accent));
         color: #fff;
         white-space: preserve-spaces;
       }
 
       command-palette .palette-item[aria-selected="true"] mark {
-        background: var(--accent, #4f46e5);
+        background: var(--accent, var(--cp-accent));
         color: inherit;
         text-decoration: underline;
         text-underline-offset: 2px;
@@ -146,13 +168,13 @@ class CommandPalette extends HTMLElement {
       command-palette .palette-empty {
         padding: 1.5rem 0.75rem;
         text-align: center;
-        color: var(--text-dim, #71717a);
+        color: var(--text-dim, var(--cp-text-dim));
         font-size: 0.875rem;
       }
 
       command-palette mark {
-        background: var(--accent-dim, rgba(79, 70, 229, 0.1));
-        color: var(--accent, #4f46e5);
+        background: var(--accent-dim, var(--cp-accent-dim));
+        color: var(--accent, var(--cp-accent));
         border-radius: 2px;
         padding: 0;
         transition: background 0.08s;
