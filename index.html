@@ -33,7 +33,15 @@
 
     <div class="container">
       <header>
-        <p class="subtitle">A collection of tools and utilities that various LLMs vibed out their tubes for <a href="https://remysharp.com">me</a>.</p>
+        <div class="subtitle-row">
+          <p class="subtitle">A collection of tools and utilities that various LLMs vibed out their tubes for <a href="https://remysharp.com">me</a>.</p>
+          <button type="button" class="search-button" aria-label="Search tools">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </div>
       </header>
       <!-- PROJECTS:START -->
         <section class="category-section">
@@ -758,10 +766,12 @@
     <command-palette open-on-type></command-palette>
     <script src="command-palette/command-palette.wc.js"></script>
     <script>
-      document.querySelector('command-palette').addEventListener('navigate', (e) => {
+      const palette = document.querySelector('command-palette');
+      palette.addEventListener('navigate', (e) => {
         const href = e.detail.command.href;
         if (href) window.location.href = href;
       });
+      document.querySelector('.search-button').addEventListener('click', () => palette.open());
     </script>
     <script>navigator.serviceWorker?.register('/sw.js')</script>
   </body>
