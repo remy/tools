@@ -139,7 +139,7 @@ def generate_index_html(projects):
             palette_items.append({
                 'name': 'navigate',
                 'description': f"{project['title']} ({category})",
-                'href': f"{project['path']}/index.html",
+                'href': f"{project['path']}/",
             })
     palette_json = json.dumps(palette_items, indent=2, ensure_ascii=False)
     palette_pattern = r'(<script type="application/json" data-palette>)(.*?)(</script>)'
