@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sculpt a custom oscillator waveform by tapping to add control points. The Web Audio API renders the resulting PeriodicWave through an OscillatorNode you can connect to your speakers.">
+  <meta name="category" content="Audio">
+  <title>Audio Shape</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="page-header">
+      <h1>Audio Shape</h1>
+      <p class="lede">Tap the waveform to add control points and bend the wave's trajectory. The oscillator is preloaded but silent — hit <strong>Connect</strong> to route it to your speakers.</p>
+    </header>
+
+    <section class="controls" aria-label="Oscillator controls">
+      <div class="ctrl">
+        <label for="base-type">Base shape</label>
+        <select id="base-type">
+          <option value="sine" selected>Sine</option>
+          <option value="square">Square</option>
+          <option value="sawtooth">Sawtooth</option>
+          <option value="triangle">Triangle</option>
+        </select>
+      </div>
+
+      <div class="ctrl">
+        <label for="freq">Frequency <span class="freq-readout" id="freq-readout">220 Hz</span></label>
+        <input type="range" id="freq" min="40" max="1200" value="220" step="1">
+      </div>
+
+      <div class="ctrl ctrl-buttons">
+        <button type="button" id="connect" class="btn btn-primary">
+          <span class="play-dot" aria-hidden="true"></span>
+          <span class="btn-label">Connect</span>
+        </button>
+        <button type="button" id="reset" class="btn btn-ghost" title="Remove all control points">Reset shape</button>
+      </div>
+    </section>
+
+    <section class="stage" aria-label="Waveform editor">
+      <canvas id="wave" width="900" height="320" aria-label="Editable waveform. Tap to add a control point."></canvas>
+      <p class="status" id="status" aria-live="polite">No control points yet — using <strong>sine</strong>.</p>
+    </section>
+
+    <section class="legend">
+      <h2>How it works</h2>
+      <ul>
+        <li><strong>Tap empty space</strong> on the wave to drop a control point.</li>
+        <li><strong>Drag a point</strong> to reshape the wave in real time.</li>
+        <li><strong>Tap an existing point</strong> to change its interpolation type or delete it.</li>
+        <li>The wave you sculpt becomes a <code>PeriodicWave</code> applied to a single <code>OscillatorNode</code>.</li>
+      </ul>
+    </section>
+  </div>
+
+  <dialog id="point-dialog">
+    <form method="dialog" class="dialog-form">
+      <header class="dialog-header">
+        <h2>Edit point</h2>
+        <button type="button" class="dialog-close" id="dialog-close" aria-label="Close">&times;</button>
+      </header>
+
+      <div class="dialog-body">
+        <div class="ctrl">
+          <label for="point-type">Interpolation</label>
+          <select id="point-type">
+            <option value="smooth">Smooth (curved)</option>
+            <option value="corner">Corner (linear)</option>
+            <option value="hold">Hold (step)</option>
+          </select>
+        </div>
+
+        <div class="ctrl ctrl-row">
+          <div>
+            <label for="point-x">Position</label>
+            <input type="range" id="point-x" min="0" max="1" step="0.001" value="0.5">
+            <span class="readout" id="point-x-readout">50%</span>
+          </div>
+          <div>
+            <label for="point-y">Amplitude</label>
+            <input type="range" id="point-y" min="-1" max="1" step="0.001" value="0">
+            <span class="readout" id="point-y-readout">0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <footer class="dialog-footer">
+        <button type="button" class="btn btn-danger" id="point-delete">Delete point</button>
+        <button type="submit" class="btn btn-primary">Done</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
