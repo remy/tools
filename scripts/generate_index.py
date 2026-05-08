@@ -136,12 +136,9 @@ def generate_index_html(projects):
     palette_items = []
     for category in sorted(categories.keys()):
         for project in sorted(categories[category], key=lambda x: x['title']):
-            description = project['title']
-            if project['description']:
-                description = f"{project['title']} — {project['description']}"
             palette_items.append({
                 'name': 'navigate',
-                'description': description,
+                'description': f"{project['title']} ({category})",
                 'href': f"{project['path']}/index.html",
             })
     palette_json = json.dumps(palette_items, indent=2, ensure_ascii=False)
