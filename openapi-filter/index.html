@@ -77,6 +77,9 @@
         <label class="field search-field">
           <input id="search-input" type="search" placeholder="Filter endpoints…">
         </label>
+        <label class="field search-field" title="Show only endpoints whose response schema contains a property with this name (case-insensitive substring match). Resolves $refs and traverses allOf/oneOf/anyOf/items.">
+          <input id="returns-field-input" type="search" placeholder="Returns field…">
+        </label>
         <button class="btn" id="select-all-btn" type="button">Select all</button>
         <button class="btn" id="select-none-btn" type="button">Clear</button>
         <label class="checkbox-inline" title="Group endpoints by their first tag (or path prefix).">
