@@ -31,10 +31,6 @@
       </li>
     </template>
 
-    <div class="filter-container" id="filterContainer">
-      <input type="text" class="filter-input" id="filterInput" placeholder="Type to filter projects...">
-      <div class="filter-hint">Tab to cycle • Enter to open • Esc to close</div>
-    </div>
     <div class="container">
       <header>
         <p class="subtitle">A collection of tools and utilities that various LLMs vibed out their tubes for <a href="https://remysharp.com">me</a>.</p>
@@ -523,8 +519,235 @@
     <footer>
       <p>Responsible disclosure: All these demos and tools have been coded with AI.</p>
       <p>All the code for all these projects is available on <a href="https://github.com/remy/tools/">github</a>.</p>
+      <p>Press <kbd>&#8984;</kbd><kbd>K</kbd> / <kbd>Ctrl</kbd><kbd>K</kbd>, or just start typing, to search.</p>
     </footer>
-    <script src="script.js"></script>
+    <script type="application/json" data-palette>
+[
+  {
+    "name": "navigate",
+    "description": "Capacitor Value Calculator — Decode capacitor codes and calculate values from ceramic capacitor markings",
+    "href": "capcalc/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Contract Rate Calculator — Calculate contract rates and earnings based on working days and hourly rates",
+    "href": "contract-rate/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Distance & Time Converter — Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed to calculate how long a journey will take.",
+    "href": "distance-time-converter/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Dynamic Tax Calculator — Calculate tax-inclusive (gross) and tax-exclusive (net) values with customizable tax rates and real-time conversion",
+    "href": "tax/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Time Calculator — Add and subtract time durations with hours, minutes, and seconds",
+    "href": "time-add/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "ESP32 Supermini Comparison — Side-by-side comparison of ESP32 Supermini boards and specifications",
+    "href": "esp-compare/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Font Grid Generator — Drop a pixel font file and generate an 8x8 grid representation of each glyph. Supports TTF, OTF, WOFF, and WOFF2 formats.",
+    "href": "font-grid-generator/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "GB Tile Converter — Convert images or font files to Game Boy DMG tile data. Upload an image, align to an 8x8 grid, or load a font to generate character tiles. Edit individual tile pixels and export C header arrays.",
+    "href": "gb-tile-converter/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "GB Tile Visualizer — Drop a Game Boy C/H source file to visualise and edit tile data inline, then download the modified source.",
+    "href": "gb-tile-visualizer/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "GB Variable Width Fonts — Game Boy variable-width font editor. Extract bitmap data and glyph widths from a font image using magenta (#FF00FF) width markers. Generates C arrays for VWF engines.",
+    "href": "gb-font-extractor/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Markdown — Drop a Markdown file or paste text and render it instantly with tables and syntax highlighting.",
+    "href": "markdown/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Merge — Upload two text files, view a colour-coded diff, and selectively apply individual changes from file 1 into file 2 with live re-diffing.",
+    "href": "merge/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "OpenAPI Schema Filter — Paste an OpenAPI 3.x JSON schema, pick the endpoints you care about, and export a trimmed schema containing only those operations and the components they depend on.",
+    "href": "openapi-filter/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Org Notifications — View and manage GitHub organization notifications in a clean interface",
+    "href": "org-notifications/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Package Browser — Load package-lock.json or pnpm-lock.yaml from a local file or GitHub URL and browse the dependency tree with search and filtering.",
+    "href": "package-browser/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Trace SVG — Drop a PNG or JPG, trace it into black-and-white SVG paths, inspect with pan/zoom, then copy or download the SVG.",
+    "href": "trace-svg/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "URL to Meta — Extract metadata and Open Graph information from any URL",
+    "href": "url-to-meta/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "VS Code JSON Validator — Validate JSON against a schema with real-time error reporting and syntax highlighting",
+    "href": "json-schema/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "gitviz web — Analyse a GitHub repository with contributor, churn, momentum, bug-cluster, and firefighting visualizations powered by the GitHub API.",
+    "href": "gitviz/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "15s countdown — A simple game timer with 15s restart and 30s single modes, featuring a wake lock option to keep the screen awake during use.",
+    "href": "buzzer/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "AFI Quote Master — Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
+    "href": "quote-game/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Countdown: The Number Experience — Play the classic numbers round from Countdown - reach the target using arithmetic operations",
+    "href": "countdown-numbers/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "This is England — Stories for Curious Kids — Fifty tiny stories about what makes England… England.",
+    "href": "this-is-england/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "HA Intent Parser Visualizer — Visual debugger for Home Assistant Assist intent recognition templates",
+    "href": "hass-sentence/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "HA Template Debugger — Test and debug Home Assistant Jinja2 templates with real-time rendering and variable support.",
+    "href": "ha-template-debugger/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Immich Album Manager — Browser-based tool to bulk manage Immich albums - filter, delete, merge, and rename albums with regex and asset count filtering",
+    "href": "immich-album/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Immich Dedupe — Deduplicate photos in Immich. Compare duplicate pairs side-by-side, choose which to keep, and trash the rest. Album memberships are merged to the kept asset before trashing.",
+    "href": "immich-dedupe/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Immich Mass Rotate — Bulk rotate images in Immich. Select multiple thumbnails to rotate clockwise or counter-clockwise en masse via the API.",
+    "href": "immich-mass-rotate/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Immich Metadata Search & Download — Search Immich assets using arbitrary metadata queries and download the results as a zip file.",
+    "href": "immich-metadata-search/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Beat Loop Generator — Mobile-first beat sequencer with predefined instruments and genre style presets. Synthesises kicks, snares, hi-hats, toms, claps and bass using the Web Audio API.",
+    "href": "beat-loop-generator/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Brighton Cinema Planner — Compare showtimes across Brighton cinemas (Odeon, Cineworld, Duke of York's) and plan your movie outings",
+    "href": "movies/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Cook Planner — Schedule and coordinate cooking times for multiple dishes, with appliance conflict detection and a live step-by-step countdown timeline.",
+    "href": "cook-plan/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Is there a full moon? — A simple page that tells you whether it is a full moon today, and when the next full moon is.",
+    "href": "full-moon/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "My Pages Read — Track your daily reading progress and visualize pages read over time",
+    "href": "page-count/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Priority Calls — let the people who matter reach you — An Android app that lets priority contacts break through silent, Do Not Disturb, and bedtime modes.",
+    "href": "priority-calls/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Social Replies — Fetch replies from Bluesky and Mastodon posts and extract structured information using Gemini, with prompt presets, IndexedDB caching, downloads and cost tracking.",
+    "href": "social-replies/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Subscription Tracker — Track recurring subscription costs with a monthly calendar view, currency conversion, and export/import support.",
+    "href": "subscriptions/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Subtitle Timing Adjuster — Upload an SRT subtitle file, shift all timings forward or backward with millisecond precision, then download the adjusted file.",
+    "href": "subtitle-timing-adjuster/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Workout Plan — A simple, data-driven workout tracker for tracking daily splits and exercises.",
+    "href": "workout/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "CSS Anchor Positioning Playground — Interactive playground for CSS Anchor Positioning — drag the anchor, try every position-area, fallback, and visibility combo.",
+    "href": "css-anchor/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Command Palette — A VS Code-style command palette web component with keyboard navigation, filtering, and custom event dispatching",
+    "href": "command-palette/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Native Popover API Demo — Interactive demo of the native HTML Popover API — no libraries, no JavaScript required for basic use",
+    "href": "native-popover/index.html"
+  },
+  {
+    "name": "navigate",
+    "description": "Wake Lock Demo — Demonstration of the Screen Wake Lock API to prevent device screen from dimming",
+    "href": "wake-lock/index.html"
+  }
+]
+    </script>
+    <command-palette open-on-type></command-palette>
+    <script src="command-palette/command-palette.wc.js"></script>
+    <script>
+      document.querySelector('command-palette').addEventListener('navigate', (e) => {
+        const href = e.detail.command.href;
+        if (href) window.location.href = href;
+      });
+    </script>
     <script>navigator.serviceWorker?.register('/sw.js')</script>
   </body>
 

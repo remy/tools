@@ -295,7 +295,33 @@ class CommandPalette extends HTMLElement {
       } else {
         this.open();
       }
+      return;
     }
+
+    if (!this.hasAttribute('open-on-type') || this._panel.open) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key.length !== 1) return;
+    if (this._isEditableTarget(document.activeElement)) return;
+
+    // "/" opens without populating — matches common search-shortcut convention (e.g. GitHub).
+    if (e.key === '/') {
+      e.preventDefault();
+      this.open();
+      return;
+    }
+    if (e.key === ' ') return;
+
+    e.preventDefault();
+    this.open();
+    this._input.value = e.key;
+    this._handleInput();
+  }
+
+  _isEditableTarget(el) {
+    if (!el) return false;
+    const tag = el.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    return el.isContentEditable === true;
   }
 
   _handleBackdropClick(e) {

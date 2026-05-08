@@ -132,6 +132,27 @@ def generate_index_html(projects):
     pattern = r'(<!-- PROJECTS:START -->).*?(<!-- PROJECTS:END -->)'
     new_content = re.sub(pattern, r'\1\n        ' + sections_html + r'\n        \2', html_content, flags=re.DOTALL)
 
+    # Populate the command-palette data with one entry per project
+    palette_items = []
+    for category in sorted(categories.keys()):
+        for project in sorted(categories[category], key=lambda x: x['title']):
+            description = project['title']
+            if project['description']:
+                description = f"{project['title']} — {project['description']}"
+            palette_items.append({
+                'name': 'navigate',
+                'description': description,
+                'href': f"{project['path']}/index.html",
+            })
+    palette_json = json.dumps(palette_items, indent=2, ensure_ascii=False)
+    palette_pattern = r'(<script type="application/json" data-palette>)(.*?)(</script>)'
+    new_content = re.sub(
+        palette_pattern,
+        lambda m: f"{m.group(1)}\n{palette_json}\n    {m.group(3)}",
+        new_content,
+        flags=re.DOTALL,
+    )
+
     with open('index.html', 'w', encoding='utf-8') as f:
         f.write(new_content)
 

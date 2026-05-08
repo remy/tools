@@ -334,7 +334,7 @@
         <div class="badge">Web Component</div>
         <h1>Command <span>Palette</span></h1>
         <p>A keyboard-driven command palette. Press <kbd>&#8984;</kbd><kbd>K</kbd> or <kbd>Ctrl</kbd><kbd>K</kbd> to
-          open.</p>
+          open, or just start typing on the page (this demo enables <code>open-on-type</code>).</p>
       </header>
 
       <div class="sections">
@@ -476,7 +476,12 @@ palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
 <span class="tag">&lt;command-palette</span> <span class="attr">id</span>=<span class="val">"palette"</span><span class="tag">&gt;&lt;/command-palette&gt;</span>
 <span class="tag">&lt;button</span> <span class="attr">commandfor</span>=<span class="val">"palette"</span> <span class="attr">command</span>=<span class="val">"--open"</span><span class="tag">&gt;</span>Open<span class="tag">&lt;/button&gt;</span>
 <span class="tag">&lt;button</span> <span class="attr">commandfor</span>=<span class="val">"palette"</span> <span class="attr">command</span>=<span class="val">"--toggle"</span><span class="tag">&gt;</span>Toggle<span class="tag">&lt;/button&gt;</span>
-<span class="cm">// Supported custom commands: --open, --close, --toggle</span></code></pre>
+<span class="cm">// Supported custom commands: --open, --close, --toggle</span>
+
+<span class="cm">// Opt in to "search-as-you-type": pressing any printable key on the</span>
+<span class="cm">// page (when no input/textarea/contenteditable is focused) opens the</span>
+<span class="cm">// palette pre-filled with that character. "/" opens without populating.</span>
+<span class="tag">&lt;command-palette</span> <span class="attr">open-on-type</span><span class="tag">&gt;&lt;/command-palette&gt;</span></code></pre>
         </div>
 
       </div>
@@ -503,7 +508,7 @@ palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
     ]
     </script>
 
-    <command-palette id="palette"></command-palette>
+    <command-palette id="palette" open-on-type></command-palette>
     <script src="./command-palette.wc.js"></script>
 
     <script>
