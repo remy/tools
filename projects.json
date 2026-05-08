@@ -1,11 +1,11 @@
 {
   "audio-shape": {
-    "category": "audio",
+    "category": "Audio",
     "description": "Sculpt a custom oscillator waveform by tapping to add control points. The Web Audio API renders the resulting PeriodicWave through an OscillatorNode you can connect to your speakers.",
     "title": "Audio Shape"
   },
   "beat-loop-generator": {
-    "category": "audio",
+    "category": "Audio",
     "description": "Mobile-first beat sequencer with predefined instruments and genre style presets. Synthesises kicks, snares, hi-hats, toms, claps and bass using the Web Audio API.",
     "title": "Beat Loop Generator"
   },
