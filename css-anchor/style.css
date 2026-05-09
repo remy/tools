@@ -527,11 +527,22 @@ select.text-input {
 
 textarea.code-panel {
   display: block;
+  box-sizing: border-box;
   width: 100%;
-  min-height: 220px;
+  min-height: 240px;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  outline: none;
   resize: vertical;
   white-space: pre;
-  outline: none;
+  overflow: auto;
   tab-size: 2;
 }
 
@@ -541,6 +552,7 @@ textarea.code-panel:focus {
 
 @media (min-width: 900px) {
   textarea.code-panel {
+    flex: 1;
     min-height: 0;
     resize: none;
   }
