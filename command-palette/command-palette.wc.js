@@ -236,7 +236,7 @@ class CommandPalette extends HTMLElement {
 
   setCommands(commands, options = {}) {
     this._commands = commands;
-    this._filtered = [...commands];
+    this._filtered = commands.map((cmd) => ({ cmd, indices: [] }));
     this._selectedIndex = 0;
     this._isDrillDown = true;
     this._input.value = '';
@@ -264,10 +264,7 @@ class CommandPalette extends HTMLElement {
     if (this._isDrillDown) return;
     this._commands = [...this._baseCommands];
     if (!this._input) return;
-    const query = this._input.value.trim().toLowerCase();
-    this._filtered = query
-      ? this._commands.filter((cmd) => cmd.description.toLowerCase().includes(query))
-      : [...this._commands];
+    this._filtered = this._matchCommands(this._input.value);
     if (this._selectedIndex >= this._filtered.length) this._selectedIndex = 0;
     this._render();
   }
@@ -278,7 +275,7 @@ class CommandPalette extends HTMLElement {
       try { this.onBeforeOpen(); } catch (e) { console.error('command-palette: onBeforeOpen threw', e); }
     }
     this._input.value = '';
-    this._filtered = [...this._commands];
+    this._filtered = this._commands.map((cmd) => ({ cmd, indices: [] }));
     this._selectedIndex = 0;
     this._render();
     this._panel.showModal();
@@ -301,7 +298,7 @@ class CommandPalette extends HTMLElement {
   _resetToBase() {
     this._resetState();
     this._input.value = '';
-    this._filtered = [...this._commands];
+    this._filtered = this._commands.map((cmd) => ({ cmd, indices: [] }));
     this._selectedIndex = 0;
     this._render();
     this._input.focus();
@@ -376,20 +373,13 @@ class CommandPalette extends HTMLElement {
       this._updateSelection();
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const cmd = this._filtered[this._selectedIndex];
-      if (cmd) this._select(cmd);
+      const entry = this._filtered[this._selectedIndex];
+      if (entry) this._select(entry.cmd);
     }
   }
 
   _handleInput() {
-    const query = this._input.value.trim().toLowerCase();
-    if (!query) {
-      this._filtered = [...this._commands];
-    } else {
-      this._filtered = this._commands.filter(
-        (cmd) => cmd.description.toLowerCase().includes(query)
-      );
-    }
+    this._filtered = this._matchCommands(this._input.value);
     this._selectedIndex = 0;
     this._render();
   }
@@ -398,8 +388,53 @@ class CommandPalette extends HTMLElement {
     const item = e.target.closest('.palette-item');
     if (!item) return;
     const index = parseInt(item.dataset.index, 10);
-    const cmd = this._filtered[index];
-    if (cmd) this._select(cmd);
+    const entry = this._filtered[index];
+    if (entry) this._select(entry.cmd);
+  }
+
+  _matchCommands(rawQuery) {
+    const query = rawQuery.trim();
+    if (!query) {
+      return this._commands.map((cmd) => ({ cmd, indices: [], score: 0 }));
+    }
+    const results = [];
+    for (const cmd of this._commands) {
+      const m = this._fuzzyMatch(query, cmd.description);
+      if (m) results.push({ cmd, indices: m.indices, score: m.score });
+    }
+    results.sort((a, b) => b.score - a.score);
+    return results;
+  }
+
+  _fuzzyMatch(query, target) {
+    const q = query.toLowerCase();
+    const t = target.toLowerCase();
+    const indices = [];
+    let qi = 0;
+    for (let ti = 0; ti < t.length && qi < q.length; ti++) {
+      if (t[ti] === q[qi]) {
+        indices.push(ti);
+        qi++;
+      }
+    }
+    if (qi < q.length) return null;
+
+    let score = 0;
+    let run = 0;
+    for (let i = 0; i < indices.length; i++) {
+      const idx = indices[i];
+      if (i > 0 && idx === indices[i - 1] + 1) {
+        run++;
+        score += 6 + run * 3;
+      } else {
+        run = 0;
+        score += 1;
+      }
+      const prev = idx > 0 ? t[idx - 1] : ' ';
+      if (/[\s\-_/(.]/.test(prev)) score += 5;
+    }
+    score -= indices[0] * 0.05;
+    return { score, indices };
   }
 
   _select(command) {
@@ -423,7 +458,7 @@ class CommandPalette extends HTMLElement {
   }
 
   _render() {
-    const query = this._input.value.trim().toLowerCase();
+    const query = this._input.value.trim();
     this._list.innerHTML = '';
 
     if (!this._filtered.length) {
@@ -434,7 +469,7 @@ class CommandPalette extends HTMLElement {
       return;
     }
 
-    this._filtered.forEach((cmd, i) => {
+    this._filtered.forEach((entry, i) => {
       const el = document.createElement('div');
       el.className = 'palette-item';
       el.setAttribute('role', 'option');
@@ -444,23 +479,31 @@ class CommandPalette extends HTMLElement {
         el.setAttribute('aria-selected', 'true');
       }
 
-      if (query) {
-        const desc = cmd.description;
-        const idx = desc.toLowerCase().indexOf(query);
-        if (idx !== -1) {
-          const before = desc.slice(0, idx);
-          const match = desc.slice(idx, idx + query.length);
-          const after = desc.slice(idx + query.length);
-          el.innerHTML = `${this._esc(before)}<mark>${this._esc(match)}</mark>${this._esc(after)}`;
-        } else {
-          el.textContent = desc;
-        }
-      } else {
-        el.textContent = cmd.description;
-      }
+      el.innerHTML = this._renderHighlight(entry.cmd.description, entry.indices);
 
       this._list.appendChild(el);
     });
+  }
+
+  _renderHighlight(text, indices) {
+    if (!indices || !indices.length) return this._esc(text);
+    let html = '';
+    let i = 0;
+    let mi = 0;
+    while (i < text.length) {
+      if (mi < indices.length && i === indices[mi]) {
+        const start = i;
+        while (mi < indices.length && i === indices[mi]) {
+          mi++;
+          i++;
+        }
+        html += `<mark>${this._esc(text.slice(start, i))}</mark>`;
+      } else {
+        html += this._esc(text[i]);
+        i++;
+      }
+    }
+    return html;
   }
 
   _updateSelection() {
