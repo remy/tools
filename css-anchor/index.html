@@ -223,10 +223,15 @@
                   data-tab="css">CSS</button>
                 <button type="button" class="code-tab" role="tab" aria-selected="false" data-tab="html">HTML</button>
               </div>
-              <button type="button" class="copy-btn" data-copy>Copy</button>
+              <div class="code-header-right">
+                <span class="edit-hint">editable — changes sync live</span>
+                <button type="button" class="copy-btn" data-copy>Copy</button>
+              </div>
             </div>
-            <pre class="code-panel" data-panel="css" role="tabpanel"><code data-code></code></pre>
-            <pre class="code-panel" data-panel="html" role="tabpanel" hidden><code data-html-code></code></pre>
+            <textarea class="code-panel" data-panel="css" data-code role="tabpanel" spellcheck="false"
+              autocomplete="off" autocapitalize="off" wrap="off"></textarea>
+            <textarea class="code-panel" data-panel="html" data-html-code role="tabpanel" spellcheck="false"
+              autocomplete="off" autocapitalize="off" wrap="off" hidden></textarea>
           </div>
         </div>
       </div>

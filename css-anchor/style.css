@@ -520,7 +520,44 @@ select.text-input {
   line-height: 1.5;
   color: var(--text);
   background: transparent;
-  overflow-x: auto;
+  overflow: auto;
   border: none;
   border-radius: 0;
+}
+
+textarea.code-panel {
+  display: block;
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+  white-space: pre;
+  outline: none;
+  tab-size: 2;
+}
+
+textarea.code-panel:focus {
+  background: var(--surface-2);
+}
+
+@media (min-width: 900px) {
+  textarea.code-panel {
+    min-height: 0;
+    resize: none;
+  }
+}
+
+.code-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.edit-hint {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .edit-hint { display: none; }
 }

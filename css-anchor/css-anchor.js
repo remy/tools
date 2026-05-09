@@ -13,12 +13,13 @@ const state = {
 
 let _dragging = null;
 let _activeTab = 'css';
+let _suppressCssWrite = false;
+let _suppressHtmlWrite = false;
 
 const $canvasWrap  = document.querySelector('[data-canvas-wrap]');
 const $canvas      = document.querySelector('[data-canvas]');
 const $anchor      = document.querySelector('[data-anchor]');
 const $popup       = document.querySelector('[data-popup]');
-const $popupMeta   = document.querySelector('[data-popup-meta]');
 const $currentArea = document.querySelector('[data-current-area]');
 const $marginInput = document.querySelector('[data-margin]');
 const $marginOut   = document.querySelector('[data-margin-out]');
@@ -182,7 +183,7 @@ document.querySelector('[data-reset]').addEventListener('click', () => {
 
 // copy button
 $copyBtn.addEventListener('click', async () => {
-  const text = _activeTab === 'css' ? $code.textContent : $htmlCode.textContent;
+  const text = _activeTab === 'css' ? $code.value : $htmlCode.value;
   try {
     await navigator.clipboard.writeText(text);
     $copyBtn.textContent = 'Copied!';
@@ -284,7 +285,8 @@ function render() {
   $popup.style.positionVisibility   = state.visibility;
   $popup.style.width  = state.sizeW ? `anchor-size(${state.sizeW})`  : '';
   $popup.style.height = state.sizeH ? `anchor-size(${state.sizeH})` : '';
-  $popupMeta.textContent = state.area;
+  const meta = $popup.querySelector('.popup-meta');
+  if (meta) meta.textContent = state.area;
 
   // generate CSS
   const cssLines = [
@@ -304,23 +306,134 @@ function render() {
   if (state.sizeW)             cssLines.push(`  width: anchor-size(${state.sizeW});`);
   if (state.sizeH)             cssLines.push(`  height: anchor-size(${state.sizeH});`);
   cssLines.push(`}`);
-  $code.textContent = cssLines.join('\n');
+  if (!_suppressCssWrite) $code.value = cssLines.join('\n');
 
   // generate HTML
-  const htmlLines = [
-    `<!-- Anchor element -->`,
-    `<div class="anchor">`,
-    `  <span>⚓</span>`,
-    `  <span class="anchor-label">anchor</span>`,
-    `</div>`,
-    ``,
-    `<!-- Popup (positioned relative to anchor) -->`,
-    `<div class="popup">`,
-    `  <strong>Anchored popup</strong>`,
-    `</div>`,
-  ];
-  $htmlCode.textContent = htmlLines.join('\n');
+  if (!_suppressHtmlWrite) {
+    const htmlLines = [
+      `<!-- Anchor element -->`,
+      `<div class="anchor">`,
+      `  <span>⚓</span>`,
+      `  <span class="anchor-label">anchor</span>`,
+      `</div>`,
+      ``,
+      `<!-- Popup (positioned relative to anchor) -->`,
+      `<div class="popup">`,
+      `  <strong>Anchored popup</strong>`,
+      `  <span class="popup-meta"></span>`,
+      `</div>`,
+    ];
+    $htmlCode.value = htmlLines.join('\n');
+  }
 }
+
+// ─── CSS edit → controls sync ───
+
+function findBlock(text, selector) {
+  const re = new RegExp(`\\.${selector}\\s*\\{`, 'g');
+  const m = re.exec(text);
+  if (!m) return null;
+  let depth = 1;
+  let i = m.index + m[0].length;
+  while (i < text.length && depth > 0) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') depth--;
+    if (depth === 0) return text.slice(m.index + m[0].length, i);
+    i++;
+  }
+  return null;
+}
+
+function getDecl(body, prop) {
+  const re = new RegExp(`(?:^|;|\\s)${prop}\\s*:\\s*([^;}]+)`, 'i');
+  const m = body.match(re);
+  return m ? m[1].trim() : null;
+}
+
+function parseCss(text) {
+  const out = {};
+  const anchorBody = findBlock(text, 'anchor');
+  if (anchorBody) {
+    const v = getDecl(anchorBody, 'anchor-name');
+    if (v) out.anchorName = v;
+  }
+  const popupBody = findBlock(text, 'popup');
+  if (popupBody) {
+    const area = getDecl(popupBody, 'position-area');
+    if (area) out.area = area;
+
+    const margin = getDecl(popupBody, 'margin');
+    if (margin !== null) {
+      const mm = margin.match(/-?\d+(\.\d+)?/);
+      out.margin = mm ? Math.max(0, Math.min(40, Math.round(Number(mm[0])))) : 0;
+    } else {
+      out.margin = 0;
+    }
+
+    const fb = getDecl(popupBody, 'position-try-fallbacks');
+    out.fallbacks = fb
+      ? fb.split(',').map(s => s.trim()).filter(s => ['flip-block', 'flip-inline', 'flip-start'].includes(s))
+      : [];
+
+    out.tryOrder = getDecl(popupBody, 'position-try-order') || 'normal';
+    out.visibility = getDecl(popupBody, 'position-visibility') || 'always';
+
+    const w = getDecl(popupBody, 'width');
+    const wm = w && w.match(/anchor-size\(\s*([a-z-]+)\s*\)/i);
+    out.sizeW = wm ? wm[1] : '';
+
+    const h = getDecl(popupBody, 'height');
+    const hm = h && h.match(/anchor-size\(\s*([a-z-]+)\s*\)/i);
+    out.sizeH = hm ? hm[1] : '';
+  }
+  return out;
+}
+
+function syncAreaUI() {
+  document.querySelectorAll('[data-area]').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.area === state.area);
+  });
+  $currentArea.textContent = state.area;
+  $presetSelect.value = '';
+}
+
+$code.addEventListener('input', () => {
+  let parsed;
+  try { parsed = parseCss($code.value); } catch { return; }
+  if (parsed.anchorName) {
+    state.anchorName = parsed.anchorName;
+    $anchorNameInput.value = parsed.anchorName;
+  }
+  if (parsed.area) state.area = parsed.area;
+  if (typeof parsed.margin === 'number') state.margin = parsed.margin;
+  if (parsed.fallbacks)  state.fallbacks  = parsed.fallbacks;
+  if (parsed.tryOrder)   state.tryOrder   = parsed.tryOrder;
+  if (parsed.visibility) state.visibility = parsed.visibility;
+  if (parsed.sizeW !== undefined) state.sizeW = parsed.sizeW;
+  if (parsed.sizeH !== undefined) state.sizeH = parsed.sizeH;
+
+  syncControlsFromState();
+  syncAreaUI();
+
+  _suppressCssWrite = true;
+  render();
+  _suppressCssWrite = false;
+});
+
+// ─── HTML edit → canvas sync ───
+
+$htmlCode.addEventListener('input', () => {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(`<body>${$htmlCode.value}</body>`, 'text/html');
+  const newAnchor = doc.querySelector('.anchor');
+  const newPopup  = doc.querySelector('.popup');
+  if (newAnchor) $anchor.innerHTML = newAnchor.innerHTML;
+  if (newPopup)  $popup.innerHTML  = newPopup.innerHTML;
+
+  _suppressHtmlWrite = true;
+  render();
+  _suppressHtmlWrite = false;
+});
 
 function checkSupport() {
   const supported = CSS.supports?.('anchor-name', '--x') && CSS.supports?.('position-area', 'top');
