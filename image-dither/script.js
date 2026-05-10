@@ -26,6 +26,40 @@ function paletteByName(name) {
   return name === 'measured' ? PALETTE_MEASURED : PALETTE_SATURATED;
 }
 
+// Spectra 6 wire format is 4 bits per pixel, two pixels per byte (high
+// nibble = left). Our internal palette indices are
+// [0=Black, 1=White, 2=Red, 3=Green, 4=Blue, 5=Yellow]; the device wants a
+// different code per colour. Two encodings observed in the wild:
+//
+//   ACEP-compatible (mattcarter11/eink-dithering-tester, confirmed against
+//     real hardware): black=0x0, white=0x1, yellow=0x2, red=0x3, blue=0x5,
+//     green=0x6 — index 0x4 is skipped.
+//   Contiguous (some Spectra 6 reference docs): the same colour order but
+//     packed into 0x0..0x5 with no gaps.
+//
+// If the panel renders wrong colours with the default, switch encodings in
+// the UI; the test-pattern download makes it trivial to identify which
+// nibble code shows which colour.
+const NIBBLE_MAPS = {
+  // index → device nibble code (in our [black, white, red, green, blue, yellow] order)
+  el073tf1: [0xF, 0x0, 0x6, 0x2, 0xD, 0xB], // hardware-verified on EL073TF1
+  acep: [0x0, 0x1, 0x3, 0x6, 0x5, 0x2],
+  contiguous: [0x0, 0x1, 0x3, 0x5, 0x4, 0x2],
+};
+
+function indexToNibbleLut(name) {
+  return NIBBLE_MAPS[name] || NIBBLE_MAPS.el073tf1;
+}
+
+// Build the inverse LUT (16-entry array). Unmapped nibbles fall back to 0
+// so a stray byte won't crash decoding.
+function nibbleToIndexLut(name) {
+  const fwd = indexToNibbleLut(name);
+  const inv = new Uint8Array(16); // defaults to 0 (black)
+  for (let i = 0; i < fwd.length; i++) inv[fwd[i]] = i;
+  return inv;
+}
+
 // DOM
 const presetSelect = document.getElementById('presetSelect');
 const widthInput = document.getElementById('widthInput');
@@ -37,6 +71,8 @@ const spaceSelect = document.getElementById('spaceSelect');
 const paletteSelect = document.getElementById('paletteSelect');
 const strengthInput = document.getElementById('strengthInput');
 const strengthValue = document.getElementById('strengthValue');
+const nibbleSelect = document.getElementById('nibbleSelect');
+const testPatternBtn = document.getElementById('testPatternBtn');
 const brightnessInput = document.getElementById('brightnessInput');
 const contrastInput = document.getElementById('contrastInput');
 const saturationInput = document.getElementById('saturationInput');
@@ -75,7 +111,7 @@ presetSelect.addEventListener('change', () => {
   reprocessAll();
 });
 
-[widthInput, heightInput, fitSelect, bgSelect, ditherSelect, spaceSelect, paletteSelect]
+[widthInput, heightInput, fitSelect, bgSelect, ditherSelect, spaceSelect, paletteSelect, nibbleSelect]
   .forEach(el => el.addEventListener('change', reprocessAll));
 
 strengthInput.addEventListener('input', () => { strengthValue.textContent = strengthInput.value; });
@@ -336,8 +372,8 @@ async function processItem(item) {
   ditheredCanvas.getContext('2d').drawImage(canvas, 0, 0);
   setPreviewMode(item.id, item.mode || 'dithered');
 
-  // Pack 3-bit data.
-  const packed = pack4Bit(indices);
+  // Pack 4bpp Spectra 6 nibble data using the selected encoding.
+  const packed = packNibbles(indices, indexToNibbleLut(nibbleSelect.value));
   const blob = new Blob([packed], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
 
@@ -360,15 +396,15 @@ async function processItem(item) {
 // error so the user can pick the right preset.
 async function processDataItem(item, targetW, targetH) {
   const totalPixels = targetW * targetH;
-  const expectedBytes = Math.ceil(totalPixels * 3 / 8);
+  const expectedBytes = Math.ceil(totalPixels / 2);
   const bytes = new Uint8Array(await item.file.arrayBuffer());
   if (bytes.length !== expectedBytes) {
     throw new Error(
-      `Expected ${expectedBytes} bytes for ${targetW}×${targetH}, got ${bytes.length}`
+      `Expected ${expectedBytes} bytes for ${targetW}×${targetH} (4bpp), got ${bytes.length}`
     );
   }
 
-  const indices = unpack3Bit(bytes, totalPixels);
+  const indices = unpackNibbles(bytes, totalPixels, nibbleToIndexLut(nibbleSelect.value));
 
   const canvas = document.createElement('canvas');
   canvas.width = targetW;
@@ -658,65 +694,32 @@ function writeIndicesToImageData(indices, imageData, palette) {
   }
 }
 
-const SPECTRA6_NIBBLE = [
-  0xF, // black
-  0x0, // white
-  0x6, // red
-  0x2, // green
-  0xD, // blue
-  0xB, // yellow
-];
-
-function pack4Bit(indices) {
-  const out = new Uint8Array(Math.ceil(indices.length / 2));
-
-  for (let i = 0, j = 0; i < indices.length; i += 2, j++) {
-    const a = SPECTRA6_NIBBLE[indices[i]] & 0x0f;
-    const b = SPECTRA6_NIBBLE[indices[i + 1] ?? 1] & 0x0f; // pad white
-    out[j] = (a << 4) | b;
-  }
-
-  return out;
-}
-
-// ── 3-bit packing ────────────────────────────────────────────────────────────
-// Concatenates palette indices (3 bits each, MSB-first) into a continuous bit
-// stream, then splits into bytes (MSB-first). Any trailing partial byte is
-// zero-padded on the right.
-function pack3Bit(indices) {
-  const totalBits = indices.length * 3;
-  const totalBytes = Math.ceil(totalBits / 8);
+// ── 4bpp nibble packing (Spectra 6 wire format) ──────────────────────────────
+// Two pixels per byte: high nibble = left pixel, low nibble = right pixel,
+// scanning left-to-right, top-to-bottom. Each palette index is mapped through
+// `indexToNibble` to the device colour code before packing.
+//
+// If an odd pixel count is given (it shouldn't be for any real Spectra 6
+// resolution) the last nibble is padded with the device code for black.
+function packNibbles(indices, indexToNibble) {
+  const totalBytes = Math.ceil(indices.length / 2);
   const out = new Uint8Array(totalBytes);
-  let buf = 0;        // up to 10 bits live
-  let bits = 0;
-  let bi = 0;
-  for (let i = 0; i < indices.length; i++) {
-    buf = (buf << 3) | (indices[i] & 0b111);
-    bits += 3;
-    if (bits >= 8) {
-      bits -= 8;
-      out[bi++] = (buf >> bits) & 0xff;
-      buf &= (1 << bits) - 1;
-    }
-  }
-  if (bits > 0) {
-    out[bi++] = (buf << (8 - bits)) & 0xff;
+  for (let p = 0, bi = 0; p < indices.length; p += 2, bi++) {
+    const hi = indexToNibble[indices[p]] & 0xf;
+    const lo = (p + 1 < indices.length) ? indexToNibble[indices[p + 1]] & 0xf : 0x0;
+    out[bi] = (hi << 4) | lo;
   }
   return out;
 }
 
-// Reverse of pack3Bit: pulls 3-bit palette indices from an MSB-first stream.
-// Stops at totalPixels so trailing zero-pad bits aren't decoded as an extra pixel.
-function unpack3Bit(bytes, totalPixels) {
+// Inverse of packNibbles. Returns palette indices (length = totalPixels).
+function unpackNibbles(bytes, totalPixels, nibbleToIndex) {
   const indices = new Uint8Array(totalPixels);
-  let buf = 0, bits = 0, pi = 0;
-  for (let i = 0; i < bytes.length && pi < totalPixels; i++) {
-    buf = (buf << 8) | bytes[i];
-    bits += 8;
-    while (bits >= 3 && pi < totalPixels) {
-      bits -= 3;
-      indices[pi++] = (buf >> bits) & 0b111;
-      buf &= (1 << bits) - 1;
+  for (let p = 0, bi = 0; p < totalPixels; p += 2, bi++) {
+    const byte = bytes[bi];
+    indices[p] = nibbleToIndex[(byte >> 4) & 0xf];
+    if (p + 1 < totalPixels) {
+      indices[p + 1] = nibbleToIndex[byte & 0xf];
     }
   }
   return indices;
@@ -737,3 +740,33 @@ function triggerDownload(item) {
   a.click();
   a.remove();
 }
+
+// Synthesise six equal horizontal bands (one per palette index) at the
+// current target resolution and pack them with the active nibble encoding.
+// The user uploads this to the panel, then reads off which colour appears in
+// each band — top-to-bottom, the bands are 0=Black, 1=White, 2=Red, 3=Green,
+// 4=Blue, 5=Yellow. Anything else means the nibble encoding is wrong.
+testPatternBtn.addEventListener('click', () => {
+  const w = Math.max(1, Math.floor(Number(widthInput.value) || 0));
+  const h = Math.max(1, Math.floor(Number(heightInput.value) || 0));
+  if (!w || !h) return;
+
+  const indices = new Uint8Array(w * h);
+  const bandHeight = h / 6;
+  for (let y = 0; y < h; y++) {
+    const band = Math.min(5, Math.floor(y / bandHeight));
+    const rowStart = y * w;
+    indices.fill(band, rowStart, rowStart + w);
+  }
+
+  const packed = packNibbles(indices, indexToNibbleLut(nibbleSelect.value));
+  const blob = new Blob([packed], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `spectra6-test-${w}x${h}-${nibbleSelect.value}.data`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});

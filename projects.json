@@ -81,8 +81,8 @@
   },
   "image-dither": {
     "category": "Developer Tools",
-    "description": "Dither images to a 6-colour e-paper palette and pack them as 3-bit raw data for direct-to-screen upload.",
-    "title": "Image Dither \u2014 6-colour e-paper packer"
+    "description": "Dither images to a 6-colour Spectra 6 palette and pack them as 4-bit-per-pixel raw data for direct e-paper upload.",
+    "title": "Image Dither \u2014 Spectra 6 packer"
   },
   "immich-album": {
     "category": "Immich",

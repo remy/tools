@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Dither images to a 6-colour e-paper palette and pack them as 3-bit raw data for direct-to-screen upload.">
+  <meta name="description" content="Dither images to a 6-colour Spectra 6 palette and pack them as 4-bit-per-pixel raw data for direct e-paper upload.">
   <meta name="category" content="Developer Tools">
-  <title>Image Dither &mdash; 6-colour e-paper packer</title>
+  <title>Image Dither &mdash; Spectra 6 packer</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,7 +13,7 @@
     <h1>Image Dither</h1>
     <p class="subtitle">
       Convert images to a 6-colour palette (black, white, red, green, blue, yellow) and pack as
-      3-bit raw <code>.data</code> files for direct e-paper upload.
+      4-bit-per-pixel raw <code>.data</code> files for direct Spectra 6 e-paper upload.
     </p>
 
     <section class="settings">
@@ -86,6 +86,15 @@
           <span class="field-label">Dither strength <span class="field-value" id="strengthValue">85</span></span>
           <input type="range" id="strengthInput" min="0" max="100" step="1" value="85">
         </label>
+
+        <label class="field">
+          <span class="field-label">Nibble encoding</span>
+          <select id="nibbleSelect">
+            <option value="el073tf1" selected>EL073TF1 (hardware tested)</option>
+            <option value="acep">ACEP (0,1,3,6,5,2)</option>
+            <option value="contiguous">Contiguous (0..5)</option>
+          </select>
+        </label>
       </div>
 
       <div class="adjust-header">
@@ -116,9 +125,19 @@
           <line x1="12" y1="8" x2="12" y2="20"/>
         </svg>
         <p>Drop images or <code>.data</code> files here, or <label class="file-label" for="fileInput">browse</label></p>
-        <p class="hint">PNG, JPG, GIF, WebP, or pre-packed <code>.data</code> (decoded using the current W&times;H).</p>
+        <p class="hint">Spectra 6 4bpp (W&times;H/2 bytes). Drop a packed <code>.data</code> back to verify it round-trips.</p>
       </div>
       <input type="file" id="fileInput" accept="image/*,.data,application/octet-stream" multiple hidden>
+    </section>
+
+    <section class="diagnostics">
+      <button type="button" class="btn btn-secondary btn-sm" id="testPatternBtn">
+        Download Spectra 6 test pattern
+      </button>
+      <span class="diagnostics-hint">
+        Six horizontal bands (one per palette index) at the current W&times;H. Send to the panel and
+        read off which colour appears in each band to confirm the nibble encoding.
+      </span>
     </section>
 
     <section class="results" id="results" hidden>
