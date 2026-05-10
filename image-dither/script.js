@@ -216,7 +216,7 @@ function createItem(file, isData) {
     btn.addEventListener('click', () => setPreviewMode(id, btn.dataset.mode));
   });
   document.getElementById('fileList').appendChild(card);
-  return { id, file, card, blob: null, url: null, mode: 'dithered', isData: !!isData };
+  return { id, file, card, blob: null, url: null, mode: 'dithered', isData: !!isData, processed: false };
 }
 
 function setPreviewMode(id, mode) {
@@ -262,7 +262,7 @@ async function processQueue() {
   processing = true;
   try {
     while (true) {
-      const next = items.find(it => !it.blob && !it.error && !it.inFlight);
+      const next = items.find(it => !it.processed && !it.error && !it.inFlight);
       if (!next) break;
       next.inFlight = true;
       try {
@@ -286,6 +286,7 @@ function reprocessAll() {
   for (const item of items) {
     revokeItem(item);
     item.error = false;
+    item.processed = false;
     const dl = item.card.querySelector('[data-download]');
     dl.hidden = true;
     showStatus(item, 'Processing…');
@@ -379,6 +380,7 @@ async function processItem(item) {
 
   item.blob = blob;
   item.url = url;
+  item.processed = true;
 
   const dl = item.card.querySelector('[data-download]');
   dl.href = url;
@@ -433,6 +435,7 @@ async function processDataItem(item, targetW, targetH) {
   // hidden for data-source items so we don't double-wrap it.
   item.blob = null;
   item.url = null;
+  item.processed = true;
   hideStatus(item);
 }
 
