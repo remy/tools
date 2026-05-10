@@ -9,7 +9,7 @@
     <meta name="category" content="Developer Tools" />
     <title>Markdown</title>
     <link rel="icon" type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232563eb' d='M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm3 11V9l3 3 3-3v7h2V8h-2l-3 3-3-3H4v8h2zm12-1l-3-3h2V8h2v4h2l-3 3z'/%3E%3C/svg%3E">
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Epath%7Bfill:%2318181b%7D@media (prefers-color-scheme:dark)%7Bpath%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Cpath d='M20.56 18H3.44C2.65 18 2 17.37 2 16.59V7.41C2 6.63 2.65 6 3.44 6H20.56C21.35 6 22 6.63 22 7.41V16.59C22 17.37 21.35 18 20.56 18M6.81 15.19V11.53L8.73 13.88L10.65 11.53V15.19H12.58V8.81H10.65L8.73 11.16L6.81 8.81H4.89V15.19H6.81M19.69 12H17.77V8.81H15.85V12H13.92L16.81 15.28L19.69 12Z'/%3E%3C/svg%3E">
     <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/styles/github.min.css">
     <link rel="stylesheet"
@@ -116,6 +116,7 @@
         padding: var(--space-2xl);
         text-align: center;
         cursor: pointer;
+        color: var(--colour-text);
         transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
       }
 
@@ -158,6 +159,22 @@
         border-radius: 0.25rem;
         color: var(--colour-text);
       }
+
+      .empty-loading {
+        display: none;
+        color: var(--colour-text-secondary);
+        font-size: 0.9375rem;
+        animation: empty-pulse 1.4s ease-in-out infinite;
+      }
+
+      @keyframes empty-pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+      }
+
+      .empty.loading .empty-text { display: none; }
+      .empty.loading .empty-loading { display: block; }
+      .empty.loading .empty-card { cursor: progress; }
 
       /* Loaded state */
       .container {
@@ -331,7 +348,7 @@
   <body>
     <div class="empty" id="empty">
       <button class="empty-card" id="empty-card" type="button" aria-label="Open a Markdown file">
-        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
           <path
             d="M20.56 18H3.44C2.65 18 2 17.37 2 16.59V7.41C2 6.63 2.65 6 3.44 6H20.56C21.35 6 22 6.63 22 7.41V16.59C22 17.37 21.35 18 20.56 18M6.81 15.19V11.53L8.73 13.88L10.65 11.53V15.19H12.58V8.81H10.65L8.73 11.16L6.81 8.81H4.89V15.19H6.81M19.69 12H17.77V8.81H15.85V12H13.92L16.81 15.28L19.69 12Z" />
         </svg>
@@ -339,16 +356,115 @@
         <p class="empty-text">
           Drop a file anywhere, paste text with <kbd>⌘</kbd>+<kbd>V</kbd>, or click to open a file.
         </p>
+        <p class="empty-loading">Loading…</p>
       </button>
     </div>
+
+    <input type="file" id="file-input" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+
+    <script>
+      // Tiny early script: capture file/paste/drop input before the heavy
+      // module loads, queue it, and show a loading state. The main module
+      // calls register() once it is ready.
+      (function () {
+        const empty = document.getElementById('empty');
+        const emptyCard = document.getElementById('empty-card');
+        const fileInput = document.getElementById('file-input');
+
+        let pending = null;
+        let handler = null;
+        let consumed = false;
+
+        function showLoading() {
+          if (!handler) empty.classList.add('loading');
+        }
+
+        function dispatch(text) {
+          if (handler) {
+            empty.classList.remove('loading');
+            handler(text);
+          } else {
+            pending = text;
+          }
+        }
+
+        function readFile(file) {
+          if (!file) return;
+          showLoading();
+          const reader = new FileReader();
+          reader.onload = () => dispatch(String(reader.result ?? ''));
+          reader.readAsText(file);
+        }
+
+        emptyCard.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+          readFile(fileInput.files[0]);
+          fileInput.value = '';
+        });
+
+        let dragDepth = 0;
+        window.addEventListener('dragenter', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          e.preventDefault();
+          dragDepth++;
+          document.body.classList.add('dragover');
+        });
+        window.addEventListener('dragover', (e) => {
+          if (Array.from(e.dataTransfer?.types || []).includes('Files')) e.preventDefault();
+        });
+        window.addEventListener('dragleave', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          dragDepth = Math.max(0, dragDepth - 1);
+          if (dragDepth === 0) document.body.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dragDepth = 0;
+          document.body.classList.remove('dragover');
+          const file = e.dataTransfer?.files?.[0];
+          if (file) readFile(file);
+        });
+
+        window.addEventListener('paste', (e) => {
+          const target = e.target;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+          const clipboard = e.clipboardData;
+          if (!clipboard) return;
+          const file = Array.from(clipboard.files || [])[0];
+          if (file) {
+            e.preventDefault();
+            readFile(file);
+            return;
+          }
+          const text = clipboard.getData('text/plain');
+          if (text) {
+            e.preventDefault();
+            showLoading();
+            dispatch(text);
+          }
+        });
+
+        window.__markdownEarly = {
+          register(fn) {
+            handler = fn;
+            empty.classList.remove('loading');
+            if (pending !== null) {
+              consumed = true;
+              const t = pending;
+              pending = null;
+              fn(t);
+            }
+          },
+          get consumed() { return consumed; },
+        };
+      })();
+    </script>
 
     <button class="clear-btn" id="clear-btn" type="button" hidden>Clear</button>
 
     <div class="container" hidden id="container">
       <article class="preview" id="preview"></article>
     </div>
-
-    <input type="file" id="file-input" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
 
     <script type="module">
       import markdownit from 'https://esm.sh/markdown-it@14.1.0';
@@ -374,11 +490,9 @@
       });
 
       const empty = document.getElementById('empty');
-      const emptyCard = document.getElementById('empty-card');
       const container = document.getElementById('container');
       const preview = document.getElementById('preview');
       const clearBtn = document.getElementById('clear-btn');
-      const fileInput = document.getElementById('file-input');
 
       const STORAGE_KEY = 'markdown-tool:input';
 
@@ -403,79 +517,16 @@
         try { localStorage.removeItem(STORAGE_KEY); } catch (_) { /* ignore */ }
       }
 
-      function loadFile(file) {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => setMarkdown(String(reader.result ?? ''));
-        reader.readAsText(file);
-      }
-
-      // File picker
-      emptyCard.addEventListener('click', () => fileInput.click());
-      fileInput.addEventListener('change', () => {
-        loadFile(fileInput.files[0]);
-        fileInput.value = '';
-      });
-
-      // Clear
       clearBtn.addEventListener('click', clearMarkdown);
 
-      // Drag & drop on the whole page
-      let dragDepth = 0;
-      window.addEventListener('dragenter', (e) => {
-        if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
-        e.preventDefault();
-        dragDepth++;
-        document.body.classList.add('dragover');
-      });
-      window.addEventListener('dragover', (e) => {
-        if (Array.from(e.dataTransfer?.types || []).includes('Files')) {
-          e.preventDefault();
-        }
-      });
-      window.addEventListener('dragleave', (e) => {
-        if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
-        dragDepth = Math.max(0, dragDepth - 1);
-        if (dragDepth === 0) document.body.classList.remove('dragover');
-      });
-      window.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dragDepth = 0;
-        document.body.classList.remove('dragover');
-        const file = e.dataTransfer?.files?.[0];
-        if (file) loadFile(file);
-      });
+      window.__markdownEarly.register(setMarkdown);
 
-      // Paste anywhere on the page
-      window.addEventListener('paste', (e) => {
-        // If the user is pasting into a real input (e.g. a future use), don't hijack
-        const target = e.target;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-          return;
-        }
-        const clipboard = e.clipboardData;
-        if (!clipboard) return;
-
-        // Prefer file paste (e.g. dragging a .md from Finder into clipboard tools)
-        const file = Array.from(clipboard.files || [])[0];
-        if (file) {
-          e.preventDefault();
-          loadFile(file);
-          return;
-        }
-
-        const text = clipboard.getData('text/plain');
-        if (text) {
-          e.preventDefault();
-          setMarkdown(text);
-        }
-      });
-
-      // Restore previous content
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) setMarkdown(saved);
-      } catch (_) { /* ignore */ }
+      if (!window.__markdownEarly.consumed) {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) setMarkdown(saved);
+        } catch (_) { /* ignore */ }
+      }
     </script>
     <script>navigator.serviceWorker?.register("/sw.js")</script>
   </body>
