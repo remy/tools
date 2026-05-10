@@ -160,6 +160,22 @@
         color: var(--colour-text);
       }
 
+      .empty-loading {
+        display: none;
+        color: var(--colour-text-secondary);
+        font-size: 0.9375rem;
+        animation: empty-pulse 1.4s ease-in-out infinite;
+      }
+
+      @keyframes empty-pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+      }
+
+      .empty.loading .empty-text { display: none; }
+      .empty.loading .empty-loading { display: block; }
+      .empty.loading .empty-card { cursor: progress; }
+
       /* Loaded state */
       .container {
         max-width: 80ch;
@@ -340,16 +356,115 @@
         <p class="empty-text">
           Drop a file anywhere, paste text with <kbd>⌘</kbd>+<kbd>V</kbd>, or click to open a file.
         </p>
+        <p class="empty-loading">Loading…</p>
       </button>
     </div>
+
+    <input type="file" id="file-input" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
+
+    <script>
+      // Tiny early script: capture file/paste/drop input before the heavy
+      // module loads, queue it, and show a loading state. The main module
+      // calls register() once it is ready.
+      (function () {
+        const empty = document.getElementById('empty');
+        const emptyCard = document.getElementById('empty-card');
+        const fileInput = document.getElementById('file-input');
+
+        let pending = null;
+        let handler = null;
+        let consumed = false;
+
+        function showLoading() {
+          if (!handler) empty.classList.add('loading');
+        }
+
+        function dispatch(text) {
+          if (handler) {
+            empty.classList.remove('loading');
+            handler(text);
+          } else {
+            pending = text;
+          }
+        }
+
+        function readFile(file) {
+          if (!file) return;
+          showLoading();
+          const reader = new FileReader();
+          reader.onload = () => dispatch(String(reader.result ?? ''));
+          reader.readAsText(file);
+        }
+
+        emptyCard.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+          readFile(fileInput.files[0]);
+          fileInput.value = '';
+        });
+
+        let dragDepth = 0;
+        window.addEventListener('dragenter', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          e.preventDefault();
+          dragDepth++;
+          document.body.classList.add('dragover');
+        });
+        window.addEventListener('dragover', (e) => {
+          if (Array.from(e.dataTransfer?.types || []).includes('Files')) e.preventDefault();
+        });
+        window.addEventListener('dragleave', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          dragDepth = Math.max(0, dragDepth - 1);
+          if (dragDepth === 0) document.body.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dragDepth = 0;
+          document.body.classList.remove('dragover');
+          const file = e.dataTransfer?.files?.[0];
+          if (file) readFile(file);
+        });
+
+        window.addEventListener('paste', (e) => {
+          const target = e.target;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+          const clipboard = e.clipboardData;
+          if (!clipboard) return;
+          const file = Array.from(clipboard.files || [])[0];
+          if (file) {
+            e.preventDefault();
+            readFile(file);
+            return;
+          }
+          const text = clipboard.getData('text/plain');
+          if (text) {
+            e.preventDefault();
+            showLoading();
+            dispatch(text);
+          }
+        });
+
+        window.__markdownEarly = {
+          register(fn) {
+            handler = fn;
+            empty.classList.remove('loading');
+            if (pending !== null) {
+              consumed = true;
+              const t = pending;
+              pending = null;
+              fn(t);
+            }
+          },
+          get consumed() { return consumed; },
+        };
+      })();
+    </script>
 
     <button class="clear-btn" id="clear-btn" type="button" hidden>Clear</button>
 
     <div class="container" hidden id="container">
       <article class="preview" id="preview"></article>
     </div>
-
-    <input type="file" id="file-input" accept=".md,.markdown,.txt,text/markdown,text/plain" hidden>
 
     <script type="module">
       import markdownit from 'https://esm.sh/markdown-it@14.1.0';
@@ -375,11 +490,9 @@
       });
 
       const empty = document.getElementById('empty');
-      const emptyCard = document.getElementById('empty-card');
       const container = document.getElementById('container');
       const preview = document.getElementById('preview');
       const clearBtn = document.getElementById('clear-btn');
-      const fileInput = document.getElementById('file-input');
 
       const STORAGE_KEY = 'markdown-tool:input';
 
@@ -404,79 +517,16 @@
         try { localStorage.removeItem(STORAGE_KEY); } catch (_) { /* ignore */ }
       }
 
-      function loadFile(file) {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = () => setMarkdown(String(reader.result ?? ''));
-        reader.readAsText(file);
-      }
-
-      // File picker
-      emptyCard.addEventListener('click', () => fileInput.click());
-      fileInput.addEventListener('change', () => {
-        loadFile(fileInput.files[0]);
-        fileInput.value = '';
-      });
-
-      // Clear
       clearBtn.addEventListener('click', clearMarkdown);
 
-      // Drag & drop on the whole page
-      let dragDepth = 0;
-      window.addEventListener('dragenter', (e) => {
-        if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
-        e.preventDefault();
-        dragDepth++;
-        document.body.classList.add('dragover');
-      });
-      window.addEventListener('dragover', (e) => {
-        if (Array.from(e.dataTransfer?.types || []).includes('Files')) {
-          e.preventDefault();
-        }
-      });
-      window.addEventListener('dragleave', (e) => {
-        if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
-        dragDepth = Math.max(0, dragDepth - 1);
-        if (dragDepth === 0) document.body.classList.remove('dragover');
-      });
-      window.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dragDepth = 0;
-        document.body.classList.remove('dragover');
-        const file = e.dataTransfer?.files?.[0];
-        if (file) loadFile(file);
-      });
+      window.__markdownEarly.register(setMarkdown);
 
-      // Paste anywhere on the page
-      window.addEventListener('paste', (e) => {
-        // If the user is pasting into a real input (e.g. a future use), don't hijack
-        const target = e.target;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
-          return;
-        }
-        const clipboard = e.clipboardData;
-        if (!clipboard) return;
-
-        // Prefer file paste (e.g. dragging a .md from Finder into clipboard tools)
-        const file = Array.from(clipboard.files || [])[0];
-        if (file) {
-          e.preventDefault();
-          loadFile(file);
-          return;
-        }
-
-        const text = clipboard.getData('text/plain');
-        if (text) {
-          e.preventDefault();
-          setMarkdown(text);
-        }
-      });
-
-      // Restore previous content
-      try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) setMarkdown(saved);
-      } catch (_) { /* ignore */ }
+      if (!window.__markdownEarly.consumed) {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) setMarkdown(saved);
+        } catch (_) { /* ignore */ }
+      }
     </script>
     <script>navigator.serviceWorker?.register("/sw.js")</script>
   </body>
