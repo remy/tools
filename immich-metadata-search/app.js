@@ -500,7 +500,7 @@ class ImmichMetadataSearch {
   // ── Search ───────────────────────────────────────────────────
 
   async search() {
-    this.host = this.hostInput.value.trim();
+    this.host = this.hostInput.value.trim().replace(/\/+$/, '');
     this.apiKey = this.apiKeyInput.value.trim();
     this.useProxy = this.useProxyInput.checked;
     this.proxy = this.proxyInput.value.trim();
