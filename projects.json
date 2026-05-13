@@ -94,6 +94,11 @@
     "description": "Visual debugger for Home Assistant Assist intent recognition templates",
     "title": "HA Intent Parser Visualizer"
   },
+  "image-metadata-reader": {
+    "category": "Developer Tools",
+    "description": "Drop a JPEG to inspect every embedded metadata block \u2014 EXIF, GPS, XMP, IPTC, ICC profile, JFIF, and the raw JPEG segment map.",
+    "title": "Image Metadata Reader"
+  },
   "immich-album": {
     "category": "Immich",
     "description": "Browser-based tool to bulk manage Immich albums - filter, delete, merge, and rename albums with regex and asset count filtering",
