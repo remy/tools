@@ -114,6 +114,11 @@
     "description": "Search Immich assets using arbitrary metadata queries and download the results as a zip file.",
     "title": "Immich Metadata Search & Download"
   },
+  "jpg-metadata-reader": {
+    "category": "Developer Tools",
+    "description": "Drop a JPEG to inspect every embedded metadata block \u2014 EXIF, GPS, XMP, IPTC, ICC profile, JFIF, and the raw JPEG segment map.",
+    "title": "JPG Metadata Reader"
+  },
   "json-schema": {
     "category": "Developer Tools",
     "description": "Validate JSON against a schema with real-time error reporting and syntax highlighting",
