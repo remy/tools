@@ -49,6 +49,11 @@
     "description": "Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed to calculate how long a journey will take.",
     "title": "Distance & Time Converter"
   },
+  "emoji-accessibility": {
+    "category": "Developer Tools",
+    "description": "Browse every Unicode emoji alongside the text screen readers announce. Compare how VoiceOver, Narrator, NVDA, JAWS, and TalkBack verbalise each one.",
+    "title": "Emoji Accessibility Reference"
+  },
   "esp-compare": {
     "category": "Developer Tools",
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
