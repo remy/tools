@@ -12,7 +12,6 @@ const els = {
   category: document.getElementById('category'),
   diffOnly: document.getElementById('diff-only'),
   showCodepoint: document.getElementById('show-codepoint'),
-  themeToggle: document.getElementById('theme-toggle'),
   tbody: document.getElementById('emoji-tbody'),
   resultCount: document.getElementById('result-count'),
   mobileHint: document.getElementById('mobile-hint'),
@@ -50,22 +49,6 @@ function initCodepointToggle() {
 function setCodepointVisible(show) {
   document.body.classList.toggle('show-codepoint', show);
   localStorage.setItem('emoji-a11y-show-codepoint', show ? '1' : '0');
-}
-
-function initTheme() {
-  const saved = localStorage.getItem('emoji-a11y-theme');
-  const dark = saved === 'dark';
-  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-  els.themeToggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
-  els.themeToggle.querySelector('.theme-label').textContent = dark ? 'Light mode' : 'Dark mode';
-}
-
-function toggleTheme() {
-  const dark = document.documentElement.getAttribute('data-theme') !== 'dark';
-  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-  localStorage.setItem('emoji-a11y-theme', dark ? 'dark' : 'light');
-  els.themeToggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
-  els.themeToggle.querySelector('.theme-label').textContent = dark ? 'Light mode' : 'Dark mode';
 }
 
 function maybeShowMobileHint() {
@@ -122,11 +105,8 @@ function wireEvents() {
   els.showCodepoint.addEventListener('change', (e) => {
     setCodepointVisible(e.target.checked);
   });
-
-  els.themeToggle.addEventListener('click', toggleTheme);
 }
 
-initTheme();
 initCodepointToggle();
 wireEvents();
 loadData().catch((err) => {

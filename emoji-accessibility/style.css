@@ -43,21 +43,23 @@
   --space-2xl: 2rem;
 }
 
-[data-theme="dark"] {
-  --colour-bg: #0a0a0a;
-  --colour-bg-secondary: #171717;
-  --colour-bg-tertiary: #262626;
-  --colour-border: #404040;
-  --colour-text: #fafafa;
-  --colour-text-secondary: #a1a1aa;
-  --colour-text-tertiary: #71717a;
-  --colour-block-bg: #171717;
-  --colour-block-border: #262626;
-  --colour-shadow: rgba(0, 0, 0, 0.5);
-  --colour-primary-light: #1e3a8a;
-  --colour-info-light: #1e3a8a;
-  --colour-diff-bg: #422006;
-  --colour-diff-text: #fde68a;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --colour-bg: #0a0a0a;
+    --colour-bg-secondary: #171717;
+    --colour-bg-tertiary: #262626;
+    --colour-border: #404040;
+    --colour-text: #fafafa;
+    --colour-text-secondary: #a1a1aa;
+    --colour-text-tertiary: #71717a;
+    --colour-block-bg: #171717;
+    --colour-block-border: #262626;
+    --colour-shadow: rgba(0, 0, 0, 0.5);
+    --colour-primary-light: #1e3a8a;
+    --colour-info-light: #1e3a8a;
+    --colour-diff-bg: #422006;
+    --colour-diff-text: #fde68a;
+  }
 }
 
 html {
@@ -215,12 +217,12 @@ button {
   grid-template-columns: 1fr;
   gap: var(--space-md);
   margin-bottom: var(--space-sm);
+  align-items: end;
 }
 
 @media (min-width: 768px) {
   .controls-grid {
-    grid-template-columns: 2fr 1fr auto;
-    align-items: end;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
   }
 }
 
@@ -228,13 +230,19 @@ button {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  min-height: 0;
 }
 
 .control-toggles {
   flex-direction: row;
   flex-wrap: wrap;
-  gap: var(--space-md);
+  gap: var(--space-md) var(--space-lg);
   align-items: center;
+  /* Align with input baseline: input is 1rem text with ~0.5rem vertical
+     padding, so its content centre sits ~0.75rem from the bottom. The
+     1rem-tall checkbox needs ~0.25rem below it to land its centre at the
+     same vertical position. */
+  padding-bottom: 0.4375rem;
 }
 
 .form-label {
@@ -435,10 +443,9 @@ body:not(.show-codepoint) .cell-cp {
   display: none;
 }
 
-.cell-cat {
-  font-size: 0.8125rem;
-  color: var(--colour-text-secondary);
-  white-space: nowrap;
+.cell-cat,
+.col-cat {
+  display: none;
 }
 
 .col-platform {
