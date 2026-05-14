@@ -11,6 +11,7 @@ const els = {
   search: document.getElementById('search'),
   category: document.getElementById('category'),
   diffOnly: document.getElementById('diff-only'),
+  showCodepoint: document.getElementById('show-codepoint'),
   themeToggle: document.getElementById('theme-toggle'),
   tbody: document.getElementById('emoji-tbody'),
   resultCount: document.getElementById('result-count'),
@@ -38,6 +39,17 @@ function populateCategories(data) {
     opt.textContent = c;
     els.category.appendChild(opt);
   }
+}
+
+function initCodepointToggle() {
+  const show = localStorage.getItem('emoji-a11y-show-codepoint') === '1';
+  els.showCodepoint.checked = show;
+  document.body.classList.toggle('show-codepoint', show);
+}
+
+function setCodepointVisible(show) {
+  document.body.classList.toggle('show-codepoint', show);
+  localStorage.setItem('emoji-a11y-show-codepoint', show ? '1' : '0');
 }
 
 function initTheme() {
@@ -107,10 +119,15 @@ function wireEvents() {
     runFilter();
   });
 
+  els.showCodepoint.addEventListener('change', (e) => {
+    setCodepointVisible(e.target.checked);
+  });
+
   els.themeToggle.addEventListener('click', toggleTheme);
 }
 
 initTheme();
+initCodepointToggle();
 wireEvents();
 loadData().catch((err) => {
   console.error('Failed to load emoji data', err);
