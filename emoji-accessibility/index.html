@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Emoji Accessibility Reference</title>
+  <meta name="description" content="Browse every Unicode emoji alongside the text screen readers announce. Compare how VoiceOver, Narrator, NVDA, JAWS, and TalkBack verbalise each one." />
+  <meta name="category" content="Developer Tools" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <a class="skip-link" href="#emoji-table">Skip to emoji table</a>
+
+  <header class="page-header">
+    <div class="container">
+      <h1>Emoji Accessibility Reference</h1>
+      <p class="lede">
+        Every Unicode emoji and the text a screen reader will announce, side
+        by side across platforms. Use it to spot emoji whose announced name
+        differs between Apple VoiceOver, Windows readers and Android TalkBack
+        — and to choose emoji whose meaning survives being read aloud.
+      </p>
+      <div class="alert alert-info" role="note">
+        <strong>Important:</strong> Actual output depends on the screen reader
+        version, OS version, locale, and verbosity settings. The Windows
+        column merges Narrator, NVDA, and JAWS; their announcements usually
+        match but can diverge — check with the specific reader you target.
+        Most emoji read identically across platforms; the value here is in
+        spotting where they don't.
+      </div>
+    </div>
+  </header>
+
+  <section class="controls" aria-label="Filter controls">
+    <div class="container controls-grid">
+      <div class="control control-search">
+        <label for="search" class="form-label">Search</label>
+        <input
+          type="search"
+          id="search"
+          class="input"
+          placeholder="grinning, 1F600, 😀…"
+          aria-describedby="search-hint"
+          autocomplete="off"
+        />
+        <span id="search-hint" class="form-hint">Matches emoji glyph, codepoint, name, and keywords.</span>
+      </div>
+      <div class="control">
+        <label for="category" class="form-label">Category</label>
+        <select id="category" class="input">
+          <option value="">All categories</option>
+        </select>
+      </div>
+      <div class="control control-toggles">
+        <label class="checkbox">
+          <input type="checkbox" id="diff-only" />
+          <span>Only show platform differences</span>
+        </label>
+        <button type="button" id="theme-toggle" class="btn btn-ghost" aria-pressed="false">
+          <span aria-hidden="true">◐</span>
+          <span class="theme-label">Dark mode</span>
+        </button>
+      </div>
+    </div>
+    <div class="container">
+      <p id="result-count" class="result-count" role="status" aria-live="polite">Loading…</p>
+    </div>
+  </section>
+
+  <main class="container main-content">
+    <p class="mobile-hint" id="mobile-hint" hidden>Swipe table to compare platforms &rarr;</p>
+    <div class="table-wrap" tabindex="0">
+      <table class="emoji-table" id="emoji-table">
+        <caption class="sr-only">Every Unicode emoji with the announcement text used by major screen readers across platforms.</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="col-emoji">Emoji</th>
+            <th scope="col" class="col-cp">Codepoint</th>
+            <th scope="col" class="col-cat">Category</th>
+            <th scope="col" class="col-platform col-cldr">Unicode CLDR <span class="th-sub">baseline</span></th>
+            <th scope="col" class="col-platform col-apple">Apple <span class="th-sub">VoiceOver iOS / macOS</span></th>
+            <th scope="col" class="col-platform col-windows">Windows <span class="th-sub">Narrator / NVDA / JAWS</span></th>
+            <th scope="col" class="col-platform col-android">Android <span class="th-sub">TalkBack</span></th>
+          </tr>
+        </thead>
+        <tbody id="emoji-tbody">
+          <tr><td colspan="7" class="loading">Loading emoji data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="page-footer">
+    <div class="container">
+      <p>
+        Baseline names from
+        <a href="https://github.com/unicode-org/cldr-json">Unicode CLDR annotations (English)</a>;
+        emoji ordering and categorisation from
+        <a href="https://unicode.org/Public/emoji/15.1/emoji-test.txt">Unicode emoji-test.txt 15.1</a>.
+        Platform-specific differences are hand-curated in
+        <code>overrides.json</code> — pull requests welcome.
+      </p>
+    </div>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

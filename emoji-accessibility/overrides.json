@@ -1,0 +1,131 @@
+{
+  "_README": "Per-platform screen-reader announcements that differ from the Unicode CLDR baseline. Keys are the codepoint sequence (uppercase hex, joined by '-') matching data.json. Values may include any of: apple, windows, android. Optional _note and _source fields document why. Anything not listed inherits the CLDR baseline. Exact strings depend on screen reader version, OS version, locale, and verbosity settings — this file captures the typical default-verbosity output reported by published sources.",
+
+  "1F3F4-E0067-E0062-E0065-E006E-E0067-E007F": {
+    "_note": "Subdivision flag (England). Apple VoiceOver announces the place name; Windows Narrator and Android TalkBack typically fall back to 'flag' or read the tag characters.",
+    "apple": "England",
+    "windows": "flag",
+    "android": "flag"
+  },
+  "1F3F4-E0067-E0062-E0073-E0063-E0074-E0061-E006F-E007F": {
+    "_note": "Subdivision flag (Scotland). Apple VoiceOver announces the place name; Windows Narrator and Android TalkBack typically fall back to 'flag'.",
+    "apple": "Scotland",
+    "windows": "flag",
+    "android": "flag"
+  },
+  "1F3F4-E0067-E0062-E0077-E006C-E0073-E007F": {
+    "_note": "Subdivision flag (Wales). Apple VoiceOver announces the place name; other platforms typically fall back to 'flag'.",
+    "apple": "Wales",
+    "windows": "flag",
+    "android": "flag"
+  },
+
+  "1F3F3-FE0F-200D-1F308": {
+    "_note": "Rainbow flag. Apple VoiceOver says 'rainbow flag'; CLDR uses the same. Windows Narrator on older versions may announce 'white flag, rainbow' as two separate emoji.",
+    "apple": "rainbow flag",
+    "windows": "white flag, rainbow"
+  },
+  "1F3F3-FE0F-200D-26A7-FE0F": {
+    "_note": "Transgender flag. Older Windows Narrator versions decompose ZWJ sequences into their parts.",
+    "windows": "white flag, transgender symbol"
+  },
+  "1F3F4-200D-2620-FE0F": {
+    "_note": "Pirate flag. Older Narrator decomposes the ZWJ sequence.",
+    "windows": "black flag, skull and crossbones"
+  },
+
+  "1F44D-1F3FB": {
+    "_note": "Skin-tone modifiers: Apple and Android announce the tone verbally; older Windows Narrator versions may only say the base emoji and omit the tone.",
+    "apple": "thumbs up, light skin tone",
+    "android": "thumbs up, light skin tone",
+    "windows": "thumbs up"
+  },
+  "1F44D-1F3FC": {
+    "_note": "Skin-tone modifiers: Apple and Android announce the tone verbally; older Windows Narrator versions may omit it.",
+    "apple": "thumbs up, medium-light skin tone",
+    "android": "thumbs up, medium-light skin tone",
+    "windows": "thumbs up"
+  },
+  "1F44D-1F3FD": {
+    "apple": "thumbs up, medium skin tone",
+    "android": "thumbs up, medium skin tone",
+    "windows": "thumbs up"
+  },
+  "1F44D-1F3FE": {
+    "apple": "thumbs up, medium-dark skin tone",
+    "android": "thumbs up, medium-dark skin tone",
+    "windows": "thumbs up"
+  },
+  "1F44D-1F3FF": {
+    "apple": "thumbs up, dark skin tone",
+    "android": "thumbs up, dark skin tone",
+    "windows": "thumbs up"
+  },
+
+  "1F44B-1F3FB": {
+    "_note": "Apple announces the modifier with a comma; CLDR uses a colon.",
+    "apple": "waving hand, light skin tone"
+  },
+  "1F44B-1F3FC": { "apple": "waving hand, medium-light skin tone" },
+  "1F44B-1F3FD": { "apple": "waving hand, medium skin tone" },
+  "1F44B-1F3FE": { "apple": "waving hand, medium-dark skin tone" },
+  "1F44B-1F3FF": { "apple": "waving hand, dark skin tone" },
+
+  "1F468-200D-1F4BB": {
+    "_note": "ZWJ profession sequence. Modern platforms render as a single phrase; older Narrator decomposes to component parts.",
+    "apple": "man technologist",
+    "android": "man technologist",
+    "windows": "man, laptop"
+  },
+  "1F469-200D-1F4BB": {
+    "apple": "woman technologist",
+    "android": "woman technologist",
+    "windows": "woman, laptop"
+  },
+  "1F468-200D-1F52C": {
+    "apple": "man scientist",
+    "windows": "man, microscope"
+  },
+  "1F469-200D-1F52C": {
+    "apple": "woman scientist",
+    "windows": "woman, microscope"
+  },
+  "1F468-200D-2695-FE0F": {
+    "apple": "man health worker",
+    "windows": "man, medical symbol"
+  },
+  "1F469-200D-2695-FE0F": {
+    "apple": "woman health worker",
+    "windows": "woman, medical symbol"
+  },
+
+  "1F468-200D-1F469-200D-1F466": {
+    "_note": "Family emoji. Apple typically announces as a composite phrase; Narrator may read each member separately.",
+    "apple": "family: man, woman, boy",
+    "windows": "man, woman, boy"
+  },
+  "1F468-200D-1F468-200D-1F466": {
+    "apple": "family: man, man, boy",
+    "windows": "man, man, boy"
+  },
+  "1F469-200D-1F469-200D-1F466": {
+    "apple": "family: woman, woman, boy",
+    "windows": "woman, woman, boy"
+  },
+
+  "2764-FE0F-200D-1F525": {
+    "_note": "Heart on fire. Older Narrator decomposes ZWJ sequences.",
+    "windows": "red heart, fire"
+  },
+  "2764-FE0F-200D-1FA79": {
+    "_note": "Mending heart. Older Narrator decomposes ZWJ sequences.",
+    "windows": "red heart, adhesive bandage"
+  },
+
+  "1F600": {
+    "_note": "No platform divergence — included as a sanity-check entry. All major readers announce 'grinning face'.",
+    "apple": "grinning face",
+    "windows": "grinning face",
+    "android": "grinning face"
+  }
+}
