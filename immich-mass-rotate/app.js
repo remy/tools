@@ -187,7 +187,7 @@ class ImmichMassRotate {
   }
 
   async loadImages() {
-    this.host = this.hostInput.value.trim();
+    this.host = this.hostInput.value.trim().replace(/\/+$/, '');
     this.apiKey = this.apiKeyInput.value.trim();
     this.year = this.yearInput.value.trim();
     this.useProxy = this.useProxyInput.checked;

@@ -18,7 +18,8 @@ function hideStatus() {
 function getConfig() {
   const serverUrl = document
     .getElementById('serverUrl')
-    .value.replace(/\/$/, '');
+    .value.trim()
+    .replace(/\/+$/, '');
   const apiKey = $('#apiKey').value;
   const useProxy = $('#useProxy').checked;
   const proxyUrl = $('#proxyUrl').value.replace(/\/$/, '');
