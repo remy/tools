@@ -94,19 +94,9 @@
   --colour-error-light: #fee2e2;
 }
 
-/* ---- Reset ---- */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
-  -webkit-font-smoothing: antialiased;
-}
+/* Reset, [hidden], html base and base tokens come from /shared-base.css.
+   The :root / theme blocks above override shared tokens with this tool's
+   warm orange palette. */
 
 body {
   font-family:

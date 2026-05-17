@@ -6,15 +6,10 @@
   <meta name="description" content="Drop a pixel font file and generate an 8x8 grid representation of each glyph. Supports TTF, OTF, WOFF, and WOFF2 formats.">
   <meta name="category" content="Developer Tools">
   <title>Font Grid Generator</title>
+  <link rel="stylesheet" href="/shared-base.css">
   <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    /* Reset, [hidden] and base tokens come from /shared-base.css.
+       The :root below overrides shared tokens with this tool's palette. */
     :root {
       --colour-primary: #2563eb;
       --colour-primary-hover: #1d4ed8;
@@ -66,16 +61,7 @@
       --colour-input-border: #3f3f46;
     }
 
-    html {
-      -webkit-text-size-adjust: 100%;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size: 16px;
-      line-height: 1.5;
-      color: var(--colour-text);
-      background: var(--colour-bg);
       padding: var(--space-xl);
     }
 

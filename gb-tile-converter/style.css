@@ -1,14 +1,5 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-[hidden] {
-  display: none !important;
-}
+/* Reset, [hidden], html base and base tokens come from /shared-base.css.
+   The :root below overrides shared tokens with this tool's palette. */
 
 :root {
   --colour-primary: #2563eb;
@@ -54,17 +45,6 @@
   }
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  color: var(--colour-text);
-  background: var(--colour-bg);
-}
 
 .sr-only {
   position: absolute;

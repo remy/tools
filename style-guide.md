@@ -8,6 +8,27 @@
 - **Minimal padding**: Space-efficient for mobile screens
 - **Theme support**: Colour variations through CSS custom properties
 
+## Shared Stylesheet
+
+The CSS in this guide is implemented once at the repo root — **do not
+copy it into each tool**:
+
+- **`/shared.css`** — the full design system below (tokens, themes,
+  reset, base styles, components, utilities). Live demo:
+  `kitchen-sink.html`. Use for **new tools**:
+
+  ```html
+  <link rel="stylesheet" href="/shared.css">
+  ```
+
+- **`/shared-base.css`** — just the tokens, themes, reset, `[hidden]`
+  and body defaults (no opinionated headings/links/components). For
+  tools that keep their own bespoke look but want the shared
+  foundation. Link it **before** the tool's own stylesheet.
+
+The rest of this document is the reference for what those files
+provide and how to use the classes and tokens.
+
 ## Typography
 
 ### Font Stack

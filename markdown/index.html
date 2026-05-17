@@ -15,7 +15,10 @@
     <link rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.10.0/build/styles/github-dark.min.css"
       media="(prefers-color-scheme: dark)">
+    <link rel="stylesheet" href="/shared-base.css">
     <style>
+      /* Reset, [hidden] and base tokens come from /shared-base.css.
+         The :root below overrides shared tokens with this tool's palette. */
       :root {
         --colour-bg: #fafafa;
         --colour-bg-secondary: #f4f4f5;
@@ -49,18 +52,6 @@
           --colour-block-border: #262626;
           --colour-shadow: rgba(0, 0, 0, 0.5);
         }
-      }
-
-      *,
-      *::before,
-      *::after {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      [hidden] {
-        display: none !important;
       }
 
       html,
