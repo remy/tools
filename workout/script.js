@@ -17,10 +17,31 @@ let wakeLock = null;
 /* ── Rep-workout elapsed timer ── */
 let repTimer = {
   startTime: 0,
+  restStart: 0,
   intervalId: null,
   panelEl: null,
   stopped: false
 };
+
+function isRestTimerEnabled() {
+  try { return localStorage.getItem('rep-rest-timer') === '1'; }
+  catch (e) { return false; }
+}
+
+function toggleRestTimer() {
+  const on = !isRestTimerEnabled();
+  try { localStorage.setItem('rep-rest-timer', on ? '1' : '0'); } catch (e) {}
+  updateRestToggleUI();
+  document.querySelectorAll('.rep-timer-rest').forEach(el => { el.hidden = !on; });
+}
+
+function updateRestToggleUI() {
+  const on = isRestTimerEnabled();
+  document.querySelectorAll('.rest-toggle').forEach(b => {
+    b.classList.toggle('active', on);
+    b.textContent = on ? '⏱ Rest on' : '⏱ Rest off';
+  });
+}
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -93,6 +114,7 @@ async function init() {
     renderWorkouts(data.workouts);
     restoreTab();
     restoreTheme();
+    updateRestToggleUI();
   } catch (error) {
     console.error('Error loading workouts:', error);
   }
@@ -182,6 +204,7 @@ function renderWorkouts(workouts) {
             <div class="focus-text">${workout.focus}</div>
           </div>
           <div class="bar-actions">
+            <button class="rest-toggle" onclick="toggleRestTimer()">⏱ Rest off</button>
             <a href="manage.html" class="manage-link" title="Manage workouts">⚙</a>
             <button class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
           </div>
@@ -207,8 +230,14 @@ function renderWorkouts(workouts) {
           </div>
         </div>` : ''}
         <div class="rep-timer" hidden>
-          <span class="rep-timer-label">Elapsed</span>
-          <span class="rep-timer-time">0:00</span>
+          <div class="rep-timer-seg">
+            <span class="rep-timer-label">Elapsed</span>
+            <span class="rep-timer-time">0:00</span>
+          </div>
+          <div class="rep-timer-seg rep-timer-rest" hidden>
+            <span class="rep-timer-label">Rest</span>
+            <span class="rep-timer-rest-time">0:00</span>
+          </div>
         </div>
       `;
     }
@@ -244,18 +273,23 @@ function formatElapsed(ms) {
    exercise in that panel is marked done. */
 function renderRepTimer() {
   if (!repTimer.panelEl) return;
+  const now = Date.now();
   const el = repTimer.panelEl.querySelector('.rep-timer-time');
-  if (el) el.textContent = formatElapsed(Date.now() - repTimer.startTime);
+  if (el) el.textContent = formatElapsed(now - repTimer.startTime);
+  const restEl = repTimer.panelEl.querySelector('.rep-timer-rest-time');
+  if (restEl) restEl.textContent = formatElapsed(now - repTimer.restStart);
 }
 
 function startRepTimer(panelEl) {
   if (repTimer.intervalId || repTimer.stopped) return;
   repTimer.panelEl = panelEl;
   repTimer.startTime = Date.now();
+  repTimer.restStart = repTimer.startTime;
   const pill = panelEl.querySelector('.rep-timer');
   if (pill) {
     pill.classList.remove('done');
     pill.querySelector('.rep-timer-label').textContent = 'Elapsed';
+    pill.querySelector('.rep-timer-rest').hidden = !isRestTimerEnabled();
     pill.hidden = false;
   }
   renderRepTimer();
@@ -551,7 +585,10 @@ document.addEventListener('click', function(e) {
   const total = parseInt(row.dataset.totalSets, 10);
   let completed = parseInt(row.dataset.completedSets, 10);
 
-  if (row.classList.contains('done')) {
+  const wasDone = row.classList.contains('done');
+  const setLogged = !wasDone;
+
+  if (wasDone) {
     completed = 0;
     row.classList.remove('done');
   } else {
@@ -577,6 +614,12 @@ document.addEventListener('click', function(e) {
       stopRepTimer();
     } else {
       startRepTimer(panel);
+    }
+
+    // Rest timer resets each time a set is logged.
+    if (setLogged && repTimer.intervalId && !repTimer.stopped) {
+      repTimer.restStart = Date.now();
+      renderRepTimer();
     }
   }
 });
