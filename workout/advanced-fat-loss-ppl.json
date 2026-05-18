@@ -1,0 +1,61 @@
+{
+  "workouts": [
+    {
+      "id": "A",
+      "label": "Push",
+      "focus": "PUSH + CORE",
+      "exercises": [
+        { "name": "Incline Barbell Bench Press", "sets": "4", "reps": "6–8" },
+        { "name": "Flat Dumbbell Press", "sets": "3", "reps": "8–10" },
+        { "name": "Machine Shoulder Press (back-supported)", "sets": "3", "reps": "8–10" },
+        { "name": "Cable Lateral Raises", "sets": "4", "reps": "12–15" },
+        { "name": "Cable Crossover (high to low)", "sets": "3", "reps": "12–15" },
+        { "name": "Overhead Cable Tricep Extension", "sets": "3", "reps": "10–12" },
+        { "name": "Dead Bug", "sets": "3", "reps": "10 / side" }
+      ],
+      "cardio": {
+        "icon": "🚴",
+        "title": "CARDIO FINISHER",
+        "description": "15–20 min · Bike or elliptical · Steady Zone 2 pace"
+      }
+    },
+    {
+      "id": "B",
+      "label": "Pull",
+      "focus": "PULL + ARMS",
+      "exercises": [
+        { "name": "Wide-Grip Lat Pulldown", "sets": "4", "reps": "8–10" },
+        { "name": "Chest-Supported Row (machine)", "sets": "4", "reps": "8–10" },
+        { "name": "Single-Arm Seated Cable Row", "sets": "3", "reps": "10–12 / side" },
+        { "name": "Straight-Arm Cable Pulldown", "sets": "3", "reps": "12–15" },
+        { "name": "Face Pulls (cable)", "sets": "3", "reps": "15–20" },
+        { "name": "Incline Dumbbell Curls", "sets": "3", "reps": "10–12" },
+        { "name": "Cable Hammer Curls", "sets": "3", "reps": "12–15" }
+      ],
+      "cardio": {
+        "icon": "🚣",
+        "title": "CARDIO FINISHER",
+        "description": "15–20 min · Rowing machine · Steady Zone 2 pace"
+      }
+    },
+    {
+      "id": "C",
+      "label": "Legs",
+      "focus": "LEGS + CORE",
+      "exercises": [
+        { "name": "Leg Press", "sets": "4", "reps": "10–12" },
+        { "name": "Bulgarian Split Squat (DBs)", "sets": "3", "reps": "10 / side" },
+        { "name": "Hack Squat (machine)", "sets": "3", "reps": "10–12" },
+        { "name": "Seated Leg Curl (machine)", "sets": "4", "reps": "10–12" },
+        { "name": "Machine Hip Thrust", "sets": "3", "reps": "10–12" },
+        { "name": "Standing Calf Raise (machine)", "sets": "4", "reps": "12–15" },
+        { "name": "Cable Pallof Press", "sets": "3", "reps": "12 / side" }
+      ],
+      "cardio": {
+        "icon": "🚶",
+        "title": "CARDIO FINISHER",
+        "description": "15–20 min · Incline treadmill walk · Steady Zone 2 pace"
+      }
+    }
+  ]
+}
