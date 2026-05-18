@@ -28,21 +28,6 @@ function isRestTimerEnabled() {
   catch (e) { return false; }
 }
 
-function toggleRestTimer() {
-  const on = !isRestTimerEnabled();
-  try { localStorage.setItem('rep-rest-timer', on ? '1' : '0'); } catch (e) {}
-  updateRestToggleUI();
-  document.querySelectorAll('.rep-timer-rest').forEach(el => { el.hidden = !on; });
-}
-
-function updateRestToggleUI() {
-  const on = isRestTimerEnabled();
-  document.querySelectorAll('.rest-toggle').forEach(b => {
-    b.classList.toggle('active', on);
-    b.textContent = on ? '⏱ Rest on' : '⏱ Rest off';
-  });
-}
-
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -114,7 +99,6 @@ async function init() {
     renderWorkouts(data.workouts);
     restoreTab();
     restoreTheme();
-    updateRestToggleUI();
   } catch (error) {
     console.error('Error loading workouts:', error);
   }
@@ -204,7 +188,6 @@ function renderWorkouts(workouts) {
             <div class="focus-text">${workout.focus}</div>
           </div>
           <div class="bar-actions">
-            <button class="rest-toggle" onclick="toggleRestTimer()">⏱ Rest off</button>
             <a href="manage.html" class="manage-link" title="Manage workouts">⚙</a>
             <button class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
           </div>

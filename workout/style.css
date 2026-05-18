@@ -68,32 +68,6 @@ body.light .theme-toggle {
 
 .theme-toggle:active { opacity: 0.7; }
 
-.rest-toggle {
-  background: transparent;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  border-radius: 20px;
-  padding: 5px 12px;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 500;
-  color: var(--muted);
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-body.light .rest-toggle {
-  border-color: rgba(0,0,0,0.15);
-}
-
-.rest-toggle.active {
-  color: var(--accent);
-  border-color: var(--accent);
-}
-
-.rest-toggle:active { opacity: 0.7; }
-
 .bar-actions {
   display: flex;
   align-items: center;
