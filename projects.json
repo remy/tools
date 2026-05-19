@@ -89,6 +89,11 @@
     "description": "Analyse a GitHub repository with contributor, churn, momentum, bug-cluster, and firefighting visualizations powered by the GitHub API.",
     "title": "gitviz web"
   },
+  "graphql-filter": {
+    "category": "Developer Tools",
+    "description": "Paste a GraphQL SDL schema or an introspection query result, pick the root fields and types you need, and export a minimal valid trimmed schema with only the operations and types they reference.",
+    "title": "GraphQL Schema Filter"
+  },
   "ha-template-debugger": {
     "category": "Home Assistant",
     "description": "Test and debug Home Assistant Jinja2 templates with real-time rendering and variable support.",
