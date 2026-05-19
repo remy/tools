@@ -188,7 +188,6 @@ async function parseSchema(text) {
 
   el.inputPanel.open = false;
   el.fieldsPanel.hidden = false;
-  el.tabJson.hidden = inputKind !== 'introspection';
   renderList();
   updateOutput();
 }
@@ -694,13 +693,14 @@ function buildTrimmedSchema() {
     return { error: `Failed to print schema: ${err.message}` };
   }
 
+  // Always derive a trimmed introspection JSON so the slice can be exported
+  // as JSON regardless of the input format. Requires a valid schema, so this
+  // is null only when the selection has no Query root type.
   let introspection = null;
-  if (state.inputKind === 'introspection') {
-    try {
-      introspection = gql.introspectionFromSchema(gql.buildASTSchema(filteredDoc));
-    } catch {
-      introspection = null;
-    }
+  try {
+    introspection = gql.introspectionFromSchema(gql.buildASTSchema(filteredDoc));
+  } catch {
+    introspection = null;
   }
   return { sdl, introspection };
 }
@@ -732,7 +732,7 @@ function updateOutput() {
   const pct = originalBytes ? Math.round((bytes / originalBytes) * 100) : 0;
   el.outputMeta.textContent = `${formatBytes(bytes)} · ${pct}% of original`;
 
-  el.tabJson.hidden = state.inputKind !== 'introspection' || !out.introspection;
+  el.tabJson.hidden = !out.introspection;
   if (activeTab === 'json' && el.tabJson.hidden) activeTab = 'sdl';
 
   renderDocs();
