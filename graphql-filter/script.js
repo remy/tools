@@ -606,6 +606,9 @@ function buildTrimmedSchema() {
   }
 
   // Fixed point: directives used by kept nodes pull their argument types into
+  // Preserve directives from an explicit `schema { ... }` definition, if any.
+  let schemaDef = state.ast.definitions.find(d => d.kind === 'SchemaDefinition') || null;
+
   // the closure, which can keep more types/fields, which can use more directives.
   let closure = computeClosure(true);
   let defs = [];
