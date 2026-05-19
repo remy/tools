@@ -17,6 +17,7 @@ const state = {
   ast: null,                 // DocumentNode
   inputKind: 'sdl',          // 'sdl' | 'introspection'
   originalText: '',
+  originalSdl: '',
   registry: new Map(),       // typeName -> { kind, fields:Map, interfaces:[], referencedTypes:Set }
   rootFields: [],            // { id, op, name, returnTypeName, returnLabel, args, description }
   rootTypeNames: {},         // { query, mutation, subscription }
@@ -168,6 +169,11 @@ async function parseSchema(text) {
   state.ast = ast;
   state.inputKind = inputKind;
   state.originalText = trimmed;
+  try {
+    state.originalSdl = gql.printSchema(schema);
+  } catch {
+    state.originalSdl = trimmed;
+  }
   buildRegistry(schema);
   extractRootFields(schema);
 
@@ -731,9 +737,10 @@ function updateOutput() {
   }
 
   const bytes = new Blob([out.sdl]).size;
-  const originalBytes = new Blob([state.originalText]).size;
-  const pct = originalBytes ? Math.round((bytes / originalBytes) * 100) : 0;
-  el.outputMeta.textContent = `${formatBytes(bytes)} · ${pct}% of original`;
+  const originalBytes = new Blob([state.originalSdl || state.originalText]).size;
+  const ratio = originalBytes ? (bytes / originalBytes) * 100 : 0;
+  const pct = ratio > 0 && ratio < 1 ? '<1' : Math.round(ratio);
+  el.outputMeta.textContent = `${formatBytes(bytes)} · ${pct}% of full schema`;
 
   el.tabJson.hidden = !out.introspection;
   if (activeTab === 'json' && el.tabJson.hidden) activeTab = 'sdl';
