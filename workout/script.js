@@ -14,6 +14,20 @@ let circuitState = {
 let audioCtx = null;
 let wakeLock = null;
 
+/* ── Rep-workout elapsed timer ── */
+let repTimer = {
+  startTime: 0,
+  restStart: 0,
+  intervalId: null,
+  panelEl: null,
+  stopped: false
+};
+
+function isRestTimerEnabled() {
+  try { return localStorage.getItem('rep-rest-timer') === '1'; }
+  catch (e) { return false; }
+}
+
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -198,6 +212,16 @@ function renderWorkouts(workouts) {
             <div class="cardio-desc">${workout.cardio.description}</div>
           </div>
         </div>` : ''}
+        <div class="rep-timer" hidden>
+          <div class="rep-timer-seg">
+            <span class="rep-timer-label">Elapsed</span>
+            <span class="rep-timer-time">0:00</span>
+          </div>
+          <div class="rep-timer-seg rep-timer-rest" hidden>
+            <span class="rep-timer-label">Rest</span>
+            <span class="rep-timer-rest-time">0:00</span>
+          </div>
+        </div>
       `;
     }
 
@@ -215,6 +239,70 @@ function formatTime(seconds) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `0:${String(s).padStart(2, '0')}`;
+}
+
+function formatElapsed(ms) {
+  const total = Math.floor(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+/* ── Rep-workout elapsed timer ──
+   Starts the instant the first set is logged on a rep-based panel (the
+   transition from nothing ticked to a first rep), and freezes once every
+   exercise in that panel is marked done. */
+function renderRepTimer() {
+  if (!repTimer.panelEl) return;
+  const now = Date.now();
+  const el = repTimer.panelEl.querySelector('.rep-timer-time');
+  if (el) el.textContent = formatElapsed(now - repTimer.startTime);
+  const restEl = repTimer.panelEl.querySelector('.rep-timer-rest-time');
+  if (restEl) restEl.textContent = formatElapsed(now - repTimer.restStart);
+}
+
+function startRepTimer(panelEl) {
+  if (repTimer.intervalId || repTimer.stopped) return;
+  repTimer.panelEl = panelEl;
+  repTimer.startTime = Date.now();
+  repTimer.restStart = repTimer.startTime;
+  const pill = panelEl.querySelector('.rep-timer');
+  if (pill) {
+    pill.classList.remove('done');
+    pill.querySelector('.rep-timer-label').textContent = 'Elapsed';
+    pill.querySelector('.rep-timer-rest').hidden = !isRestTimerEnabled();
+    pill.hidden = false;
+  }
+  renderRepTimer();
+  repTimer.intervalId = setInterval(renderRepTimer, 1000);
+}
+
+function stopRepTimer() {
+  if (!repTimer.intervalId) return;
+  clearInterval(repTimer.intervalId);
+  repTimer.intervalId = null;
+  repTimer.stopped = true;
+  renderRepTimer();
+  const pill = repTimer.panelEl?.querySelector('.rep-timer');
+  if (pill) {
+    pill.classList.add('done');
+    pill.querySelector('.rep-timer-label').textContent = 'Total';
+  }
+}
+
+function resetRepTimer() {
+  clearInterval(repTimer.intervalId);
+  const pill = repTimer.panelEl?.querySelector('.rep-timer');
+  if (pill) {
+    pill.hidden = true;
+    pill.classList.remove('done');
+  }
+  repTimer.intervalId = null;
+  repTimer.startTime = 0;
+  repTimer.stopped = false;
+  repTimer.panelEl = null;
 }
 
 /* ── Circuit timer ── */
@@ -438,6 +526,7 @@ function restoreTheme() {
 function switchTab(index) {
   // Stop any running circuit timer
   resetCircuit();
+  resetRepTimer();
 
   // Reset ticks on previous tab (rep-based)
   document.querySelectorAll('.day-panel.active .exercise-row').forEach(r => {
@@ -479,7 +568,10 @@ document.addEventListener('click', function(e) {
   const total = parseInt(row.dataset.totalSets, 10);
   let completed = parseInt(row.dataset.completedSets, 10);
 
-  if (row.classList.contains('done')) {
+  const wasDone = row.classList.contains('done');
+  const setLogged = !wasDone;
+
+  if (wasDone) {
     completed = 0;
     row.classList.remove('done');
   } else {
@@ -491,6 +583,28 @@ document.addEventListener('click', function(e) {
 
   row.dataset.completedSets = completed;
   row.querySelector('.ex-sets-current').textContent = completed;
+
+  // Elapsed timer: start on first rep, freeze when the whole panel is done.
+  const panel = row.closest('.day-panel');
+  if (panel) {
+    const rows = [...panel.querySelectorAll('.exercise-row')];
+    const anyTicked = rows.some(r => parseInt(r.dataset.completedSets, 10) > 0 || r.classList.contains('done'));
+    const allDone = rows.length > 0 && rows.every(r => r.classList.contains('done'));
+
+    if (!anyTicked) {
+      resetRepTimer();
+    } else if (allDone) {
+      stopRepTimer();
+    } else {
+      startRepTimer(panel);
+    }
+
+    // Rest timer resets each time a set is logged.
+    if (setLogged && repTimer.intervalId && !repTimer.stopped) {
+      repTimer.restStart = Date.now();
+      renderRepTimer();
+    }
+  }
 });
 
 // Circuit settings persistence
