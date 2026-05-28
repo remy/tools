@@ -1,0 +1,292 @@
+:root {
+  --bg: #0f1320;
+  --panel: rgba(20, 26, 42, 0.92);
+  --panel-border: rgba(255, 255, 255, 0.12);
+  --text: #eef1fb;
+  --text-dim: #9aa3c7;
+  --accent: #ff5a5f;
+  --accent-2: #4f9dff;
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --radius: 14px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+#map {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--bg);
+}
+
+/* Leaflet attribution kept legible against the dark UI */
+.leaflet-control-attribution {
+  background: rgba(15, 19, 32, 0.75) !important;
+  color: var(--text-dim) !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--accent-2) !important;
+}
+
+.leaflet-bar a {
+  background: var(--panel) !important;
+  color: var(--text) !important;
+  border-bottom-color: var(--panel-border) !important;
+}
+
+.leaflet-bar a:hover {
+  background: #1f273f !important;
+}
+
+/* ---- Centre pin ---- */
+.centre-pin {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 600;
+  pointer-events: none;
+  /* Tip of the pin sits exactly on the map centre */
+  transform: translate(-50%, -100%);
+}
+
+.centre-pin svg {
+  display: block;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.5));
+}
+
+.pin-body {
+  fill: var(--accent);
+}
+
+.pin-dot {
+  fill: #fff;
+}
+
+.pin-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -3px;
+  width: 14px;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  filter: blur(1px);
+}
+
+/* ---- Shared panel chrome ---- */
+.panel {
+  position: fixed;
+  z-index: 700;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* ---- Search ---- */
+.search-panel {
+  top: max(1rem, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(440px, calc(100vw - 2rem));
+  padding: 0;
+  overflow: hidden;
+}
+
+#searchForm {
+  display: flex;
+  align-items: center;
+}
+
+#searchInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 1rem;
+  padding: 0.85rem 1rem;
+  outline: none;
+}
+
+#searchInput::placeholder {
+  color: var(--text-dim);
+}
+
+#searchForm button {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+#searchForm button:hover {
+  color: var(--text);
+}
+
+.search-results {
+  list-style: none;
+  border-top: 1px solid var(--panel-border);
+  max-height: min(50vh, 320px);
+  overflow-y: auto;
+}
+
+.search-results li {
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.search-results li:last-child {
+  border-bottom: 0;
+}
+
+.search-results li:hover,
+.search-results li.active {
+  background: rgba(79, 157, 255, 0.16);
+}
+
+.result-name {
+  font-weight: 600;
+}
+
+.result-meta {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-top: 0.1rem;
+}
+
+.search-results li.empty {
+  cursor: default;
+  color: var(--text-dim);
+}
+
+.search-results li.empty:hover {
+  background: transparent;
+}
+
+/* ---- Readout ---- */
+.readout {
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(440px, calc(100vw - 2rem));
+  padding: 0.9rem 1.1rem;
+  text-align: center;
+}
+
+.elevation {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.elevation-value {
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.elevation-value.loading {
+  color: var(--text-dim);
+}
+
+.elevation-unit {
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.elevation-feet {
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  margin-left: 0.4rem;
+}
+
+.coords {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.copy-btn {
+  border: 1px solid var(--panel-border);
+  background: transparent;
+  color: var(--text-dim);
+  border-radius: 8px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.copy-btn:hover {
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+/* ---- Locate ---- */
+.locate-btn {
+  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 6.5rem);
+  right: max(1rem, env(safe-area-inset-right));
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.locate-btn:hover {
+  color: var(--accent-2);
+}
+
+.locate-btn.busy {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .elevation-value {
+    font-size: 2rem;
+  }
+}

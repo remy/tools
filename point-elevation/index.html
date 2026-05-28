@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Find the elevation above sea level for any point on an interactive map. Drag the map under the centre pin or search for a place; elevation data comes from the Open-Meteo API.">
+  <meta name="category" content="Maps">
+  <title>Point Elevation</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <!-- Fixed centre pin overlaid on the map; its tip marks the queried point -->
+  <div class="centre-pin" aria-hidden="true">
+    <svg viewBox="0 0 24 36" width="34" height="51">
+      <path class="pin-body"
+        d="M12 0C5.92 0 1 4.92 1 11c0 7.84 9.36 23.06 9.76 23.7a1.46 1.46 0 0 0 2.48 0C13.64 34.06 23 18.84 23 11 23 4.92 18.08 0 12 0Z" />
+      <circle class="pin-dot" cx="12" cy="11" r="4" />
+    </svg>
+    <span class="pin-shadow"></span>
+  </div>
+
+  <header class="panel search-panel">
+    <form id="searchForm" role="search" autocomplete="off">
+      <input id="searchInput" type="search" placeholder="Search for a place…" aria-label="Search for a place">
+      <button type="submit" aria-label="Search">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7" />
+          <line x1="16.5" y1="16.5" x2="21" y2="21" />
+        </svg>
+      </button>
+    </form>
+    <ul id="searchResults" class="search-results" hidden></ul>
+  </header>
+
+  <section class="panel readout" aria-live="polite">
+    <div class="elevation">
+      <span id="elevationValue" class="elevation-value">—</span>
+      <span class="elevation-unit">m</span>
+      <span id="elevationFeet" class="elevation-feet"></span>
+    </div>
+    <div class="coords">
+      <span id="coords">—</span>
+      <button id="copyBtn" class="copy-btn" type="button" aria-label="Copy coordinates" hidden>Copy</button>
+    </div>
+  </section>
+
+  <button id="locateBtn" class="panel locate-btn" type="button" aria-label="Use my location">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <line x1="12" y1="2" x2="12" y2="5" />
+      <line x1="12" y1="19" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="5" y2="12" />
+      <line x1="19" y1="12" x2="22" y2="12" />
+    </svg>
+  </button>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+
+</html>
