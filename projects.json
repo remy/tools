@@ -174,6 +174,11 @@
     "description": "Track your daily reading progress and visualize pages read over time",
     "title": "My Pages Read"
   },
+  "point-elevation": {
+    "category": "Maps",
+    "description": "Find the elevation above sea level for any point on an interactive map. Drag the map under the centre pin or search for an address with OpenStreetMap; elevation data comes from the Open-Meteo API.",
+    "title": "Point Elevation"
+  },
   "priority-calls": {
     "category": "Productivity",
     "description": "An Android app that lets priority contacts break through silent, Do Not Disturb, and bedtime modes.",
