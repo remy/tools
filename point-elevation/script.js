@@ -53,10 +53,18 @@ async function fetchElevation(lat, lng) {
   const url = `${ELEVATION_API}?latitude=${lat.toFixed(6)}&longitude=${lng.toFixed(6)}`;
   try {
     const res = await fetch(url, { signal: elevationAbort.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const metres = data?.elevation?.[0];
+    const data = await res.json().catch(() => null);
     els.elevationValue.classList.remove("loading");
+
+    if (!res.ok || data?.error) {
+      const reason = data?.reason || `HTTP ${res.status}`;
+      console.warn("Elevation request failed:", reason);
+      els.elevationValue.textContent = res.status === 429 ? "rate limited" : "error";
+      els.elevationFeet.textContent = "";
+      return;
+    }
+
+    const metres = data?.elevation?.[0];
     if (typeof metres !== "number") {
       els.elevationValue.textContent = "n/a";
       return;
@@ -65,6 +73,7 @@ async function fetchElevation(lat, lng) {
     els.elevationFeet.textContent = `(${Math.round(metres * 3.28084).toLocaleString()} ft)`;
   } catch (err) {
     if (err.name === "AbortError") return;
+    console.warn("Elevation request error:", err);
     els.elevationValue.classList.remove("loading");
     els.elevationValue.textContent = "error";
     els.elevationFeet.textContent = "";
@@ -103,14 +112,19 @@ function clearResults() {
   els.searchResults.innerHTML = "";
 }
 
+function showMessage(text) {
+  els.searchResults.innerHTML = "";
+  const li = document.createElement("li");
+  li.className = "empty";
+  li.textContent = text;
+  els.searchResults.append(li);
+  els.searchResults.hidden = false;
+}
+
 function renderResults(results) {
   els.searchResults.innerHTML = "";
   if (!results.length) {
-    const li = document.createElement("li");
-    li.className = "empty";
-    li.textContent = "No places found";
-    els.searchResults.append(li);
-    els.searchResults.hidden = false;
+    showMessage("No places found");
     return;
   }
 
@@ -139,14 +153,22 @@ els.searchForm.addEventListener("submit", async (e) => {
   const query = els.searchInput.value.trim();
   if (!query) return;
 
+  showMessage("Searching…");
+
   const url = `${GEOCODE_API}?name=${encodeURIComponent(query)}&count=8&language=en&format=json`;
   try {
     const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    renderResults(data.results || []);
-  } catch {
-    renderResults([]);
+    const data = await res.json().catch(() => null);
+    if (!res.ok || data?.error) {
+      const reason = data?.reason || `Search failed (HTTP ${res.status})`;
+      console.warn("Geocoding request failed:", reason);
+      showMessage(res.status === 429 ? "Rate limited — wait a moment and try again." : reason);
+      return;
+    }
+    renderResults(data?.results || []);
+  } catch (err) {
+    console.warn("Geocoding request error:", err);
+    showMessage("Couldn't reach the search service. Check your connection.");
   }
 });
 
