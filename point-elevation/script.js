@@ -1,5 +1,5 @@
 const ELEVATION_API = "https://api.open-meteo.com/v1/elevation";
-const GEOCODE_API = "https://geocoding-api.open-meteo.com/v1/search";
+const GEOCODE_API = "https://nominatim.openstreetmap.org/search";
 
 const els = {
   elevationValue: document.getElementById("elevationValue"),
@@ -130,18 +130,32 @@ function renderResults(results) {
 
   for (const r of results) {
     const li = document.createElement("li");
-    const meta = [r.admin1, r.country].filter(Boolean).join(", ");
+    const parts = (r.display_name || "").split(", ");
+    const title = parts.shift() || r.display_name || "Result";
+    const meta = parts.join(", ");
+
     const name = document.createElement("span");
     name.className = "result-name";
-    name.textContent = r.name;
-    const sub = document.createElement("span");
-    sub.className = "result-meta";
-    sub.textContent = meta;
-    li.append(name, sub);
+    name.textContent = title;
+    li.append(name);
+    if (meta) {
+      const sub = document.createElement("span");
+      sub.className = "result-meta";
+      sub.textContent = meta;
+      li.append(sub);
+    }
+
     li.addEventListener("click", () => {
       clearResults();
-      els.searchInput.value = r.name;
-      map.flyTo([r.latitude, r.longitude], Math.max(map.getZoom(), 12), { duration: 0.8 });
+      els.searchInput.value = title;
+      const lat = parseFloat(r.lat);
+      const lon = parseFloat(r.lon);
+      const bb = (r.boundingbox || []).map(Number);
+      if (bb.length === 4 && bb.every(Number.isFinite)) {
+        map.flyToBounds([[bb[0], bb[2]], [bb[1], bb[3]]], { maxZoom: 16, duration: 0.8 });
+      } else if (Number.isFinite(lat) && Number.isFinite(lon)) {
+        map.flyTo([lat, lon], Math.max(map.getZoom(), 14), { duration: 0.8 });
+      }
     });
     els.searchResults.append(li);
   }
@@ -155,17 +169,17 @@ els.searchForm.addEventListener("submit", async (e) => {
 
   showMessage("Searching…");
 
-  const url = `${GEOCODE_API}?name=${encodeURIComponent(query)}&count=8&language=en&format=json`;
+  const url = `${GEOCODE_API}?q=${encodeURIComponent(query)}&format=jsonv2&limit=8&addressdetails=1`;
   try {
     const res = await fetch(url);
     const data = await res.json().catch(() => null);
     if (!res.ok || data?.error) {
-      const reason = data?.reason || `Search failed (HTTP ${res.status})`;
+      const reason = data?.error?.message || data?.error || `Search failed (HTTP ${res.status})`;
       console.warn("Geocoding request failed:", reason);
       showMessage(res.status === 429 ? "Rate limited — wait a moment and try again." : reason);
       return;
     }
-    renderResults(data?.results || []);
+    renderResults(Array.isArray(data) ? data : []);
   } catch (err) {
     console.warn("Geocoding request error:", err);
     showMessage("Couldn't reach the search service. Check your connection.");
