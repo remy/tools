@@ -98,6 +98,32 @@ function uvCategory(uvi) {
   return "Extreme";
 }
 
+// UV index -> the standard WHO colour (green/yellow/orange/red/violet),
+// interpolated so the gradient blends smoothly between bands.
+const UV_STOPS = [
+  [0, [76, 175, 80]], // green
+  [3, [255, 214, 0]], // yellow
+  [6, [255, 143, 0]], // orange
+  [8, [244, 67, 54]], // red
+  [11, [156, 39, 176]], // violet
+];
+function uvColor(uvi) {
+  const v = Math.max(0, uvi);
+  let lo = UV_STOPS[0];
+  let hi = UV_STOPS[UV_STOPS.length - 1];
+  for (let i = 0; i < UV_STOPS.length - 1; i++) {
+    if (v >= UV_STOPS[i][0] && v <= UV_STOPS[i + 1][0]) {
+      lo = UV_STOPS[i];
+      hi = UV_STOPS[i + 1];
+      break;
+    }
+  }
+  const span = hi[0] - lo[0] || 1;
+  const k = Math.min(1, Math.max(0, (v - lo[0]) / span));
+  const ch = (j) => Math.round(lo[1][j] + (hi[1][j] - lo[1][j]) * k);
+  return `rgb(${ch(0)}, ${ch(1)}, ${ch(2)})`;
+}
+
 const dayOfYear = (d) => {
   const start = new Date(d.getFullYear(), 0, 0);
   return Math.floor((d - start) / dayMs);
@@ -167,6 +193,17 @@ function arcPath(from, to) {
   return dStr.trim();
 }
 
+// Closed region between the arc (from..to) and the horizon line.
+function areaPath(from, to) {
+  const start = arcPoint(from);
+  const end = arcPoint(to);
+  return (
+    `M${start.x.toFixed(1)} ${YB} ` +
+    arcPath(from, to).replace(/^M/, "L") +
+    ` L${end.x.toFixed(1)} ${YB} Z`
+  );
+}
+
 /* -------------------------------------------------------------------------
  * Time helpers — everything the slider touches is "minutes since local
  * midnight" so the arc fraction is a transparent linear mapping.
@@ -185,6 +222,8 @@ const fmtClock = (d) => (d ? pad(d.getHours()) + ":" + pad(d.getMinutes()) : "--
 const $ = (id) => document.getElementById(id);
 const els = {
   subtitle: $("subtitle"),
+  uvArea: $("uv-area"),
+  uvGrad: $("uv-grad"),
   arcFull: $("arc-full"),
   arcDone: $("arc-done"),
   riseDot: $("rise-dot"),
@@ -287,6 +326,12 @@ function render() {
   // Full grey arc always spans the whole day.
   els.arcFull.setAttribute("d", arcPath(0, 1));
 
+  // UV-coloured fill under the arc. Sample the UV index across the daylight
+  // span and feed those colours into the horizontal gradient, so the band
+  // beneath the arc shifts green -> yellow -> orange -> red with the UV level
+  // and you can see at a glance when it climbs and falls.
+  renderUvFill(riseMin, setMin, dayStart, t);
+
   // Fraction of the way from sunrise to sunset (linear in time).
   let f;
   if (riseMin !== null && setMin !== null && setMin > riseMin) {
@@ -322,6 +367,47 @@ function render() {
   els.subtitle.textContent = `${status} · ${fmtMinutes(sel)}`;
 
   els.timeOut.textContent = fmtMinutes(sel);
+}
+
+// Paint the area under the daylight arc with a UV-coloured gradient. The arc
+// fraction is linear in time, so a fraction f maps to minutes-of-day, which we
+// turn into an absolute instant to evaluate the UV index — then drop a gradient
+// stop coloured for that level. The fill is kept light/semi-opaque via CSS.
+function renderUvFill(riseMin, setMin, dayStart, t) {
+  const hasDay = riseMin !== null && setMin !== null && setMin > riseMin;
+  if (!hasDay && !t.alwaysUp) {
+    // Polar night (or no daylight): nothing to colour.
+    els.uvArea.setAttribute("hidden", "");
+    return;
+  }
+  els.uvArea.removeAttribute("hidden");
+
+  // Daylight span in minutes-of-day (whole day for midnight sun).
+  const startMin = hasDay ? riseMin : 0;
+  const endMin = hasDay ? setMin : 1440;
+
+  // The fill spans the same fractions as the visible daylight arc.
+  els.uvArea.setAttribute("d", areaPath(0, 1));
+
+  // Sample UV across the span and build gradient stops at matching offsets.
+  const samples = 24;
+  const xStart = arcPoint(0).x;
+  const xEnd = arcPoint(1).x;
+  let stops = "";
+  for (let i = 0; i <= samples; i++) {
+    const f = i / samples;
+    const mins = startMin + (endMin - startMin) * f;
+    const instant = new Date(dayStart);
+    instant.setMinutes(mins);
+    const alt = sunAltitude(instant, state.lat, state.lng);
+    const uvi = uvIndex(alt, instant, state.lat);
+    const offsetPct = (f * 100).toFixed(2);
+    stops += `<stop offset="${offsetPct}%" stop-color="${uvColor(uvi)}"></stop>`;
+  }
+  // Keep the gradient's user-space coordinates aligned to the arc width.
+  els.uvGrad.setAttribute("x1", xStart.toFixed(1));
+  els.uvGrad.setAttribute("x2", xEnd.toFixed(1));
+  els.uvGrad.innerHTML = stops;
 }
 
 /* -------------------------------------------------------------------------

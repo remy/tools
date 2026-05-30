@@ -85,6 +85,10 @@ body {
   stroke-width: 2;
 }
 
+.uv-area {
+  opacity: 0.28;
+}
+
 .arc {
   stroke-width: 2.5;
   stroke-linecap: round;

@@ -20,8 +20,16 @@
            aria-labelledby="sky-title">
         <title id="sky-title">Path of the sun across the sky</title>
 
+        <defs>
+          <!-- horizontal gradient coloured by UV level across the day -->
+          <linearGradient id="uv-grad" gradientUnits="userSpaceOnUse" x1="80" y1="0" x2="720" y2="0"></linearGradient>
+        </defs>
+
         <!-- horizon -->
         <line id="horizon" x1="40" y1="380" x2="760" y2="380" />
+
+        <!-- UV-coloured fill under the daylight arc -->
+        <path id="uv-area" class="uv-area" fill="url(#uv-grad)" stroke="none" />
 
         <!-- full day arc (dashed, muted) -->
         <path id="arc-full" class="arc arc-full" fill="none" />
