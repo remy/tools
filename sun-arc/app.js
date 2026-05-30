@@ -47,6 +47,62 @@ function sunAltitude(date, lat, lng) {
   return altitudeOf(H, phi, c.dec);
 }
 
+/* -------------------------------------------------------------------------
+ * Clear-sky UV index estimate
+ * A physically-motivated approximation — not a substitute for a measured /
+ * forecast UVI, but it captures the things the user asked for: the time of
+ * day and year, the latitude, and the altitude.
+ *
+ *   UVI ≈ k · sin(altitude)^a · (1/r)^2 · (O3ref/O3)^b
+ *
+ * - sin(altitude)^a  solar-elevation term (the dominant factor); equals
+ *                    cos(zenith), and the exponent approximates the longer
+ *                    atmospheric path the light takes when the sun is low.
+ * - (1/r)^2          Earth–Sun distance: ~7% stronger at perihelion (early Jan).
+ * - ozone            thinner ozone (lower latitudes / autumn) lets more UVB
+ *                    through; modelled as a smooth latitude + season function.
+ * ---------------------------------------------------------------------- */
+function uvIndex(altRad, date, lat) {
+  if (altRad <= 0) return 0; // sun at or below the horizon
+
+  const cosSza = Math.sin(altRad); // cos(zenith) = sin(altitude)
+
+  // Earth–Sun distance factor. Perihelion ~3 Jan (day-of-year ≈ 3).
+  const doy = dayOfYear(date);
+  const r = 1 - 0.0167 * Math.cos((2 * PI * (doy - 3)) / 365.25);
+  const distFactor = 1 / (r * r);
+
+  // Total-column ozone estimate (Dobson Units): higher toward the poles and
+  // in late winter/spring, lower near the equator and in autumn. The seasonal
+  // swing is phased by hemisphere.
+  const absLat = Math.abs(lat);
+  const seasonPhase = lat >= 0 ? doy : doy + 182.6; // flip seasons south
+  const ozone =
+    260 +
+    100 * (absLat / 90) +
+    20 * Math.cos((2 * PI * (seasonPhase - 60)) / 365.25);
+  const ozoneFactor = Math.pow(300 / ozone, 1.2);
+
+  // Scale calibrated against clear-sky references (e.g. London midsummer
+  // noon ≈ 7–8, tropical overhead sun ≈ 11–13).
+  const uvi = 9.2 * Math.pow(cosSza, 1.12) * distFactor * ozoneFactor;
+  return Math.max(0, uvi);
+}
+
+// UV index category label (WHO bands).
+function uvCategory(uvi) {
+  if (uvi < 3) return "Low";
+  if (uvi < 6) return "Moderate";
+  if (uvi < 8) return "High";
+  if (uvi < 11) return "Very high";
+  return "Extreme";
+}
+
+const dayOfYear = (d) => {
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d - start) / dayMs);
+};
+
 const J0 = 0.0009;
 const julianCycle = (d, lw) => Math.round(d - J0 - lw / (2 * PI));
 const approxTransit = (Ht, lw, n) => J0 + (Ht + lw) / (2 * PI) + n;
@@ -142,6 +198,7 @@ const els = {
   sSet: $("s-set"),
   sLen: $("s-len"),
   sAlt: $("s-alt"),
+  sUv: $("s-uv"),
   date: $("date"),
   time: $("time"),
   timeOut: $("time-out"),
@@ -208,8 +265,12 @@ function render() {
     els.sLen.textContent = t.alwaysUp ? "24h 00m" : "0h 00m";
   }
 
-  const altDeg = (sunAltitude(now, state.lat, state.lng) * 180) / PI;
+  const altRad = sunAltitude(now, state.lat, state.lng);
+  const altDeg = (altRad * 180) / PI;
   els.sAlt.textContent = altDeg.toFixed(1) + "°";
+
+  const uvi = uvIndex(altRad, now, state.lat);
+  els.sUv.textContent = uvi <= 0 ? "0" : `${uvi.toFixed(1)} · ${uvCategory(uvi)}`;
 
   // Endpoints + their labels.
   const pL = arcPoint(0);
