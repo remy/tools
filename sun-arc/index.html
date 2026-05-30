@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location. Defaults to today at the current moment, with a slider to scrub through the day.">
+  <meta name="category" content="Productivity">
+  <title>Sun Arc</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="card">
+    <header class="card-head">
+      <h1>SUN</h1>
+      <p id="subtitle" class="subtitle">&nbsp;</p>
+    </header>
+
+    <figure class="arc-wrap">
+      <svg id="sky" viewBox="0 0 800 460" preserveAspectRatio="xMidYMid meet" role="img"
+           aria-labelledby="sky-title">
+        <title id="sky-title">Path of the sun across the sky</title>
+
+        <defs>
+          <!-- horizontal gradient coloured by UV level across the day -->
+          <linearGradient id="uv-grad" gradientUnits="userSpaceOnUse" x1="80" y1="0" x2="720" y2="0"></linearGradient>
+        </defs>
+
+        <!-- horizon -->
+        <line id="horizon" x1="40" y1="380" x2="760" y2="380" />
+
+        <!-- UV-coloured fill under the daylight arc -->
+        <path id="uv-area" class="uv-area" fill="url(#uv-grad)" stroke="none" />
+
+        <!-- full day arc (dashed, muted) -->
+        <path id="arc-full" class="arc arc-full" fill="none" />
+        <!-- elapsed arc (dashed, orange) -->
+        <path id="arc-done" class="arc arc-done" fill="none" />
+
+        <!-- endpoints -->
+        <circle id="rise-dot" class="endpoint" r="6" />
+        <circle id="set-dot"  class="endpoint" r="6" />
+
+        <!-- the sun marker -->
+        <g id="sun" class="sun">
+          <circle class="sun-core" r="9" />
+          <g class="sun-rays"></g>
+        </g>
+
+        <!-- endpoint labels -->
+        <text id="rise-label" class="time-label" text-anchor="middle">--:--</text>
+        <text id="set-label"  class="time-label" text-anchor="middle">--:--</text>
+      </svg>
+    </figure>
+
+    <section class="stats" aria-label="Sun statistics">
+      <div class="stat"><span class="stat-label">Sunrise</span><span id="s-rise" class="stat-val">--:--</span></div>
+      <div class="stat"><span class="stat-label">Solar noon</span><span id="s-noon" class="stat-val">--:--</span></div>
+      <div class="stat"><span class="stat-label">Sunset</span><span id="s-set" class="stat-val">--:--</span></div>
+      <div class="stat"><span class="stat-label">Day length</span><span id="s-len" class="stat-val">--</span></div>
+      <div class="stat"><span class="stat-label">Altitude</span><span id="s-alt" class="stat-val">--</span></div>
+      <div class="stat"><span class="stat-label">UV index</span><span id="s-uv" class="stat-val">--</span></div>
+    </section>
+
+    <section class="controls">
+      <div class="control control-time">
+        <div class="control-row">
+          <label for="date">Date</label>
+          <input type="date" id="date">
+          <button type="button" id="now" class="ghost">Now</button>
+        </div>
+        <div class="control-row">
+          <label for="time">Time</label>
+          <input type="range" id="time" min="0" max="1439" step="1" value="720">
+          <output id="time-out" class="time-out">12:00</output>
+        </div>
+      </div>
+
+      <details class="control control-loc">
+        <summary>
+          <span class="summary-label">Location</span>
+          <span id="loc-summary" class="loc-summary">London, UK</span>
+        </summary>
+        <div class="control-row">
+          <label for="lat">Lat</label>
+          <input type="number" id="lat" step="0.0001" min="-90" max="90" value="51.5074">
+          <label for="lng">Lng</label>
+          <input type="number" id="lng" step="0.0001" min="-180" max="180" value="-0.1278">
+          <button type="button" id="geo" class="ghost">📍 Use my location</button>
+        </div>
+        <p id="geo-msg" class="geo-msg" hidden></p>
+      </details>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

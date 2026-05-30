@@ -204,6 +204,11 @@
     "description": "Upload an SRT subtitle file, shift all timings forward or backward with millisecond precision, then download the adjusted file.",
     "title": "Subtitle Timing Adjuster"
   },
+  "sun-arc": {
+    "category": "Productivity",
+    "description": "Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location. Defaults to today at the current moment, with a slider to scrub through the day.",
+    "title": "Sun Arc"
+  },
   "tax": {
     "category": "Calculators",
     "description": "Calculate tax-inclusive (gross) and tax-exclusive (net) values with customizable tax rates and real-time conversion",
