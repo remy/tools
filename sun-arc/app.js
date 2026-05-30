@@ -37,13 +37,14 @@ function sunCoords(d) {
   return { dec: declination(L, 0), ra: rightAscension(L, 0) };
 }
 
+// Sun altitude (radians) for an absolute instant.
 function sunAltitude(date, lat, lng) {
   const lw = rad * -lng;
   const phi = rad * lat;
   const d = toDays(date);
   const c = sunCoords(d);
   const H = siderealTime(d, lw) - c.ra;
-  return altitudeOf(H, phi, c.dec); // radians
+  return altitudeOf(H, phi, c.dec);
 }
 
 const J0 = 0.0009;
@@ -74,7 +75,7 @@ function getTimes(date, lat, lng) {
     sunrise = fromJulian(Jrise);
     sunset = fromJulian(Jset);
   }
-  // Is the sun up or down all day? Compare noon altitude to the horizon.
+  // No rise/set: is the sun up or down for the whole day?
   const noonAlt = altitudeOf(0, phi, dec);
   return {
     sunrise,
@@ -87,13 +88,13 @@ function getTimes(date, lat, lng) {
 
 /* -------------------------------------------------------------------------
  * Geometry of the drawn arc
+ * fraction 0 -> sunrise (left), 1 -> sunset (right); theta sweeps PI..0.
  * ---------------------------------------------------------------------- */
-const CX = 400; // svg coords
-const YB = 380; // horizon line
-const RX = 320; // horizontal radius
-const RY = 230; // vertical radius
+const CX = 400;
+const YB = 380; // horizon line (svg y)
+const RX = 320;
+const RY = 230;
 
-// fraction 0 -> sunrise (left), 1 -> sunset (right). theta sweeps PI..0
 function arcPoint(f) {
   const theta = PI - f * PI;
   return { x: CX + RX * Math.cos(theta), y: YB - RY * Math.sin(theta) };
@@ -109,6 +110,18 @@ function arcPath(from, to) {
   }
   return dStr.trim();
 }
+
+/* -------------------------------------------------------------------------
+ * Time helpers — everything the slider touches is "minutes since local
+ * midnight" so the arc fraction is a transparent linear mapping.
+ * ---------------------------------------------------------------------- */
+const pad = (n) => String(n).padStart(2, "0");
+const fmtMinutes = (m) => pad(Math.floor(m / 60) % 24) + ":" + pad(Math.round(m) % 60);
+const toDateInput = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+
+// Local minutes-of-day for an absolute Date (or "--:--" placeholder text).
+const dateToMinutes = (d) => (d ? d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60 : null);
+const fmtClock = (d) => (d ? pad(d.getHours()) + ":" + pad(d.getMinutes()) : "--:--");
 
 /* -------------------------------------------------------------------------
  * DOM + state
@@ -145,13 +158,8 @@ const state = {
   lng: -0.1278,
   label: "London, UK",
   date: new Date(), // selected calendar day (local)
-  minutes: 0, // minutes since local midnight
+  minutes: 720, // minutes since local midnight (slider value)
 };
-
-const pad = (n) => String(n).padStart(2, "0");
-const fmtTime = (d) => (d ? pad(d.getHours()) + ":" + pad(d.getMinutes()) : "--:--");
-const fmtMinutes = (m) => pad(Math.floor(m / 60)) + ":" + pad(m % 60);
-const toDateInput = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 
 // Build the 8-ray sun glyph once.
 (function buildRays() {
@@ -167,11 +175,11 @@ const toDateInput = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" +
   }
 })();
 
-// The instant currently selected (selected day at selected minutes, local).
+// The absolute instant currently selected (selected day at selected minutes).
 function selectedInstant() {
   const d = new Date(state.date);
   d.setHours(0, 0, 0, 0);
-  d.setMinutes(state.minutes);
+  d.setMinutes(state.minutes); // minutes > 59 normalise into hours
   return d;
 }
 
@@ -180,25 +188,30 @@ function render() {
   dayStart.setHours(0, 0, 0, 0);
   const t = getTimes(dayStart, state.lat, state.lng);
   const now = selectedInstant();
+  const sel = state.minutes; // selected minutes-of-day
 
-  // Endpoint labels + stats
-  els.riseLabel.textContent = fmtTime(t.sunrise);
-  els.setLabel.textContent = fmtTime(t.sunset);
-  els.sRise.textContent = fmtTime(t.sunrise);
-  els.sNoon.textContent = fmtTime(t.solarNoon);
-  els.sSet.textContent = fmtTime(t.sunset);
+  // Sunrise/sunset as minutes-of-day (local), for both labels and geometry.
+  const riseMin = dateToMinutes(t.sunrise);
+  const setMin = dateToMinutes(t.sunset);
 
-  if (t.sunrise && t.sunset) {
-    const lenMin = Math.round((t.sunset - t.sunrise) / 60000);
+  // Labels + stats.
+  els.riseLabel.textContent = fmtClock(t.sunrise);
+  els.setLabel.textContent = fmtClock(t.sunset);
+  els.sRise.textContent = fmtClock(t.sunrise);
+  els.sNoon.textContent = fmtClock(t.solarNoon);
+  els.sSet.textContent = fmtClock(t.sunset);
+
+  if (riseMin !== null && setMin !== null) {
+    const lenMin = Math.round(setMin - riseMin);
     els.sLen.textContent = Math.floor(lenMin / 60) + "h " + pad(lenMin % 60) + "m";
   } else {
     els.sLen.textContent = t.alwaysUp ? "24h 00m" : "0h 00m";
   }
 
-  const alt = (sunAltitude(now, state.lat, state.lng) * 180) / PI;
-  els.sAlt.textContent = alt.toFixed(1) + "°";
+  const altDeg = (sunAltitude(now, state.lat, state.lng) * 180) / PI;
+  els.sAlt.textContent = altDeg.toFixed(1) + "°";
 
-  // Position dots at the arc endpoints.
+  // Endpoints + their labels.
   const pL = arcPoint(0);
   const pR = arcPoint(1);
   els.riseDot.setAttribute("cx", pL.x);
@@ -213,22 +226,22 @@ function render() {
   // Full grey arc always spans the whole day.
   els.arcFull.setAttribute("d", arcPath(0, 1));
 
-  // Where is the sun? Fraction of the way from sunrise to sunset.
+  // Fraction of the way from sunrise to sunset (linear in time).
   let f;
-  if (t.sunrise && t.sunset) {
-    f = (now - t.sunrise) / (t.sunset - t.sunrise);
+  if (riseMin !== null && setMin !== null && setMin > riseMin) {
+    f = (sel - riseMin) / (setMin - riseMin);
   } else {
     f = t.alwaysUp ? 0.5 : -1; // polar day -> peak; polar night -> hidden
   }
 
-  const below = f < 0 || f > 1;
+  const below = f < 0 || f > 1; // sun beneath the horizon
   const fClamped = Math.max(-0.12, Math.min(1.12, f));
   const sp = arcPoint(fClamped);
   els.sun.setAttribute("transform", `translate(${sp.x.toFixed(1)} ${sp.y.toFixed(1)})`);
   els.sun.classList.toggle("below", below);
 
   // Orange "elapsed" arc only while the sun is above the horizon.
-  if (!below && t.sunrise && t.sunset) {
+  if (!below && riseMin !== null) {
     els.arcDone.setAttribute("d", arcPath(0, f));
     els.arcDone.removeAttribute("hidden");
   } else if (t.alwaysUp) {
@@ -238,16 +251,16 @@ function render() {
     els.arcDone.setAttribute("hidden", "");
   }
 
-  // Subtitle status line.
+  // Status line.
   let status;
   if (t.alwaysUp) status = "Midnight sun — the sun never sets today";
   else if (t.alwaysDown) status = "Polar night — the sun never rises today";
   else if (f < 0) status = "Before sunrise";
   else if (f > 1) status = "After sunset";
-  else status = alt >= 0 ? `Sun is up · ${alt.toFixed(0)}° above horizon` : "Below horizon";
+  else status = `Sun is up · ${Math.max(0, altDeg).toFixed(0)}° above horizon`;
   els.subtitle.textContent = `${status} · ${state.label}`;
 
-  els.timeOut.textContent = fmtMinutes(state.minutes);
+  els.timeOut.textContent = fmtMinutes(sel);
 }
 
 /* -------------------------------------------------------------------------
@@ -346,6 +359,6 @@ function loadLoc() {
   } catch {}
 }
 
-/* init */
+/* init: defaults to today + current time + live sun position */
 loadLoc();
-setToNow(); // defaults to today + current time, draws current sun position
+setToNow();
