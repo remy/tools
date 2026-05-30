@@ -14,9 +14,9 @@
   --ink: #2b2f36;
   --muted: #9aa0a6;
   --line: #e3e5e8;
-  --sun: #f5a623;
-  --sun-soft: #f8c46a;
-  --arc-muted: #d9dbde;
+  --sun: #f97316;
+  --sun-soft: #fb923c;
+  --arc-muted: #94a3b8;
   --shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
@@ -27,7 +27,9 @@
     --ink: #e9eaec;
     --muted: #7d828a;
     --line: #2c3036;
-    --arc-muted: #3a3f47;
+    --sun: #fb923c;
+    --sun-soft: #fdba74;
+    --arc-muted: #5b6472;
     --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   }
 }

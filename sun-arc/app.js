@@ -258,7 +258,7 @@ function render() {
   else if (f < 0) status = "Before sunrise";
   else if (f > 1) status = "After sunset";
   else status = `Sun is up · ${Math.max(0, altDeg).toFixed(0)}° above horizon`;
-  els.subtitle.textContent = `${status} · ${state.label}`;
+  els.subtitle.textContent = `${status} · ${fmtMinutes(sel)}`;
 
   els.timeOut.textContent = fmtMinutes(sel);
 }
