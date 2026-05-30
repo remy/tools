@@ -1,0 +1,261 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:root {
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --ink: #2b2f36;
+  --muted: #9aa0a6;
+  --line: #e3e5e8;
+  --sun: #f5a623;
+  --sun-soft: #f8c46a;
+  --arc-muted: #d9dbde;
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161a;
+    --card: #1d2025;
+    --ink: #e9eaec;
+    --muted: #7d828a;
+    --line: #2c3036;
+    --arc-muted: #3a3f47;
+    --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  }
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.card {
+  background: var(--card);
+  width: 100%;
+  max-width: 640px;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 1.75rem 1.75rem 2rem;
+}
+
+.card-head h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+
+/* ---- arc ---- */
+.arc-wrap {
+  margin: 0.25rem 0 0.5rem;
+}
+
+#sky {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+#horizon {
+  stroke: var(--line);
+  stroke-width: 2;
+}
+
+.arc {
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-dasharray: 2 9;
+}
+
+.arc-full {
+  stroke: var(--arc-muted);
+}
+
+.arc-done {
+  stroke: var(--sun);
+}
+
+.endpoint {
+  fill: var(--sun);
+}
+
+.time-label {
+  fill: var(--sun);
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.sun .sun-core {
+  fill: none;
+  stroke: var(--sun);
+  stroke-width: 2.5;
+}
+
+.sun .sun-rays line {
+  stroke: var(--sun);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.sun.below {
+  opacity: 0.45;
+}
+
+/* ---- stats ---- */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 0.5rem 0.75rem;
+  padding: 0.75rem 0;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.stat-val {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* ---- controls ---- */
+.controls {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.control-row + .control-row {
+  margin-top: 0.6rem;
+}
+
+label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-width: 2.5rem;
+}
+
+input[type="date"],
+input[type="number"] {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.4rem 0.55rem;
+}
+
+input[type="number"] {
+  width: 7rem;
+}
+
+input[type="range"] {
+  flex: 1;
+  min-width: 8rem;
+  accent-color: var(--sun);
+}
+
+.time-out {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  min-width: 3.2rem;
+  text-align: right;
+  color: var(--ink);
+}
+
+button.ghost {
+  font: inherit;
+  font-size: 0.82rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+}
+
+button.ghost:hover {
+  border-color: var(--sun);
+  color: var(--sun);
+}
+
+.control-loc summary {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  list-style: none;
+}
+
+.control-loc summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary-label {
+  color: var(--muted);
+}
+
+.summary-label::after {
+  content: " ▾";
+}
+
+.loc-summary {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.control-loc[open] > summary {
+  margin-bottom: 0.6rem;
+}
+
+.geo-msg {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.5rem;
+}
