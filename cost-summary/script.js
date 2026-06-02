@@ -1,16 +1,22 @@
 const API_KEY_STORAGE = 'gemini_api_key';
 const MONTH_FILTER_STORAGE = 'cost_summary_month_filter';
 
+const DEFAULT_CATEGORIES = [
+  'Travel', 'Groceries', 'Eating out', 'Shopping', 'Entertainment',
+  'Subscriptions', 'Home / garden', 'Kids', 'Coffee', 'Health & fitness',
+  'Charity', 'Other',
+];
+
 const CATEGORY_COLORS = [
-  '#378ADD','#639922','#BA7517','#D4537E','#7F77DD',
-  '#1D9E75','#D85A30','#888780','#5DCAA5','#E24B4A',
-  '#C97D3A','#4A90D9','#7BAF3E','#A06BB5','#E8874A'
+  '#378ADD','#639922','#7F77DD','#BA7517','#D4537E',
+  '#888780','#1D9E75','#E24B4A','#5DCAA5','#C97D3A',
+  '#4A90D9','#7BAF3E','#A06BB5','#E8874A','#D85A30',
 ];
 
 const state = {
   transactions: [],
-  categorised: [],
-  categories: [],
+  nameToCategory: {},     // { merchantName: category }
+  categories: [],         // sorted list of category names currently in use
   chartInstance: null,
 };
 
@@ -79,13 +85,13 @@ newReportBtn.addEventListener('click', () => {
   newReportBtn.hidden = true;
   fileInput.value = '';
   state.transactions = [];
-  state.categorised = [];
+  state.nameToCategory = {};
   state.categories = [];
   if (state.chartInstance) { state.chartInstance.destroy(); state.chartInstance = null; }
 });
 
 rerunBtn.addEventListener('click', () => {
-  if (state.transactions.length) categoriseAll(state.transactions);
+  if (state.transactions.length) categoriseMerchants(state.transactions);
 });
 
 // --- CSV parsing ---
@@ -154,53 +160,82 @@ function processFile(file) {
       return;
     }
     state.transactions = txs;
-    categoriseAll(txs);
+    categoriseMerchants(txs);
   };
   reader.readAsText(file);
 }
 
-// --- Gemini categorisation ---
-async function categoriseAll(txs) {
+// --- Merchant aggregation ---
+// Build one entry per unique merchant name with a few sample item titles/subjects
+// to give the LLM enough context to categorise without sending duplicates.
+function buildMerchantList(txs) {
+  const map = new Map();
+  for (const tx of txs) {
+    if (!map.has(tx.name)) {
+      map.set(tx.name, { name: tx.name, examples: new Set(), count: 0, total: 0 });
+    }
+    const m = map.get(tx.name);
+    m.count++;
+    m.total += tx.gross;
+    const sample = tx.itemTitle || tx.subject;
+    if (sample && m.examples.size < 3) m.examples.add(sample.slice(0, 80));
+  }
+  return [...map.values()].map(m => ({
+    name: m.name,
+    count: m.count,
+    total: m.total,
+    examples: [...m.examples],
+  }));
+}
+
+// --- Gemini categorisation (one mapping per unique merchant) ---
+async function categoriseMerchants(txs) {
   uploadZone.hidden = true;
   settingsPanel.hidden = true;
   reportSection.hidden = true;
   progressSection.hidden = false;
 
-  const BATCH = 20;
-  const results = new Array(txs.length);
-  let done = 0;
-  setProgress(0, txs.length);
+  const merchants = buildMerchantList(txs);
+  setProgress(0, merchants.length);
 
-  for (let start = 0; start < txs.length; start += BATCH) {
-    const items = txs.slice(start, start + BATCH);
-    const cats = await categoriseBatch(items);
-    cats.forEach((c, j) => results[start + j] = c);
-    done += items.length;
-    setProgress(done, txs.length);
+  const BATCH = 50;
+  const mapping = {};
+
+  for (let start = 0; start < merchants.length; start += BATCH) {
+    const items = merchants.slice(start, start + BATCH);
+    const batchMap = await categoriseMerchantBatch(items);
+    Object.assign(mapping, batchMap);
+    setProgress(Math.min(start + items.length, merchants.length), merchants.length);
   }
 
-  state.categorised = txs.map((tx, i) => ({ ...tx, category: results[i] || 'Other' }));
-  buildReport(state.categorised);
+  // Fill in any merchants the LLM missed.
+  for (const m of merchants) {
+    if (!mapping[m.name]) mapping[m.name] = 'Other';
+  }
+
+  state.nameToCategory = mapping;
+  buildReport();
 }
 
 function setProgress(done, total) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0;
   $('progress-bar').style.width = pct + '%';
-  $('progress-count').textContent = `${done} / ${total} transactions`;
-  $('progress-label').textContent = done === total ? 'Building report…' : 'Categorising with Gemini…';
+  $('progress-count').textContent = `${done} / ${total} merchants`;
+  $('progress-label').textContent = done === total ? 'Building report…' : 'Categorising merchants with Gemini…';
 }
 
-async function categoriseBatch(items) {
+async function categoriseMerchantBatch(merchants) {
   const key = localStorage.getItem(API_KEY_STORAGE);
-  const prompt = `You are categorising personal finance transactions. For each transaction, return a single category name.
+  const prompt = `You are categorising merchants from a personal finance transaction list. Each merchant has a name and a few example transaction descriptions to help you decide.
 
-Categories to use (pick the best fit, you may invent a new one if none fit):
-Travel, Groceries, Eating out, Shopping, Entertainment, Home & garden, Kids, Subscriptions, Coffee & cafes, Health & fitness, Charity & donations, Other
+Categories to use (pick the best fit; you may invent a new category only if none of these obviously apply):
+${DEFAULT_CATEGORIES.join(', ')}
 
-Transactions (JSON array):
-${JSON.stringify(items.map(tx => ({ name: tx.name, amount: tx.gross, subject: tx.subject, itemTitle: tx.itemTitle })))}
+Merchants (JSON array):
+${JSON.stringify(merchants.map(m => ({ name: m.name, examples: m.examples })))}
 
-Return ONLY a JSON array of strings, one category per transaction, in the same order. No explanation, no markdown, no backticks. Example: ["Groceries","Travel","Subscriptions"]`;
+Return ONLY a JSON object mapping merchant name to category — no explanation, no markdown, no backticks.
+Example: {"Tesco":"Groceries","Deliveroo":"Eating out","Netflix":"Subscriptions"}`;
 
   try {
     const res = await fetch(
@@ -210,7 +245,7 @@ Return ONLY a JSON array of strings, one category per transaction, in the same o
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1 },
+          generationConfig: { temperature: 0.1, responseMimeType: 'application/json' },
         }),
       }
     );
@@ -219,15 +254,15 @@ Return ONLY a JSON array of strings, one category per transaction, in the same o
       throw new Error(err?.error?.message || `HTTP ${res.status}`);
     }
     const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
-    if (Array.isArray(parsed)) return parsed;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
   } catch (err) {
     console.error('Gemini error:', err);
     showError(err.message);
   }
-  return items.map(() => 'Other');
+  return Object.fromEntries(merchants.map(m => [m.name, 'Other']));
 }
 
 function showError(msg) {
@@ -237,34 +272,46 @@ function showError(msg) {
 }
 
 // --- Report ---
-function buildReport(categorised) {
+function buildReport() {
   progressSection.hidden = true;
   reportSection.hidden = false;
   newReportBtn.hidden = false;
 
-  const total = categorised.reduce((s, t) => s + t.gross, 0);
+  const txs = state.transactions;
+  const total = txs.reduce((s, t) => s + t.gross, 0);
   const filter = localStorage.getItem(MONTH_FILTER_STORAGE) || '';
 
   $('report-title').textContent = filter ? formatMonthTitle(filter) : 'All transactions';
   $('report-subtitle').textContent =
-    `${categorised.length} transactions · downloaded ${new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}`;
+    `${txs.length} transactions · ${Object.keys(state.nameToCategory).length} merchants · loaded ${new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}`;
 
-  const groups = {};
-  for (const tx of categorised) {
-    if (!groups[tx.category]) groups[tx.category] = [];
-    groups[tx.category].push(tx);
+  // Group: category -> merchantName -> { count, total }
+  const catGroups = new Map();
+  for (const tx of txs) {
+    const cat = state.nameToCategory[tx.name] || 'Other';
+    if (!catGroups.has(cat)) catGroups.set(cat, new Map());
+    const merchants = catGroups.get(cat);
+    if (!merchants.has(tx.name)) merchants.set(tx.name, { name: tx.name, count: 0, total: 0 });
+    const m = merchants.get(tx.name);
+    m.count++;
+    m.total += tx.gross;
   }
 
-  const sorted = Object.entries(groups)
-    .map(([cat, txs]) => ({ cat, txs, total: txs.reduce((s, t) => s + t.gross, 0) }))
+  const sorted = [...catGroups.entries()]
+    .map(([cat, merchants]) => {
+      const list = [...merchants.values()].sort((a, b) => b.total - a.total);
+      const catTotal = list.reduce((s, m) => s + m.total, 0);
+      const txCount = list.reduce((s, m) => s + m.count, 0);
+      return { cat, merchants: list, total: catTotal, txCount };
+    })
     .sort((a, b) => b.total - a.total);
 
   state.categories = sorted.map(g => g.cat);
 
-  const biggest = categorised.reduce((a, b) => a.gross > b.gross ? a : b);
+  const biggest = txs.reduce((a, b) => a.gross > b.gross ? a : b);
   $('metrics').innerHTML = `
     <div class="metric"><div class="metric-label">Total spent</div><div class="metric-value">£${total.toFixed(2)}</div></div>
-    <div class="metric"><div class="metric-label">Transactions</div><div class="metric-value">${categorised.length}</div></div>
+    <div class="metric"><div class="metric-label">Transactions</div><div class="metric-value">${txs.length}</div></div>
     <div class="metric"><div class="metric-label">Categories</div><div class="metric-value">${sorted.length}</div></div>
     <div class="metric"><div class="metric-label">Largest spend</div><div class="metric-value">£${biggest.gross.toFixed(2)}</div></div>
   `;
@@ -272,14 +319,16 @@ function buildReport(categorised) {
   const labels = sorted.map(g => g.cat);
   const values = sorted.map(g => parseFloat(g.total.toFixed(2)));
   const colors = sorted.map((_, i) => CATEGORY_COLORS[i % CATEGORY_COLORS.length]);
+  const colorByCat = Object.fromEntries(sorted.map((g, i) => [g.cat, colors[i]]));
 
-  $('chart-container').style.height = Math.max(240, sorted.length * 42 + 60) + 'px';
+  $('chart-container').style.height = Math.max(240, sorted.length * 38 + 60) + 'px';
 
   $('chart-legend').innerHTML = sorted.map((g, i) =>
-    `<span><span class="swatch" style="background:${colors[i]}"></span>${g.cat} £${g.total.toFixed(0)}</span>`
+    `<span><span class="swatch" style="background:${colors[i]}"></span>${escapeHtml(g.cat)} £${g.total.toFixed(0)}</span>`
   ).join('');
 
   if (state.chartInstance) state.chartInstance.destroy();
+  const tickColor = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#888';
   state.chartInstance = new Chart($('spend-chart'), {
     type: 'bar',
     data: {
@@ -296,11 +345,11 @@ function buildReport(categorised) {
       },
       scales: {
         x: {
-          ticks: { callback: v => '£' + v, color: '#888', font: { size: 11 } },
+          ticks: { callback: v => '£' + v, color: tickColor, font: { size: 11 } },
           grid: { color: 'rgba(128,128,128,0.12)' },
         },
         y: {
-          ticks: { color: getComputedStyle(document.body).getPropertyValue('--text') || '#1a1a18', font: { size: 12 } },
+          ticks: { color: tickColor, font: { size: 12 } },
           grid: { display: false },
         },
       },
@@ -309,39 +358,34 @@ function buildReport(categorised) {
 
   const list = $('categories-list');
   list.innerHTML = '';
-  sorted.forEach((g, i) => {
-    const color = colors[i];
+  sorted.forEach(g => {
+    const color = colorByCat[g.cat];
     const card = document.createElement('div');
     card.className = 'category-card';
     card.dataset.cat = g.cat;
 
-    const txsSorted = [...g.txs].sort((a, b) => b.gross - a.gross);
-
     card.innerHTML = `
       <div class="category-header">
         <div class="cat-left">
-          <div class="cat-dot" style="background:${color}"></div>
+          <div class="cat-swatch" style="background:${color}"></div>
           <div class="cat-name">${escapeHtml(g.cat)}</div>
         </div>
         <div class="cat-right">
           <span class="cat-total">£${g.total.toFixed(2)}</span>
-          <span class="cat-count">${g.txs.length} item${g.txs.length !== 1 ? 's' : ''}</span>
-          <span class="cat-chevron">▾</span>
+          <span class="cat-count">${g.txCount} item${g.txCount !== 1 ? 's' : ''}</span>
+          <span class="cat-chevron" aria-hidden="true">⌄</span>
         </div>
       </div>
       <div class="category-body" hidden>
-        ${txsSorted.map(tx => {
-          const title = escapeHtml(`${tx.name}${tx.itemTitle ? ' — ' + tx.itemTitle : ''}`);
-          const label = escapeHtml(tx.name + (tx.itemTitle ? ' — ' + tx.itemTitle.substring(0, 40) : ''));
+        ${g.merchants.map(m => {
+          const label = m.count > 1
+            ? `${escapeHtml(m.name)} <span class="tx-count">(x${m.count})</span>`
+            : escapeHtml(m.name);
           return `
-          <div class="transaction-row">
-            <div class="tx-name" title="${title}">${label}</div>
-            <div class="tx-right">
-              <span class="tx-date">${formatDate(tx.date)}</span>
-              <span class="tx-amount">£${tx.gross.toFixed(2)}</span>
-              <button class="tx-reclassify" data-idx="${state.categorised.indexOf(tx)}">move</button>
-            </div>
-          </div>`;
+          <button class="merchant-row" data-name="${escapeHtml(m.name)}" title="Move ${escapeHtml(m.name)} to a different category">
+            <span class="tx-name">${label}</span>
+            <span class="tx-amount">£${m.total.toFixed(2)}</span>
+          </button>`;
         }).join('')}
       </div>`;
 
@@ -352,10 +396,10 @@ function buildReport(categorised) {
       chevron.classList.toggle('open', !body.hidden);
     });
 
-    card.querySelectorAll('.tx-reclassify').forEach(btn => {
+    card.querySelectorAll('.merchant-row').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        openReclassify(parseInt(btn.dataset.idx));
+        openReclassify(btn.dataset.name);
       });
     });
 
@@ -372,30 +416,32 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-function formatDate(d) {
-  const [dd, mm] = d.split('/');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${parseInt(dd)} ${months[parseInt(mm)-1]}`;
-}
-
 function formatMonthTitle(filter) {
   const [mm, yyyy] = filter.split('/');
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   return `${months[parseInt(mm)-1]} ${yyyy}`;
 }
 
-// --- Reclassify ---
-function openReclassify(idx) {
-  const tx = state.categorised[idx];
-  $('modal-tx-desc').textContent = `${tx.name} — £${tx.gross.toFixed(2)}`;
+// --- Reclassify (moves ALL transactions for the merchant) ---
+function openReclassify(name) {
+  const currentCat = state.nameToCategory[name] || 'Other';
+  const txs = state.transactions.filter(t => t.name === name);
+  const total = txs.reduce((s, t) => s + t.gross, 0);
+
+  $('modal-title').textContent = `Move ${name}`;
+  $('modal-tx-desc').textContent =
+    `${txs.length} transaction${txs.length !== 1 ? 's' : ''} · £${total.toFixed(2)} · currently in ${currentCat}`;
+
+  // Build a deduped, sorted category list including defaults and any user-added ones.
+  const allCats = [...new Set([...state.categories, ...DEFAULT_CATEGORIES])];
 
   const catsDiv = $('modal-cats');
-  catsDiv.innerHTML = state.categories.map(cat => `
-    <button class="modal-cat-btn ${cat === tx.category ? 'current' : ''}" data-cat="${escapeHtml(cat)}">
-      ${cat === tx.category ? '✓ ' : ''}${escapeHtml(cat)}
+  catsDiv.innerHTML = allCats.map(cat => `
+    <button class="modal-cat-btn ${cat === currentCat ? 'current' : ''}" data-cat="${escapeHtml(cat)}">
+      ${cat === currentCat ? '✓ ' : ''}${escapeHtml(cat)}
     </button>
   `).join('') + `
-    <button class="modal-cat-btn" data-cat="__new__" style="border-style:dashed">+ New category…</button>
+    <button class="modal-cat-btn modal-cat-new" data-cat="__new__">+ New category…</button>
   `;
 
   catsDiv.querySelectorAll('.modal-cat-btn').forEach(btn => {
@@ -406,18 +452,13 @@ function openReclassify(idx) {
         if (!cat || !cat.trim()) return;
         cat = cat.trim();
       }
-      applyReclassify(idx, cat);
+      state.nameToCategory[name] = cat;
+      buildReport();
       reclassifyModal.close();
     });
   });
 
   reclassifyModal.showModal();
-}
-
-function applyReclassify(idx, newCat) {
-  state.categorised[idx].category = newCat;
-  if (!state.categories.includes(newCat)) state.categories.push(newCat);
-  buildReport(state.categorised);
 }
 
 $('modal-cancel').addEventListener('click', () => reclassifyModal.close());
