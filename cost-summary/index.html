@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Upload a PayPal CSV and get a categorised spending report, powered by Gemini.">
+  <meta name="category" content="Productivity">
+  <title>Cost Summary</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>cost <span>summary</span></h1>
+  <div class="header-actions">
+    <button class="btn btn-icon" id="settings-btn" title="Settings" aria-label="Settings">⚙</button>
+    <button class="btn" id="new-report-btn" hidden>New report</button>
+  </div>
+</header>
+
+<main>
+  <section id="settings-panel" hidden>
+    <h2>Settings</h2>
+    <div class="field">
+      <label for="api-key-input">Gemini API key</label>
+      <input type="password" id="api-key-input" placeholder="AIza…" autocomplete="off">
+      <p class="field-note">Stored in localStorage. Never sent anywhere except directly to Google's Gemini API.</p>
+    </div>
+    <div class="field">
+      <label for="month-filter">Month filter (leave blank for all)</label>
+      <input type="text" id="month-filter" placeholder="e.g. 05/2026">
+      <p class="field-note">Format: MM/YYYY</p>
+    </div>
+    <button class="btn btn-primary" id="save-settings-btn">Save</button>
+    <div id="settings-notice"></div>
+  </section>
+
+  <section id="upload-zone">
+    <input type="file" id="file-input" accept=".csv" hidden>
+    <h2>Drop your PayPal CSV here</h2>
+    <p>or click to choose a file</p>
+    <button class="btn btn-primary" id="choose-file-btn">Choose file</button>
+    <p class="upload-notice" id="upload-notice"></p>
+  </section>
+
+  <section id="progress-section" hidden>
+    <p class="progress-label" id="progress-label">Categorising transactions…</p>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <p class="progress-count" id="progress-count"></p>
+  </section>
+
+  <section id="report-section" hidden>
+    <div class="report-header">
+      <div>
+        <div class="report-title" id="report-title">May 2026</div>
+        <div class="report-subtitle" id="report-subtitle"></div>
+      </div>
+      <div class="report-actions">
+        <button class="btn" id="rerun-btn">Re-categorise</button>
+      </div>
+    </div>
+
+    <div class="metrics" id="metrics"></div>
+
+    <div class="chart-wrap">
+      <div id="chart-legend"></div>
+      <div class="chart-container" id="chart-container">
+        <canvas id="spend-chart" role="img" aria-label="Horizontal bar chart of spending by category"></canvas>
+      </div>
+    </div>
+
+    <div id="categories-list"></div>
+  </section>
+</main>
+
+<dialog id="reclassify-modal" aria-labelledby="modal-title">
+  <div class="modal-content">
+    <h3 id="modal-title">Move transaction</h3>
+    <p id="modal-tx-desc"></p>
+    <div class="modal-cats" id="modal-cats"></div>
+    <button class="btn" id="modal-cancel">Cancel</button>
+  </div>
+</dialog>
+
+<script src="chart.umd.js"></script>
+<script src="script.js"></script>
+<script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

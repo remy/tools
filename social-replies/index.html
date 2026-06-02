@@ -596,10 +596,16 @@ Rules:
     const $ = id => document.getElementById(id);
 
     // --- API key persistence ---
+    // Shared across tools under 'gemini_api_key'. Migrate the old key once.
+    const GEMINI_KEY_STORAGE = 'gemini_api_key';
+    if (!localStorage.getItem(GEMINI_KEY_STORAGE) && localStorage.getItem('gemini-key')) {
+      localStorage.setItem(GEMINI_KEY_STORAGE, localStorage.getItem('gemini-key'));
+      localStorage.removeItem('gemini-key');
+    }
     const keyInput = $('gemini-key');
-    keyInput.value = localStorage.getItem('gemini-key') ?? '';
+    keyInput.value = localStorage.getItem(GEMINI_KEY_STORAGE) ?? '';
     keyInput.addEventListener('change', () => {
-      localStorage.setItem('gemini-key', keyInput.value.trim());
+      localStorage.setItem(GEMINI_KEY_STORAGE, keyInput.value.trim());
     });
 
     // --- URL list helpers ---
