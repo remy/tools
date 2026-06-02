@@ -503,10 +503,11 @@ main {
 #date-popover {
   position: fixed;
   position-anchor: --date-anchor;
-  top: anchor(bottom);
-  left: anchor(left);
+  top: anchor(bottom, 80px);
+  left: anchor(left, 1rem);
+  right: auto;
+  bottom: auto;
   margin: 6px 0 0;
-  inset: unset;
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text);
