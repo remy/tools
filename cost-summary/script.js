@@ -140,8 +140,7 @@ function txDateIso(tx) {
 }
 
 function visibleTransactions() {
-  const from = localStorage.getItem(DATE_FROM_STORAGE) || '';
-  const to = localStorage.getItem(DATE_TO_STORAGE) || '';
+  const { from, to } = getDateRange();
   if (!from && !to) return state.transactions;
   return state.transactions.filter(tx => {
     const iso = txDateIso(tx);
@@ -149,6 +148,27 @@ function visibleTransactions() {
     if (to && iso > to) return false;
     return true;
   });
+}
+
+// Default to the most recent fully-completed month when the user hasn't
+// touched the filter. A stored empty string means "explicitly cleared —
+// show all dates", which we leave alone.
+function lastFullMonthRange() {
+  const now = new Date();
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const y = lastMonth.getFullYear();
+  const m = lastMonth.getMonth();
+  const first = new Date(y, m, 1);
+  const last = new Date(y, m + 1, 0);
+  const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return { from: fmt(first), to: fmt(last) };
+}
+
+function getDateRange() {
+  const from = localStorage.getItem(DATE_FROM_STORAGE);
+  const to = localStorage.getItem(DATE_TO_STORAGE);
+  if (from === null && to === null) return lastFullMonthRange();
+  return { from: from || '', to: to || '' };
 }
 
 function processFile(file) {
@@ -432,8 +452,7 @@ function formatIsoDateShort(iso) {
 }
 
 function reportTitle() {
-  const from = localStorage.getItem(DATE_FROM_STORAGE) || '';
-  const to = localStorage.getItem(DATE_TO_STORAGE) || '';
+  const { from, to } = getDateRange();
   if (from && to && from.slice(0,7) === to.slice(0,7)) {
     // Same month — show "May 2026"
     const d = new Date(from + 'T00:00:00');
@@ -446,8 +465,7 @@ function reportTitle() {
 }
 
 function dateLabel() {
-  const from = localStorage.getItem(DATE_FROM_STORAGE) || '';
-  const to = localStorage.getItem(DATE_TO_STORAGE) || '';
+  const { from, to } = getDateRange();
   if (!from && !to) return 'All dates';
   if (from && to) return `${formatIsoDateShort(from)} – ${formatIsoDateShort(to)}`;
   if (from) return `from ${formatIsoDateShort(from)}`;
@@ -457,23 +475,26 @@ function dateLabel() {
 // --- Date popover ---
 datePopover.addEventListener('beforetoggle', e => {
   if (e.newState === 'open') {
-    dateFromInput.value = localStorage.getItem(DATE_FROM_STORAGE) || '';
-    dateToInput.value = localStorage.getItem(DATE_TO_STORAGE) || '';
+    const { from, to } = getDateRange();
+    dateFromInput.value = from;
+    dateToInput.value = to;
   }
 });
 
 $('date-apply').addEventListener('click', () => {
   const from = dateFromInput.value;
   const to = dateToInput.value;
-  if (from) localStorage.setItem(DATE_FROM_STORAGE, from); else localStorage.removeItem(DATE_FROM_STORAGE);
-  if (to) localStorage.setItem(DATE_TO_STORAGE, to); else localStorage.removeItem(DATE_TO_STORAGE);
+  localStorage.setItem(DATE_FROM_STORAGE, from);
+  localStorage.setItem(DATE_TO_STORAGE, to);
   datePopover.hidePopover();
   if (state.transactions.length) buildReport();
 });
 
 $('date-clear').addEventListener('click', () => {
-  localStorage.removeItem(DATE_FROM_STORAGE);
-  localStorage.removeItem(DATE_TO_STORAGE);
+  // Persist empty strings (not removeItem) so the default doesn't re-apply
+  // on the next render — empty means "show all dates" by explicit choice.
+  localStorage.setItem(DATE_FROM_STORAGE, '');
+  localStorage.setItem(DATE_TO_STORAGE, '');
   dateFromInput.value = '';
   dateToInput.value = '';
   datePopover.hidePopover();
