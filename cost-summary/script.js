@@ -228,15 +228,16 @@ function buildMerchantList(txs) {
   return [...map.values()].map(m => ({ name: m.name, examples: [...m.examples] }));
 }
 
-// Bigger models get bigger batches — pro can usually take everything in one
-// shot, flash sits in the middle, flash-lite stays small to keep latency
-// down and avoid response truncation.
+// Each merchant entry is tiny — name + a couple of short examples in,
+// "name":"Category" out — and Gemini 2.5's context is 1M+. The practical
+// ceiling is output stability rather than input size, so we bias toward
+// "everything in one shot" for the bigger models.
 function batchSizeForModel(model) {
   const m = model.toLowerCase();
-  if (m.includes('pro')) return 500;
-  if (m.includes('flash-lite')) return 50;
-  if (m.includes('flash')) return 200;
-  return 50;
+  if (m.includes('pro')) return Infinity;
+  if (m.includes('flash-lite')) return 500;
+  if (m.includes('flash')) return 2000;
+  return 500;
 }
 
 // --- Gemini categorisation ---
@@ -296,7 +297,11 @@ Example: {"Tesco":"Groceries","Deliveroo":"Eating out","Netflix":"Subscriptions"
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1, responseMimeType: 'application/json' },
+          generationConfig: {
+            temperature: 0.1,
+            responseMimeType: 'application/json',
+            maxOutputTokens: 32768,
+          },
         }),
       }
     );
