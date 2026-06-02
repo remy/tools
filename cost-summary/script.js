@@ -1,5 +1,6 @@
 const API_KEY_STORAGE = 'gemini_api_key';
-const MONTH_FILTER_STORAGE = 'cost_summary_month_filter';
+const DATE_FROM_STORAGE = 'cost_summary_date_from';
+const DATE_TO_STORAGE = 'cost_summary_date_to';
 
 const DEFAULT_CATEGORIES = [
   'Travel', 'Groceries', 'Eating out', 'Shopping', 'Entertainment',
@@ -14,9 +15,9 @@ const CATEGORY_COLORS = [
 ];
 
 const state = {
-  transactions: [],
-  nameToCategory: {},     // { merchantName: category }
-  categories: [],         // sorted list of category names currently in use
+  transactions: [],       // all parsed (after status filter) — unfiltered by date
+  nameToCategory: {},
+  categories: [],
   chartInstance: null,
 };
 
@@ -26,7 +27,6 @@ const settingsBtn = $('settings-btn');
 const settingsPanel = $('settings-panel');
 const saveSettingsBtn = $('save-settings-btn');
 const apiKeyInput = $('api-key-input');
-const monthFilterInput = $('month-filter');
 const uploadZone = $('upload-zone');
 const fileInput = $('file-input');
 const chooseFileBtn = $('choose-file-btn');
@@ -35,23 +35,21 @@ const reportSection = $('report-section');
 const newReportBtn = $('new-report-btn');
 const rerunBtn = $('rerun-btn');
 const reclassifyModal = $('reclassify-modal');
+const datePopover = $('date-popover');
+const dateTrigger = $('date-trigger');
+const dateFromInput = $('date-from');
+const dateToInput = $('date-to');
 
 settingsBtn.addEventListener('click', () => {
   const open = !settingsPanel.hidden;
   settingsPanel.hidden = open;
-  if (!open) {
-    apiKeyInput.value = localStorage.getItem(API_KEY_STORAGE) || '';
-    monthFilterInput.value = localStorage.getItem(MONTH_FILTER_STORAGE) || '';
-  }
+  if (!open) apiKeyInput.value = localStorage.getItem(API_KEY_STORAGE) || '';
 });
 
 saveSettingsBtn.addEventListener('click', () => {
   const key = apiKeyInput.value.trim();
-  const filter = monthFilterInput.value.trim();
   if (key) localStorage.setItem(API_KEY_STORAGE, key);
   else localStorage.removeItem(API_KEY_STORAGE);
-  if (filter) localStorage.setItem(MONTH_FILTER_STORAGE, filter);
-  else localStorage.removeItem(MONTH_FILTER_STORAGE);
   const notice = $('settings-notice');
   notice.innerHTML = '<div class="notice saved">Saved.</div>';
   setTimeout(() => { notice.innerHTML = ''; }, 2000);
@@ -91,7 +89,7 @@ newReportBtn.addEventListener('click', () => {
 });
 
 rerunBtn.addEventListener('click', () => {
-  if (state.transactions.length) categoriseMerchants(state.transactions);
+  if (state.transactions.length) categoriseMerchants(visibleTransactions());
 });
 
 // --- CSV parsing ---
@@ -112,13 +110,15 @@ function parseCSV(text) {
     const date = cols[0];
     const name = cols[3] || '';
     const type = cols[4] || '';
-    const status = cols[5] || '';
+    const status = (cols[5] || '').trim();
     const gross = parseFloat((cols[7] || '0').replace(/,/g, ''));
     const impact = cols[cols.length - 1] || '';
     const subject = cols[36] || '';
     const itemTitle = cols[15] || '';
 
-    if (impact === 'Debit' && status === 'Completed' && !isNaN(gross)) {
+    // PayPal status values include Completed, Pending, Refunded, Reversed, etc.
+    // Only count completed debits.
+    if (impact === 'Debit' && status.toLowerCase() === 'completed' && !isNaN(gross)) {
       results.push({
         date,
         name: name.trim(),
@@ -132,14 +132,22 @@ function parseCSV(text) {
   return results;
 }
 
-function filterByMonth(txs) {
-  const filter = (localStorage.getItem(MONTH_FILTER_STORAGE) || '').trim();
-  if (!filter) return txs;
-  const [mm, yyyy] = filter.split('/');
-  if (!mm || !yyyy) return txs;
-  return txs.filter(tx => {
-    const [, m, y] = tx.date.split('/');
-    return m === mm && y === yyyy;
+// PayPal dates are DD/MM/YYYY — convert to YYYY-MM-DD for comparison.
+function txDateIso(tx) {
+  const [d, m, y] = tx.date.split('/');
+  if (!d || !m || !y) return '';
+  return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+
+function visibleTransactions() {
+  const from = localStorage.getItem(DATE_FROM_STORAGE) || '';
+  const to = localStorage.getItem(DATE_TO_STORAGE) || '';
+  if (!from && !to) return state.transactions;
+  return state.transactions.filter(tx => {
+    const iso = txDateIso(tx);
+    if (from && iso < from) return false;
+    if (to && iso > to) return false;
+    return true;
   });
 }
 
@@ -153,42 +161,44 @@ function processFile(file) {
   }
   const reader = new FileReader();
   reader.onload = e => {
-    const all = parseCSV(e.target.result);
-    const txs = filterByMonth(all);
+    state.transactions = parseCSV(e.target.result);
+    const txs = visibleTransactions();
     if (!txs.length) {
-      $('upload-notice').textContent = 'No completed debit transactions found (check your month filter).';
+      $('upload-notice').textContent = 'No completed debit transactions found.';
       return;
     }
-    state.transactions = txs;
     categoriseMerchants(txs);
   };
   reader.readAsText(file);
 }
 
 // --- Merchant aggregation ---
-// Build one entry per unique merchant name with a few sample item titles/subjects
-// to give the LLM enough context to categorise without sending duplicates.
+// Drop examples that are mostly numeric (PayPal often puts merchant phone
+// references like "8882211161" in itemTitle, which are useless to the LLM).
+function isUsefulExample(s) {
+  if (!s) return false;
+  const trimmed = s.trim();
+  if (trimmed.length < 3) return false;
+  const letters = (trimmed.match(/[a-zA-Z]/g) || []).length;
+  return letters >= 3;
+}
+
 function buildMerchantList(txs) {
   const map = new Map();
   for (const tx of txs) {
     if (!map.has(tx.name)) {
-      map.set(tx.name, { name: tx.name, examples: new Set(), count: 0, total: 0 });
+      map.set(tx.name, { name: tx.name, examples: new Set() });
     }
     const m = map.get(tx.name);
-    m.count++;
-    m.total += tx.gross;
-    const sample = tx.itemTitle || tx.subject;
-    if (sample && m.examples.size < 3) m.examples.add(sample.slice(0, 80));
+    for (const candidate of [tx.itemTitle, tx.subject]) {
+      if (m.examples.size >= 3) break;
+      if (isUsefulExample(candidate)) m.examples.add(candidate.slice(0, 80));
+    }
   }
-  return [...map.values()].map(m => ({
-    name: m.name,
-    count: m.count,
-    total: m.total,
-    examples: [...m.examples],
-  }));
+  return [...map.values()].map(m => ({ name: m.name, examples: [...m.examples] }));
 }
 
-// --- Gemini categorisation (one mapping per unique merchant) ---
+// --- Gemini categorisation ---
 async function categoriseMerchants(txs) {
   uploadZone.hidden = true;
   settingsPanel.hidden = true;
@@ -208,7 +218,6 @@ async function categoriseMerchants(txs) {
     setProgress(Math.min(start + items.length, merchants.length), merchants.length);
   }
 
-  // Fill in any merchants the LLM missed.
   for (const m of merchants) {
     if (!mapping[m.name]) mapping[m.name] = 'Other';
   }
@@ -226,13 +235,13 @@ function setProgress(done, total) {
 
 async function categoriseMerchantBatch(merchants) {
   const key = localStorage.getItem(API_KEY_STORAGE);
-  const prompt = `You are categorising merchants from a personal finance transaction list. Each merchant has a name and a few example transaction descriptions to help you decide.
+  const prompt = `You are categorising merchants from a personal finance transaction list. Each merchant has a name and may have a few example transaction descriptions to help you decide.
 
 Categories to use (pick the best fit; you may invent a new category only if none of these obviously apply):
 ${DEFAULT_CATEGORIES.join(', ')}
 
 Merchants (JSON array):
-${JSON.stringify(merchants.map(m => ({ name: m.name, examples: m.examples })))}
+${JSON.stringify(merchants)}
 
 Return ONLY a JSON object mapping merchant name to category — no explanation, no markdown, no backticks.
 Example: {"Tesco":"Groceries","Deliveroo":"Eating out","Netflix":"Subscriptions"}`;
@@ -277,13 +286,12 @@ function buildReport() {
   reportSection.hidden = false;
   newReportBtn.hidden = false;
 
-  const txs = state.transactions;
+  const txs = visibleTransactions();
   const total = txs.reduce((s, t) => s + t.gross, 0);
-  const filter = localStorage.getItem(MONTH_FILTER_STORAGE) || '';
 
-  $('report-title').textContent = filter ? formatMonthTitle(filter) : 'All transactions';
-  $('report-subtitle').textContent =
-    `${txs.length} transactions · ${Object.keys(state.nameToCategory).length} merchants · loaded ${new Date().toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })}`;
+  $('report-title').textContent = reportTitle();
+  $('subtitle-stats').textContent = `${txs.length} transactions · ${new Set(txs.map(t => t.name)).size} merchants ·`;
+  $('date-label').textContent = dateLabel();
 
   // Group: category -> merchantName -> { count, total }
   const catGroups = new Map();
@@ -308,12 +316,16 @@ function buildReport() {
 
   state.categories = sorted.map(g => g.cat);
 
-  const biggest = txs.reduce((a, b) => a.gross > b.gross ? a : b);
+  const biggest = txs.length ? txs.reduce((a, b) => a.gross > b.gross ? a : b) : null;
   $('metrics').innerHTML = `
     <div class="metric"><div class="metric-label">Total spent</div><div class="metric-value">£${total.toFixed(2)}</div></div>
     <div class="metric"><div class="metric-label">Transactions</div><div class="metric-value">${txs.length}</div></div>
     <div class="metric"><div class="metric-label">Categories</div><div class="metric-value">${sorted.length}</div></div>
-    <div class="metric"><div class="metric-label">Largest spend</div><div class="metric-value">£${biggest.gross.toFixed(2)}</div></div>
+    <div class="metric">
+      <div class="metric-label">Largest spend</div>
+      <div class="metric-value">${biggest ? '£' + biggest.gross.toFixed(2) : '—'}</div>
+      ${biggest ? `<div class="metric-sub">${escapeHtml(biggest.name)}</div>` : ''}
+    </div>
   `;
 
   const labels = sorted.map(g => g.cat);
@@ -331,10 +343,7 @@ function buildReport() {
   const tickColor = getComputedStyle(document.body).getPropertyValue('--text-muted').trim() || '#888';
   state.chartInstance = new Chart($('spend-chart'), {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [{ data: values, backgroundColor: colors, borderRadius: 4 }],
-    },
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 4 }] },
     options: {
       indexAxis: 'y',
       responsive: true,
@@ -416,11 +425,60 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-function formatMonthTitle(filter) {
-  const [mm, yyyy] = filter.split('/');
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  return `${months[parseInt(mm)-1]} ${yyyy}`;
+function formatIsoDateShort(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+function reportTitle() {
+  const from = localStorage.getItem(DATE_FROM_STORAGE) || '';
+  const to = localStorage.getItem(DATE_TO_STORAGE) || '';
+  if (from && to && from.slice(0,7) === to.slice(0,7)) {
+    // Same month — show "May 2026"
+    const d = new Date(from + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  }
+  if (from || to) {
+    return `${formatIsoDateShort(from) || 'start'} – ${formatIsoDateShort(to) || 'today'}`;
+  }
+  return 'All transactions';
+}
+
+function dateLabel() {
+  const from = localStorage.getItem(DATE_FROM_STORAGE) || '';
+  const to = localStorage.getItem(DATE_TO_STORAGE) || '';
+  if (!from && !to) return 'All dates';
+  if (from && to) return `${formatIsoDateShort(from)} – ${formatIsoDateShort(to)}`;
+  if (from) return `from ${formatIsoDateShort(from)}`;
+  return `until ${formatIsoDateShort(to)}`;
+}
+
+// --- Date popover ---
+datePopover.addEventListener('beforetoggle', e => {
+  if (e.newState === 'open') {
+    dateFromInput.value = localStorage.getItem(DATE_FROM_STORAGE) || '';
+    dateToInput.value = localStorage.getItem(DATE_TO_STORAGE) || '';
+  }
+});
+
+$('date-apply').addEventListener('click', () => {
+  const from = dateFromInput.value;
+  const to = dateToInput.value;
+  if (from) localStorage.setItem(DATE_FROM_STORAGE, from); else localStorage.removeItem(DATE_FROM_STORAGE);
+  if (to) localStorage.setItem(DATE_TO_STORAGE, to); else localStorage.removeItem(DATE_TO_STORAGE);
+  datePopover.hidePopover();
+  if (state.transactions.length) buildReport();
+});
+
+$('date-clear').addEventListener('click', () => {
+  localStorage.removeItem(DATE_FROM_STORAGE);
+  localStorage.removeItem(DATE_TO_STORAGE);
+  dateFromInput.value = '';
+  dateToInput.value = '';
+  datePopover.hidePopover();
+  if (state.transactions.length) buildReport();
+});
 
 // --- Reclassify (moves ALL transactions for the merchant) ---
 function openReclassify(name) {
@@ -432,7 +490,6 @@ function openReclassify(name) {
   $('modal-tx-desc').textContent =
     `${txs.length} transaction${txs.length !== 1 ? 's' : ''} · £${total.toFixed(2)} · currently in ${currentCat}`;
 
-  // Build a deduped, sorted category list including defaults and any user-added ones.
   const allCats = [...new Set([...state.categories, ...DEFAULT_CATEGORIES])];
 
   const catsDiv = $('modal-cats');

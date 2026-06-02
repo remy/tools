@@ -121,10 +121,12 @@ button {
   width: 32px;
   height: 32px;
   padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--text-muted);
+
+  & svg { display: block; }
+  &:hover { color: var(--text); }
 }
 
 main {
@@ -224,6 +226,10 @@ main {
     font-size: 13px;
     color: var(--text-muted);
     margin-top: 2px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   & .report-actions {
@@ -259,14 +265,22 @@ main {
     font-weight: 500;
     letter-spacing: -0.01em;
   }
+
+  & .metric-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 /* Chart */
 .chart-wrap {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
+  background: transparent;
+  border: none;
+  padding: 0;
   margin-bottom: 1.5rem;
 }
 
@@ -274,7 +288,7 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 12px;
-  margin-bottom: 1rem;
+  margin-top: 1rem;
   font-size: 12px;
   color: var(--text-muted);
 
@@ -411,12 +425,15 @@ main {
   flex-shrink: 0;
 }
 
-/* Reclassify modal */
+/* Reclassify modal — centered by default, fullscreen on narrow viewports */
 #reclassify-modal {
   border: none;
   padding: 0;
   background: transparent;
   color: var(--text);
+  margin: auto;
+  max-width: none;
+  max-height: none;
 
   &::backdrop {
     background: rgba(0, 0, 0, 0.5);
@@ -442,6 +459,105 @@ main {
     font-size: 13px;
     color: var(--text-muted);
     margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  #reclassify-modal {
+    width: 100vw;
+    height: 100dvh;
+
+    & .modal-content {
+      width: 100vw;
+      max-width: 100vw;
+      height: 100dvh;
+      max-height: 100dvh;
+      border-radius: 0;
+    }
+  }
+}
+
+/* Date-range trigger + anchored popover */
+.date-trigger {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px 2px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  anchor-name: --date-anchor;
+
+  &:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
+
+  & .date-chevron {
+    font-size: 11px;
+    line-height: 1;
+    color: var(--text-faint);
+  }
+}
+
+#date-popover {
+  position: fixed;
+  position-anchor: --date-anchor;
+  top: anchor(bottom);
+  left: anchor(left);
+  margin: 6px 0 0;
+  inset: unset;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 0;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.18);
+
+  & .popover-content {
+    padding: 1rem;
+    min-width: 260px;
+  }
+
+  & h4 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  & .date-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  & .date-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  & .date-fields input {
+    padding: 6px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    color-scheme: light dark;
+  }
+
+  & .popover-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
   }
 }
 
