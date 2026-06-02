@@ -1,4 +1,6 @@
 const API_KEY_STORAGE = 'gemini_api_key';
+const MODEL_STORAGE = 'gemini_model';
+const DEFAULT_MODEL = 'gemini-2.5-flash-lite';
 const DATE_FROM_STORAGE = 'cost_summary_date_from';
 const DATE_TO_STORAGE = 'cost_summary_date_to';
 
@@ -28,6 +30,7 @@ const settingsBtn = $('settings-btn');
 const settingsPanel = $('settings-panel');
 const saveSettingsBtn = $('save-settings-btn');
 const apiKeyInput = $('api-key-input');
+const modelInput = $('model-input');
 const uploadZone = $('upload-zone');
 const fileInput = $('file-input');
 const chooseFileBtn = $('choose-file-btn');
@@ -44,13 +47,19 @@ const dateToInput = $('date-to');
 settingsBtn.addEventListener('click', () => {
   const open = !settingsPanel.hidden;
   settingsPanel.hidden = open;
-  if (!open) apiKeyInput.value = localStorage.getItem(API_KEY_STORAGE) || '';
+  if (!open) {
+    apiKeyInput.value = localStorage.getItem(API_KEY_STORAGE) || '';
+    modelInput.value = localStorage.getItem(MODEL_STORAGE) || '';
+  }
 });
 
 saveSettingsBtn.addEventListener('click', () => {
   const key = apiKeyInput.value.trim();
+  const model = modelInput.value.trim();
   if (key) localStorage.setItem(API_KEY_STORAGE, key);
   else localStorage.removeItem(API_KEY_STORAGE);
+  if (model) localStorage.setItem(MODEL_STORAGE, model);
+  else localStorage.removeItem(MODEL_STORAGE);
   const notice = $('settings-notice');
   notice.innerHTML = '<div class="notice saved">Saved.</div>';
   setTimeout(() => { notice.innerHTML = ''; }, 2000);
@@ -267,9 +276,10 @@ ${JSON.stringify(merchants)}
 Return ONLY a JSON object mapping merchant name to category — no explanation, no markdown, no backticks.
 Example: {"Tesco":"Groceries","Deliveroo":"Eating out","Netflix":"Subscriptions"}`;
 
+  const model = localStorage.getItem(MODEL_STORAGE) || DEFAULT_MODEL;
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${key}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
