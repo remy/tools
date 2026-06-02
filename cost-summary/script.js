@@ -339,6 +339,7 @@ function buildReport() {
   $('report-title').textContent = reportTitle();
   $('subtitle-stats').textContent = `${txs.length} transactions · ${new Set(txs.map(t => t.name)).size} merchants ·`;
   $('date-label').textContent = dateLabel();
+  updateNavButtons();
 
   // Group: category -> merchantName -> { count, total }
   const catGroups = new Map();
@@ -519,6 +520,71 @@ $('date-apply').addEventListener('click', () => {
   datePopover.hidePopover();
   if (state.transactions.length) buildReport();
 });
+
+// --- Month nav (prev/next) ---
+function isoFmt(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function dataBounds() {
+  if (!state.transactions.length) return null;
+  let min = null, max = null;
+  for (const tx of state.transactions) {
+    const iso = txDateIso(tx);
+    if (!iso) continue;
+    if (min === null || iso < min) min = iso;
+    if (max === null || iso > max) max = iso;
+  }
+  return min ? { min, max } : null;
+}
+
+// Decide which month "prev/next" pivots from: the start of the current
+// range if set, otherwise the latest month with data.
+function currentMonthAnchor() {
+  const { from } = getDateRange();
+  if (from) {
+    const d = new Date(from + 'T00:00:00');
+    return { y: d.getFullYear(), m: d.getMonth() };
+  }
+  const b = dataBounds();
+  if (b) {
+    const d = new Date(b.max + 'T00:00:00');
+    return { y: d.getFullYear(), m: d.getMonth() };
+  }
+  const n = new Date();
+  return { y: n.getFullYear(), m: n.getMonth() - 1 };
+}
+
+function monthBounds(y, m) {
+  const first = new Date(y, m, 1);
+  const last = new Date(y, m + 1, 0);
+  return { from: isoFmt(first), to: isoFmt(last) };
+}
+
+function canShift(delta) {
+  const b = dataBounds();
+  if (!b) return false;
+  const a = currentMonthAnchor();
+  const t = monthBounds(a.y, a.m + delta);
+  return t.to >= b.min && t.from <= b.max;
+}
+
+function shiftMonth(delta) {
+  if (!canShift(delta)) return;
+  const a = currentMonthAnchor();
+  const t = monthBounds(a.y, a.m + delta);
+  localStorage.setItem(DATE_FROM_STORAGE, t.from);
+  localStorage.setItem(DATE_TO_STORAGE, t.to);
+  buildReport();
+}
+
+$('date-prev').addEventListener('click', () => shiftMonth(-1));
+$('date-next').addEventListener('click', () => shiftMonth(+1));
+
+function updateNavButtons() {
+  $('date-prev').disabled = !canShift(-1);
+  $('date-next').disabled = !canShift(+1);
+}
 
 $('date-clear').addEventListener('click', () => {
   // Persist empty strings (not removeItem) so the default doesn't re-apply

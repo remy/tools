@@ -484,6 +484,33 @@ summary.category-header {
   }
 }
 
+/* Prev / next month buttons sitting either side of the date chip */
+.date-nav {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  transition: background 0.1s, color 0.1s, opacity 0.1s;
+
+  &:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    background: var(--surface2);
+    color: var(--text-faint);
+    border-color: var(--border);
+  }
+}
+
 /* Date-range trigger + anchored popover */
 .date-trigger {
   font: inherit;
