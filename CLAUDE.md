@@ -38,6 +38,34 @@ This works as long as the dialog has no padding (or the inner content fills it),
 
 Reserve `popover="auto"` for non-modal UI (menus, tooltips, dropdowns) where the rest of the page should remain interactive.
 
+## Expandable sections
+
+For expand/collapse UI (accordion panels, "show more", FAQ items, anything with a header that toggles a body) use the native `<details>`/`<summary>` element rather than wiring up a click handler and toggling `hidden` yourself. It handles keyboard activation, ARIA state, the `open` attribute, and emits a `toggle` event when the state changes — all for free.
+
+```html
+<details>
+  <summary>Header content</summary>
+  <div>Body content</div>
+</details>
+```
+
+Strip the default disclosure marker in CSS:
+
+```css
+summary {
+  list-style: none;
+  &::-webkit-details-marker { display: none; }
+}
+```
+
+Drive chevron / arrow rotation from `[open]` on the parent rather than tracking state in JS:
+
+```css
+details[open] .chevron { transform: rotate(180deg); }
+```
+
+If you need to preserve open state across a re-render, capture the open category keys into a `Set`, then set `details.open = true` when re-rendering and listen for the `toggle` event to keep the set in sync.
+
 ## Web Components
 
 If HTML or CSS is included in the web component code, it should include a command before the template string as `/* HTML */` and `/* CSS */` (the spaces are important) for syntax highlighting.

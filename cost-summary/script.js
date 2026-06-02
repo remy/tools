@@ -394,13 +394,13 @@ function buildReport() {
   list.innerHTML = '';
   sorted.forEach(g => {
     const color = colorByCat[g.cat];
-    const card = document.createElement('div');
+    const card = document.createElement('details');
     card.className = 'category-card';
     card.dataset.cat = g.cat;
+    if (state.openCategories.has(g.cat)) card.open = true;
 
-    const isOpen = state.openCategories.has(g.cat);
     card.innerHTML = `
-      <div class="category-header">
+      <summary class="category-header">
         <div class="cat-left">
           <div class="cat-swatch" style="background:${color}"></div>
           <div class="cat-name">${escapeHtml(g.cat)}</div>
@@ -408,10 +408,10 @@ function buildReport() {
         <div class="cat-right">
           <span class="cat-total">£${g.total.toFixed(2)}</span>
           <span class="cat-count">${g.txCount} item${g.txCount !== 1 ? 's' : ''}</span>
-          <span class="cat-chevron${isOpen ? ' open' : ''}" aria-hidden="true">⌄</span>
+          <span class="cat-chevron" aria-hidden="true">⌄</span>
         </div>
-      </div>
-      <div class="category-body"${isOpen ? '' : ' hidden'}>
+      </summary>
+      <div class="category-body">
         ${g.merchants.map(m => {
           const label = m.count > 1
             ? `${escapeHtml(m.name)} <span class="tx-count">(x${m.count})</span>`
@@ -424,13 +424,9 @@ function buildReport() {
         }).join('')}
       </div>`;
 
-    card.querySelector('.category-header').addEventListener('click', () => {
-      const body = card.querySelector('.category-body');
-      const chevron = card.querySelector('.cat-chevron');
-      body.hidden = !body.hidden;
-      chevron.classList.toggle('open', !body.hidden);
-      if (body.hidden) state.openCategories.delete(g.cat);
-      else state.openCategories.add(g.cat);
+    card.addEventListener('toggle', () => {
+      if (card.open) state.openCategories.add(g.cat);
+      else state.openCategories.delete(g.cat);
     });
 
     card.querySelectorAll('.merchant-row').forEach(btn => {

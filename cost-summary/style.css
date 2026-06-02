@@ -320,6 +320,13 @@ main {
   overflow: hidden;
 }
 
+/* <summary> default marker — strip the disclosure triangle */
+summary.category-header {
+  list-style: none;
+
+  &::-webkit-details-marker { display: none; }
+}
+
 .category-header {
   display: flex;
   align-items: center;
@@ -331,6 +338,8 @@ main {
 
   &:hover { background: var(--surface2); }
 }
+
+.category-card[open] .cat-chevron { transform: rotate(180deg); }
 
 .cat-left {
   display: flex;
@@ -376,8 +385,6 @@ main {
   display: inline-block;
   width: 14px;
   text-align: center;
-
-  &.open { transform: rotate(180deg); }
 }
 
 .category-body {
