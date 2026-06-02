@@ -228,6 +228,17 @@ function buildMerchantList(txs) {
   return [...map.values()].map(m => ({ name: m.name, examples: [...m.examples] }));
 }
 
+// Bigger models get bigger batches — pro can usually take everything in one
+// shot, flash sits in the middle, flash-lite stays small to keep latency
+// down and avoid response truncation.
+function batchSizeForModel(model) {
+  const m = model.toLowerCase();
+  if (m.includes('pro')) return 500;
+  if (m.includes('flash-lite')) return 50;
+  if (m.includes('flash')) return 200;
+  return 50;
+}
+
 // --- Gemini categorisation ---
 async function categoriseMerchants(txs) {
   uploadZone.hidden = true;
@@ -238,11 +249,11 @@ async function categoriseMerchants(txs) {
   const merchants = buildMerchantList(txs);
   setProgress(0, merchants.length);
 
-  const BATCH = 50;
+  const batchSize = batchSizeForModel(localStorage.getItem(MODEL_STORAGE) || DEFAULT_MODEL);
   const mapping = {};
 
-  for (let start = 0; start < merchants.length; start += BATCH) {
-    const items = merchants.slice(start, start + BATCH);
+  for (let start = 0; start < merchants.length; start += batchSize) {
+    const items = merchants.slice(start, start + batchSize);
     const batchMap = await categoriseMerchantBatch(items);
     Object.assign(mapping, batchMap);
     setProgress(Math.min(start + items.length, merchants.length), merchants.length);
