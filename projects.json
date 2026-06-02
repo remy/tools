@@ -34,6 +34,11 @@
     "description": "Schedule and coordinate cooking times for multiple dishes, with appliance conflict detection and a live step-by-step countdown timeline.",
     "title": "Cook Planner"
   },
+  "cost-summary": {
+    "category": "Productivity",
+    "description": "Upload a PayPal CSV and get a categorised spending report, powered by Gemini.",
+    "title": "Cost Summary"
+  },
   "countdown-numbers": {
     "category": "Game",
     "description": "Play the classic numbers round from Countdown - reach the target using arithmetic operations",

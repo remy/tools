@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Upload a PayPal CSV and get a categorised spending report, powered by Gemini.">
+  <meta name="category" content="Productivity">
+  <title>Cost Summary</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>cost <span>summary</span></h1>
+  <div class="header-actions">
+    <button class="btn btn-icon" id="settings-btn" title="Settings" aria-label="Settings">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    <button class="btn" id="new-report-btn" hidden>New report</button>
+  </div>
+</header>
+
+<main>
+  <section id="settings-panel" hidden>
+    <h2>Settings</h2>
+    <div class="field">
+      <label for="api-key-input">Gemini API key</label>
+      <input type="password" id="api-key-input" placeholder="AIza…" autocomplete="off">
+      <p class="field-note">Stored in localStorage. Never sent anywhere except directly to Google's Gemini API.</p>
+    </div>
+    <div class="field">
+      <label for="model-input">Gemini model</label>
+      <input type="text" id="model-input" placeholder="gemini-2.5-flash-lite" autocomplete="off">
+      <p class="field-note">Leave blank for the default.</p>
+    </div>
+    <button class="btn btn-primary" id="save-settings-btn">Save</button>
+    <div id="settings-notice"></div>
+  </section>
+
+  <section id="upload-zone">
+    <input type="file" id="file-input" accept=".csv" hidden>
+    <h2>Drop your PayPal CSV here</h2>
+    <p>or click to choose a file</p>
+    <button class="btn btn-primary" id="choose-file-btn">Choose file</button>
+    <p class="upload-notice" id="upload-notice"></p>
+  </section>
+
+  <section id="progress-section" hidden>
+    <p class="progress-label" id="progress-label">Categorising transactions…</p>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <p class="progress-count" id="progress-count"></p>
+  </section>
+
+  <section id="report-section" hidden>
+    <div class="report-header">
+      <div>
+        <div class="report-title" id="report-title">May 2026</div>
+        <div class="report-subtitle">
+          <span id="subtitle-stats"></span>
+          <button class="date-nav" id="date-prev" type="button" aria-label="Previous month" title="Previous month">‹</button>
+          <button class="date-trigger" id="date-trigger" popovertarget="date-popover" aria-haspopup="dialog">
+            <span id="date-label">All dates</span>
+            <span class="date-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <button class="date-nav" id="date-next" type="button" aria-label="Next month" title="Next month">›</button>
+        </div>
+      </div>
+      <div class="report-actions">
+        <button class="btn" id="rerun-btn">Re-categorise</button>
+      </div>
+    </div>
+
+    <div class="metrics" id="metrics"></div>
+
+    <div class="chart-wrap">
+      <div class="chart-container" id="chart-container">
+        <canvas id="spend-chart" role="img" aria-label="Horizontal bar chart of spending by category"></canvas>
+      </div>
+      <div id="chart-legend"></div>
+    </div>
+
+    <div id="categories-list"></div>
+  </section>
+</main>
+
+<div id="date-popover" popover>
+  <div class="popover-content">
+    <h4>Date range</h4>
+    <div class="date-fields">
+      <label>
+        <span>From</span>
+        <input type="date" id="date-from">
+      </label>
+      <label>
+        <span>To</span>
+        <input type="date" id="date-to">
+      </label>
+    </div>
+    <div class="popover-actions">
+      <button class="btn" id="date-clear">Clear</button>
+      <button class="btn btn-primary" id="date-apply">Apply</button>
+    </div>
+  </div>
+</div>
+
+<dialog id="reclassify-modal" aria-labelledby="modal-title">
+  <div class="modal-content">
+    <h3 id="modal-title">Move transaction</h3>
+    <p id="modal-tx-desc"></p>
+    <div class="modal-cats" id="modal-cats"></div>
+    <button class="btn" id="modal-cancel">Cancel</button>
+  </div>
+</dialog>
+
+<script src="chart.umd.js"></script>
+<script src="script.js"></script>
+<script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
