@@ -197,14 +197,16 @@ body {
 }
 
 .asset-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px 10px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--border);
 }
 
 .asset-thumb {
+  grid-row: span 2;
   width: 40px;
   height: 40px;
   flex-shrink: 0;
@@ -219,7 +221,6 @@ body {
 }
 
 .asset-meta {
-  flex: 1;
   min-width: 0;
 }
 
@@ -233,6 +234,8 @@ body {
   border-radius: 4px;
   padding: 2px 4px;
   font-family: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .asset-name:focus {
@@ -244,13 +247,19 @@ body {
 .asset-ref {
   font-size: 0.7rem;
   color: var(--muted);
-  margin-top: 2px;
+  margin-top: 3px;
+  line-height: 1.5;
+}
+
+.asset-ref code {
+  word-break: break-all;
 }
 
 .asset-actions {
+  grid-column: 2;
   display: flex;
-  gap: 4px;
-  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .asset-actions button {

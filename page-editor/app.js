@@ -339,6 +339,20 @@
     scheduleSave();
   }
 
+  // ---- Print ----------------------------------------------------------------
+  // Print only the rendered iframe. If we're in HTML source view the canvas
+  // may be stale, so push the current source into it first.
+  function printPage() {
+    if (state.mode === 'html') {
+      state.html = htmlSource.value;
+      applyCanvasContent();
+      applyCss();
+    }
+    canvas.contentWindow.focus();
+    canvas.contentWindow.print();
+  }
+  document.getElementById('print').addEventListener('click', printPage);
+
   // ---- Window-wide drag & drop ---------------------------------------------
   function showDrop() { dropOverlay.hidden = false; }
   function hideDrop() { dropOverlay.hidden = true; }
