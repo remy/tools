@@ -31,26 +31,78 @@ function currentList() {
 // ── Main render ──
 export function render() {
   const list = currentList();
+  // Only stay in the single-list view when a valid list is selected; otherwise
+  // fall back to the home view (e.g. the open list was just deleted).
+  const onList = state.view === 'list' && !!list;
+
+  $('header-title').textContent = onList ? list.name : 'Todo Lists';
+  $('btn-back').hidden = !onList;
+
+  $('home-view').hidden = onList;
+  $('list-view').hidden = !onList;
+  $('add-item-form').hidden = !onList;
+
+  if (onList) renderItems();
+  else renderHome();
+}
+
+// ── Home view: all lists ──
+export function renderHome() {
   const hasLists = state.lists.length > 0;
+  $('empty-app').hidden = hasLists;
+  $('home-lists').hidden = !hasLists;
+  if (!hasLists) return;
 
-  $('current-list-name').textContent = list ? list.name : 'Todo';
-  $('list-switch').disabled = !hasLists;
-
-  const emptyApp = $('empty-app');
-  const listView = $('list-view');
-  const addBar = $('add-item-form');
-
-  if (!hasLists) {
-    emptyApp.hidden = false;
-    listView.hidden = true;
-    addBar.hidden = true;
-    return;
+  const ul = $('home-list');
+  ul.replaceChildren();
+  for (const list of state.lists) {
+    ul.appendChild(homeRow(list));
   }
-  emptyApp.hidden = true;
-  listView.hidden = false;
-  addBar.hidden = false;
+}
 
-  renderItems();
+function homeRow(list) {
+  const li = document.createElement('li');
+  li.className = 'pick-row';
+
+  const pick = document.createElement('button');
+  pick.type = 'button';
+  pick.className = 'pick-main';
+  pick.dataset.action = 'pick';
+  pick.dataset.id = list.id;
+
+  const name = document.createElement('span');
+  name.className = 'pick-name';
+  name.textContent = list.name;
+  pick.appendChild(name);
+
+  const c = state.counts[list.id];
+  if (c && c.total) {
+    const badge = document.createElement('span');
+    badge.className = 'pick-count';
+    if (c.done === c.total) badge.classList.add('complete');
+    badge.textContent = `${c.done}/${c.total}`;
+    pick.appendChild(badge);
+  }
+  li.appendChild(pick);
+
+  const ren = document.createElement('button');
+  ren.type = 'button';
+  ren.className = 'icon-btn';
+  ren.dataset.action = 'rename';
+  ren.dataset.id = list.id;
+  ren.setAttribute('aria-label', 'Rename list');
+  ren.appendChild(svg('<path d="M11.5 3.5L14.5 6.5M3 15H6L13.5 7.5L10.5 4.5L3 12V15Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>', 16));
+
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'icon-btn icon-danger';
+  del.dataset.action = 'delete';
+  del.dataset.id = list.id;
+  del.setAttribute('aria-label', 'Delete list');
+  del.appendChild(svg('<path d="M4 5H14M7 5V3.5H11V5M6 5V14H12V5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>', 16));
+
+  li.append(ren, del);
+  return li;
 }
 
 export function renderItems() {

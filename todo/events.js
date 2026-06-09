@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { db } from './db.js';
 import { render, renderItems, beginEdit, relativeTime, fullTime } from './render.js';
 import {
-  openListsDialog, openNewListDialog, onNewListTemplateChange,
+  goHome, openNewListDialog, onNewListTemplateChange,
   createList, renameList, deleteList, selectList, refreshItems,
 } from './lists.js';
 import {
@@ -123,26 +123,18 @@ function openHistory(item) {
   $('history-dialog').showModal();
 }
 
-// ── Lists dialog interactions ──
-function wireListsDialog() {
-  $('lists-dialog-list').addEventListener('click', async (e) => {
+// ── Home view: list of all lists ──
+function wireHomeList() {
+  $('home-list').addEventListener('click', async (e) => {
     const el = e.target.closest('[data-action]');
     if (!el) return;
     const id = el.dataset.id;
     const action = el.dataset.action;
-    if (action === 'pick') {
-      await selectList(id);
-      $('lists-dialog').close();
-    } else if (action === 'rename') {
-      await renameList(id);
-    } else if (action === 'delete') {
-      await deleteList(id);
-    }
+    if (action === 'pick') await selectList(id);
+    else if (action === 'rename') await renameList(id);
+    else if (action === 'delete') await deleteList(id);
   });
-  $('lists-new').addEventListener('click', () => {
-    $('lists-dialog').close();
-    openNewListDialog();
-  });
+  $('home-new-list').addEventListener('click', openNewListDialog);
 }
 
 // ── Templates section in settings ──
@@ -159,16 +151,17 @@ function wireTemplates() {
 
 export function bindEvents() {
   // Header
-  $('list-switch').addEventListener('click', openListsDialog);
+  $('btn-back').addEventListener('click', goHome);
   $('btn-settings').addEventListener('click', openSettings);
   $('empty-new-list').addEventListener('click', openNewListDialog);
 
-  // New list dialog
+  // New list dialog — the submit button is type="submit", so the form's submit
+  // event is the single source of truth (a separate click handler would fire
+  // createList twice and create duplicate lists).
   $('new-list-template').addEventListener('change', onNewListTemplateChange);
-  $('new-list-create').addEventListener('click', createList);
   $('new-list-form').addEventListener('submit', (e) => { e.preventDefault(); createList(); });
 
-  // Settings: sync + data
+  // Settings: sync
   $('sync-save').addEventListener('click', handleSyncSave);
   $('sync-now').addEventListener('click', handleSyncNow);
   $('sync-pull').addEventListener('click', handleSyncPull);
@@ -178,12 +171,12 @@ export function bindEvents() {
     btn.addEventListener('click', () => $(btn.dataset.close).close());
   });
 
-  ['lists-dialog', 'new-list-dialog', 'history-dialog', 'settings-dialog', 'template-dialog']
+  ['new-list-dialog', 'history-dialog', 'settings-dialog', 'template-dialog']
     .forEach(wireBackdropDismiss);
 
   wireTodoList();
   wireAddItem();
   wireReset();
-  wireListsDialog();
+  wireHomeList();
   wireTemplates();
 }

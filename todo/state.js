@@ -14,5 +14,7 @@ export const state = {
   lists: [],          // [{ id, name, createdAt, order }]
   templates: [],      // [{ id, name, items: [text], createdAt }]
   items: [],          // items for the currently-selected list
+  counts: {},         // listId -> { total, done } for the home view
   currentListId: null,
+  view: 'home',       // 'home' (all lists) | 'list' (a single list)
 };

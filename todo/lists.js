@@ -4,81 +4,43 @@ import { render } from './render.js';
 
 const $ = (id) => document.getElementById(id);
 
-// Load lists + the current list's items into state, then paint.
+// Load lists, templates and per-list counts into state, then paint. The
+// current list's items are also refreshed when one is open. The active view
+// ('home' vs 'list') is preserved so a background sync never yanks the user
+// out of the list they're working in.
 export async function refreshAll() {
   state.lists = await db.getLists();
   state.templates = await db.getTemplates();
+  state.counts = await db.getCounts();
 
-  // Resolve the selected list: keep it if still present, else fall back to the
-  // stored preference, else the first list.
-  const saved = await db.getSetting('currentListId');
   const ids = new Set(state.lists.map((l) => l.id));
-  if (!state.currentListId || !ids.has(state.currentListId)) {
-    state.currentListId = ids.has(saved) ? saved : (state.lists[0]?.id ?? null);
+  if (state.currentListId && !ids.has(state.currentListId)) {
+    state.currentListId = null;
   }
   state.items = state.currentListId ? await db.getItems(state.currentListId) : [];
   render();
 }
 
+// Open a list (navigate into the single-list view).
 export async function selectList(id) {
   state.currentListId = id;
+  state.view = 'list';
   await db.setSetting('currentListId', id);
   state.items = await db.getItems(id);
+  render();
+}
+
+// Navigate back to the landing page listing every to-do list. Counts are
+// refreshed so progress reflects any changes made inside a list.
+export async function goHome() {
+  state.view = 'home';
+  state.counts = await db.getCounts();
   render();
 }
 
 export async function refreshItems() {
   if (!state.currentListId) { state.items = []; return; }
   state.items = await db.getItems(state.currentListId);
-}
-
-// ── Lists picker dialog ──
-export function openListsDialog() {
-  renderListsDialog();
-  $('lists-dialog').showModal();
-}
-
-function renderListsDialog() {
-  const ul = $('lists-dialog-list');
-  ul.replaceChildren();
-  if (!state.lists.length) {
-    const li = document.createElement('li');
-    li.className = 'muted-row';
-    li.textContent = 'No lists yet.';
-    ul.appendChild(li);
-  }
-  for (const list of state.lists) {
-    const li = document.createElement('li');
-    li.className = 'pick-row';
-    if (list.id === state.currentListId) li.classList.add('active');
-
-    const pick = document.createElement('button');
-    pick.type = 'button';
-    pick.className = 'pick-main';
-    pick.dataset.action = 'pick';
-    pick.dataset.id = list.id;
-    pick.textContent = list.name;
-    li.appendChild(pick);
-
-    const ren = document.createElement('button');
-    ren.type = 'button';
-    ren.className = 'icon-btn';
-    ren.dataset.action = 'rename';
-    ren.dataset.id = list.id;
-    ren.setAttribute('aria-label', 'Rename list');
-    ren.innerHTML = '<svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M11.5 3.5L14.5 6.5M3 15H6L13.5 7.5L10.5 4.5L3 12V15Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-    const del = document.createElement('button');
-    del.type = 'button';
-    del.className = 'icon-btn icon-danger';
-    del.dataset.action = 'delete';
-    del.dataset.id = list.id;
-    del.setAttribute('aria-label', 'Delete list');
-    del.innerHTML = '<svg width="16" height="16" viewBox="0 0 18 18" fill="none"><path d="M4 5H14M7 5V3.5H11V5M6 5V14H12V5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-    li.append(ren, del);
-    ul.appendChild(li);
-  }
 }
 
 // ── New list dialog (blank or from template) ──
@@ -133,7 +95,6 @@ export async function renameList(id) {
   if (!trimmed || trimmed === list.name) return;
   await db.putList({ ...list, name: trimmed });
   state.lists = await db.getLists();
-  renderListsDialog();
   render();
 }
 
@@ -143,11 +104,11 @@ export async function deleteList(id) {
   if (!confirm(`Delete "${list.name}" and all its items? This cannot be undone.`)) return;
   await db.deleteList(id);
   state.lists = await db.getLists();
+  state.counts = await db.getCounts();
   if (state.currentListId === id) {
-    state.currentListId = state.lists[0]?.id ?? null;
-    await db.setSetting('currentListId', state.currentListId);
-    state.items = state.currentListId ? await db.getItems(state.currentListId) : [];
+    state.currentListId = null;
+    state.items = [];
+    state.view = 'home';
   }
-  renderListsDialog();
   render();
 }

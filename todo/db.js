@@ -316,6 +316,24 @@ class TodoDB {
     return lists;
   }
 
+  // Item totals per list, for the home view. One scan over all item docs.
+  async getCounts() {
+    const db = await this.open();
+    const res = await db.allDocs({
+      include_docs: true,
+      startkey: ITEM_PREFIX,
+      endkey: ITEM_PREFIX + HIGH,
+    });
+    const map = {};
+    for (const r of res.rows) {
+      const d = r.doc;
+      const m = map[d.listId] || (map[d.listId] = { total: 0, done: 0 });
+      m.total += 1;
+      if (d.checked) m.done += 1;
+    }
+    return map;
+  }
+
   async putList(list) {
     const db = await this.open();
     const doc = listToDoc(list);
