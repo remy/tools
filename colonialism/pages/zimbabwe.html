@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zimbabwe — The British Colonial Project</title>
+  <meta name="description" content="Zimbabwe and the British colonial project — the history of colonisation, the key events, and what the territory looks like today.">
+  <link rel="stylesheet" href="../shared.css">
+  <style>
+    .territory-hero {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 3rem 2rem 2rem;
+      border-bottom: 4px solid #16a34a;
+    }
+    .territory-hero .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #16a34a;
+      margin-bottom: 0.8rem;
+    }
+    .territory-hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+    .territory-hero .flag-name {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+    .territory-hero .flag {
+      font-size: 2.5rem;
+    }
+    .territory-hero .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.7rem;
+      background: #16a34a;
+      color: white;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+    }
+    .territory-hero .hero-summary {
+      max-width: 700px;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.8);
+      margin-top: 1rem;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      padding: 1.2rem 2rem;
+      background: var(--pale);
+      border-bottom: 1px solid var(--border);
+    }
+    .meta-item label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .meta-item value {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--ink);
+    }
+
+    .content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 900;
+      margin-bottom: 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 1.2em;
+      background: #16a34a;
+      border-radius: 2px;
+    }
+
+    .body-text {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+
+    .timeline {
+      margin: 1.5rem 0;
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 4.5rem 1fr;
+      gap: 1rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+    .timeline-year {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #16a34a;
+      padding-top: 0.1rem;
+    }
+    .timeline-event {
+      font-size: 0.93rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .atrocities-box {
+      background: #fff5f5;
+      border: 1px solid #fca5a5;
+      border-left: 4px solid var(--red);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .atrocities-box .box-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 0.8rem;
+    }
+    .atrocities-box p {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #450a0a;
+    }
+
+    .today-box {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-left: 4px solid var(--green);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .today-box .box-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 0.8rem;
+    }
+    .today-box p {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #14532d;
+    }
+
+    .sources {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid var(--border);
+    }
+    .sources h3 {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.8rem;
+    }
+    .sources ul {
+      list-style: none;
+    }
+    .sources li {
+      font-size: 0.8rem;
+      margin-bottom: 0.3rem;
+    }
+    .sources a {
+      color: var(--blue);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .sources a:hover {
+      text-decoration: underline;
+    }
+
+    .nav-territory {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: var(--pale);
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .nav-territory a {
+      color: var(--ink);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+    .nav-territory a:hover {
+      color: var(--red);
+    }
+
+    /* ---- Mobile (~325px and up) ---- */
+    @media (max-width: 600px) {
+      .territory-hero {
+        padding: 2rem 1.1rem 1.5rem;
+      }
+      .territory-hero .flag {
+        font-size: 2rem;
+      }
+      .territory-hero .hero-summary {
+        font-size: 1rem;
+      }
+      .meta-row {
+        gap: 0.9rem 1.5rem;
+        padding: 1rem 1.1rem;
+      }
+      .content {
+        padding: 2rem 1.1rem;
+      }
+      /* Stack the year above the event so the narrow event column has room. */
+      .timeline-item {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+      }
+      .atrocities-box,
+      .today-box {
+        padding: 1.2rem 1.1rem;
+      }
+      .nav-territory {
+        padding: 1rem 1.1rem;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="../index.html" class="nav-brand">The Colonial Project</a>
+    <a href="../index.html" class="nav-back">← All territories</a>
+    <span class="nav-note">Africa</span>
+  </nav>
+
+  <div class="territory-hero">
+    <div class="eyebrow">Africa</div>
+    <div class="flag-name">
+      <span class="flag">🇿🇼</span>
+      <h1>Zimbabwe</h1>
+    </div>
+    <span class="status-badge">Independent Republic</span>
+    <p class="hero-summary">Zimbabwe was colonised by Cecil Rhodes's British South Africa Company and named Rhodesia after him. White minority rule persisted long after other African countries gained independence, with Britain's role in managing the transition a source of lasting controversy.</p>
+  </div>
+
+  <div class="meta-row">
+    <div class="meta-item">
+      <label>Colonised</label>
+      <value>1888 (Rudd Concession) / 1923 (Crown Colony)</value>
+    </div>
+    <div class="meta-item"><label>Independence</label><value>1980</value></div>
+    <div class="meta-item">
+      <label>Region</label>
+      <value>Africa</value>
+    </div>
+    <div class="meta-item">
+      <label>Current Status</label>
+      <value>Independent Republic</value>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2 class="section-title">Key events</h2>
+    <div class="timeline">
+      
+    <div class="timeline-item">
+      <div class="timeline-year">1888</div>
+      <div class="timeline-event">Rudd Concession — Rhodes extracts mineral rights from King Lobengula of the Ndebele by deception.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1896</div>
+      <div class="timeline-event">First Chimurenga — Ndebele and Shona uprisings against British South Africa Company rule. Brutally suppressed.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1923</div>
+      <div class="timeline-event">Southern Rhodesia becomes a self-governing Crown Colony — with white minority rule.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1965</div>
+      <div class="timeline-event">Ian Smith's Unilateral Declaration of Independence — white minority refuses to accept majority rule.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1980</div>
+      <div class="timeline-event">After a brief reversion to British-administered Southern Rhodesia following the 1979 Lancaster House Agreement, the country becomes independent as the Republic of Zimbabwe. Robert Mugabe elected as first Prime Minister.</div>
+    </div>
+  
+    </div>
+
+    <hr class="section-rule">
+
+    <h2 class="section-title">Atrocities &amp; injustices</h2>
+    <div class="atrocities-box">
+      <div class="box-label">⚠ What the history books often omit</div>
+      <p>Cecil Rhodes is a symbol of the most unashamed form of British imperialism — openly racist, driven by greed, and willing to use deception and violence. The dispossession of the Ndebele and Shona peoples of their best land created a land inequality that Mugabe later used to justify his violent fast-track land redistribution, which collapsed the economy. Britain's failure to fund the land reform process agreed at Lancaster House in 1979 is considered a contributing cause.</p>
+    </div>
+
+    <hr class="section-rule">
+
+    <h2 class="section-title">Today</h2>
+    <div class="today-box">
+      <div class="box-label">The present</div>
+      <p>Zimbabwe has experienced economic collapse, hyperinflation, and authoritarian rule under Mugabe (1980–2017) and his successor Mnangagwa. The country has vast natural resources but endemic poverty. The legacy of colonial land dispossession and the mishandled post-colonial transition remain central to understanding Zimbabwe's crises.</p>
+    </div>
+
+    <div class="sources">
+      <h3>Sources &amp; further reading</h3>
+      <ul><li><a href="https://en.wikipedia.org/wiki/History_of_Zimbabwe" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/History_of_Zimbabwe</a></li><li><a href="https://en.wikipedia.org/wiki/Cecil_Rhodes" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Cecil_Rhodes</a></li></ul>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <p>This is a personal education resource. Sources are linked above. History is contested — this represents one attempt to present facts often absent from English education.</p>
+  </footer>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

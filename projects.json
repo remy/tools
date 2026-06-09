@@ -19,6 +19,11 @@
     "description": "Decode capacitor codes and calculate values from ceramic capacitor markings",
     "title": "Capacitor Value Calculator"
   },
+  "colonialism": {
+    "category": "Learning",
+    "description": "What they didn't teach us in school \u2014 an honest, territory-by-territory look at the reach, methods, and lasting consequences of British colonisation.",
+    "title": "The British Colonial Project \u2014 A Personal Education"
+  },
   "command-palette": {
     "category": "Web Demos",
     "description": "A VS Code-style command palette web component with keyboard navigation, filtering, and custom event dispatching",
@@ -220,7 +225,7 @@
     "title": "Dynamic Tax Calculator"
   },
   "this-is-england": {
-    "category": "Game",
+    "category": "Learning",
     "description": "Fifty tiny stories about what makes England\u2026 England.",
     "title": "This is England \u2014 Stories for Curious Kids"
   },

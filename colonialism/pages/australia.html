@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Australia — The British Colonial Project</title>
+  <meta name="description" content="Australia and the British colonial project — the history of colonisation, the key events, and what the territory looks like today.">
+  <link rel="stylesheet" href="../shared.css">
+  <style>
+    .territory-hero {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 3rem 2rem 2rem;
+      border-bottom: 4px solid #16a34a;
+    }
+    .territory-hero .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #16a34a;
+      margin-bottom: 0.8rem;
+    }
+    .territory-hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+    .territory-hero .flag-name {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+    .territory-hero .flag {
+      font-size: 2.5rem;
+    }
+    .territory-hero .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.7rem;
+      background: #16a34a;
+      color: white;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+    }
+    .territory-hero .hero-summary {
+      max-width: 700px;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.8);
+      margin-top: 1rem;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      padding: 1.2rem 2rem;
+      background: var(--pale);
+      border-bottom: 1px solid var(--border);
+    }
+    .meta-item label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .meta-item value {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--ink);
+    }
+
+    .content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 900;
+      margin-bottom: 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 1.2em;
+      background: #16a34a;
+      border-radius: 2px;
+    }
+
+    .body-text {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+
+    .timeline {
+      margin: 1.5rem 0;
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 4.5rem 1fr;
+      gap: 1rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+    .timeline-year {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #16a34a;
+      padding-top: 0.1rem;
+    }
+    .timeline-event {
+      font-size: 0.93rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .atrocities-box {
+      background: #fff5f5;
+      border: 1px solid #fca5a5;
+      border-left: 4px solid var(--red);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .atrocities-box .box-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 0.8rem;
+    }
+    .atrocities-box p {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #450a0a;
+    }
+
+    .today-box {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-left: 4px solid var(--green);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .today-box .box-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 0.8rem;
+    }
+    .today-box p {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #14532d;
+    }
+
+    .sources {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid var(--border);
+    }
+    .sources h3 {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.8rem;
+    }
+    .sources ul {
+      list-style: none;
+    }
+    .sources li {
+      font-size: 0.8rem;
+      margin-bottom: 0.3rem;
+    }
+    .sources a {
+      color: var(--blue);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .sources a:hover {
+      text-decoration: underline;
+    }
+
+    .nav-territory {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: var(--pale);
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .nav-territory a {
+      color: var(--ink);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+    .nav-territory a:hover {
+      color: var(--red);
+    }
+
+    /* ---- Mobile (~325px and up) ---- */
+    @media (max-width: 600px) {
+      .territory-hero {
+        padding: 2rem 1.1rem 1.5rem;
+      }
+      .territory-hero .flag {
+        font-size: 2rem;
+      }
+      .territory-hero .hero-summary {
+        font-size: 1rem;
+      }
+      .meta-row {
+        gap: 0.9rem 1.5rem;
+        padding: 1rem 1.1rem;
+      }
+      .content {
+        padding: 2rem 1.1rem;
+      }
+      /* Stack the year above the event so the narrow event column has room. */
+      .timeline-item {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+      }
+      .atrocities-box,
+      .today-box {
+        padding: 1.2rem 1.1rem;
+      }
+      .nav-territory {
+        padding: 1rem 1.1rem;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="../index.html" class="nav-brand">The Colonial Project</a>
+    <a href="../index.html" class="nav-back">← All territories</a>
+    <span class="nav-note">Oceania</span>
+  </nav>
+
+  <div class="territory-hero">
+    <div class="eyebrow">Oceania</div>
+    <div class="flag-name">
+      <span class="flag">🇦🇺</span>
+      <h1>Australia</h1>
+    </div>
+    <span class="status-badge">Independent Commonwealth Realm</span>
+    <p class="hero-summary">Australia was claimed by Britain in 1770 on the legal fiction of terra nullius — that it was uninhabited land. The continent had between 300,000 and 1 million indigenous inhabitants. Colonisation brought disease, dispossession, and massacres. Australia became a federation in 1901 and is now a Commonwealth Realm.</p>
+  </div>
+
+  <div class="meta-row">
+    <div class="meta-item">
+      <label>Colonised</label>
+      <value>1788 (first penal colony)</value>
+    </div>
+    <div class="meta-item"><label>Independence</label><value>1901 (federation) / 1986 (full legal independence)</value></div>
+    <div class="meta-item">
+      <label>Region</label>
+      <value>Oceania</value>
+    </div>
+    <div class="meta-item">
+      <label>Current Status</label>
+      <value>Independent Commonwealth Realm</value>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2 class="section-title">Key events</h2>
+    <div class="timeline">
+      
+    <div class="timeline-item">
+      <div class="timeline-year">1770</div>
+      <div class="timeline-event">James Cook claims eastern Australia for Britain under terra nullius.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1788</div>
+      <div class="timeline-event">First Fleet arrives. Penal colony established at Sydney Cove.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1789</div>
+      <div class="timeline-event">Smallpox epidemic devastates Aboriginal populations around Sydney, killing an estimated half of those near the harbour. Its origin remains debated.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1838</div>
+      <div class="timeline-event">Myall Creek Massacre — 28 Aboriginal men, women and children murdered by settlers. Seven settlers hanged — one of the few times perpetrators were held accountable.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1869</div>
+      <div class="timeline-event">Legislation begins giving colonial authorities power to remove Aboriginal children from families.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1901</div>
+      <div class="timeline-event">Federation. The White Australia Policy formally begins.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">2008</div>
+      <div class="timeline-event">Prime Minister Kevin Rudd delivers formal apology to the Stolen Generations.</div>
+    </div>
+  
+    </div>
+
+    <hr class="section-rule">
+
+    <h2 class="section-title">Atrocities &amp; injustices</h2>
+    <div class="atrocities-box">
+      <div class="box-label">⚠ What the history books often omit</div>
+      <p>The Stolen Generations — Aboriginal and Torres Strait Islander children forcibly removed from their families by government authorities, mainly between about 1910 and 1970 (with removals beginning earlier) — is the defining atrocity of Australian colonialism. Estimates of the number removed vary widely, from around 20,000–25,000 up to 100,000; the official finding was that between one in ten and one in three Indigenous children were taken. The broader destruction of Aboriginal society through disease (sometimes deliberate), massacre, and dispossession reduced the indigenous population by an estimated 90% within decades of British arrival. A formal count of frontier massacres has documented over 400 massacre sites.</p>
+    </div>
+
+    <hr class="section-rule">
+
+    <h2 class="section-title">Today</h2>
+    <div class="today-box">
+      <div class="box-label">The present</div>
+      <p>Australia is a wealthy G20 nation. Indigenous Australians remain significantly disadvantaged across virtually every measure — health, education, incarceration, life expectancy. A 2023 referendum on an Indigenous Voice to Parliament was defeated. The republic debate continues periodically. Australia is a close ally of Britain and the US.</p>
+    </div>
+
+    <div class="sources">
+      <h3>Sources &amp; further reading</h3>
+      <ul><li><a href="https://en.wikipedia.org/wiki/Stolen_Generations" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Stolen_Generations</a></li><li><a href="https://en.wikipedia.org/wiki/History_of_Australia" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/History_of_Australia</a></li></ul>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <p>This is a personal education resource. Sources are linked above. History is contested — this represents one attempt to present facts often absent from English education.</p>
+  </footer>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

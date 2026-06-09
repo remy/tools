@@ -1,0 +1,135 @@
+/* Shared CSS — The British Colonial Project */
+
+:root {
+  --ink: #0f0f0f;
+  --paper: #fafaf7;
+  --pale: #f2f0ea;
+  --text: #2c2c2c;
+  --muted: #6b6b6b;
+  --border: #e0ddd5;
+  --red: #b91c1c;
+  --gold: #d97706;
+  --green: #16a34a;
+  --blue: #2563eb;
+
+  --font-display: 'Georgia', 'Times New Roman', serif;
+  --font-body: 'Georgia', serif;
+  --font-mono: 'Courier New', monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--paper);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* Navigation */
+.site-nav {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.9rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 2px solid var(--red);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.nav-brand {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 0.95rem;
+  color: var(--paper);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+.nav-brand:hover {
+  color: var(--gold);
+}
+.nav-note {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-left: auto;
+}
+.nav-back {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  margin-right: auto;
+}
+.nav-back:hover {
+  color: var(--gold);
+}
+
+/* Footer */
+.site-footer {
+  background: var(--ink);
+  color: rgba(255,255,255,0.5);
+  padding: 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.7;
+  text-align: center;
+  border-top: 2px solid var(--red);
+  margin-top: 4rem;
+}
+
+/* Utility */
+.section-rule {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 2rem 0;
+}
+
+/* Prevent any accidental horizontal overflow on small screens */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+img, svg, video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mobile — targets ~325px and up. Nav and footer are shared across all pages. */
+@media (max-width: 600px) {
+  .site-nav {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+  }
+  .nav-brand {
+    font-size: 0.85rem;
+  }
+  .nav-note {
+    /* drop the uppercase strapline on narrow screens — it competes with the brand */
+    display: none;
+  }
+  .nav-back {
+    font-size: 0.65rem;
+  }
+  .site-footer {
+    padding: 1.5rem 1.1rem;
+    font-size: 0.7rem;
+    margin-top: 2.5rem;
+  }
+}

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scotland — The British Colonial Project</title>
+  <meta name="description" content="Scotland and the British colonial project — the history of colonisation, the key events, and what the territory looks like today.">
+  <link rel="stylesheet" href="../shared.css">
+  <style>
+    .territory-hero {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 3rem 2rem 2rem;
+      border-bottom: 4px solid #2563eb;
+    }
+    .territory-hero .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #2563eb;
+      margin-bottom: 0.8rem;
+    }
+    .territory-hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+    .territory-hero .flag-name {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+    .territory-hero .flag {
+      font-size: 2.5rem;
+    }
+    .territory-hero .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.7rem;
+      background: #2563eb;
+      color: white;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+    }
+    .territory-hero .hero-summary {
+      max-width: 700px;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.8);
+      margin-top: 1rem;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      padding: 1.2rem 2rem;
+      background: var(--pale);
+      border-bottom: 1px solid var(--border);
+    }
+    .meta-item label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .meta-item value {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--ink);
+    }
+
+    .content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 900;
+      margin-bottom: 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 1.2em;
+      background: #2563eb;
+      border-radius: 2px;
+    }
+
+    .body-text {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+
+    .timeline {
+      margin: 1.5rem 0;
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 4.5rem 1fr;
+      gap: 1rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+    .timeline-year {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #2563eb;
+      padding-top: 0.1rem;
+    }
+    .timeline-event {
+      font-size: 0.93rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .atrocities-box {
+      background: #fff5f5;
+      border: 1px solid #fca5a5;
+      border-left: 4px solid var(--red);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .atrocities-box .box-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 0.8rem;
+    }
+    .atrocities-box p {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #450a0a;
+    }
+
+    .today-box {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-left: 4px solid var(--green);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .today-box .box-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 0.8rem;
+    }
+    .today-box p {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #14532d;
+    }
+
+    .sources {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid var(--border);
+    }
+    .sources h3 {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.8rem;
+    }
+    .sources ul {
+      list-style: none;
+    }
+    .sources li {
+      font-size: 0.8rem;
+      margin-bottom: 0.3rem;
+    }
+    .sources a {
+      color: var(--blue);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .sources a:hover {
+      text-decoration: underline;
+    }
+
+    .nav-territory {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: var(--pale);
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .nav-territory a {
+      color: var(--ink);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+    .nav-territory a:hover {
+      color: var(--red);
+    }
+
+    /* ---- Mobile (~325px and up) ---- */
+    @media (max-width: 600px) {
+      .territory-hero {
+        padding: 2rem 1.1rem 1.5rem;
+      }
+      .territory-hero .flag {
+        font-size: 2rem;
+      }
+      .territory-hero .hero-summary {
+        font-size: 1rem;
+      }
+      .meta-row {
+        gap: 0.9rem 1.5rem;
+        padding: 1rem 1.1rem;
+      }
+      .content {
+        padding: 2rem 1.1rem;
+      }
+      /* Stack the year above the event so the narrow event column has room. */
+      .timeline-item {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+      }
+      .atrocities-box,
+      .today-box {
+        padding: 1.2rem 1.1rem;
+      }
+      .nav-territory {
+        padding: 1rem 1.1rem;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="../index.html" class="nav-brand">The Colonial Project</a>
+    <a href="../index.html" class="nav-back">← All territories</a>
+    <span class="nav-note">British Isles</span>
+  </nav>
+
+  <div class="territory-hero">
+    <div class="eyebrow">British Isles</div>
+    <div class="flag-name">
+      <span class="flag">🏴󠁧󠁢󠁳󠁣󠁴󠁿</span>
+      <h1>Scotland</h1>
+    </div>
+    <span class="status-badge">Devolved Nation (UK)</span>
+    <p class="hero-summary">Scotland entered a union with England in 1707 through the Acts of Union — controversial at the time, with widespread accusations of bribery of Scottish parliamentarians. The Highland Clearances of the 18th–19th centuries forcibly removed thousands of Scots to make way for sheep farming. Scotland voted 55–45 to remain in the UK in 2014.</p>
+  </div>
+
+  <div class="meta-row">
+    <div class="meta-item">
+      <label>Colonised</label>
+      <value>1707 (Acts of Union)</value>
+    </div>
+    
+    <div class="meta-item">
+      <label>Region</label>
+      <value>British Isles</value>
+    </div>
+    <div class="meta-item">
+      <label>Current Status</label>
+      <value>Devolved Nation (UK)</value>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2 class="section-title">Key events</h2>
+    <div class="timeline">
+      
+    <div class="timeline-item">
+      <div class="timeline-year">1707</div>
+      <div class="timeline-event">Acts of Union merge the Scottish and English Parliaments. The Scottish Parliament is dissolved.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1746</div>
+      <div class="timeline-event">Battle of Culloden — the last pitched battle on British soil. The Jacobite rising is crushed. The Act of Proscription that follows bans the wearing of Highland dress (the Dress Act) and disarms the clans; the clan system is dismantled by the abolition of heritable jurisdictions.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1750</div>
+      <div class="timeline-event">Beginning of the Highland Clearances. Landlords evict thousands of tenant farmers to make way for sheep.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1999</div>
+      <div class="timeline-event">Scottish Parliament reconvened after 292 years.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">2014</div>
+      <div class="timeline-event">Scottish independence referendum. 55.3% voted to remain in the UK.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">2016</div>
+      <div class="timeline-event">Scotland votes 62% to Remain in the EU. UK votes Leave overall. SNP argues this breaks the terms of the 2014 referendum.</div>
+    </div>
+  
+    </div>
+
+    <hr class="section-rule">
+
+    <h2 class="section-title">Atrocities &amp; injustices</h2>
+    <div class="atrocities-box">
+      <div class="box-label">⚠ What the history books often omit</div>
+      <p>The Highland Clearances (roughly 1750–1860) involved the forced eviction of tens of thousands of Gaelic-speaking Highlanders from ancestral lands. Homes were burned, people were put on boats — many to Canada, Australia, and the US — so that landowners (often absentee English aristocracy) could run more profitable sheep farms. Entire communities were destroyed. In some areas, the population never recovered. The Gaelic language, already suppressed after Culloden, declined sharply as a result.</p>
+    </div>
+
+    <hr class="section-rule">
+
+    <h2 class="section-title">Today</h2>
+    <div class="today-box">
+      <div class="box-label">The present</div>
+      <p>Scotland has a devolved Parliament with significant powers. The SNP has governed since 2007 and continues to push for a second independence referendum, which Westminster refuses to grant. Around 1% of Scots can speak Gaelic (2022 census), but only about 0.1% record it as their main language; there are active revival efforts. The relationship with Westminster is deeply strained, particularly post-Brexit.</p>
+    </div>
+
+    <div class="sources">
+      <h3>Sources &amp; further reading</h3>
+      <ul><li><a href="https://en.wikipedia.org/wiki/Highland_Clearances" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Highland_Clearances</a></li><li><a href="https://en.wikipedia.org/wiki/Acts_of_Union_1707" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Acts_of_Union_1707</a></li></ul>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <p>This is a personal education resource. Sources are linked above. History is contested — this represents one attempt to present facts often absent from English education.</p>
+  </footer>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

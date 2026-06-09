@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jersey — The British Colonial Project</title>
+  <meta name="description" content="Jersey and the British colonial project — the history of colonisation, the key events, and what the territory looks like today.">
+  <link rel="stylesheet" href="../shared.css">
+  <style>
+    .territory-hero {
+      background: var(--ink);
+      color: var(--paper);
+      padding: 3rem 2rem 2rem;
+      border-bottom: 4px solid #d97706;
+    }
+    .territory-hero .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #d97706;
+      margin-bottom: 0.8rem;
+    }
+    .territory-hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+    .territory-hero .flag-name {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+    .territory-hero .flag {
+      font-size: 2.5rem;
+    }
+    .territory-hero .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.7rem;
+      background: #d97706;
+      color: white;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 2px;
+    }
+    .territory-hero .hero-summary {
+      max-width: 700px;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.8);
+      margin-top: 1rem;
+    }
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      padding: 1.2rem 2rem;
+      background: var(--pale);
+      border-bottom: 1px solid var(--border);
+    }
+    .meta-item label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .meta-item value {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--ink);
+    }
+
+    .content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 900;
+      margin-bottom: 1rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 1.2em;
+      background: #d97706;
+      border-radius: 2px;
+    }
+
+    .body-text {
+      font-size: 1rem;
+      line-height: 1.8;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+
+    .timeline {
+      margin: 1.5rem 0;
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 4.5rem 1fr;
+      gap: 1rem;
+      padding: 0.8rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-item:last-child {
+      border-bottom: none;
+    }
+    .timeline-year {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #d97706;
+      padding-top: 0.1rem;
+    }
+    .timeline-event {
+      font-size: 0.93rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .atrocities-box {
+      background: #fff5f5;
+      border: 1px solid #fca5a5;
+      border-left: 4px solid var(--red);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .atrocities-box .box-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--red);
+      margin-bottom: 0.8rem;
+    }
+    .atrocities-box p {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #450a0a;
+    }
+
+    .today-box {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-left: 4px solid var(--green);
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .today-box .box-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 0.8rem;
+    }
+    .today-box p {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      color: #14532d;
+    }
+
+    .sources {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid var(--border);
+    }
+    .sources h3 {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.8rem;
+    }
+    .sources ul {
+      list-style: none;
+    }
+    .sources li {
+      font-size: 0.8rem;
+      margin-bottom: 0.3rem;
+    }
+    .sources a {
+      color: var(--blue);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .sources a:hover {
+      text-decoration: underline;
+    }
+
+    .nav-territory {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: var(--pale);
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .nav-territory a {
+      color: var(--ink);
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+    .nav-territory a:hover {
+      color: var(--red);
+    }
+
+    /* ---- Mobile (~325px and up) ---- */
+    @media (max-width: 600px) {
+      .territory-hero {
+        padding: 2rem 1.1rem 1.5rem;
+      }
+      .territory-hero .flag {
+        font-size: 2rem;
+      }
+      .territory-hero .hero-summary {
+        font-size: 1rem;
+      }
+      .meta-row {
+        gap: 0.9rem 1.5rem;
+        padding: 1rem 1.1rem;
+      }
+      .content {
+        padding: 2rem 1.1rem;
+      }
+      /* Stack the year above the event so the narrow event column has room. */
+      .timeline-item {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+      }
+      .atrocities-box,
+      .today-box {
+        padding: 1.2rem 1.1rem;
+      }
+      .nav-territory {
+        padding: 1rem 1.1rem;
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="site-nav">
+    <a href="../index.html" class="nav-brand">The Colonial Project</a>
+    <a href="../index.html" class="nav-back">← All territories</a>
+    <span class="nav-note">Crown Dependencies</span>
+  </nav>
+
+  <div class="territory-hero">
+    <div class="eyebrow">Crown Dependencies</div>
+    <div class="flag-name">
+      <span class="flag">🇯🇪</span>
+      <h1>Jersey</h1>
+    </div>
+    <span class="status-badge">Crown Dependency</span>
+    <p class="hero-summary">Jersey is a Crown Dependency — not part of the UK, but the Crown is responsible for its defence and international representation. It has its own parliament, laws and tax system. Often used as an offshore financial centre.</p>
+  </div>
+
+  <div class="meta-row">
+    <div class="meta-item">
+      <label>Colonised</label>
+      <value>1066 (Norman Conquest)</value>
+    </div>
+    
+    <div class="meta-item">
+      <label>Region</label>
+      <value>Crown Dependencies</value>
+    </div>
+    <div class="meta-item">
+      <label>Current Status</label>
+      <value>Crown Dependency</value>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2 class="section-title">Key events</h2>
+    <div class="timeline">
+      
+    <div class="timeline-item">
+      <div class="timeline-year">1066</div>
+      <div class="timeline-event">Norman Conquest. Jersey comes under the same crown as England.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1204</div>
+      <div class="timeline-event">England loses Normandy. Jersey chooses to remain loyal to the English Crown.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1940</div>
+      <div class="timeline-event">German occupation during WWII (1940–1945). Jersey and the other Channel Islands were the only British soil occupied by Nazi Germany.</div>
+    </div>
+  
+    <div class="timeline-item">
+      <div class="timeline-year">1973</div>
+      <div class="timeline-event">UK joins the EEC. Jersey negotiates a special relationship — not a full member, but part of the customs union.</div>
+    </div>
+  
+    </div>
+
+    <hr class="section-rule">
+
+    <h2 class="section-title">Atrocities &amp; injustices</h2>
+    <div class="atrocities-box">
+      <div class="box-label">⚠ What the history books often omit</div>
+      <p>The wartime forced labour of concentration camp prisoners brought to Jersey by the Nazis — with some collaboration by the local administration — remains a difficult chapter in the island's history.</p>
+    </div>
+
+    <hr class="section-rule">
+
+    <h2 class="section-title">Today</h2>
+    <div class="today-box">
+      <div class="box-label">The present</div>
+      <p>Jersey is a self-governing dependency with its own financial centre. It is frequently criticised as a tax haven enabling wealth concealment. The islanders have a Norman-French cultural heritage; the Jèrriais language is classed by UNESCO as severely endangered, with only around 100 people naming it as their main language.</p>
+    </div>
+
+    <div class="sources">
+      <h3>Sources &amp; further reading</h3>
+      <ul><li><a href="https://en.wikipedia.org/wiki/Jersey" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Jersey</a></li></ul>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <p>This is a personal education resource. Sources are linked above. History is contested — this represents one attempt to present facts often absent from English education.</p>
+  </footer>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
