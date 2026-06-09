@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description"
+      content="Multiple checklists and todo lists with check timestamps, reusable templates, offline PouchDB storage and live CouchDB sync.">
+    <meta name="category" content="Productivity">
+    <title>Todo Lists</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="app">
+      <header class="header">
+        <button class="action-btn" id="btn-back" aria-label="All lists" hidden>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        <h1 class="header-title" id="header-title">Todo Lists</h1>
+        <button class="action-btn" id="btn-settings" aria-label="Settings">
+          <span class="icon-mask icon-settings" aria-hidden="true"></span>
+        </button>
+      </header>
+
+      <!-- Home / landing: all lists -->
+      <main class="home-view" id="home-view" hidden>
+        <!-- No lists yet -->
+        <div class="empty-app" id="empty-app" hidden>
+          <div class="empty-illustration">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+              <rect x="3.5" y="3" width="17" height="18" rx="3" stroke="currentColor" stroke-width="1.3" />
+              <path d="M8 9H16M8 13H16M8 17H12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+            </svg>
+          </div>
+          <h2>No lists yet</h2>
+          <p>Create a list for your camping trip, packing checklist, weekly chores — anything.</p>
+          <button class="btn btn-primary" id="empty-new-list">Create your first list</button>
+        </div>
+
+        <!-- One or more lists -->
+        <div class="home-lists" id="home-lists" hidden>
+          <ul class="pick-list" id="home-list"></ul>
+          <button class="btn btn-primary home-new-btn" id="home-new-list" type="button">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+            New list
+          </button>
+        </div>
+      </main>
+
+      <!-- Current list -->
+      <main class="list-view" id="list-view" hidden>
+        <div class="list-chrome">
+          <div class="progress-meter" id="progress-meter" hidden>
+            <div class="progress-track">
+              <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <span class="progress-label" id="progress-label"></span>
+          </div>
+          <button class="btn btn-ghost btn-sm reset-btn" id="reset-checks" hidden title="Uncheck every item">
+            <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
+              <path d="M3.5 9a5.5 5.5 0 1 1 1.6 3.9M3.5 13V9.5H7" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Reset
+          </button>
+        </div>
+
+        <ul class="todo-list" id="todo-list"></ul>
+        <p class="empty-list" id="empty-list" hidden>Nothing here yet. Add your first item below.</p>
+      </main>
+
+      <form class="add-bar" id="add-item-form">
+        <input type="text" id="add-item-input" placeholder="Add an item…" autocomplete="off" enterkeyhint="done">
+        <button type="submit" class="add-btn" aria-label="Add item">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- New list -->
+    <dialog id="new-list-dialog">
+      <div class="pop-header">
+        <h2>New list</h2>
+        <button class="pop-close" data-close="new-list-dialog" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <form class="pop-body" id="new-list-form">
+        <label class="field">
+          <span class="field-label">List name</span>
+          <input type="text" id="new-list-name" autocomplete="off" placeholder="Camping trip, Packing list…">
+        </label>
+        <label class="field">
+          <span class="field-label">Start from template</span>
+          <select id="new-list-template"></select>
+        </label>
+        <p class="field-hint-block">Pick a template to pre-fill the list with all its items. Manage templates in Settings.
+        </p>
+        <div class="pop-actions">
+          <button type="submit" class="btn btn-primary" id="new-list-create">Create list</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Item check history -->
+    <dialog id="history-dialog">
+      <div class="pop-header">
+        <h2 id="history-title">History</h2>
+        <button class="pop-close" data-close="history-dialog" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="pop-body">
+        <ul class="history-list" id="history-list"></ul>
+      </div>
+    </dialog>
+
+    <!-- Template editor -->
+    <dialog id="template-dialog">
+      <div class="pop-header">
+        <h2 id="template-editor-title">New Template</h2>
+        <button class="pop-close" data-close="template-dialog" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="pop-body">
+        <input type="hidden" id="template-edit-id">
+        <label class="field">
+          <span class="field-label">Template name</span>
+          <input type="text" id="template-name" autocomplete="off" placeholder="Camping checklist">
+        </label>
+        <label class="field">
+          <span class="field-label">Items — one per line</span>
+          <textarea id="template-items" rows="8" placeholder="Tent&#10;Sleeping bag&#10;Torch&#10;First aid kit"></textarea>
+        </label>
+        <div class="pop-actions">
+          <button class="btn btn-primary" id="template-save" type="button">Save template</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Settings -->
+    <dialog id="settings-dialog">
+      <div class="pop-header">
+        <h2>Settings</h2>
+        <button class="pop-close" data-close="settings-dialog" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="pop-body">
+        <div class="settings-section">
+          <div class="settings-head-row">
+            <h3 class="settings-heading">Templates</h3>
+            <button class="btn btn-ghost btn-sm" id="template-new" type="button">+ New</button>
+          </div>
+          <ul class="pick-list" id="templates-list"></ul>
+        </div>
+
+        <div class="settings-section">
+          <h3 class="settings-heading">Sync</h3>
+          <label class="field">
+            <span class="field-label">CouchDB URL</span>
+            <input type="url" id="sync-url" placeholder="https://user:pass@couch.example.com/todo-lists"
+              autocomplete="off">
+          </label>
+          <label class="field">
+            <span class="field-label">Bearer token (optional)</span>
+            <input type="password" id="sync-token" autocomplete="off">
+          </label>
+          <p class="sync-status" id="sync-status" aria-live="polite">Sync disabled.</p>
+          <p class="sync-hint">Replicates live against a CouchDB-compatible endpoint. The server must send CORS
+            headers.</p>
+          <div class="pop-actions">
+            <button class="btn btn-ghost" id="sync-pull" type="button"
+              title="Overwrite local with server data; leaves the remote untouched">Pull from server</button>
+            <button class="btn btn-ghost" id="sync-now" type="button">Sync now</button>
+            <button class="btn btn-primary" id="sync-save" type="button">Save sync settings</button>
+          </div>
+          <div class="share-row">
+            <button class="btn btn-ghost share-btn" id="sync-share" type="button" disabled>Copy share link</button>
+            <p class="sync-hint">Opens the app on another device pre-configured for this server. The link contains your
+              URL and token, so only share it with people you trust.</p>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="/vendor/pouchdb/pouchdb.min.js"></script>
+    <script type="module" src="main.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>

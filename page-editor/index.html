@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A live page editor: type directly into the page, toggle to raw HTML, edit minimal CSS in a side panel, and drag in files (images, fonts) that are cached in IndexedDB with nice names you can reference inside the page.">
+  <meta name="category" content="Web Demos">
+  <title>Page Editor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="toolbar">
+    <div class="toolbar-group brand">
+      <strong>Page Editor</strong>
+    </div>
+
+    <div class="toolbar-group format" id="format-tools">
+      <button type="button" data-cmd="bold" title="Bold"><b>B</b></button>
+      <button type="button" data-cmd="italic" title="Italic"><i>I</i></button>
+      <button type="button" data-block="h1" title="Heading 1">H1</button>
+      <button type="button" data-block="h2" title="Heading 2">H2</button>
+      <button type="button" data-block="p" title="Paragraph">¶</button>
+      <button type="button" data-cmd="insertUnorderedList" title="Bulleted list">•—</button>
+      <button type="button" data-link title="Insert link">🔗</button>
+    </div>
+
+    <div class="toolbar-group right">
+      <div class="seg" role="tablist" aria-label="Editing mode">
+        <button type="button" id="mode-visual" class="seg-btn active" role="tab" aria-selected="true">Visual</button>
+        <button type="button" id="mode-html" class="seg-btn" role="tab" aria-selected="false">HTML</button>
+      </div>
+      <button type="button" id="toggle-css" class="ghost" aria-pressed="false">CSS</button>
+      <button type="button" id="toggle-assets" class="ghost" aria-pressed="false">Files</button>
+      <button type="button" id="print" class="ghost" title="Print the rendered page">Print</button>
+      <span id="save-status" class="save-status" aria-live="polite"></span>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Editing canvas: an isolated iframe so user CSS can't leak into the chrome -->
+    <iframe id="canvas" title="Page content" class="canvas"></iframe>
+
+    <!-- Raw HTML source view (shares the same space as the canvas) -->
+    <textarea id="html-source" class="source" spellcheck="false" hidden
+              placeholder="<p>Your HTML… reference uploaded files with asset:nice-name</p>"></textarea>
+
+    <!-- CSS side panel -->
+    <aside id="css-panel" class="panel" hidden aria-label="CSS editor">
+      <div class="panel-head">
+        <span>CSS</span>
+        <button type="button" class="panel-close" data-close="css-panel" aria-label="Close CSS panel">×</button>
+      </div>
+      <textarea id="css-source" class="source css" spellcheck="false"
+                placeholder="body { font-family: sans-serif; }&#10;&#10;/* @font-face { src: url(asset:my-font); } */"></textarea>
+    </aside>
+
+    <!-- Files / assets side panel -->
+    <aside id="assets-panel" class="panel" hidden aria-label="Uploaded files">
+      <div class="panel-head">
+        <span>Files</span>
+        <button type="button" class="panel-close" data-close="assets-panel" aria-label="Close files panel">×</button>
+      </div>
+      <p class="panel-hint">Drag files anywhere to add them. Reference with <code>asset:name</code>.</p>
+      <ul id="asset-list" class="asset-list"></ul>
+      <p id="asset-empty" class="asset-empty">No files yet — drop some in.</p>
+    </aside>
+  </main>
+
+  <!-- Full-window drop overlay -->
+  <div id="drop-overlay" class="drop-overlay" hidden>
+    <div class="drop-card">Drop files to add them</div>
+  </div>
+
+  <script src="db.js"></script>
+  <script src="app.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

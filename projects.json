@@ -184,6 +184,11 @@
     "description": "Track your daily reading progress and visualize pages read over time",
     "title": "My Pages Read"
   },
+  "page-editor": {
+    "category": "Web Demos",
+    "description": "A live page editor: type directly into the page, toggle to raw HTML, edit minimal CSS in a side panel, and drag in files (images, fonts) that are cached in IndexedDB with nice names you can reference inside the page.",
+    "title": "Page Editor"
+  },
   "point-elevation": {
     "category": "Maps",
     "description": "Find the elevation above sea level for any point on an interactive map. Drag the map under the centre pin or search for an address with OpenStreetMap; elevation data comes from the Open-Meteo API.",
@@ -233,6 +238,11 @@
     "category": "Calculators",
     "description": "Add and subtract time durations with hours, minutes, and seconds",
     "title": "Time Calculator"
+  },
+  "todo": {
+    "category": "Productivity",
+    "description": "Multiple checklists and todo lists with check timestamps, reusable templates, offline PouchDB storage and live CouchDB sync.",
+    "title": "Todo Lists"
   },
   "trace-svg": {
     "category": "Developer Tools",

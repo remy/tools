@@ -36,7 +36,63 @@ dialog.addEventListener('click', (e) => {
 
 This works as long as the dialog has no padding (or the inner content fills it), so the only clicks whose `target` is the dialog itself are the ones on the backdrop.
 
+On mobile / narrow viewports, modals must fill the screen rather than float as a centred card or partial sheet. Add a media query that makes the `<dialog>` cover the full viewport with no rounded corners:
+
+```css
+@media (max-width: 639px) {
+  dialog {
+    inset: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+```
+
 Reserve `popover="auto"` for non-modal UI (menus, tooltips, dropdowns) where the rest of the page should remain interactive.
+
+## Shared icons
+
+Reusable icons live in `/icons` at the repo root (e.g. `/icons/settings.svg`) so every tool references the same asset. They are authored with `fill="currentColor"` and a `viewBox`.
+
+Render them with a CSS mask rather than inline `<svg>` or `<img>` — masking lets the icon take `currentColor`, so it inherits text colour and adapts to light/dark mode (an `<img>` can't be recoloured by CSS):
+
+```css
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-settings {
+  width: 1.25rem;
+  height: 1.25rem;
+  -webkit-mask-image: url(/icons/settings.svg);
+  mask-image: url(/icons/settings.svg);
+}
+```
+
+```html
+<span class="icon-mask icon-settings" aria-hidden="true"></span>
+```
+
+## Settings icon
+
+Whenever a tool exposes a settings entry point, the trigger must be an icon button using a recognisable settings (cog/gear) icon — not a text label or some other glyph. Give it an `aria-label="Settings"` and use the shared `/icons/settings.svg` via the mask technique above:
+
+```html
+<button class="action-btn" id="btn-settings" aria-label="Settings">
+  <span class="icon-mask icon-settings" aria-hidden="true"></span>
+</button>
+```
 
 ## Expandable sections
 
