@@ -234,6 +234,11 @@
     "description": "Add and subtract time durations with hours, minutes, and seconds",
     "title": "Time Calculator"
   },
+  "todo": {
+    "category": "Productivity",
+    "description": "Keep multiple checklists and todo lists with per-item check timestamps and history, one-tap reset, reusable templates, offline PouchDB storage and live CouchDB sync.",
+    "title": "Todo Lists"
+  },
   "trace-svg": {
     "category": "Developer Tools",
     "description": "Drop a PNG or JPG, trace it into black-and-white SVG paths, inspect with pan/zoom, then copy or download the SVG.",
