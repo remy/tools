@@ -209,7 +209,7 @@ body {
 
 .todo-item {
   display: flex;
-  align-items: flex-start;
+  align-items: anchor-center;
   gap: 0.625rem;
   padding: 0.625rem 0.75rem;
   background: var(--bg-card);
