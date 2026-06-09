@@ -54,17 +54,43 @@ On mobile / narrow viewports, modals must fill the screen rather than float as a
 
 Reserve `popover="auto"` for non-modal UI (menus, tooltips, dropdowns) where the rest of the page should remain interactive.
 
+## Shared icons
+
+Reusable icons live in `/icons` at the repo root (e.g. `/icons/settings.svg`) so every tool references the same asset. They are authored with `fill="currentColor"` and a `viewBox`.
+
+Render them with a CSS mask rather than inline `<svg>` or `<img>` — masking lets the icon take `currentColor`, so it inherits text colour and adapts to light/dark mode (an `<img>` can't be recoloured by CSS):
+
+```css
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-settings {
+  width: 1.25rem;
+  height: 1.25rem;
+  -webkit-mask-image: url(/icons/settings.svg);
+  mask-image: url(/icons/settings.svg);
+}
+```
+
+```html
+<span class="icon-mask icon-settings" aria-hidden="true"></span>
+```
+
 ## Settings icon
 
-Whenever a tool exposes a settings entry point, the trigger must be an icon button using a recognisable settings (cog/gear) icon — not a text label or some other glyph. Give it an `aria-label="Settings"`. A consistent inline SVG cog to reuse:
+Whenever a tool exposes a settings entry point, the trigger must be an icon button using a recognisable settings (cog/gear) icon — not a text label or some other glyph. Give it an `aria-label="Settings"` and use the shared `/icons/settings.svg` via the mask technique above:
 
 ```html
 <button class="action-btn" id="btn-settings" aria-label="Settings">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-    <circle cx="12" cy="12" r="3.25" stroke="currentColor" stroke-width="1.6" />
-    <path d="M19.4 13a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-      stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-  </svg>
+  <span class="icon-mask icon-settings" aria-hidden="true"></span>
 </button>
 ```
 
