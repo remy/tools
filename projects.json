@@ -236,7 +236,7 @@
   },
   "todo": {
     "category": "Productivity",
-    "description": "Keep multiple checklists and todo lists with per-item check timestamps and history, one-tap reset, reusable templates, offline PouchDB storage and live CouchDB sync.",
+    "description": "Multiple checklists and todo lists with check timestamps, reusable templates, offline PouchDB storage and live CouchDB sync.",
     "title": "Todo Lists"
   },
   "trace-svg": {
