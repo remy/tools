@@ -121,31 +121,6 @@ export async function deleteTemplate(id) {
   renderTemplates();
 }
 
-// ── Export / import ──
-export async function handleExport() {
-  const data = await db.exportData();
-  const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `todo-lists-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-export async function handleImport(file) {
-  try {
-    const data = JSON.parse(await file.text());
-    await db.importData(data);
-    await refreshAll();
-    renderTemplates();
-    $('settings-dialog').close();
-  } catch (err) {
-    alert('Import failed: ' + err.message);
-  }
-}
-
 // ── Sync controls ──
 export async function handleSyncSave() {
   const url = $('sync-url').value.trim();

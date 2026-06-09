@@ -442,9 +442,13 @@ dialog {
 
 @media (max-width: 639px) {
   dialog {
-    margin: auto 0.25rem 0.25rem;
-    max-width: calc(100vw - 0.5rem);
-    max-height: 88dvh;
+    inset: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
   }
 }
 
@@ -600,8 +604,6 @@ dialog {
   font-size: 0.75rem;
 }
 
-.import-label { cursor: pointer; }
-
 /* ── Pick lists (lists & templates) ── */
 .pick-list {
   list-style: none;
@@ -727,13 +729,6 @@ dialog {
 }
 
 .settings-head-row .settings-heading { margin-bottom: 0; }
-
-.data-row {
-  display: flex;
-  gap: 0.5rem;
-
-  & .btn { flex: 1; }
-}
 
 .sync-status {
   font-size: 0.8125rem;

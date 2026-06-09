@@ -7,7 +7,7 @@ import {
 } from './lists.js';
 import {
   openSettings, openTemplateEditor, saveTemplate, deleteTemplate,
-  handleExport, handleImport, handleSyncSave, handleSyncNow, handleSyncPull,
+  handleSyncSave, handleSyncNow, handleSyncPull,
 } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
@@ -172,11 +172,6 @@ export function bindEvents() {
   $('sync-save').addEventListener('click', handleSyncSave);
   $('sync-now').addEventListener('click', handleSyncNow);
   $('sync-pull').addEventListener('click', handleSyncPull);
-  $('btn-export').addEventListener('click', handleExport);
-  $('btn-import').addEventListener('change', (e) => {
-    if (e.target.files[0]) handleImport(e.target.files[0]);
-    e.target.value = '';
-  });
 
   // Close buttons (any element with data-close pointing at a dialog id)
   document.querySelectorAll('[data-close]').forEach((btn) => {

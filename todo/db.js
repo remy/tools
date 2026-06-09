@@ -500,56 +500,6 @@ class TodoDB {
     doc[key] = value;
     await db.put(doc);
   }
-
-  // ── Export / import ──
-  async exportData() {
-    const db = await this.open();
-    const lists = await this.getLists();
-    const templates = await this.getTemplates();
-    const allItems = await db.allDocs({
-      include_docs: true,
-      startkey: ITEM_PREFIX,
-      endkey: ITEM_PREFIX + HIGH,
-    });
-    const items = allItems.rows.map((r) => {
-      const { listId, id, text, checked, checkedAt, order, createdAt, history } = itemFromDoc(r.doc);
-      return { listId, id, text, checked, checkedAt, order, createdAt, history };
-    });
-    return {
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      lists,
-      items,
-      templates,
-    };
-  }
-
-  async importData(data) {
-    if (!data || data.version !== 1 || !Array.isArray(data.lists)) {
-      throw new Error('Invalid import file');
-    }
-    const db = await this.open();
-    // Wipe existing user data first (mirrors a fresh restore).
-    const wipe = [];
-    for (const prefix of [LIST_PREFIX, ITEM_PREFIX, TEMPLATE_PREFIX]) {
-      const res = await db.allDocs({ include_docs: true, startkey: prefix, endkey: prefix + HIGH });
-      for (const r of res.rows) wipe.push({ _id: r.id, _rev: r.doc._rev, _deleted: true });
-    }
-    if (wipe.length) await db.bulkDocs(wipe);
-
-    const docs = [];
-    for (const l of data.lists) {
-      docs.push(listToDoc({ ...l, id: l.id ?? crypto.randomUUID() }));
-    }
-    for (const it of (data.items || [])) {
-      if (!it.listId) continue;
-      docs.push(itemToDoc({ ...it, id: it.id ?? crypto.randomUUID() }));
-    }
-    for (const t of (data.templates || [])) {
-      docs.push(templateToDoc({ ...t, id: t.id ?? crypto.randomUUID() }));
-    }
-    if (docs.length) await db.bulkDocs(docs);
-  }
 }
 
 export const db = new TodoDB();
