@@ -1,8 +1,13 @@
 import { state } from './state.js';
-import { db, getSyncConfig, setSyncConfig } from './db.js';
+import { db, getSyncConfig, setSyncConfig, encodeSyncConfig, SHARE_PARAM } from './db.js';
 import { refreshAll } from './lists.js';
 
 const $ = (id) => document.getElementById(id);
+
+// Enable the share button only when there's a remote host to share.
+function updateShareAvailability(url) {
+  $('sync-share').disabled = !url;
+}
 
 // ── Sync status ──
 function statusText(s) {
@@ -28,12 +33,36 @@ export function openSettings() {
   const cfg = getSyncConfig();
   $('sync-url').value = cfg.url;
   $('sync-token').value = cfg.token;
+  updateShareAvailability(cfg.url);
 
   if (unsubStatus) unsubStatus();
   unsubStatus = db.onSyncStatus(renderSyncStatus);
 
   renderTemplates();
   $('settings-dialog').showModal();
+}
+
+// Build a link that encodes the current sync config and copy it to the
+// clipboard. Opening it on another device saves the config and reloads.
+let shareResetTimer = null;
+export async function handleShareLink() {
+  const cfg = getSyncConfig();
+  if (!cfg.url) return;
+  const link = `${location.origin}${location.pathname}?${SHARE_PARAM}=${encodeSyncConfig(cfg)}`;
+
+  const btn = $('sync-share');
+  const flash = (msg) => {
+    btn.textContent = msg;
+    clearTimeout(shareResetTimer);
+    shareResetTimer = setTimeout(() => { btn.textContent = 'Copy share link'; }, 2000);
+  };
+  try {
+    await navigator.clipboard.writeText(link);
+    flash('Copied!');
+  } catch {
+    // Clipboard blocked (e.g. insecure context) — surface the link to copy by hand.
+    prompt('Copy this sync link:', link);
+  }
 }
 
 // ── Templates ──
@@ -140,6 +169,7 @@ export async function handleSyncSave() {
       if (!ok) { btn.disabled = false; return; }
     }
     setSyncConfig({ url, token });
+    updateShareAvailability(url);
     // pullFirst when local has nothing to lose — protects a fresh client from
     // racing an empty push against the initial pull.
     await db.reopen({ pullFirst: !hasLocal });

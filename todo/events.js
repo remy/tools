@@ -7,7 +7,7 @@ import {
 } from './lists.js';
 import {
   openSettings, openTemplateEditor, saveTemplate, deleteTemplate,
-  handleSyncSave, handleSyncNow, handleSyncPull,
+  handleSyncSave, handleSyncNow, handleSyncPull, handleShareLink,
 } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
@@ -165,6 +165,7 @@ export function bindEvents() {
   $('sync-save').addEventListener('click', handleSyncSave);
   $('sync-now').addEventListener('click', handleSyncNow);
   $('sync-pull').addEventListener('click', handleSyncPull);
+  $('sync-share').addEventListener('click', handleShareLink);
 
   // Close buttons (any element with data-close pointing at a dialog id)
   document.querySelectorAll('[data-close]').forEach((btn) => {

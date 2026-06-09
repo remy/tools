@@ -11,6 +11,9 @@ const PouchDB = globalThis.PouchDB;
 const SYNC_PREFIX = 'todo-lists.sync.';
 const HIGH = '￿';
 
+// Query-string param that carries a shared sync config (URL-safe base64 JSON).
+export const SHARE_PARAM = 'sync';
+
 export function getSyncConfig() {
   const url = localStorage.getItem(SYNC_PREFIX + 'url') || '';
   const token = localStorage.getItem(SYNC_PREFIX + 'token') || '';
@@ -24,6 +27,27 @@ export function setSyncConfig({ url, token }) {
   };
   setOrClear('url', url);
   setOrClear('token', token);
+}
+
+// ── Shareable sync config (URL-safe base64 of a JSON {url, token}) ──
+// URL-safe so the value survives a query string untouched (no +, /, = that
+// URLSearchParams would otherwise mangle). UTF-8 aware so non-ASCII tokens
+// round-trip correctly.
+export function encodeSyncConfig({ url, token }) {
+  const json = JSON.stringify({ url, token: token || '' });
+  const bytes = new TextEncoder().encode(json);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+export function decodeSyncConfig(str) {
+  const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64);
+  const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+  const cfg = JSON.parse(new TextDecoder().decode(bytes));
+  if (!cfg || typeof cfg.url !== 'string') throw new Error('Malformed sync config');
+  return { url: cfg.url, token: typeof cfg.token === 'string' ? cfg.token : '' };
 }
 
 // ── Document <-> model mappers ──
