@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Screen Light</title>
+    <meta name="description"
+      content="Fill the whole screen with a solid colour of your choice and keep the display awake with the Screen Wake Lock API. Press and hold anywhere to exit.">
+    <meta name="category" content="Web Demos">
+    <meta name="theme-color" content="#ffffff">
+    <style>
+      :root {
+        --bg: #fafafa;
+        --surface: #ffffff;
+        --surface-2: #f4f4f5;
+        --border: #d4d4d8;
+        --text: #18181b;
+        --text-dim: #71717a;
+        --accent: #4f46e5;
+        --orange: #ea580c;
+        --radius: 12px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1117;
+          --surface: #1a1d27;
+          --surface-2: #242736;
+          --border: #2e3248;
+          --text: #e8e9f0;
+          --text-dim: #8b8fa8;
+          --accent: #6c63ff;
+          --orange: #f97316;
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        min-height: 100dvh;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* ─── Setup screen ─── */
+      .setup {
+        max-width: 460px;
+        margin-inline: auto;
+        padding: 2rem 1.25rem 4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+
+      .page-header {
+        text-align: center;
+      }
+
+      .page-header h1 {
+        font-size: clamp(1.6rem, 6vw, 2.25rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.4rem;
+
+        & span {
+          color: var(--accent);
+        }
+      }
+
+      .page-header p {
+        color: var(--text-dim);
+        font-size: 0.95rem;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+      }
+
+      /* Live preview of the chosen colour */
+      .preview {
+        position: relative;
+        height: 120px;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .preview .swatch-label {
+        font-family: ui-monospace, 'Cascadia Code', monospace;
+        font-size: 0.95rem;
+        font-weight: 600;
+        padding: 0.3em 0.7em;
+        border-radius: 99px;
+        background: #00000022;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+
+      .field-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-dim);
+      }
+
+      .colour-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      input[type="color"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 56px;
+        height: 56px;
+        padding: 0;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: none;
+        cursor: pointer;
+        flex-shrink: 0;
+      }
+
+      input[type="color"]::-webkit-color-swatch-wrapper {
+        padding: 4px;
+      }
+
+      input[type="color"]::-webkit-color-swatch {
+        border: none;
+        border-radius: 8px;
+      }
+
+      input[type="color"]::-moz-color-swatch {
+        border: none;
+        border-radius: 8px;
+      }
+
+      .hex-input {
+        flex: 1;
+        font-family: ui-monospace, 'Cascadia Code', monospace;
+        font-size: 1rem;
+        text-transform: uppercase;
+        padding: 0.65em 0.8em;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface-2);
+        color: var(--text);
+        min-width: 0;
+      }
+
+      .hex-input:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .presets {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+        gap: 0.6rem;
+      }
+
+      .preset {
+        aspect-ratio: 1;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        cursor: pointer;
+        padding: 0;
+        transition: transform 0.1s ease;
+      }
+
+      .preset:hover {
+        transform: scale(1.06);
+      }
+
+      .preset[aria-pressed="true"] {
+        outline: 3px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      .btn-activate {
+        font-family: inherit;
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 0.9em 1em;
+        border: none;
+        border-radius: var(--radius);
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+      }
+
+      .btn-activate:hover {
+        opacity: 0.9;
+      }
+
+      .btn-activate:active {
+        opacity: 0.8;
+      }
+
+      .note {
+        display: flex;
+        gap: 0.6rem;
+        align-items: flex-start;
+        font-size: 0.85rem;
+        color: var(--text-dim);
+        text-align: left;
+      }
+
+      .note.warn {
+        color: var(--orange);
+      }
+
+      .note .icon {
+        flex-shrink: 0;
+      }
+
+      /* ─── Light screen ─── */
+      .light {
+        position: fixed;
+        inset: 0;
+        background: #ffffff;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: none;
+        cursor: pointer;
+        overscroll-behavior: none;
+      }
+
+      .hint {
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        padding: 0.5em 1em;
+        border-radius: 99px;
+        background: #00000026;
+        color: #fff;
+        opacity: 1;
+        transition: opacity 0.6s ease;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      .light.dim-hint .hint {
+        opacity: 0;
+      }
+
+      /* Hold-to-exit progress ring, anchored to the touch point */
+      .hold-ring {
+        position: fixed;
+        width: 84px;
+        height: 84px;
+        margin: -42px 0 0 -42px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+      }
+
+      .hold-ring.active {
+        opacity: 1;
+      }
+
+      .hold-ring circle {
+        fill: none;
+        stroke-width: 6;
+        stroke-linecap: round;
+        transform: rotate(-90deg);
+        transform-origin: center;
+      }
+
+      .hold-ring .track {
+        stroke: #00000022;
+      }
+
+      .hold-ring .bar {
+        stroke: #ffffff;
+        transition: stroke-dashoffset 0.05s linear;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ─── Setup / colour picker ─── -->
+    <main class="setup" id="setup">
+      <header class="page-header">
+        <h1>Screen <span>Light</span></h1>
+        <p>Turn your display into a solid panel of light. Pick a colour, activate, and the screen stays awake until you press and hold to exit.</p>
+      </header>
+
+      <div class="card">
+        <div class="preview" id="preview">
+          <span class="swatch-label" id="swatch-label">#FFFFFF</span>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Colour</span>
+          <div class="colour-row">
+            <input type="color" id="colour" value="#ffffff" aria-label="Pick a colour">
+            <input type="text" class="hex-input" id="hex" value="#FFFFFF" aria-label="Hex colour value"
+              spellcheck="false" autocomplete="off" maxlength="7">
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Presets</span>
+          <div class="presets" id="presets"></div>
+        </div>
+
+        <button class="btn-activate" id="activate" type="button">Activate light</button>
+
+        <div class="note" id="support-note" hidden>
+          <span class="icon">⚠</span>
+          <span>The Screen Wake Lock API isn't available in this browser, so the screen may still dim. The colour fill will still work.</span>
+        </div>
+      </div>
+    </main>
+
+    <!-- ─── Full-screen colour ─── -->
+    <div class="light" id="light" hidden>
+      <span class="hint" id="hint">Press and hold to exit</span>
+      <svg class="hold-ring" id="hold-ring" viewBox="0 0 84 84" aria-hidden="true">
+        <circle class="track" cx="42" cy="42" r="36"></circle>
+        <circle class="bar" cx="42" cy="42" r="36"></circle>
+      </svg>
+    </div>
+
+    <script>
+      const PRESETS = [
+        '#ffffff', '#fff4e0', '#ffe9b0', '#ffcf6b',
+        '#ff7a59', '#ff3b30', '#ff2d95', '#a855f7',
+        '#3b82f6', '#22d3ee', '#22c55e', '#000000',
+      ];
+      const HOLD_MS = 650;
+      const HINT_FADE_MS = 2500;
+      const STORE_KEY = 'screen-light:colour';
+
+      const setupEl = document.getElementById('setup');
+      const lightEl = document.getElementById('light');
+      const previewEl = document.getElementById('preview');
+      const swatchLabel = document.getElementById('swatch-label');
+      const colourInput = document.getElementById('colour');
+      const hexInput = document.getElementById('hex');
+      const presetsEl = document.getElementById('presets');
+      const activateBtn = document.getElementById('activate');
+      const supportNote = document.getElementById('support-note');
+      const hintEl = document.getElementById('hint');
+      const ringEl = document.getElementById('hold-ring');
+      const ringBar = ringEl.querySelector('.bar');
+
+      const RING_CIRC = 2 * Math.PI * 36;
+      ringBar.style.strokeDasharray = RING_CIRC;
+      ringBar.style.strokeDashoffset = RING_CIRC;
+
+      const wakeLockSupported = 'wakeLock' in navigator;
+      if (!wakeLockSupported) supportNote.hidden = false;
+
+      // ─── Colour helpers ──────────────────────────────────────────────
+      const isHex = (v) => /^#[0-9a-fA-F]{6}$/.test(v);
+
+      function relativeLuminance(hex) {
+        const n = parseInt(hex.slice(1), 16);
+        const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+          .map((c) => {
+            c /= 255;
+            return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+          });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      }
+
+      function setColour(hex, { syncInput = true } = {}) {
+        if (!isHex(hex)) return;
+        hex = hex.toLowerCase();
+        if (syncInput) colourInput.value = hex;
+        hexInput.value = hex.toUpperCase();
+        const upper = hex.toUpperCase();
+
+        // Preview + active screen
+        previewEl.style.background = hex;
+        lightEl.style.background = hex;
+
+        // Contrast-aware overlay colour for label / hint / ring
+        const dark = relativeLuminance(hex) < 0.5;
+        const fg = dark ? '#ffffff' : '#18181b';
+        const fgSoft = dark ? '#ffffff26' : '#00000018';
+        swatchLabel.textContent = upper;
+        swatchLabel.style.color = fg;
+        swatchLabel.style.background = dark ? '#ffffff26' : '#00000026';
+        hintEl.style.color = fg;
+        hintEl.style.background = dark ? '#ffffff26' : '#00000018';
+        ringBar.style.stroke = fg;
+        ringEl.querySelector('.track').style.stroke = fgSoft;
+
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', hex);
+
+        // Reflect selection in presets
+        for (const btn of presetsEl.children) {
+          btn.setAttribute('aria-pressed', String(btn.dataset.colour === hex));
+        }
+
+        try { localStorage.setItem(STORE_KEY, hex); } catch {}
+      }
+
+      // ─── Build presets ───────────────────────────────────────────────
+      for (const c of PRESETS) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'preset';
+        btn.dataset.colour = c;
+        btn.style.background = c;
+        btn.setAttribute('aria-label', `Use ${c}`);
+        btn.setAttribute('aria-pressed', 'false');
+        btn.addEventListener('click', () => setColour(c));
+        presetsEl.appendChild(btn);
+      }
+
+      // ─── Input wiring ────────────────────────────────────────────────
+      colourInput.addEventListener('input', () => setColour(colourInput.value));
+
+      hexInput.addEventListener('input', () => {
+        let v = hexInput.value.trim();
+        if (v && !v.startsWith('#')) v = '#' + v;
+        if (isHex(v)) setColour(v);
+      });
+      hexInput.addEventListener('blur', () => {
+        if (!isHex(hexInput.value.trim())) hexInput.value = colourInput.value.toUpperCase();
+      });
+
+      // ─── Wake lock ───────────────────────────────────────────────────
+      let wakeLock = null;
+
+      async function requestWakeLock() {
+        if (!wakeLockSupported) return;
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => { wakeLock = null; });
+        } catch { /* user agent may reject; colour fill still works */ }
+      }
+
+      async function releaseWakeLock() {
+        try { await wakeLock?.release(); } catch {}
+        wakeLock = null;
+      }
+
+      // Re-acquire the lock when returning to the tab while the light is on.
+      document.addEventListener('visibilitychange', () => {
+        if (!lightEl.hidden && document.visibilityState === 'visible' && !wakeLock) {
+          requestWakeLock();
+        }
+      });
+
+      // ─── Activate / exit ─────────────────────────────────────────────
+      let hintTimer = null;
+
+      function scheduleHintFade() {
+        clearTimeout(hintTimer);
+        lightEl.classList.remove('dim-hint');
+        hintTimer = setTimeout(() => lightEl.classList.add('dim-hint'), HINT_FADE_MS);
+      }
+
+      async function activate() {
+        lightEl.hidden = false;
+        setupEl.hidden = true;
+        scheduleHintFade();
+        // Fullscreen is best-effort — the activate tap is the user gesture.
+        try { await document.documentElement.requestFullscreen?.(); } catch {}
+        await requestWakeLock();
+      }
+
+      async function exit() {
+        if (lightEl.hidden) return;
+        cancelHold();
+        clearTimeout(hintTimer);
+        // Hide first so the fullscreenchange handler below short-circuits
+        // instead of re-entering exit().
+        lightEl.hidden = true;
+        setupEl.hidden = false;
+        await releaseWakeLock();
+        if (document.fullscreenElement) {
+          try { await document.exitFullscreen(); } catch {}
+        }
+      }
+
+      activateBtn.addEventListener('click', activate);
+
+      // ─── Press-and-hold to exit ──────────────────────────────────────
+      let holdRAF = null;
+      let holdStart = 0;
+
+      function positionRing(x, y) {
+        ringEl.style.left = x + 'px';
+        ringEl.style.top = y + 'px';
+      }
+
+      function holdTick(now) {
+        const elapsed = now - holdStart;
+        const progress = Math.min(elapsed / HOLD_MS, 1);
+        ringBar.style.strokeDashoffset = RING_CIRC * (1 - progress);
+        if (progress >= 1) {
+          if (navigator.vibrate) navigator.vibrate(30);
+          exit();
+          return;
+        }
+        holdRAF = requestAnimationFrame(holdTick);
+      }
+
+      function startHold(e) {
+        // Re-show the hint on any interaction, then begin the hold timer.
+        scheduleHintFade();
+        positionRing(e.clientX, e.clientY);
+        ringEl.classList.add('active');
+        holdStart = performance.now();
+        cancelAnimationFrame(holdRAF);
+        holdRAF = requestAnimationFrame(holdTick);
+      }
+
+      function cancelHold() {
+        cancelAnimationFrame(holdRAF);
+        holdRAF = null;
+        ringEl.classList.remove('active');
+        ringBar.style.strokeDashoffset = RING_CIRC;
+      }
+
+      lightEl.addEventListener('pointerdown', startHold);
+      lightEl.addEventListener('pointerup', cancelHold);
+      lightEl.addEventListener('pointercancel', cancelHold);
+      lightEl.addEventListener('pointerleave', cancelHold);
+
+      // Leaving fullscreen (e.g. swipe / Esc) returns to setup too.
+      document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && !lightEl.hidden) exit();
+      });
+
+      // ─── Init ────────────────────────────────────────────────────────
+      let initial = '#ffffff';
+      try {
+        const saved = localStorage.getItem(STORE_KEY);
+        if (saved && isHex(saved)) initial = saved;
+      } catch {}
+      setColour(initial);
+    </script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
