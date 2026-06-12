@@ -12,7 +12,7 @@ export function openBreakdown() {
     list.innerHTML = '';
     emptyEl.hidden = false;
     document.getElementById('breakdown-total').innerHTML = formatCurrency(0, state.settings.displayCurrency) + '<span>/mo</span>';
-    document.getElementById('breakdown-popover').showPopover();
+    document.getElementById('breakdown-popover').showModal();
     return;
   }
 
@@ -85,5 +85,5 @@ export function openBreakdown() {
   document.getElementById('breakdown-total').innerHTML =
     formatCurrency(total, state.settings.displayCurrency) + '<span>/mo</span>';
 
-  document.getElementById('breakdown-popover').showPopover();
+  document.getElementById('breakdown-popover').showModal();
 }
