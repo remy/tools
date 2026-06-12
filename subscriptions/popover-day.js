@@ -61,5 +61,5 @@ export function openDaySheet(day) {
   }
 
   list.innerHTML = html;
-  popover.showPopover();
+  popover.showModal();
 }

@@ -136,18 +136,21 @@ export function bindEvents() {
   // Settings
   document.getElementById('btn-settings').addEventListener('click', openSettings);
 
-  // Popover close buttons
-  const subDialog = document.getElementById('sub-popover');
-  document.getElementById('sub-popover-close').addEventListener('click', () => subDialog.close());
-  subDialog.addEventListener('click', (e) => {
-    if (e.target === subDialog) subDialog.close();
-  });
-  document.getElementById('quick-add-close').addEventListener('click', () =>
-    document.getElementById('quick-add-popover').hidePopover());
-  document.getElementById('breakdown-close').addEventListener('click', () =>
-    document.getElementById('breakdown-popover').hidePopover());
-  document.getElementById('settings-close').addEventListener('click', () =>
-    document.getElementById('settings-popover').hidePopover());
+  // Dialog close buttons + backdrop click-to-dismiss
+  const dialogs = [
+    ['sub-popover', 'sub-popover-close'],
+    ['quick-add-popover', 'quick-add-close'],
+    ['breakdown-popover', 'breakdown-close'],
+    ['settings-popover', 'settings-close'],
+    ['day-sheet-popover', 'day-sheet-close'],
+  ];
+  for (const [dialogId, closeId] of dialogs) {
+    const dialog = document.getElementById(dialogId);
+    document.getElementById(closeId).addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+  }
 
   // Sub form
   document.getElementById('sub-form').addEventListener('submit', handleSubFormSubmit);
@@ -225,16 +228,13 @@ export function bindEvents() {
     openSubPopover(day);
   });
 
-  // Day sheet — close, open edit for tapped sub, add-to-this-day
-  document.getElementById('day-sheet-close').addEventListener('click', () =>
-    document.getElementById('day-sheet-popover').hidePopover());
-
+  // Day sheet — open edit for tapped sub, add-to-this-day
   document.getElementById('day-sheet-list').addEventListener('click', (e) => {
     const item = e.target.closest('.day-sheet-item');
     if (!item) return;
     const sub = state.subscriptions.find(s => s.id === item.dataset.subId);
     if (!sub) return;
-    document.getElementById('day-sheet-popover').hidePopover();
+    document.getElementById('day-sheet-popover').close();
     setTimeout(() => openSubPopover(null, sub), 200);
   });
 
@@ -248,7 +248,7 @@ export function bindEvents() {
 
   document.getElementById('day-sheet-add').addEventListener('click', () => {
     const day = getDaySheetDay();
-    document.getElementById('day-sheet-popover').hidePopover();
+    document.getElementById('day-sheet-popover').close();
     setTimeout(() => openSubPopover(day), 200);
   });
 
@@ -256,7 +256,7 @@ export function bindEvents() {
   document.getElementById('breakdown-list').addEventListener('click', async (e) => {
     const editBtn = e.target.closest('[data-edit-id]');
     if (editBtn) {
-      document.getElementById('breakdown-popover').hidePopover();
+      document.getElementById('breakdown-popover').close();
       const sub = state.subscriptions.find(s => s.id === editBtn.dataset.editId);
       if (sub) setTimeout(() => openSubPopover(null, sub), 200);
       return;

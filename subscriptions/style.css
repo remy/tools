@@ -476,16 +476,9 @@ dialog {
 }
 
 @media (max-width: 639px) {
-  [popover],
+  /* Every modal dialog fills the screen on narrow viewports
+     (supported down to a 325px-wide minimum). */
   dialog {
-    margin: auto 0.25rem 0.25rem;
-    max-width: calc(100vw - 0.5rem);
-    max-height: 88dvh;
-    border-radius: var(--radius-lg);
-  }
-
-  /* Edit modal fills the screen on narrow viewports */
-  dialog#sub-popover {
     inset: 0;
     margin: 0;
     width: 100vw;
