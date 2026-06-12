@@ -4,6 +4,10 @@ import { filteredSubs, isSubActive, subEndsInMonth, parseEndDate, convertAmount,
 export function openBreakdown() {
   const list = document.getElementById('breakdown-list');
   const emptyEl = document.getElementById('breakdown-empty');
+  const dialog = document.getElementById('breakdown-popover');
+  // showModal() throws if the dialog is already open — this function doubles
+  // as a re-render (e.g. after deleting an item), so only open when closed.
+  const show = () => { if (!dialog.open) dialog.showModal(); };
 
   const visible = filteredSubs().filter(sub =>
     isSubActive(sub, state.currentYear, state.currentMonth)
@@ -12,7 +16,7 @@ export function openBreakdown() {
     list.innerHTML = '';
     emptyEl.hidden = false;
     document.getElementById('breakdown-total').innerHTML = formatCurrency(0, state.settings.displayCurrency) + '<span>/mo</span>';
-    document.getElementById('breakdown-popover').showModal();
+    show();
     return;
   }
 
@@ -85,5 +89,5 @@ export function openBreakdown() {
   document.getElementById('breakdown-total').innerHTML =
     formatCurrency(total, state.settings.displayCurrency) + '<span>/mo</span>';
 
-  document.getElementById('breakdown-popover').showModal();
+  show();
 }
