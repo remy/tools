@@ -221,6 +221,7 @@ const fmtClock = (d) => (d ? pad(d.getHours()) + ":" + pad(d.getMinutes()) : "--
  * ---------------------------------------------------------------------- */
 const $ = (id) => document.getElementById(id);
 const els = {
+  sky: $("sky"),
   subtitle: $("subtitle"),
   uvArea: $("uv-area"),
   uvGrad: $("uv-grad"),
@@ -333,12 +334,21 @@ function render() {
   renderUvFill(riseMin, setMin, dayStart, t);
 
   // Fraction of the way from sunrise to sunset (linear in time).
+  const hasDay = riseMin !== null && setMin !== null && setMin > riseMin;
   let f;
-  if (riseMin !== null && setMin !== null && setMin > riseMin) {
+  if (hasDay) {
     f = (sel - riseMin) / (setMin - riseMin);
   } else {
     f = t.alwaysUp ? 0.5 : -1; // polar day -> peak; polar night -> hidden
   }
+
+  // Cache the daylight span so the drag handler can map a pointer position on
+  // the arc back to a time of day. Only a day with a real sunrise & sunset is
+  // scrubbable (polar day/night has no arc to drag along).
+  state.riseMin = riseMin;
+  state.setMin = setMin;
+  state.hasDay = hasDay;
+  els.sky.classList.toggle("scrubbable", hasDay);
 
   const below = f < 0 || f > 1; // sun beneath the horizon
   const fClamped = Math.max(-0.12, Math.min(1.12, f));
@@ -441,6 +451,68 @@ els.time.addEventListener("input", () => {
   state.minutes = Number(els.time.value);
   render();
 });
+
+/* -------------------------------------------------------------------------
+ * Drag the sun along its arc to scrub the time. The arc fraction is linear in
+ * time between sunrise and sunset, so we turn the pointer's angular position
+ * around the arc's ellipse into a fraction, then back into minutes-of-day.
+ * ---------------------------------------------------------------------- */
+let scrubbing = false;
+
+// Pointer client coords -> SVG user-space coords (handles the viewBox scaling).
+function clientToSvg(evt) {
+  const ctm = els.sky.getScreenCTM();
+  if (!ctm) return null;
+  const pt = els.sky.createSVGPoint();
+  pt.x = evt.clientX;
+  pt.y = evt.clientY;
+  return pt.matrixTransform(ctm.inverse());
+}
+
+// SVG point -> fraction along the arc (0 = sunrise/left, 1 = sunset/right).
+// The arc is the top of an ellipse centred at (CX, YB); recover the angle.
+function pointToFraction(p) {
+  const dx = (p.x - CX) / RX;
+  const dy = (YB - p.y) / RY;
+  let theta = Math.atan2(dy, dx); // PI (left) .. 0 (right) across the arc
+  theta = Math.max(0, Math.min(PI, theta));
+  return 1 - theta / PI;
+}
+
+function scrubTo(evt) {
+  if (!state.hasDay) return;
+  const p = clientToSvg(evt);
+  if (!p) return;
+  const f = pointToFraction(p);
+  const mins = state.riseMin + f * (state.setMin - state.riseMin);
+  state.minutes = Math.round(Math.max(0, Math.min(1439, mins)));
+  els.time.value = state.minutes;
+  render();
+}
+
+els.sky.addEventListener("pointerdown", (e) => {
+  if (!state.hasDay) return;
+  scrubbing = true;
+  els.sky.classList.add("scrubbing");
+  els.sky.setPointerCapture(e.pointerId);
+  scrubTo(e);
+  e.preventDefault();
+});
+
+els.sky.addEventListener("pointermove", (e) => {
+  if (scrubbing) scrubTo(e);
+});
+
+function endScrub(e) {
+  if (!scrubbing) return;
+  scrubbing = false;
+  els.sky.classList.remove("scrubbing");
+  try {
+    els.sky.releasePointerCapture(e.pointerId);
+  } catch {}
+}
+els.sky.addEventListener("pointerup", endScrub);
+els.sky.addEventListener("pointercancel", endScrub);
 
 els.now.addEventListener("click", setToNow);
 
