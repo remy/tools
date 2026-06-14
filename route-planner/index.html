@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Plan a walking or running route from your location or a chosen destination with a distance or time budget. Generates loops, out-and-back, and point-to-point routes on an interactive map, downloadable as GPX.">
+  <meta name="category" content="Maps">
+  <title>Route Planner</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header class="app-header">
+    <h1><span class="dot" aria-hidden="true"></span> Route Planner</h1>
+    <div class="header-actions">
+      <button class="action-btn" id="btn-download" type="button" disabled>
+        <span class="icon-mask icon-download" aria-hidden="true"></span>
+        <span class="btn-label">Download GPX</span>
+      </button>
+      <button class="action-btn" id="btn-settings" type="button" aria-label="Settings">
+        <span class="icon-mask icon-settings" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="controls" aria-label="Route controls">
+      <!-- Origin -->
+      <fieldset class="group">
+        <legend>Origin</legend>
+        <button class="locate-btn" id="btn-locate" type="button">
+          <span class="icon-mask icon-locate" aria-hidden="true"></span> Use my location
+        </button>
+        <div class="search">
+          <input id="origin-input" type="search" placeholder="Search an address…" autocomplete="off"
+            aria-label="Origin address">
+          <ul class="results" id="origin-results" hidden></ul>
+        </div>
+      </fieldset>
+
+      <!-- Destination -->
+      <fieldset class="group">
+        <legend>Destination <span class="muted">(optional)</span></legend>
+        <div class="search">
+          <input id="dest-input" type="search" placeholder="Search an address…" autocomplete="off"
+            aria-label="Destination address">
+          <ul class="results" id="dest-results" hidden></ul>
+        </div>
+        <p class="hint" id="dest-hint">Set a destination to aim an out &amp; back, or route straight there.</p>
+      </fieldset>
+
+      <!-- Mode -->
+      <fieldset class="group">
+        <legend>Mode</legend>
+        <label class="radio"><input type="radio" name="mode" value="walk"> Walk <span class="muted">~5 km/h</span></label>
+        <label class="radio"><input type="radio" name="mode" value="run" checked> Run <span class="muted">~10 km/h</span></label>
+        <label class="radio">
+          <input type="radio" name="mode" value="custom"> Custom
+          <input id="custom-speed" class="inline-num" type="number" min="1" max="25" step="0.5" value="8" disabled>
+          <span class="muted">km/h</span>
+        </label>
+      </fieldset>
+
+      <!-- Budget -->
+      <fieldset class="group">
+        <legend>
+          How far out?
+          <span class="unit-toggle" role="group" aria-label="Units">
+            <button type="button" id="unit-km" class="unit-btn" aria-pressed="true">km</button>
+            <button type="button" id="unit-mi" class="unit-btn" aria-pressed="false">mi</button>
+          </span>
+        </legend>
+        <label class="radio budget-row">
+          <input type="radio" name="budget" value="distance" checked> Distance
+          <input id="distance-input" class="inline-num" type="number" min="0.5" max="20" step="0.1" value="5">
+          <span class="muted" id="distance-unit">km</span>
+        </label>
+        <label class="radio budget-row">
+          <input type="radio" name="budget" value="time"> Time
+          <input id="time-input" class="inline-num" type="number" min="5" max="180" step="1" value="30">
+          <span class="muted">min</span>
+        </label>
+        <p class="hint" id="budget-hint"></p>
+      </fieldset>
+
+      <!-- Shape -->
+      <fieldset class="group">
+        <legend>Shape</legend>
+        <label class="radio shape-row">
+          <input type="radio" name="shape" value="loop"> Loop
+          <span class="hint inline" id="hint-loop"></span>
+        </label>
+        <label class="radio shape-row">
+          <input type="radio" name="shape" value="outback" checked> Out &amp; back
+          <span class="hint inline" id="hint-outback"></span>
+        </label>
+        <label class="radio shape-row" id="shape-dest-label">
+          <input type="radio" name="shape" value="dest" disabled> To destination
+          <span class="hint inline">one-way</span>
+        </label>
+      </fieldset>
+
+      <div class="actions">
+        <button class="primary" id="btn-generate" type="button">Generate →</button>
+        <button class="secondary" id="btn-regenerate" type="button" hidden>Regenerate</button>
+      </div>
+
+      <p class="error" id="error" role="alert" hidden></p>
+
+      <!-- Stats -->
+      <dl class="stats" id="stats" hidden>
+        <div class="stat" id="row-outward"><dt>Outward</dt><dd id="stat-outward">—</dd></div>
+        <div class="stat"><dt>Total</dt><dd id="stat-total">—</dd></div>
+        <div class="stat"><dt>Est. time</dt><dd id="stat-time">—</dd></div>
+        <div class="stat"><dt>Elevation</dt><dd id="stat-elev">—</dd></div>
+        <p class="stat-note" id="stat-note" hidden></p>
+      </dl>
+    </section>
+
+    <div class="map-wrap">
+      <div id="map"></div>
+      <div class="map-loading" id="map-loading" hidden>
+        <span class="spinner" aria-hidden="true"></span> Generating route…
+      </div>
+    </div>
+  </main>
+
+  <!-- Settings -->
+  <dialog id="settings-dialog">
+    <form method="dialog" class="dialog-body">
+      <h2>Settings</h2>
+      <label class="field">
+        <span>OpenRouteService API key</span>
+        <input id="ors-key-input" type="password" placeholder="Paste your free ORS key" autocomplete="off">
+      </label>
+      <p class="hint">
+        Routing uses the free <a href="https://openrouteservice.org/dev/#/signup" target="_blank" rel="noopener">OpenRouteService</a>
+        tier. Your key is stored only in this browser. Map tiles and address search need no key.
+      </p>
+      <p class="hint" id="settings-status"></p>
+      <div class="dialog-actions">
+        <button type="button" class="secondary" id="btn-clear-key">Clear</button>
+        <button type="submit" class="primary" id="btn-save-key">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <!-- Optional: copy config.example.js → config.js to preload an ORS key (gitignored). -->
+  <script src="config.js" onerror="this.remove()"></script>
+  <script type="module" src="js/main.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+
+</html>
