@@ -327,6 +327,16 @@ body {
   padding-top: 0.5rem;
   line-height: 1.4;
 }
+.export-row {
+  padding-top: 0.6rem;
+  margin-top: 0.4rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.export-row .secondary { flex: none; align-self: flex-start; }
+#strava-hint a { color: var(--accent); }
 
 /* ---- Map overlays + pins ---- */
 .map-loading {

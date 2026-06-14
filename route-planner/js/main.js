@@ -218,6 +218,7 @@ function renderStats(r) {
   const u = state.units;
   const speed = speedKmh();
   $("stats").hidden = false;
+  $("strava-hint").hidden = true;
 
   // Outward row
   const outwardRow = $("row-outward");
@@ -344,6 +345,16 @@ function init() {
     if (!state.route) return;
     const label = state.mode === "walk" ? "Walk" : "Run";
     downloadGpx(state.route.coordinates, label);
+  });
+
+  // Send to Strava: Strava has no route-creation API, so we download the GPX
+  // and open Strava's route builder for the user to upload it manually.
+  $("btn-strava").addEventListener("click", () => {
+    if (!state.route) return;
+    const label = state.mode === "walk" ? "Walk" : "Run";
+    downloadGpx(state.route.coordinates, label);
+    window.open("https://www.strava.com/maps/create", "_blank", "noopener");
+    $("strava-hint").hidden = false;
   });
 
   // Settings
