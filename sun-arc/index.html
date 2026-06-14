@@ -18,12 +18,15 @@
     <figure class="arc-wrap">
       <svg id="sky" viewBox="0 0 800 460" preserveAspectRatio="xMidYMid meet" role="img"
            aria-labelledby="sky-title">
-        <title id="sky-title">Path of the sun across the sky</title>
+        <title id="sky-title">Path of the sun across the sky — drag the sun to change the time</title>
 
         <defs>
           <!-- horizontal gradient coloured by UV level across the day -->
           <linearGradient id="uv-grad" gradientUnits="userSpaceOnUse" x1="80" y1="0" x2="720" y2="0"></linearGradient>
         </defs>
+
+        <!-- transparent hit layer so a pointer can grab the chart anywhere -->
+        <rect id="hit" x="0" y="0" width="800" height="460" fill="none" pointer-events="all" />
 
         <!-- horizon -->
         <line id="horizon" x1="40" y1="380" x2="760" y2="380" />

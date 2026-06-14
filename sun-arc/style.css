@@ -80,6 +80,16 @@ body {
   overflow: visible;
 }
 
+/* Drag along the arc to scrub the time. */
+#sky.scrubbable {
+  cursor: grab;
+  touch-action: none;
+}
+
+#sky.scrubbing {
+  cursor: grabbing;
+}
+
 #horizon {
   stroke: var(--line);
   stroke-width: 2;
