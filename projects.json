@@ -226,7 +226,7 @@
   },
   "sun-arc": {
     "category": "Productivity",
-    "description": "Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location. Defaults to today at the current moment, with a slider to scrub through the day.",
+    "description": "Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location, with UV levels across the day. Optionally factor in live cloud cover from OpenWeatherMap for your current location.",
     "title": "Sun Arc"
   },
   "tax": {
