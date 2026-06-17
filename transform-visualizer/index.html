@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="Visualise every CSS transform — translate, rotate, scale, skew, perspective and transform-origin — with live sliders, an editable HTML target, and custom CSS applied alongside.">
+    <meta name="category" content="Web Demos">
+    <title>CSS Transform Visualizer</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="container">
+      <header class="page-header">
+        <div class="badge">Web Platform</div>
+        <h1>CSS <span>Transform</span> Visualizer</h1>
+        <p>Drag the sliders to compose a transform, drag the marker to move the
+          <code>transform-origin</code>, then bring your own HTML and CSS — all applied live.</p>
+      </header>
+
+      <div class="layout">
+
+        <aside class="panel controls" aria-label="Transform controls">
+          <div class="field">
+            <label for="preset">Presets</label>
+            <select id="preset" class="text-input">
+              <option value="">Custom…</option>
+              <option value="flip-y">Flip (rotateY 180°)</option>
+              <option value="tilt">3D tilt</option>
+              <option value="pop">Pop (scale up)</option>
+              <option value="skew">Skew card</option>
+              <option value="isometric">Isometric</option>
+              <option value="spin">Spin 45°</option>
+            </select>
+          </div>
+
+          <div id="slider-groups"></div>
+
+          <details class="group" open>
+            <summary><span>Options</span><span class="chev" aria-hidden="true"></span></summary>
+            <div class="group-body options">
+              <label class="check"><input type="checkbox" id="opt-ghost" checked> <span>Show original (ghost)</span></label>
+              <label class="check"><input type="checkbox" id="opt-origin" checked> <span>Show origin marker</span></label>
+              <label class="check"><input type="checkbox" id="opt-smooth"> <span>Smooth transitions</span></label>
+              <label class="check"><input type="checkbox" id="opt-backface"> <span><code>backface-visibility: hidden</code></span></label>
+            </div>
+          </details>
+
+          <button type="button" id="reset" class="reset-btn">Reset transform</button>
+        </aside>
+
+        <section class="panel stage-wrap" aria-label="Preview">
+          <iframe id="preview" title="Transform preview"></iframe>
+          <p class="stage-hint">Drag the <span class="mk">⊕</span> marker to move the <code>transform-origin</code>.</p>
+        </section>
+
+        <section class="panel editors" aria-label="Editors">
+          <div class="field">
+            <label for="target-id">Target element ID</label>
+            <input id="target-id" class="text-input mono" value="target" spellcheck="false" autocomplete="off">
+            <p class="hint">The element carrying this id is the one that gets transformed — keep it in your HTML.</p>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <label for="html-editor">HTML</label>
+              <span class="err" id="html-err" hidden></span>
+            </div>
+            <textarea id="html-editor" class="code-area" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="css-editor">Custom CSS</label>
+            <p class="hint">Applied in the preview alongside the slider-driven transform. Style the target and its children however you like.</p>
+            <textarea id="css-editor" class="code-area" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+          </div>
+
+          <div class="field">
+            <div class="field-head">
+              <label>Generated transform CSS</label>
+              <button type="button" id="copy-css" class="mini-btn">Copy</button>
+            </div>
+            <pre class="code-out"><code id="code-out"></code></pre>
+          </div>
+        </section>
+
+      </div>
+
+      <footer>
+        Reference: <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/transform" target="_blank"
+          rel="noopener">MDN — transform</a> &middot;
+        <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/transform-origin" target="_blank"
+          rel="noopener">transform-origin</a>
+      </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>

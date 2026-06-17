@@ -254,6 +254,11 @@
     "description": "Drop a PNG or JPG, trace it into black-and-white SVG paths, inspect with pan/zoom, then copy or download the SVG.",
     "title": "Trace SVG"
   },
+  "transform-visualizer": {
+    "category": "Web Demos",
+    "description": "Visualise every CSS transform \u2014 translate, rotate, scale, skew, perspective and transform-origin \u2014 with live sliders, an editable HTML target, and custom CSS applied alongside.",
+    "title": "CSS Transform Visualizer"
+  },
   "url-to-meta": {
     "category": "Developer Tools",
     "description": "Extract metadata and Open Graph information from any URL",
