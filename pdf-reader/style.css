@@ -661,8 +661,12 @@ dialog::backdrop {
   }
 
   dialog.share-dialog {
-    inset: auto;
-    margin: auto;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    margin: 0;
     width: min(28rem, calc(100vw - 2rem));
     max-width: min(28rem, calc(100vw - 2rem));
     height: auto;
