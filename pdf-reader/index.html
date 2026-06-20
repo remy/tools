@@ -293,6 +293,7 @@
         font-weight: 700;
         letter-spacing: -0.01em;
         margin: 1.4em 0 0.5em;
+        scroll-margin-top: 4rem;
       }
 
       .doc h2 { font-size: 1.4em; }
@@ -306,7 +307,7 @@
         hyphens: auto;
       }
 
-      .doc ul {
+      .doc ul, .doc ol {
         margin: 0 0 0.9em;
         padding-left: 1.4em;
       }
@@ -343,6 +344,60 @@
         margin: 1.8em 0;
         border-top: 1px dashed var(--colour-border);
       }
+
+      /* Table of contents (collapsed by default) */
+      .toc {
+        margin: 0 0 1.8em;
+        border: 1px solid var(--colour-border);
+        border-radius: 0.5rem;
+        background: var(--colour-block-bg);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      .toc summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 0.65rem 0.9rem;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        display: flex;
+        align-items: center;
+      }
+      .toc summary::-webkit-details-marker { display: none; }
+
+      .toc summary::before {
+        content: "▸";
+        display: inline-block;
+        margin-right: 0.5em;
+        color: var(--colour-text-secondary);
+        transition: transform 0.15s ease;
+      }
+      .toc[open] summary::before { transform: rotate(90deg); }
+
+      .toc nav {
+        padding: 0 0.9rem 0.6rem;
+      }
+
+      .toc ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .toc li {
+        margin: 0.1em 0;
+      }
+
+      .toc a {
+        display: block;
+        padding: 0.25rem 0;
+        color: var(--colour-primary);
+        text-decoration: none;
+        font-size: 0.9375rem;
+        line-height: 1.35;
+      }
+
+      .toc a:hover { text-decoration: underline; }
 
       /* Settings dialog */
       dialog {
@@ -846,39 +901,66 @@
         let bodySize = 10, best = -1;
         for (const [k, v] of sizeWeight) if (v > best) { best = v; bodySize = k; }
 
-        // Group fragments into heading / list / paragraph blocks. A new
-        // paragraph starts on a column change, an extra-large vertical gap, a
-        // short previous line (paragraph end), or a fresh indent — otherwise
-        // wrapped lines flow together.
+        // Group fragments into heading / list / paragraph blocks. Wrapped lines
+        // flow together; a new paragraph starts on a column change, a big gap, a
+        // short previous line, or a fresh indent. List items absorb their own
+        // continuation lines (same column, normal spacing) so a wrapped bullet
+        // stays one <li> rather than splintering into stray paragraphs.
         const blocks = [];
-        let para = null, list = null;
+        let para = null, list = null, item = null;
         const flushPara = () => { if (para) { blocks.push(para); para = null; } };
-        const flushList = () => { if (list) { blocks.push(list); list = null; } };
+        const flushList = () => {
+          if (item) { list.items.push(item); item = null; }
+          if (list) { blocks.push(list); list = null; }
+        };
 
         for (const ln of frags) {
           const ratio = ln.size / bodySize;
           const trimmed = ln.text.trim();
           const allBold = ln.runs.length > 0 && ln.runs.every((r) => r.bold);
-          const isHeading = trimmed.length > 0 && trimmed.length < 160 &&
-            (ratio >= 1.18 || (ratio >= 1.05 && allBold && trimmed.length < 60));
+          // A heading is a short standalone line that is larger than body text
+          // (even slightly) or same-size but bold. Long lines never qualify.
+          const isHeading = trimmed.length >= 2 && trimmed.length < 90 &&
+            !BULLET_RE.test(ln.text) && !/[.,;:]$/.test(trimmed) &&
+            !/@|https?:\/\/|www\./i.test(trimmed) &&
+            (ratio >= 1.15 ||
+             (ratio >= 1.045 && trimmed.length < 72) ||
+             (allBold && ratio >= 0.98 && trimmed.length < 55));
           const isBullet = BULLET_RE.test(ln.text);
-          const prev = para ? para.lines[para.lines.length - 1] : null;
 
           if (isHeading) {
             flushPara(); flushList();
-            const level = ratio >= 2 ? 1 : ratio >= 1.6 ? 2 : ratio >= 1.3 ? 3 : 4;
+            // Detected headings are emphasised as at least an <h3> so they read
+            // as headings even when the source only bumped the size slightly.
+            const level = ratio >= 1.6 ? 1 : ratio >= 1.25 ? 2 : 3;
             blocks.push({ type: 'heading', level, y: ln.y, col: ln.col, runs: ln.runs });
             continue;
           }
 
           if (isBullet) {
             flushPara();
-            if (!list || list.col !== ln.col) { flushList(); list = { type: 'list', y: ln.y, col: ln.col, items: [] }; }
-            list.items.push(stripBullet(ln));
+            if (!list || list.col !== ln.col) {
+              flushList();
+              list = { type: 'list', y: ln.y, col: ln.col, ordered: /^\s*\d{1,3}[.)]/.test(ln.text), items: [] };
+            }
+            if (item) list.items.push(item);
+            item = { lines: [stripBullet(ln)] };
             continue;
           }
 
-          flushList();
+          // Continuation of the current list item?
+          if (list && item) {
+            const last = item.lines[item.lines.length - 1];
+            const lead = leading.get(list.col) || medSize * 1.4;
+            const cont = ln.col === list.col &&
+              (last.y - ln.y) <= lead * 1.45 &&
+              (ln.left - last.left) <= ln.size * 1.2;
+            if (cont) { item.lines.push(ln); continue; }
+            flushList();
+          }
+
+          // Otherwise it is paragraph text.
+          const prev = para ? para.lines[para.lines.length - 1] : null;
           const sameCol = prev && prev.col === ln.col;
           const lead = leading.get(ln.col) || medSize * 1.4;
           const gap = sameCol ? prev.y - ln.y : Infinity;
@@ -930,6 +1012,7 @@
         };
       }
 
+      // Strip the leading bullet / number marker, returning a full line object.
       function stripBullet(ln) {
         const runs = ln.runs.map((r) => ({ ...r }));
         const m = ln.text.match(BULLET_RE);
@@ -941,16 +1024,17 @@
             else { r.text = r.text.slice(n); n = 0; }
           }
         }
-        return { y: ln.y, runs };
+        return { y: ln.y, left: ln.left, right: ln.right, size: ln.size, runs, text: ln.text.replace(BULLET_RE, '') };
       }
 
-      function renderParagraph(p) {
+      // Flow a run of lines into inline HTML, joining wrapped lines with a space
+      // and healing soft line-wrap hyphens.
+      function renderLines(lines) {
         let html = '';
-        p.lines.forEach((ln, idx) => {
+        lines.forEach((ln, idx) => {
           const runs = ln.runs.map((r) => ({ ...r }));
-          const isLast = idx === p.lines.length - 1;
+          const isLast = idx === lines.length - 1;
           let joiner = ' ';
-          // Soft line-wrap hyphen: drop the trailing hyphen and join without a space.
           if (!isLast && /[A-Za-zÀ-ɏ]-$/.test(ln.text)) {
             const last = runs[runs.length - 1];
             last.text = last.text.replace(/-$/, '');
@@ -959,7 +1043,11 @@
           html += runsHTML(runs);
           if (!isLast) html += joiner;
         });
-        return '<p>' + html + '</p>';
+        return html;
+      }
+
+      function renderParagraph(p) {
+        return '<p>' + renderLines(p.lines) + '</p>';
       }
 
       /* ---------- Image extraction ---------- */
@@ -1113,22 +1201,54 @@
         return out;
       }
 
-      function blocksToHTML(blocks, pageNum) {
+      function blocksToHTML(blocks, pageNum, headings) {
         let html = '';
         for (const b of blocks) {
           if (b.type === 'heading') {
             const lvl = Math.min(6, b.level + 1); // leave <h1> for the document title
-            html += '<h' + lvl + '>' + runsHTML(b.runs) + '</h' + lvl + '>';
+            const id = 'pdfh-' + headings.length;
+            const text = b.runs.map((r) => r.text).join('').trim();
+            headings.push({ id, level: b.level, text });
+            html += '<h' + lvl + ' id="' + id + '">' + runsHTML(b.runs) + '</h' + lvl + '>';
           } else if (b.type === 'para') {
             html += renderParagraph(b);
           } else if (b.type === 'list') {
-            html += '<ul>' + b.items.map((it) => '<li>' + runsHTML(it.runs) + '</li>').join('') + '</ul>';
+            const tag = b.ordered ? 'ol' : 'ul';
+            html += '<' + tag + '>' +
+              b.items.map((it) => '<li>' + renderLines(it.lines) + '</li>').join('') +
+              '</' + tag + '>';
           } else if (b.type === 'image') {
             html += '<figure><img loading="lazy" src="' + b.src + '" alt="Image from page ' + pageNum +
               '" width="' + b.iw + '" height="' + b.ih + '"></figure>';
           }
         }
         return html;
+      }
+
+      // Build a collapsed-by-default table of contents from collected headings.
+      function buildTableOfContents(headings) {
+        if (headings.length < 3) return null;
+        const minLevel = Math.min(...headings.map((h) => h.level));
+        const details = document.createElement('details');
+        details.className = 'toc';
+        const summary = document.createElement('summary');
+        summary.textContent = 'Contents';
+        details.appendChild(summary);
+        const nav = document.createElement('nav');
+        const ul = document.createElement('ul');
+        for (const h of headings) {
+          if (!h.text) continue;
+          const li = document.createElement('li');
+          li.style.paddingLeft = (h.level - minLevel) * 0.9 + 'em';
+          const a = document.createElement('a');
+          a.href = '#' + h.id;
+          a.textContent = h.text;
+          li.appendChild(a);
+          ul.appendChild(li);
+        }
+        nav.appendChild(ul);
+        details.appendChild(nav);
+        return details;
       }
 
       let currentToken = 0;
@@ -1188,6 +1308,7 @@
           } catch (_) { /* ignore */ }
 
           const total = pdf.numPages;
+          const headings = [];
           for (let p = 1; p <= total; p++) {
             if (token !== currentToken) return;
             toolbarProgress.textContent = 'Reading page ' + p + ' of ' + total + '…';
@@ -1207,7 +1328,7 @@
             const section = document.createElement('section');
             section.className = 'pdf-page';
             section.dataset.page = String(p);
-            section.innerHTML = blocksToHTML(healed, p);
+            section.innerHTML = blocksToHTML(healed, p, headings);
             doc.appendChild(section);
 
             page.cleanup();
@@ -1216,6 +1337,11 @@
           }
 
           if (token !== currentToken) return;
+
+          // Prepend a collapsed table of contents once the whole doc is parsed.
+          const toc = buildTableOfContents(headings);
+          if (toc) doc.insertBefore(toc, doc.querySelector('.pdf-page'));
+
           toolbarProgress.textContent = total + (total === 1 ? ' page' : ' pages');
         } catch (err) {
           if (token !== currentToken) return;
