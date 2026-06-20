@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-      content="Upload a PDF and reflow it into a responsive, mobile-friendly article — carrying across images and as much formatting as possible — so you can read it without any horizontal scrolling." />
+      content="Upload a PDF and reflow it into a responsive, mobile-friendly article — carrying across images and as much formatting as possible — so you can read it without any horizontal scrolling. Optionally save and share converted documents via CouchDB." />
     <meta name="category" content="Productivity" />
     <title>PDF Reader</title>
     <link rel="icon" type="image/svg+xml"
@@ -482,6 +482,85 @@
         color: #fff;
       }
 
+      .dialog-divider {
+        border: none;
+        border-top: 1px solid var(--colour-border);
+        margin: var(--space-lg) 0;
+      }
+
+      .field-hint {
+        font-size: 0.8125rem;
+        color: var(--colour-text-secondary);
+        line-height: 1.45;
+        margin-bottom: var(--space-md);
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
+      .input-label {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        margin-bottom: var(--space-xs);
+      }
+
+      .input-label .muted { color: var(--colour-text-secondary); font-weight: 400; }
+
+      .field input[type="url"],
+      .field input[type="text"],
+      .field input[type="password"] {
+        width: 100%;
+        padding: 0.5rem 0.6rem;
+        margin-bottom: var(--space-md);
+        font: inherit;
+        font-size: 0.875rem;
+        color: var(--colour-text);
+        background: var(--colour-bg-secondary);
+        border: 1px solid var(--colour-border);
+        border-radius: 0.375rem;
+      }
+
+      .field input:focus-visible {
+        outline: 2px solid var(--colour-primary);
+        outline-offset: 1px;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+      }
+
+      .action-btn.primary {
+        background: var(--colour-primary);
+        border-color: var(--colour-primary);
+        color: #fff;
+      }
+
+      .action-btn.primary:hover {
+        background: var(--colour-primary-hover);
+        border-color: var(--colour-primary-hover);
+      }
+
+      .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .couch-status {
+        margin-top: var(--space-sm);
+        font-size: 0.8125rem;
+        color: var(--colour-text-secondary);
+        min-height: 1.2em;
+      }
+
+      .couch-status[data-state="error"] { color: #b91c1c; }
+      .couch-status[data-state="ok"] { color: #15803d; }
+      @media (prefers-color-scheme: dark) {
+        .couch-status[data-state="error"] { color: #f87171; }
+        .couch-status[data-state="ok"] { color: #4ade80; }
+      }
+
       @media (max-width: 639px) {
         dialog {
           inset: 0;
@@ -608,6 +687,7 @@
       <div class="toolbar">
         <span class="toolbar-name" id="toolbar-name">document.pdf</span>
         <span class="toolbar-progress" id="toolbar-progress" aria-live="polite"></span>
+        <button class="action-btn" id="btn-share" type="button">Share</button>
         <button class="action-btn icon-only" id="btn-settings" aria-label="Settings">
           <span class="icon-mask icon-settings" aria-hidden="true"></span>
         </button>
@@ -651,9 +731,32 @@
             <button type="button" data-value="wide">Wide</button>
           </div>
         </div>
+
+        <hr class="dialog-divider">
+
+        <div class="field">
+          <span class="field-label">Share via CouchDB</span>
+          <p class="field-hint">
+            Connect a CouchDB database to save converted documents and share them by link.
+            Anyone you share a document link with needs this same connection in their settings —
+            send them the setup link below to add it automatically.
+          </p>
+          <label class="input-label" for="couch-url">Database URL</label>
+          <input type="url" id="couch-url" placeholder="https://example.com/pdf-reader" autocomplete="off"
+            autocapitalize="off" spellcheck="false">
+          <label class="input-label" for="couch-token">Access token <span class="muted">(optional)</span></label>
+          <input type="password" id="couch-token" placeholder="Bearer token" autocomplete="off"
+            autocapitalize="off" spellcheck="false">
+          <div class="button-row">
+            <button class="action-btn primary" id="couch-save" type="button">Save connection</button>
+            <button class="action-btn" id="couch-share-setup" type="button" disabled>Copy setup link</button>
+          </div>
+          <p class="couch-status" id="couch-status" aria-live="polite"></p>
+        </div>
       </div>
     </dialog>
 
+    <script src="/vendor/pouchdb/pouchdb.min.js"></script>
     <script type="module">
       import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.min.mjs';
 
@@ -711,13 +814,188 @@
       applySettings();
 
       const settingsDialog = document.getElementById('settings-dialog');
-      document.getElementById('btn-settings').addEventListener('click', () => settingsDialog.showModal());
+      document.getElementById('btn-settings').addEventListener('click', () => {
+        syncCouchUI();
+        setCouchStatus('');
+        settingsDialog.showModal();
+      });
       document.getElementById('settings-close').addEventListener('click', () => settingsDialog.close());
       settingsDialog.addEventListener('click', (e) => {
         if (e.target === settingsDialog) settingsDialog.close();
       });
 
       document.getElementById('btn-new').addEventListener('click', () => window.__pdfEarly.openFilePicker());
+
+      /* ---------- Sharing via CouchDB ---------- */
+
+      const PouchDB = globalThis.PouchDB;
+      const COUCH_PREFIX = 'pdf-reader:couch.';
+      const DOC_PARAM = 'doc';
+      const SETUP_PARAM = 'couch';
+
+      function getCouchConfig() {
+        return {
+          url: localStorage.getItem(COUCH_PREFIX + 'url') || '',
+          token: localStorage.getItem(COUCH_PREFIX + 'token') || '',
+        };
+      }
+
+      function setCouchConfig({ url, token }) {
+        const setOrClear = (k, v) => {
+          if (v) localStorage.setItem(COUCH_PREFIX + k, String(v));
+          else localStorage.removeItem(COUCH_PREFIX + k);
+        };
+        setOrClear('url', url);
+        setOrClear('token', token);
+      }
+
+      // URL-safe base64 of {url, token} so the value survives a query string.
+      function encodeCouchConfig({ url, token }) {
+        const bytes = new TextEncoder().encode(JSON.stringify({ url, token: token || '' }));
+        let bin = '';
+        for (const b of bytes) bin += String.fromCharCode(b);
+        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      }
+
+      function decodeCouchConfig(str) {
+        const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        const cfg = JSON.parse(new TextDecoder().decode(bytes));
+        if (!cfg || typeof cfg.url !== 'string') throw new Error('Malformed config');
+        return { url: cfg.url, token: typeof cfg.token === 'string' ? cfg.token : '' };
+      }
+
+      function remoteDb(cfg) {
+        const opts = {};
+        if (cfg.token) {
+          opts.fetch = (url, init) => {
+            const headers = new Headers(init?.headers || {});
+            headers.set('Authorization', 'Bearer ' + cfg.token);
+            return PouchDB.fetch(url, { ...init, headers });
+          };
+        }
+        return new PouchDB(cfg.url, opts);
+      }
+
+      // ── Settings dialog: CouchDB controls ──
+      const couchUrl = document.getElementById('couch-url');
+      const couchToken = document.getElementById('couch-token');
+      const couchStatus = document.getElementById('couch-status');
+      const couchSetupBtn = document.getElementById('couch-share-setup');
+      const shareBtn = document.getElementById('btn-share');
+
+      function setCouchStatus(msg, state) {
+        couchStatus.textContent = msg || '';
+        if (state) couchStatus.dataset.state = state; else delete couchStatus.dataset.state;
+      }
+
+      function syncCouchUI() {
+        const cfg = getCouchConfig();
+        couchUrl.value = cfg.url;
+        couchToken.value = cfg.token;
+        couchSetupBtn.disabled = !cfg.url;
+      }
+
+      document.getElementById('couch-save').addEventListener('click', async () => {
+        const url = couchUrl.value.trim().replace(/\/+$/, '');
+        const token = couchToken.value.trim();
+        setCouchConfig({ url, token });
+        syncCouchUI();
+        if (!url) { setCouchStatus('Connection cleared.'); return; }
+        setCouchStatus('Checking connection…');
+        try {
+          await remoteDb({ url, token }).info();
+          setCouchStatus('Connected.', 'ok');
+        } catch (err) {
+          setCouchStatus('Saved, but could not reach the database: ' + (err?.message || err), 'error');
+        }
+      });
+
+      let setupResetTimer = null;
+      couchSetupBtn.addEventListener('click', async () => {
+        const cfg = getCouchConfig();
+        if (!cfg.url) return;
+        const link = location.origin + location.pathname + '?' + SETUP_PARAM + '=' + encodeCouchConfig(cfg);
+        await copyOrPrompt(link, couchSetupBtn, 'Copy setup link');
+      });
+
+      // Copy text to the clipboard, flashing the button; fall back to a prompt.
+      async function copyOrPrompt(text, btn, restoreLabel) {
+        const flash = (msg) => {
+          if (!btn) return;
+          btn.textContent = msg;
+          clearTimeout(setupResetTimer);
+          setupResetTimer = setTimeout(() => { btn.textContent = restoreLabel; }, 2000);
+        };
+        try {
+          await navigator.clipboard.writeText(text);
+          flash('Copied!');
+        } catch (_) {
+          window.prompt('Copy this link:', text);
+        }
+      }
+
+      // ── Toolbar: save the current document and copy a share link ──
+      let shareBusy = false;
+      shareBtn.addEventListener('click', async () => {
+        if (shareBusy) return;
+        const cfg = getCouchConfig();
+        if (!cfg.url) {
+          setCouchStatus('Add a CouchDB connection below, then share.', 'error');
+          settingsDialog.showModal();
+          syncCouchUI();
+          couchUrl.focus();
+          return;
+        }
+        shareBusy = true;
+        const original = shareBtn.textContent;
+        shareBtn.textContent = 'Saving…';
+        shareBtn.disabled = true;
+        try {
+          const id = 'pdfdoc-' + crypto.randomUUID();
+          await remoteDb(cfg).put({
+            _id: id,
+            type: 'pdfdoc',
+            title: toolbarName.textContent || 'Shared document',
+            html: doc.innerHTML,
+            createdAt: Date.now(),
+          });
+          const link = location.origin + location.pathname + '?' + DOC_PARAM + '=' + id;
+          shareBtn.textContent = 'Saved';
+          await copyOrPrompt(link, null);
+          shareBtn.textContent = 'Link copied!';
+          setTimeout(() => { shareBtn.textContent = original; }, 2200);
+        } catch (err) {
+          console.error(err);
+          shareBtn.textContent = 'Share failed';
+          setTimeout(() => { shareBtn.textContent = original; }, 2200);
+        } finally {
+          shareBusy = false;
+          shareBtn.disabled = false;
+        }
+      });
+
+      // ── Open a shared document by id ──
+      async function openSharedDoc(id) {
+        const cfg = getCouchConfig();
+        showReader('Shared document');
+        toolbarProgress.textContent = 'Loading shared document…';
+        if (!cfg.url) {
+          showError('This shared link needs a CouchDB connection. Add one in settings (or open a setup link), then reopen this link.');
+          settingsDialog.showModal();
+          syncCouchUI();
+          return;
+        }
+        try {
+          const docRec = await remoteDb(cfg).get(id);
+          toolbarName.textContent = docRec.title || 'Shared document';
+          doc.innerHTML = docRec.html || '';
+          toolbarProgress.textContent = '';
+        } catch (err) {
+          console.error(err);
+          showError('Could not load this shared document. Check that your CouchDB connection is correct and the link is valid.');
+        }
+      }
 
       /* ---------- Geometry / matrix helpers ---------- */
 
@@ -1354,6 +1632,30 @@
       }
 
       window.__pdfEarly.register(openPdf);
+
+      // If opened from a setup link (?couch=…), save the connection and strip
+      // the param via replace() so the token stays out of history. A ?doc= param
+      // is preserved across the reload so a combined link still opens the doc.
+      function consumeSetupLink() {
+        const params = new URLSearchParams(location.search);
+        const enc = params.get(SETUP_PARAM);
+        if (!enc) return false;
+        try {
+          const cfg = decodeCouchConfig(enc);
+          if (cfg.url) setCouchConfig(cfg);
+        } catch (err) {
+          console.error('Ignoring invalid setup link', err);
+        }
+        params.delete(SETUP_PARAM);
+        const qs = params.toString();
+        location.replace(location.origin + location.pathname + (qs ? '?' + qs : '') + location.hash);
+        return true;
+      }
+
+      if (!consumeSetupLink()) {
+        const sharedId = new URLSearchParams(location.search).get(DOC_PARAM);
+        if (sharedId) openSharedDoc(sharedId);
+      }
     </script>
     <script>navigator.serviceWorker?.register("/sw.js")</script>
   </body>
