@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="Upload a PDF and reflow it into a responsive, mobile-friendly article — carrying across images and as much formatting as possible — so you can read it without any horizontal scrolling. Optionally save and share converted documents via CouchDB." />
+    <meta name="category" content="Productivity" />
+    <title>PDF Reader</title>
+    <link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Epath%7Bfill:%2318181b%7D@media (prefers-color-scheme:dark)%7Bpath%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Cpath d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v1.5H8V13zm0 3h8v1.5H8V16zm0-6h3v1.5H8V10z'/%3E%3C/svg%3E">
+    <style>
+      :root {
+        --colour-bg: #fafafa;
+        --colour-bg-secondary: #f4f4f5;
+        --colour-border: #d4d4d8;
+        --colour-text: #18181b;
+        --colour-text-secondary: #52525b;
+        --colour-primary: #2563eb;
+        --colour-primary-hover: #1d4ed8;
+        --colour-primary-light: #dbeafe;
+        --colour-block-bg: #ffffff;
+        --colour-block-border: #e4e4e7;
+        --colour-shadow: rgba(0, 0, 0, 0.08);
+
+        --space-xs: 0.25rem;
+        --space-sm: 0.5rem;
+        --space-md: 0.75rem;
+        --space-lg: 1rem;
+        --space-xl: 1.5rem;
+        --space-2xl: 2rem;
+
+        /* Reading preferences — overridden from JS / settings */
+        --reading-size: 1.125rem;
+        --reading-width: 42rem;
+        --reading-family: Georgia, "Iowan Old Style", "Times New Roman", Times, serif;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --colour-bg: #0a0a0a;
+          --colour-bg-secondary: #171717;
+          --colour-border: #2a2a2a;
+          --colour-text: #fafafa;
+          --colour-text-secondary: #a1a1aa;
+          --colour-primary-light: #1e3a8a;
+          --colour-block-bg: #141414;
+          --colour-block-border: #262626;
+          --colour-shadow: rgba(0, 0, 0, 0.5);
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        color: var(--colour-text);
+        background: var(--colour-bg);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        min-height: 100vh;
+        overflow-wrap: break-word;
+      }
+
+      /* Shared icon mask technique */
+      .icon-mask {
+        display: inline-block;
+        background-color: currentColor;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+      }
+
+      .icon-settings {
+        width: 1.25rem;
+        height: 1.25rem;
+        -webkit-mask-image: url(/icons/settings.svg);
+        mask-image: url(/icons/settings.svg);
+      }
+
+      /* Drop overlay — covers the page during drag */
+      body.dragover::after {
+        content: "Drop your PDF";
+        position: fixed;
+        inset: var(--space-lg);
+        border: 3px dashed var(--colour-primary);
+        background: var(--colour-primary-light);
+        color: var(--colour-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        z-index: 2000;
+        pointer-events: none;
+      }
+
+      /* Empty state — centred prompt */
+      .empty {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-lg);
+      }
+
+      .empty-card {
+        width: 100%;
+        max-width: 32rem;
+        background: var(--colour-block-bg);
+        border: 2px dashed var(--colour-border);
+        border-radius: 0.75rem;
+        padding: var(--space-2xl);
+        text-align: center;
+        cursor: pointer;
+        color: var(--colour-text);
+        font: inherit;
+        transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+      }
+
+      .empty-card:hover,
+      .empty-card:focus-visible {
+        border-color: var(--colour-primary);
+        outline: none;
+        transform: translateY(-1px);
+      }
+
+      .empty-icon {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 auto var(--space-lg);
+        color: var(--colour-primary);
+      }
+
+      .empty-title {
+        font-family: Georgia, "Times New Roman", Times, serif;
+        font-weight: 700;
+        font-size: 1.5rem;
+        letter-spacing: -0.01em;
+        margin-bottom: var(--space-sm);
+      }
+
+      .empty-text {
+        color: var(--colour-text-secondary);
+        font-size: 0.9375rem;
+      }
+
+      .empty-text kbd {
+        display: inline-block;
+        padding: 0.1em 0.4em;
+        margin: 0 0.1em;
+        font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Monaco, Consolas, monospace;
+        font-size: 0.8125rem;
+        background: var(--colour-bg-secondary);
+        border: 1px solid var(--colour-border);
+        border-radius: 0.25rem;
+        color: var(--colour-text);
+      }
+
+      .empty-loading {
+        display: none;
+        color: var(--colour-text-secondary);
+        font-size: 0.9375rem;
+        animation: empty-pulse 1.4s ease-in-out infinite;
+      }
+
+      @keyframes empty-pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+      }
+
+      .empty.loading .empty-text { display: none; }
+      .empty.loading .empty-loading { display: block; }
+      .empty.loading .empty-card { cursor: progress; }
+
+      .empty-error {
+        margin-top: var(--space-lg);
+        color: #b91c1c;
+        font-size: 0.875rem;
+      }
+      @media (prefers-color-scheme: dark) {
+        .empty-error { color: #f87171; }
+      }
+
+      /* Top toolbar */
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        background: color-mix(in srgb, var(--colour-bg) 88%, transparent);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--colour-border);
+      }
+
+      .toolbar-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .toolbar-progress {
+        flex: 0 0 auto;
+        font-size: 0.75rem;
+        color: var(--colour-text-secondary);
+        white-space: nowrap;
+      }
+
+      .action-btn {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-xs);
+        padding: 0.4rem 0.6rem;
+        font: inherit;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--colour-text);
+        background: var(--colour-block-bg);
+        border: 1px solid var(--colour-border);
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+
+      .action-btn:hover {
+        background: var(--colour-bg-secondary);
+        border-color: var(--colour-text-secondary);
+      }
+
+      .action-btn.icon-only {
+        padding: 0.4rem;
+      }
+
+      /* Reading surface */
+      .reader {
+        max-width: var(--reading-width);
+        margin-inline: auto;
+        padding: var(--space-xl) var(--space-lg) 6rem;
+      }
+
+      .doc {
+        font-family: var(--reading-family);
+        font-size: var(--reading-size);
+        line-height: 1.7;
+        color: var(--colour-text);
+      }
+
+      .doc-title {
+        font-size: 1.6em;
+        line-height: 1.25;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin-bottom: 0.8em;
+      }
+
+      .doc h2, .doc h3, .doc h4, .doc h5, .doc h6 {
+        font-family: var(--reading-family);
+        line-height: 1.3;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin: 1.4em 0 0.5em;
+        scroll-margin-top: 4rem;
+      }
+
+      .doc h2 { font-size: 1.4em; }
+      .doc h3 { font-size: 1.2em; }
+      .doc h4 { font-size: 1.05em; }
+      .doc h5, .doc h6 { font-size: 1em; }
+
+      .doc p {
+        margin: 0 0 0.9em;
+        overflow-wrap: break-word;
+        hyphens: auto;
+      }
+
+      .doc ul, .doc ol {
+        margin: 0 0 0.9em;
+        padding-left: 1.4em;
+      }
+
+      .doc li {
+        margin-bottom: 0.3em;
+      }
+
+      .doc strong { font-weight: 700; }
+      .doc em { font-style: italic; }
+
+      .doc figure {
+        margin: 1.2em 0;
+        text-align: center;
+      }
+
+      .doc img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.375rem;
+        background: var(--colour-block-bg);
+      }
+
+      .pdf-page + .pdf-page {
+        margin-top: 1.5em;
+      }
+
+      /* faint page divider so long docs stay legible */
+      .pdf-page::before {
+        content: "";
+        display: block;
+      }
+      .pdf-page:not(:first-child)::before {
+        margin: 1.8em 0;
+        border-top: 1px dashed var(--colour-border);
+      }
+
+      /* Table of contents (collapsed by default) */
+      .toc {
+        margin: 0 0 1.8em;
+        border: 1px solid var(--colour-border);
+        border-radius: 0.5rem;
+        background: var(--colour-block-bg);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+
+      .toc summary {
+        list-style: none;
+        cursor: pointer;
+        padding: 0.65rem 0.9rem;
+        font-weight: 600;
+        font-size: 0.9375rem;
+        display: flex;
+        align-items: center;
+      }
+      .toc summary::-webkit-details-marker { display: none; }
+
+      .toc summary::before {
+        content: "▸";
+        display: inline-block;
+        margin-right: 0.5em;
+        color: var(--colour-text-secondary);
+        transition: transform 0.15s ease;
+      }
+      .toc[open] summary::before { transform: rotate(90deg); }
+
+      .toc nav {
+        padding: 0 0.9rem 0.6rem;
+      }
+
+      .toc ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .toc li {
+        margin: 0.1em 0;
+      }
+
+      .toc a {
+        display: block;
+        padding: 0.25rem 0;
+        color: var(--colour-primary);
+        text-decoration: none;
+        font-size: 0.9375rem;
+        line-height: 1.35;
+      }
+
+      .toc a:hover { text-decoration: underline; }
+
+      /* Settings dialog */
+      dialog {
+        margin: auto;
+        width: min(28rem, calc(100vw - 2rem));
+        max-width: 28rem;
+        padding: 0;
+        border: 1px solid var(--colour-border);
+        border-radius: 0.75rem;
+        background: var(--colour-block-bg);
+        color: var(--colour-text);
+        box-shadow: 0 12px 40px var(--colour-shadow);
+      }
+
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.45);
+      }
+
+      .dialog-inner {
+        padding: var(--space-xl);
+      }
+
+      .dialog-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-lg);
+      }
+
+      .dialog-header h2 {
+        font-size: 1.125rem;
+        font-weight: 700;
+      }
+
+      .dialog-close {
+        font-size: 1.5rem;
+        line-height: 1;
+        background: none;
+        border: none;
+        color: var(--colour-text-secondary);
+        cursor: pointer;
+        padding: 0 0.25rem;
+      }
+
+      .field {
+        margin-bottom: var(--space-lg);
+      }
+
+      .field-label {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--colour-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: var(--space-sm);
+      }
+
+      .segmented {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+      }
+
+      .segmented button {
+        flex: 1 1 auto;
+        min-width: 3.5rem;
+        padding: 0.5rem 0.6rem;
+        font: inherit;
+        font-size: 0.875rem;
+        color: var(--colour-text);
+        background: var(--colour-bg-secondary);
+        border: 1px solid var(--colour-border);
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      }
+
+      .segmented button[aria-pressed="true"] {
+        background: var(--colour-primary);
+        border-color: var(--colour-primary);
+        color: #fff;
+      }
+
+      .dialog-divider {
+        border: none;
+        border-top: 1px solid var(--colour-border);
+        margin: var(--space-lg) 0;
+      }
+
+      .field-hint {
+        font-size: 0.8125rem;
+        color: var(--colour-text-secondary);
+        line-height: 1.45;
+        margin-bottom: var(--space-md);
+        text-transform: none;
+        letter-spacing: 0;
+      }
+
+      .input-label {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        margin-bottom: var(--space-xs);
+      }
+
+      .input-label .muted { color: var(--colour-text-secondary); font-weight: 400; }
+
+      .field input[type="url"],
+      .field input[type="text"],
+      .field input[type="password"] {
+        width: 100%;
+        padding: 0.5rem 0.6rem;
+        margin-bottom: var(--space-md);
+        font: inherit;
+        font-size: 0.875rem;
+        color: var(--colour-text);
+        background: var(--colour-bg-secondary);
+        border: 1px solid var(--colour-border);
+        border-radius: 0.375rem;
+      }
+
+      .field input:focus-visible {
+        outline: 2px solid var(--colour-primary);
+        outline-offset: 1px;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+      }
+
+      .action-btn.primary {
+        background: var(--colour-primary);
+        border-color: var(--colour-primary);
+        color: #fff;
+      }
+
+      .action-btn.primary:hover {
+        background: var(--colour-primary-hover);
+        border-color: var(--colour-primary-hover);
+      }
+
+      .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .couch-status {
+        margin-top: var(--space-sm);
+        font-size: 0.8125rem;
+        color: var(--colour-text-secondary);
+        min-height: 1.2em;
+      }
+
+      .couch-status[data-state="error"] { color: #b91c1c; }
+      .couch-status[data-state="ok"] { color: #15803d; }
+      @media (prefers-color-scheme: dark) {
+        .couch-status[data-state="error"] { color: #f87171; }
+        .couch-status[data-state="ok"] { color: #4ade80; }
+      }
+
+      @media (max-width: 639px) {
+        dialog {
+          inset: 0;
+          margin: 0;
+          width: 100vw;
+          height: 100dvh;
+          max-width: 100vw;
+          max-height: 100dvh;
+          border-radius: 0;
+        }
+        .reader {
+          padding-inline: var(--space-md);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="empty" id="empty">
+      <button class="empty-card" id="empty-card" type="button" aria-label="Open a PDF file">
+        <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 12.5h8V14H8v-1.5zm0 3h8V17H8v-1.5zm0-6h3V11H8V9.5z" />
+        </svg>
+        <div class="empty-title">PDF Reader</div>
+        <p class="empty-text">
+          Drop a PDF anywhere, paste one with <kbd>⌘</kbd>+<kbd>V</kbd>, or click to choose a file.
+          It is reflowed into a responsive page you can read on your phone — no horizontal scrolling.
+        </p>
+        <p class="empty-loading">Loading…</p>
+      </button>
+      <p class="empty-error" id="empty-error" hidden></p>
+    </div>
+
+    <input type="file" id="file-input" accept="application/pdf,.pdf" hidden>
+
+    <script>
+      // Tiny early script: capture file/paste/drop input before the heavy
+      // PDF.js module loads, queue it, and show a loading state. The main
+      // module calls register() once it is ready.
+      (function () {
+        const empty = document.getElementById('empty');
+        const emptyCard = document.getElementById('empty-card');
+        const fileInput = document.getElementById('file-input');
+
+        let pending = null;
+        let handler = null;
+
+        function showLoading() {
+          empty.classList.add('loading');
+        }
+
+        function dispatch(payload) {
+          if (handler) {
+            handler(payload);
+          } else {
+            pending = payload;
+          }
+        }
+
+        function readFile(file) {
+          if (!file) return;
+          if (file.type && file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name || '')) return;
+          showLoading();
+          const reader = new FileReader();
+          reader.onload = () => dispatch({ buffer: reader.result, name: file.name || 'document.pdf' });
+          reader.onerror = () => empty.classList.remove('loading');
+          reader.readAsArrayBuffer(file);
+        }
+
+        emptyCard.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+          readFile(fileInput.files[0]);
+          fileInput.value = '';
+        });
+
+        let dragDepth = 0;
+        window.addEventListener('dragenter', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          e.preventDefault();
+          dragDepth++;
+          document.body.classList.add('dragover');
+        });
+        window.addEventListener('dragover', (e) => {
+          if (Array.from(e.dataTransfer?.types || []).includes('Files')) e.preventDefault();
+        });
+        window.addEventListener('dragleave', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          dragDepth = Math.max(0, dragDepth - 1);
+          if (dragDepth === 0) document.body.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dragDepth = 0;
+          document.body.classList.remove('dragover');
+          const file = e.dataTransfer?.files?.[0];
+          if (file) readFile(file);
+        });
+
+        window.addEventListener('paste', (e) => {
+          const target = e.target;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+          const file = Array.from(e.clipboardData?.files || [])[0];
+          if (file) {
+            e.preventDefault();
+            readFile(file);
+          }
+        });
+
+        window.__pdfEarly = {
+          openFilePicker() { fileInput.click(); },
+          register(fn) {
+            handler = fn;
+            if (pending !== null) {
+              const p = pending;
+              pending = null;
+              fn(p);
+            }
+          },
+        };
+      })();
+    </script>
+
+    <div id="reader-root" hidden>
+      <div class="toolbar">
+        <span class="toolbar-name" id="toolbar-name">document.pdf</span>
+        <span class="toolbar-progress" id="toolbar-progress" aria-live="polite"></span>
+        <button class="action-btn" id="btn-share" type="button">Share</button>
+        <button class="action-btn icon-only" id="btn-settings" aria-label="Settings">
+          <span class="icon-mask icon-settings" aria-hidden="true"></span>
+        </button>
+        <button class="action-btn" id="btn-new" type="button">New PDF</button>
+      </div>
+      <div class="reader">
+        <article class="doc" id="doc"></article>
+      </div>
+    </div>
+
+    <dialog id="settings-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h2>Reading settings</h2>
+          <button class="dialog-close" id="settings-close" type="button" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Text size</span>
+          <div class="segmented" id="seg-size" role="group" aria-label="Text size">
+            <button type="button" data-value="small">S</button>
+            <button type="button" data-value="medium">M</button>
+            <button type="button" data-value="large">L</button>
+            <button type="button" data-value="xlarge">XL</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Typeface</span>
+          <div class="segmented" id="seg-family" role="group" aria-label="Typeface">
+            <button type="button" data-value="serif">Serif</button>
+            <button type="button" data-value="sans">Sans</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Column width</span>
+          <div class="segmented" id="seg-width" role="group" aria-label="Column width">
+            <button type="button" data-value="narrow">Narrow</button>
+            <button type="button" data-value="comfortable">Comfortable</button>
+            <button type="button" data-value="wide">Wide</button>
+          </div>
+        </div>
+
+        <hr class="dialog-divider">
+
+        <div class="field">
+          <span class="field-label">Share via CouchDB</span>
+          <p class="field-hint">
+            Connect a CouchDB database to save converted documents and share them by link.
+            Anyone you share a document link with needs this same connection in their settings —
+            send them the setup link below to add it automatically.
+          </p>
+          <label class="input-label" for="couch-url">Database URL</label>
+          <input type="url" id="couch-url" placeholder="https://example.com/pdf-reader" autocomplete="off"
+            autocapitalize="off" spellcheck="false">
+          <label class="input-label" for="couch-token">Access token <span class="muted">(optional)</span></label>
+          <input type="password" id="couch-token" placeholder="Bearer token" autocomplete="off"
+            autocapitalize="off" spellcheck="false">
+          <div class="button-row">
+            <button class="action-btn primary" id="couch-save" type="button">Save connection</button>
+            <button class="action-btn" id="couch-share-setup" type="button" disabled>Copy setup link</button>
+          </div>
+          <p class="couch-status" id="couch-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="/vendor/pouchdb/pouchdb.min.js"></script>
+    <script type="module">
+      import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.min.mjs';
+
+      const PDFJS_BASE = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/';
+      pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'build/pdf.worker.min.mjs';
+
+      const empty = document.getElementById('empty');
+      const emptyError = document.getElementById('empty-error');
+      const readerRoot = document.getElementById('reader-root');
+      const doc = document.getElementById('doc');
+      const toolbarName = document.getElementById('toolbar-name');
+      const toolbarProgress = document.getElementById('toolbar-progress');
+
+      /* ---------- Reading preferences ---------- */
+
+      const SETTINGS_KEY = 'pdf-reader:settings';
+      const SIZES = { small: '1rem', medium: '1.125rem', large: '1.3125rem', xlarge: '1.5rem' };
+      const WIDTHS = { narrow: '34rem', comfortable: '42rem', wide: '52rem' };
+      const FAMILIES = {
+        serif: 'Georgia, "Iowan Old Style", "Times New Roman", Times, serif',
+        sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      };
+
+      const defaults = { size: 'medium', family: 'serif', width: 'comfortable' };
+      let settings = { ...defaults };
+      try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+        settings = { ...defaults, ...saved };
+      } catch (_) { /* ignore */ }
+
+      function applySettings() {
+        const root = document.documentElement.style;
+        root.setProperty('--reading-size', SIZES[settings.size] || SIZES.medium);
+        root.setProperty('--reading-width', WIDTHS[settings.width] || WIDTHS.comfortable);
+        root.setProperty('--reading-family', FAMILIES[settings.family] || FAMILIES.serif);
+        for (const [group, key] of [['seg-size', 'size'], ['seg-family', 'family'], ['seg-width', 'width']]) {
+          document.querySelectorAll('#' + group + ' button').forEach((b) => {
+            b.setAttribute('aria-pressed', String(b.dataset.value === settings[key]));
+          });
+        }
+      }
+
+      function bindSegment(id, key) {
+        document.getElementById(id).addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-value]');
+          if (!btn) return;
+          settings[key] = btn.dataset.value;
+          try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (_) { /* ignore */ }
+          applySettings();
+        });
+      }
+      bindSegment('seg-size', 'size');
+      bindSegment('seg-family', 'family');
+      bindSegment('seg-width', 'width');
+      applySettings();
+
+      const settingsDialog = document.getElementById('settings-dialog');
+      document.getElementById('btn-settings').addEventListener('click', () => {
+        syncCouchUI();
+        setCouchStatus('');
+        settingsDialog.showModal();
+      });
+      document.getElementById('settings-close').addEventListener('click', () => settingsDialog.close());
+      settingsDialog.addEventListener('click', (e) => {
+        if (e.target === settingsDialog) settingsDialog.close();
+      });
+
+      document.getElementById('btn-new').addEventListener('click', () => window.__pdfEarly.openFilePicker());
+
+      /* ---------- Sharing via CouchDB ---------- */
+
+      const PouchDB = globalThis.PouchDB;
+      const COUCH_PREFIX = 'pdf-reader:couch.';
+      const DOC_PARAM = 'doc';
+      const SETUP_PARAM = 'couch';
+
+      function getCouchConfig() {
+        return {
+          url: localStorage.getItem(COUCH_PREFIX + 'url') || '',
+          token: localStorage.getItem(COUCH_PREFIX + 'token') || '',
+        };
+      }
+
+      function setCouchConfig({ url, token }) {
+        const setOrClear = (k, v) => {
+          if (v) localStorage.setItem(COUCH_PREFIX + k, String(v));
+          else localStorage.removeItem(COUCH_PREFIX + k);
+        };
+        setOrClear('url', url);
+        setOrClear('token', token);
+      }
+
+      // URL-safe base64 of {url, token} so the value survives a query string.
+      function encodeCouchConfig({ url, token }) {
+        const bytes = new TextEncoder().encode(JSON.stringify({ url, token: token || '' }));
+        let bin = '';
+        for (const b of bytes) bin += String.fromCharCode(b);
+        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      }
+
+      function decodeCouchConfig(str) {
+        const b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        const cfg = JSON.parse(new TextDecoder().decode(bytes));
+        if (!cfg || typeof cfg.url !== 'string') throw new Error('Malformed config');
+        return { url: cfg.url, token: typeof cfg.token === 'string' ? cfg.token : '' };
+      }
+
+      function remoteDb(cfg) {
+        const opts = {};
+        if (cfg.token) {
+          opts.fetch = (url, init) => {
+            const headers = new Headers(init?.headers || {});
+            headers.set('Authorization', 'Bearer ' + cfg.token);
+            return PouchDB.fetch(url, { ...init, headers });
+          };
+        }
+        return new PouchDB(cfg.url, opts);
+      }
+
+      // ── Settings dialog: CouchDB controls ──
+      const couchUrl = document.getElementById('couch-url');
+      const couchToken = document.getElementById('couch-token');
+      const couchStatus = document.getElementById('couch-status');
+      const couchSetupBtn = document.getElementById('couch-share-setup');
+      const shareBtn = document.getElementById('btn-share');
+
+      function setCouchStatus(msg, state) {
+        couchStatus.textContent = msg || '';
+        if (state) couchStatus.dataset.state = state; else delete couchStatus.dataset.state;
+      }
+
+      function syncCouchUI() {
+        const cfg = getCouchConfig();
+        couchUrl.value = cfg.url;
+        couchToken.value = cfg.token;
+        couchSetupBtn.disabled = !cfg.url;
+      }
+
+      document.getElementById('couch-save').addEventListener('click', async () => {
+        const url = couchUrl.value.trim().replace(/\/+$/, '');
+        const token = couchToken.value.trim();
+        setCouchConfig({ url, token });
+        syncCouchUI();
+        if (!url) { setCouchStatus('Connection cleared.'); return; }
+        setCouchStatus('Checking connection…');
+        try {
+          await remoteDb({ url, token }).info();
+          setCouchStatus('Connected.', 'ok');
+        } catch (err) {
+          setCouchStatus('Saved, but could not reach the database: ' + (err?.message || err), 'error');
+        }
+      });
+
+      let setupResetTimer = null;
+      couchSetupBtn.addEventListener('click', async () => {
+        const cfg = getCouchConfig();
+        if (!cfg.url) return;
+        const link = location.origin + location.pathname + '?' + SETUP_PARAM + '=' + encodeCouchConfig(cfg);
+        await copyOrPrompt(link, couchSetupBtn, 'Copy setup link');
+      });
+
+      // Copy text to the clipboard, flashing the button; fall back to a prompt.
+      async function copyOrPrompt(text, btn, restoreLabel) {
+        const flash = (msg) => {
+          if (!btn) return;
+          btn.textContent = msg;
+          clearTimeout(setupResetTimer);
+          setupResetTimer = setTimeout(() => { btn.textContent = restoreLabel; }, 2000);
+        };
+        try {
+          await navigator.clipboard.writeText(text);
+          flash('Copied!');
+        } catch (_) {
+          window.prompt('Copy this link:', text);
+        }
+      }
+
+      // ── Toolbar: save the current document and copy a share link ──
+      let shareBusy = false;
+      shareBtn.addEventListener('click', async () => {
+        if (shareBusy) return;
+        const cfg = getCouchConfig();
+        if (!cfg.url) {
+          setCouchStatus('Add a CouchDB connection below, then share.', 'error');
+          settingsDialog.showModal();
+          syncCouchUI();
+          couchUrl.focus();
+          return;
+        }
+        shareBusy = true;
+        const original = shareBtn.textContent;
+        shareBtn.textContent = 'Saving…';
+        shareBtn.disabled = true;
+        try {
+          const id = 'pdfdoc-' + crypto.randomUUID();
+          await remoteDb(cfg).put({
+            _id: id,
+            type: 'pdfdoc',
+            title: toolbarName.textContent || 'Shared document',
+            html: doc.innerHTML,
+            createdAt: Date.now(),
+          });
+          const link = location.origin + location.pathname + '?' + DOC_PARAM + '=' + id;
+          shareBtn.textContent = 'Saved';
+          await copyOrPrompt(link, null);
+          shareBtn.textContent = 'Link copied!';
+          setTimeout(() => { shareBtn.textContent = original; }, 2200);
+        } catch (err) {
+          console.error(err);
+          shareBtn.textContent = 'Share failed';
+          setTimeout(() => { shareBtn.textContent = original; }, 2200);
+        } finally {
+          shareBusy = false;
+          shareBtn.disabled = false;
+        }
+      });
+
+      // ── Open a shared document by id ──
+      async function openSharedDoc(id) {
+        const cfg = getCouchConfig();
+        showReader('Shared document');
+        toolbarProgress.textContent = 'Loading shared document…';
+        if (!cfg.url) {
+          showError('This shared link needs a CouchDB connection. Add one in settings (or open a setup link), then reopen this link.');
+          settingsDialog.showModal();
+          syncCouchUI();
+          return;
+        }
+        try {
+          const docRec = await remoteDb(cfg).get(id);
+          toolbarName.textContent = docRec.title || 'Shared document';
+          doc.innerHTML = docRec.html || '';
+          toolbarProgress.textContent = '';
+        } catch (err) {
+          console.error(err);
+          showError('Could not load this shared document. Check that your CouchDB connection is correct and the link is valid.');
+        }
+      }
+
+      /* ---------- Geometry / matrix helpers ---------- */
+
+      // Combine two transform matrices the same way PDF.js Util.transform does:
+      // returns m1 ∘ m2 (m2 applied, then m1).
+      function matMul(m1, m2) {
+        return [
+          m1[0] * m2[0] + m1[2] * m2[1],
+          m1[1] * m2[0] + m1[3] * m2[1],
+          m1[0] * m2[2] + m1[2] * m2[3],
+          m1[1] * m2[2] + m1[3] * m2[3],
+          m1[0] * m2[4] + m1[2] * m2[5] + m1[4],
+          m1[1] * m2[4] + m1[3] * m2[5] + m1[5],
+        ];
+      }
+
+      function median(nums) {
+        if (!nums.length) return 0;
+        const s = [...nums].sort((a, b) => a - b);
+        const m = s.length >> 1;
+        return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+      }
+
+      function esc(s) {
+        return s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      }
+
+      function runsHTML(runs) {
+        return runs.map((r) => {
+          if (!r.text) return '';
+          let t = esc(r.text);
+          if (r.bold) t = '<strong>' + t + '</strong>';
+          if (r.italic) t = '<em>' + t + '</em>';
+          return t;
+        }).join('');
+      }
+
+      const BULLET_RE = /^\s*([•◦▪·‣○●∙*•‣◦]|[-–—]|\d{1,3}[.)])\s+/;
+
+      /* ---------- Text extraction & reflow ---------- */
+
+      async function extractText(page) {
+        const textContent = await page.getTextContent();
+        const styles = textContent.styles || {};
+        const fontCache = new Map();
+
+        function fontInfo(fontName) {
+          if (fontCache.has(fontName)) return fontCache.get(fontName);
+          let bold = false, italic = false;
+          try {
+            let name = '';
+            if (page.commonObjs.has && page.commonObjs.has(fontName)) {
+              const f = page.commonObjs.get(fontName);
+              name = (f && (f.name || f.loadedName)) || '';
+              if (f && f.bold) bold = true;
+              if (f && f.italic) italic = true;
+            }
+            if (!name) name = fontName || '';
+            if (/bold|black|heavy|semibold|demibold|extrabold/i.test(name)) bold = true;
+            if (/italic|oblique/i.test(name)) italic = true;
+          } catch (_) { /* best effort */ }
+          const info = { bold, italic };
+          fontCache.set(fontName, info);
+          return info;
+        }
+
+        // Normalise text items into positioned glyph runs.
+        const items = [];
+        for (const it of textContent.items) {
+          if (typeof it.str !== 'string') continue;
+          const tr = it.transform;
+          items.push({
+            str: it.str,
+            x: tr[4],
+            y: tr[5],
+            w: it.width || 0,
+            size: Math.hypot(tr[2], tr[3]) || it.height || 10,
+            font: it.fontName,
+          });
+        }
+        const itemCount = items.length;
+        if (!itemCount) return { blocks: [], itemCount: 0, columns: [0] };
+
+        // Group items into visual bands sharing a baseline. (cur MUST carry a
+        // size, otherwise the tolerance is NaN and every item lands alone.)
+        items.sort((a, b) => (b.y - a.y) || (a.x - b.x));
+        const bands = [];
+        let cur = null;
+        for (const it of items) {
+          if (cur && Math.abs(it.y - cur.y) <= Math.max(it.size, cur.size) * 0.4) {
+            cur.items.push(it);
+          } else {
+            cur = { y: it.y, size: it.size, items: [it] };
+            bands.push(cur);
+          }
+        }
+
+        // Split each band into fragments at large horizontal gaps (columns /
+        // table cells) and build each fragment into styled runs.
+        const frags = [];
+        for (const band of bands) {
+          const its = band.items.filter((i) => i.str !== '').sort((a, b) => a.x - b.x);
+          if (!its.length) continue;
+          let group = [its[0]];
+          const flush = () => {
+            const frag = buildFragment(group, band.y, fontInfo);
+            if (frag) frags.push(frag);
+          };
+          for (let i = 1; i < its.length; i++) {
+            const prev = its[i - 1];
+            const it = its[i];
+            const gap = it.x - (prev.x + prev.w);
+            if (gap > Math.max(prev.size, it.size) * 1.4) { flush(); group = [it]; }
+            else group.push(it);
+          }
+          flush();
+        }
+        if (!frags.length) return { blocks: [], itemCount, columns: [0] };
+
+        // Cluster fragment left edges into columns; only treat the page as
+        // multi-column when at least two clusters are substantial.
+        const pageW = page.getViewport({ scale: 1 }).width;
+        const medSize = median(frags.map((f) => f.size)) || 10;
+        const tol = Math.max(pageW * 0.04, medSize * 3);
+        const byLeft = [...frags].sort((a, b) => a.left - b.left);
+        const clusters = [];
+        for (const f of byLeft) {
+          const last = clusters[clusters.length - 1];
+          if (last && f.left - last.max <= tol) {
+            last.max = f.left; last.sum += f.left; last.n++; last.center = last.sum / last.n;
+          } else {
+            clusters.push({ max: f.left, sum: f.left, n: 1, center: f.left });
+          }
+        }
+        const strong = clusters.filter((c) => c.n >= 3);
+        const multiCol = strong.length >= 2;
+        let columns;
+        if (multiCol) {
+          columns = strong.map((c) => c.center).sort((a, b) => a - b);
+          for (const f of frags) {
+            let bi = 0, bd = Infinity;
+            for (let i = 0; i < columns.length; i++) {
+              const d = Math.abs(f.left - columns[i]);
+              if (d < bd) { bd = d; bi = i; }
+            }
+            f.col = bi;
+          }
+        } else {
+          columns = [clusters.length ? clusters[0].center : 0];
+          for (const f of frags) f.col = 0;
+        }
+
+        // Per-column right edge and typical line spacing (leading).
+        const colRight = new Map();
+        const byCol = new Map();
+        for (const f of frags) {
+          colRight.set(f.col, Math.max(colRight.get(f.col) || 0, f.right));
+          if (!byCol.has(f.col)) byCol.set(f.col, []);
+          byCol.get(f.col).push(f);
+        }
+        const leading = new Map();
+        for (const [col, arr] of byCol) {
+          arr.sort((a, b) => b.y - a.y);
+          const gaps = [];
+          for (let i = 1; i < arr.length; i++) {
+            const g = arr[i - 1].y - arr[i].y;
+            if (g > 1 && g < arr[i].size * 3.5) gaps.push(g);
+          }
+          leading.set(col, gaps.length ? median(gaps) : medSize * 1.4);
+        }
+
+        // Reading order: column by column (left to right), top to bottom.
+        frags.sort((a, b) => (a.col - b.col) || (b.y - a.y));
+
+        // Dominant body font size, weighted by character count.
+        const sizeWeight = new Map();
+        for (const f of frags) {
+          const key = Math.round(f.size);
+          sizeWeight.set(key, (sizeWeight.get(key) || 0) + f.text.length);
+        }
+        let bodySize = 10, best = -1;
+        for (const [k, v] of sizeWeight) if (v > best) { best = v; bodySize = k; }
+
+        // Group fragments into heading / list / paragraph blocks. Wrapped lines
+        // flow together; a new paragraph starts on a column change, a big gap, a
+        // short previous line, or a fresh indent. List items absorb their own
+        // continuation lines (same column, normal spacing) so a wrapped bullet
+        // stays one <li> rather than splintering into stray paragraphs.
+        const blocks = [];
+        let para = null, list = null, item = null;
+        const flushPara = () => { if (para) { blocks.push(para); para = null; } };
+        const flushList = () => {
+          if (item) { list.items.push(item); item = null; }
+          if (list) { blocks.push(list); list = null; }
+        };
+
+        for (const ln of frags) {
+          const ratio = ln.size / bodySize;
+          const trimmed = ln.text.trim();
+          const allBold = ln.runs.length > 0 && ln.runs.every((r) => r.bold);
+          // A heading is a short standalone line that is larger than body text
+          // (even slightly) or same-size but bold. Long lines never qualify.
+          const isHeading = trimmed.length >= 2 && trimmed.length < 90 &&
+            !BULLET_RE.test(ln.text) && !/[.,;:]$/.test(trimmed) &&
+            !/@|https?:\/\/|www\./i.test(trimmed) &&
+            (ratio >= 1.15 ||
+             (ratio >= 1.045 && trimmed.length < 72) ||
+             (allBold && ratio >= 0.98 && trimmed.length < 55));
+          const isBullet = BULLET_RE.test(ln.text);
+
+          if (isHeading) {
+            flushPara(); flushList();
+            // Detected headings are emphasised as at least an <h3> so they read
+            // as headings even when the source only bumped the size slightly.
+            const level = ratio >= 1.6 ? 1 : ratio >= 1.25 ? 2 : 3;
+            blocks.push({ type: 'heading', level, y: ln.y, col: ln.col, runs: ln.runs });
+            continue;
+          }
+
+          if (isBullet) {
+            flushPara();
+            if (!list || list.col !== ln.col) {
+              flushList();
+              list = { type: 'list', y: ln.y, col: ln.col, ordered: /^\s*\d{1,3}[.)]/.test(ln.text), items: [] };
+            }
+            if (item) list.items.push(item);
+            item = { lines: [stripBullet(ln)] };
+            continue;
+          }
+
+          // Continuation of the current list item?
+          if (list && item) {
+            const last = item.lines[item.lines.length - 1];
+            const lead = leading.get(list.col) || medSize * 1.4;
+            const cont = ln.col === list.col &&
+              (last.y - ln.y) <= lead * 1.45 &&
+              (ln.left - last.left) <= ln.size * 1.2;
+            if (cont) { item.lines.push(ln); continue; }
+            flushList();
+          }
+
+          // Otherwise it is paragraph text.
+          const prev = para ? para.lines[para.lines.length - 1] : null;
+          const sameCol = prev && prev.col === ln.col;
+          const lead = leading.get(ln.col) || medSize * 1.4;
+          const gap = sameCol ? prev.y - ln.y : Infinity;
+          const bigGap = gap > lead * 1.45;
+          const cr = colRight.get(ln.col) || 0;
+          const prevShort = prev && prev.right < cr - prev.size * 4;
+          const indent = sameCol && (ln.left - prev.left) > ln.size * 1.2;
+          const continues = sameCol && !bigGap && !prevShort && !indent;
+
+          if (!continues) {
+            flushPara();
+            para = { type: 'para', y: ln.y, col: ln.col, lines: [ln] };
+          } else {
+            para.lines.push(ln);
+          }
+        }
+        flushPara(); flushList();
+        return { blocks, itemCount, columns };
+      }
+
+      // Build one line fragment (already gap-split, sorted by x) into styled runs.
+      function buildFragment(group, y, fontInfo) {
+        const its = group;
+        const runs = [];
+        let prev = null;
+        for (const it of its) {
+          const fi = fontInfo(it.font);
+          let text = it.str;
+          if (prev) {
+            const gap = it.x - (prev.x + prev.w);
+            const last = runs[runs.length - 1];
+            const endsSpace = last && /\s$/.test(last.text);
+            if (gap > prev.size * 0.2 && !endsSpace && !/^\s/.test(text)) text = ' ' + text;
+          }
+          const last = runs[runs.length - 1];
+          if (last && last.bold === fi.bold && last.italic === fi.italic) last.text += text;
+          else runs.push({ text, bold: fi.bold, italic: fi.italic });
+          prev = it;
+        }
+        const plain = runs.map((r) => r.text).join('');
+        if (!plain.trim()) return null;
+        return {
+          y,
+          left: its[0].x,
+          right: Math.max(...its.map((i) => i.x + i.w)),
+          size: median(its.map((i) => i.size)),
+          runs,
+          text: plain,
+        };
+      }
+
+      // Strip the leading bullet / number marker, returning a full line object.
+      function stripBullet(ln) {
+        const runs = ln.runs.map((r) => ({ ...r }));
+        const m = ln.text.match(BULLET_RE);
+        if (m) {
+          let n = m[0].length;
+          for (const r of runs) {
+            if (n <= 0) break;
+            if (r.text.length <= n) { n -= r.text.length; r.text = ''; }
+            else { r.text = r.text.slice(n); n = 0; }
+          }
+        }
+        return { y: ln.y, left: ln.left, right: ln.right, size: ln.size, runs, text: ln.text.replace(BULLET_RE, '') };
+      }
+
+      // Flow a run of lines into inline HTML, joining wrapped lines with a space
+      // and healing soft line-wrap hyphens.
+      function renderLines(lines) {
+        let html = '';
+        lines.forEach((ln, idx) => {
+          const runs = ln.runs.map((r) => ({ ...r }));
+          const isLast = idx === lines.length - 1;
+          let joiner = ' ';
+          if (!isLast && /[A-Za-zÀ-ɏ]-$/.test(ln.text)) {
+            const last = runs[runs.length - 1];
+            last.text = last.text.replace(/-$/, '');
+            joiner = '';
+          }
+          html += runsHTML(runs);
+          if (!isLast) html += joiner;
+        });
+        return html;
+      }
+
+      function renderParagraph(p) {
+        return '<p>' + renderLines(p.lines) + '</p>';
+      }
+
+      /* ---------- Image extraction ---------- */
+
+      // Locate every image draw in the operator list, tracking the CTM so we
+      // know each image's position and bounding box in PDF user space.
+      function findImageOps(opList) {
+        const OPS = pdfjsLib.OPS;
+        const fns = opList.fnArray, args = opList.argsArray;
+        let ctm = [1, 0, 0, 1, 0, 0];
+        const stack = [];
+        const found = [];
+        for (let i = 0; i < fns.length; i++) {
+          const fn = fns[i];
+          if (fn === OPS.save) {
+            stack.push(ctm.slice());
+          } else if (fn === OPS.restore) {
+            ctm = stack.pop() || [1, 0, 0, 1, 0, 0];
+          } else if (fn === OPS.transform) {
+            ctm = matMul(ctm, args[i]);
+          } else if (
+            fn === OPS.paintImageXObject || fn === OPS.paintImageXObjectRepeat ||
+            fn === OPS.paintInlineImageXObject
+          ) {
+            found.push(ctm.slice());
+          }
+        }
+        return found;
+      }
+
+      // Rather than decode raw image objects (which can never resolve without a
+      // full render and would hang), render the page once to an offscreen
+      // canvas and crop each image's bounding box out of it. This handles every
+      // image type and bakes in any masking/compositing.
+      async function extractImages(page, { skipFullPage, columns }) {
+        let opList;
+        try { opList = await page.getOperatorList(); } catch (_) { return []; }
+        const ctms = findImageOps(opList);
+        if (!ctms.length) return [];
+
+        // Cap the rendered size so very large page boxes don't blow up memory.
+        const v1 = page.getViewport({ scale: 1 });
+        const maxDim = 2200;
+        const scale = Math.min(2.5, maxDim / Math.max(v1.width, v1.height, 1));
+        const vp = page.getViewport({ scale: Math.max(0.1, scale) });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.ceil(vp.width));
+        canvas.height = Math.max(1, Math.ceil(vp.height));
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const task = page.render({ canvasContext: ctx, viewport: vp });
+        try {
+          await Promise.race([
+            task.promise,
+            new Promise((_, rej) => setTimeout(() => rej(new Error('render-timeout')), 20000)),
+          ]);
+        } catch (_) {
+          try { task.cancel(); } catch (__) { /* ignore */ }
+          canvas.width = canvas.height = 0;
+          return [];
+        }
+
+        const pageArea = canvas.width * canvas.height;
+
+        // Compute every image's device-space box first, so we can drop
+        // backgrounds and de-duplicate before doing any (costly) cropping.
+        const candidates = [];
+        for (const cm of ctms) {
+          const m = matMul(vp.transform, cm);
+          const corners = [[0, 0], [1, 0], [1, 1], [0, 1]].map(([ux, uy]) => [
+            m[0] * ux + m[2] * uy + m[4],
+            m[1] * ux + m[3] * uy + m[5],
+          ]);
+          const xs = corners.map((c) => c[0]);
+          const ys = corners.map((c) => c[1]);
+          const x0 = Math.max(0, Math.floor(Math.min(...xs)));
+          const y0 = Math.max(0, Math.floor(Math.min(...ys)));
+          const x1 = Math.min(canvas.width, Math.ceil(Math.max(...xs)));
+          const y1 = Math.min(canvas.height, Math.ceil(Math.max(...ys)));
+          const w = x1 - x0, h = y1 - y0;
+          if (w < 24 || h < 24) continue;                       // hairlines / tiny marks
+          if (skipFullPage && w * h >= pageArea * 0.9) continue; // page background
+          candidates.push({ cm, x0, y0, w, h, area: w * h });
+        }
+
+        // Largest first; skip any image essentially contained within a bigger
+        // kept one (e.g. a photo sitting inside a full-page poster).
+        candidates.sort((a, b) => b.area - a.area);
+        const kept = [];
+        const margin = 6;
+        for (const c of candidates) {
+          const inside = kept.some((k) =>
+            c.x0 >= k.x0 - margin && c.y0 >= k.y0 - margin &&
+            c.x0 + c.w <= k.x0 + k.w + margin && c.y0 + c.h <= k.y0 + k.h + margin);
+          if (!inside) kept.push(c);
+        }
+
+        const out = [];
+        for (const c of kept) {
+          try {
+            const crop = document.createElement('canvas');
+            crop.width = c.w; crop.height = c.h;
+            crop.getContext('2d').drawImage(canvas, c.x0, c.y0, c.w, c.h, 0, 0, c.w, c.h);
+            let src;
+            try { src = crop.toDataURL('image/png'); } catch (_) { continue; }
+
+            // Position (PDF user space) for ordering, and column for layout.
+            const cm = c.cm;
+            const top = Math.max(cm[5], cm[5] + cm[3]);
+            const cx = cm[4] + 0.5 * cm[0] + 0.5 * cm[2];
+            let col = 0, bd = Infinity;
+            for (let i = 0; i < columns.length; i++) {
+              const d = Math.abs(cx - columns[i]);
+              if (d < bd) { bd = d; col = i; }
+            }
+            out.push({ type: 'image', y: top, col, src, iw: c.w, ih: c.h });
+          } catch (_) { /* skip this image */ }
+        }
+        canvas.width = canvas.height = 0;
+        return out;
+      }
+
+      /* ---------- Rendering ---------- */
+
+      // Heal paragraph breaks that PDF line spacing introduced mid-sentence: if
+      // a paragraph doesn't end on sentence-terminating punctuation and the next
+      // one clearly continues it, fold them back together.
+      function mergeBrokenParagraphs(blocks) {
+        const out = [];
+        for (const b of blocks) {
+          const prev = out[out.length - 1];
+          if (b.type === 'para' && prev && prev.type === 'para' && prev.col === b.col) {
+            const prevText = prev.lines.map((l) => l.text).join(' ').replace(/\s+/g, ' ').trim();
+            const nextText = b.lines.map((l) => l.text).join(' ').replace(/\s+/g, ' ').trim();
+            const prevSize = prev.lines[prev.lines.length - 1].size;
+            const nextSize = b.lines[0].size;
+            const sizeOk = Math.max(prevSize, nextSize) / Math.min(prevSize, nextSize) < 1.3;
+            // Closed = ends a sentence (. ! ?), allowing a trailing quote/bracket.
+            const prevClosed = /[.!?]["'”’)\]]?$/.test(prevText);
+            const nextContinues = /^[a-z0-9(]/.test(nextText);
+            const prevDangling = /[,–—-]$/.test(prevText);
+            if (sizeOk && nextText && ((!prevClosed && nextContinues) || prevDangling)) {
+              prev.lines = prev.lines.concat(b.lines);
+              continue;
+            }
+          }
+          out.push(b);
+        }
+        return out;
+      }
+
+      function blocksToHTML(blocks, pageNum, headings) {
+        let html = '';
+        for (const b of blocks) {
+          if (b.type === 'heading') {
+            const lvl = Math.min(6, b.level + 1); // leave <h1> for the document title
+            const id = 'pdfh-' + headings.length;
+            const text = b.runs.map((r) => r.text).join('').trim();
+            headings.push({ id, level: b.level, text });
+            html += '<h' + lvl + ' id="' + id + '">' + runsHTML(b.runs) + '</h' + lvl + '>';
+          } else if (b.type === 'para') {
+            html += renderParagraph(b);
+          } else if (b.type === 'list') {
+            const tag = b.ordered ? 'ol' : 'ul';
+            html += '<' + tag + '>' +
+              b.items.map((it) => '<li>' + renderLines(it.lines) + '</li>').join('') +
+              '</' + tag + '>';
+          } else if (b.type === 'image') {
+            html += '<figure><img loading="lazy" src="' + b.src + '" alt="Image from page ' + pageNum +
+              '" width="' + b.iw + '" height="' + b.ih + '"></figure>';
+          }
+        }
+        return html;
+      }
+
+      // Build a collapsed-by-default table of contents from collected headings.
+      function buildTableOfContents(headings) {
+        if (headings.length < 3) return null;
+        const minLevel = Math.min(...headings.map((h) => h.level));
+        const details = document.createElement('details');
+        details.className = 'toc';
+        const summary = document.createElement('summary');
+        summary.textContent = 'Contents';
+        details.appendChild(summary);
+        const nav = document.createElement('nav');
+        const ul = document.createElement('ul');
+        for (const h of headings) {
+          if (!h.text) continue;
+          const li = document.createElement('li');
+          li.style.paddingLeft = (h.level - minLevel) * 0.9 + 'em';
+          const a = document.createElement('a');
+          a.href = '#' + h.id;
+          a.textContent = h.text;
+          li.appendChild(a);
+          ul.appendChild(li);
+        }
+        nav.appendChild(ul);
+        details.appendChild(nav);
+        return details;
+      }
+
+      let currentToken = 0;
+
+      function showReader(name) {
+        empty.hidden = true;
+        empty.classList.remove('loading');
+        readerRoot.hidden = false;
+        toolbarName.textContent = name;
+        doc.innerHTML = '';
+      }
+
+      function showError(message) {
+        readerRoot.hidden = true;
+        empty.hidden = false;
+        empty.classList.remove('loading');
+        emptyError.textContent = message;
+        emptyError.hidden = false;
+      }
+
+      async function openPdf({ buffer, name }) {
+        const token = ++currentToken;
+        emptyError.hidden = true;
+        showReader(name || 'document.pdf');
+
+        let task;
+        try {
+          task = pdfjsLib.getDocument({
+            data: new Uint8Array(buffer),
+            cMapUrl: PDFJS_BASE + 'cmaps/',
+            cMapPacked: true,
+            standardFontDataUrl: PDFJS_BASE + 'standard_fonts/',
+          });
+          task.onPassword = (updatePassword, reason) => {
+            const pw = window.prompt(
+              reason === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD
+                ? 'Incorrect password. Try again:'
+                : 'This PDF is password protected. Enter the password:'
+            );
+            if (pw != null) updatePassword(pw);
+            else task.destroy();
+          };
+
+          const pdf = await task.promise;
+          if (token !== currentToken) return;
+
+          // Document title from metadata, if present.
+          try {
+            const meta = await pdf.getMetadata();
+            const title = meta && meta.info && meta.info.Title;
+            if (title && title.trim()) {
+              const h1 = document.createElement('h1');
+              h1.className = 'doc-title';
+              h1.textContent = title.trim();
+              doc.appendChild(h1);
+            }
+          } catch (_) { /* ignore */ }
+
+          const total = pdf.numPages;
+          const headings = [];
+          for (let p = 1; p <= total; p++) {
+            if (token !== currentToken) return;
+            toolbarProgress.textContent = 'Reading page ' + p + ' of ' + total + '…';
+
+            const page = await pdf.getPage(p);
+            const { blocks: textBlocks, itemCount, columns } = await extractText(page);
+            const imageBlocks = await extractImages(page, {
+              skipFullPage: itemCount > 20,
+              columns,
+            });
+            if (token !== currentToken) return;
+
+            // Order blocks the same way text is read: by column, then top-down.
+            const blocks = textBlocks.concat(imageBlocks)
+              .sort((a, b) => ((a.col || 0) - (b.col || 0)) || (b.y - a.y));
+            const healed = mergeBrokenParagraphs(blocks);
+            const section = document.createElement('section');
+            section.className = 'pdf-page';
+            section.dataset.page = String(p);
+            section.innerHTML = blocksToHTML(healed, p, headings);
+            doc.appendChild(section);
+
+            page.cleanup();
+            // Yield to the browser so the page stays responsive while parsing.
+            await new Promise((r) => requestAnimationFrame(r));
+          }
+
+          if (token !== currentToken) return;
+
+          // Prepend a collapsed table of contents once the whole doc is parsed.
+          const toc = buildTableOfContents(headings);
+          if (toc) doc.insertBefore(toc, doc.querySelector('.pdf-page'));
+
+          toolbarProgress.textContent = total + (total === 1 ? ' page' : ' pages');
+        } catch (err) {
+          if (token !== currentToken) return;
+          console.error(err);
+          const msg = err && err.name === 'PasswordException'
+            ? 'Could not open this password-protected PDF.'
+            : 'Sorry, this file could not be read as a PDF.';
+          showError(msg);
+        }
+      }
+
+      window.__pdfEarly.register(openPdf);
+
+      // If opened from a setup link (?couch=…), save the connection and strip
+      // the param via replace() so the token stays out of history. A ?doc= param
+      // is preserved across the reload so a combined link still opens the doc.
+      function consumeSetupLink() {
+        const params = new URLSearchParams(location.search);
+        const enc = params.get(SETUP_PARAM);
+        if (!enc) return false;
+        try {
+          const cfg = decodeCouchConfig(enc);
+          if (cfg.url) setCouchConfig(cfg);
+        } catch (err) {
+          console.error('Ignoring invalid setup link', err);
+        }
+        params.delete(SETUP_PARAM);
+        const qs = params.toString();
+        location.replace(location.origin + location.pathname + (qs ? '?' + qs : '') + location.hash);
+        return true;
+      }
+
+      if (!consumeSetupLink()) {
+        const sharedId = new URLSearchParams(location.search).get(DOC_PARAM);
+        if (sharedId) openSharedDoc(sharedId);
+      }
+    </script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
