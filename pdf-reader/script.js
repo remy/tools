@@ -207,6 +207,56 @@ async function contentHash(html) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Convert a data: URL into a Blob so images can be stored as binary CouchDB
+// attachments rather than inflating the JSON body (which trips a 413).
+function dataUrlToBlob(dataUrl) {
+  const comma = dataUrl.indexOf(',');
+  const meta = dataUrl.slice(5, comma); // strip leading "data:"
+  const isBase64 = /;base64$/i.test(meta);
+  const contentType = meta.replace(/;base64$/i, '') || 'application/octet-stream';
+  const payload = dataUrl.slice(comma + 1);
+  if (!isBase64) {
+    return new Blob([decodeURIComponent(payload)], { type: contentType });
+  }
+  const bin = atob(payload);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: contentType });
+}
+
+// Pull every inline data: image out of the HTML and into a PouchDB
+// `_attachments` map, replacing each src with a `data-att` reference. Returns
+// the rewritten HTML plus the attachments object (empty if there are none).
+function splitOutImages(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const attachments = {};
+  let i = 0;
+  for (const img of tmp.querySelectorAll('img[src^="data:"]')) {
+    const blob = dataUrlToBlob(img.getAttribute('src'));
+    const ext = (blob.type.split('/')[1] || 'bin').replace(/[^a-z0-9]/gi, '') || 'bin';
+    const name = 'img-' + i + '.' + ext;
+    attachments[name] = { content_type: blob.type, data: blob };
+    img.removeAttribute('src');
+    img.setAttribute('data-att', name);
+    i++;
+  }
+  return { html: tmp.innerHTML, attachments };
+}
+
+// Point each `data-att` image at its attachment Blob via an object URL.
+function restoreImages(container, attachmentRecords) {
+  if (!attachmentRecords) return;
+  for (const img of container.querySelectorAll('img[data-att]')) {
+    const name = img.getAttribute('data-att');
+    const att = attachmentRecords[name];
+    if (att && att.data) {
+      img.src = URL.createObjectURL(att.data);
+      img.removeAttribute('data-att');
+    }
+  }
+}
+
 let shareBusy = false;
 shareBtn.addEventListener('click', async () => {
   if (shareBusy) return;
@@ -230,12 +280,14 @@ shareBtn.addEventListener('click', async () => {
       id = lastSharedId;
     } else {
       id = 'pdfdoc-' + crypto.randomUUID();
+      const { html: strippedHtml, attachments } = splitOutImages(html);
       await remoteDb(cfg).put({
         _id: id,
         type: 'pdfdoc',
         title: toolbarName.textContent || 'Shared document',
-        html,
+        html: strippedHtml,
         createdAt: Date.now(),
+        _attachments: attachments,
       });
       lastSharedId = id;
       lastSharedHash = hash;
@@ -268,9 +320,10 @@ async function openSharedDoc(id) {
     return;
   }
   try {
-    const docRec = await remoteDb(cfg).get(id);
+    const docRec = await remoteDb(cfg).get(id, { attachments: true, binary: true });
     toolbarName.textContent = docRec.title || 'Shared document';
     doc.innerHTML = docRec.html || '';
+    restoreImages(doc, docRec._attachments);
     toolbarProgress.textContent = '';
   } catch (err) {
     console.error(err);
