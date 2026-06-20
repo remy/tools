@@ -124,6 +124,31 @@ const couchStatus = document.getElementById('couch-status');
 const couchSetupBtn = document.getElementById('couch-share-setup');
 const shareBtn = document.getElementById('btn-share');
 
+const shareDialog = document.getElementById('share-dialog');
+const shareUrlInput = document.getElementById('share-url-input');
+const shareCopyBtn = document.getElementById('share-copy-btn');
+
+let lastSharedId = null;
+let lastSharedHash = null;
+
+document.getElementById('share-close').addEventListener('click', () => shareDialog.close());
+shareDialog.addEventListener('click', (e) => {
+  if (e.target === shareDialog) shareDialog.close();
+});
+
+let shareCopyTimer = null;
+shareCopyBtn.addEventListener('click', async () => {
+  const url = shareUrlInput.value;
+  try {
+    await navigator.clipboard.writeText(url);
+    shareCopyBtn.textContent = 'Copied!';
+    clearTimeout(shareCopyTimer);
+    shareCopyTimer = setTimeout(() => { shareCopyBtn.textContent = 'Copy'; }, 2000);
+  } catch (_) {
+    window.prompt('Copy this link:', url);
+  }
+});
+
 function setCouchStatus(msg, state) {
   couchStatus.textContent = msg || '';
   if (state) couchStatus.dataset.state = state; else delete couchStatus.dataset.state;
@@ -175,7 +200,13 @@ async function copyOrPrompt(text, btn, restoreLabel) {
   }
 }
 
-// ── Toolbar: save the current document and copy a share link ──
+// ── Toolbar: save the current document and open share dialog ──
+async function contentHash(html) {
+  const bytes = new TextEncoder().encode(html);
+  const buf = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 let shareBusy = false;
 shareBtn.addEventListener('click', async () => {
   if (shareBusy) return;
@@ -192,19 +223,29 @@ shareBtn.addEventListener('click', async () => {
   shareBtn.textContent = 'Saving…';
   shareBtn.disabled = true;
   try {
-    const id = 'pdfdoc-' + crypto.randomUUID();
-    await remoteDb(cfg).put({
-      _id: id,
-      type: 'pdfdoc',
-      title: toolbarName.textContent || 'Shared document',
-      html: doc.innerHTML,
-      createdAt: Date.now(),
-    });
+    const html = doc.innerHTML;
+    const hash = await contentHash(html);
+    let id;
+    if (lastSharedHash === hash && lastSharedId) {
+      id = lastSharedId;
+    } else {
+      id = 'pdfdoc-' + crypto.randomUUID();
+      await remoteDb(cfg).put({
+        _id: id,
+        type: 'pdfdoc',
+        title: toolbarName.textContent || 'Shared document',
+        html,
+        createdAt: Date.now(),
+      });
+      lastSharedId = id;
+      lastSharedHash = hash;
+    }
     const link = location.origin + location.pathname + '?' + DOC_PARAM + '=' + id;
-    shareBtn.textContent = 'Saved';
-    await copyOrPrompt(link, null);
-    shareBtn.textContent = 'Link copied!';
-    setTimeout(() => { shareBtn.textContent = original; }, 2200);
+    shareUrlInput.value = link;
+    shareCopyBtn.textContent = 'Copy';
+    shareBtn.textContent = original;
+    shareDialog.showModal();
+    shareUrlInput.select();
   } catch (err) {
     console.error(err);
     shareBtn.textContent = 'Share failed';
@@ -777,6 +818,8 @@ function showReader(name) {
   readerRoot.hidden = false;
   toolbarName.textContent = name;
   doc.innerHTML = '';
+  lastSharedId = null;
+  lastSharedHash = null;
 }
 
 function showError(message) {
