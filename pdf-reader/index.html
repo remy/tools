@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="Upload a PDF and reflow it into a responsive, mobile-friendly article — carrying across images and as much formatting as possible — so you can read it without any horizontal scrolling." />
+    <meta name="category" content="Productivity" />
+    <title>PDF Reader</title>
+    <link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Epath%7Bfill:%2318181b%7D@media (prefers-color-scheme:dark)%7Bpath%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Cpath d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v1.5H8V13zm0 3h8v1.5H8V16zm0-6h3v1.5H8V10z'/%3E%3C/svg%3E">
+    <style>
+      :root {
+        --colour-bg: #fafafa;
+        --colour-bg-secondary: #f4f4f5;
+        --colour-border: #d4d4d8;
+        --colour-text: #18181b;
+        --colour-text-secondary: #52525b;
+        --colour-primary: #2563eb;
+        --colour-primary-hover: #1d4ed8;
+        --colour-primary-light: #dbeafe;
+        --colour-block-bg: #ffffff;
+        --colour-block-border: #e4e4e7;
+        --colour-shadow: rgba(0, 0, 0, 0.08);
+
+        --space-xs: 0.25rem;
+        --space-sm: 0.5rem;
+        --space-md: 0.75rem;
+        --space-lg: 1rem;
+        --space-xl: 1.5rem;
+        --space-2xl: 2rem;
+
+        /* Reading preferences — overridden from JS / settings */
+        --reading-size: 1.125rem;
+        --reading-width: 42rem;
+        --reading-family: Georgia, "Iowan Old Style", "Times New Roman", Times, serif;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --colour-bg: #0a0a0a;
+          --colour-bg-secondary: #171717;
+          --colour-border: #2a2a2a;
+          --colour-text: #fafafa;
+          --colour-text-secondary: #a1a1aa;
+          --colour-primary-light: #1e3a8a;
+          --colour-block-bg: #141414;
+          --colour-block-border: #262626;
+          --colour-shadow: rgba(0, 0, 0, 0.5);
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        color: var(--colour-text);
+        background: var(--colour-bg);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        min-height: 100vh;
+        overflow-wrap: break-word;
+      }
+
+      /* Shared icon mask technique */
+      .icon-mask {
+        display: inline-block;
+        background-color: currentColor;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+      }
+
+      .icon-settings {
+        width: 1.25rem;
+        height: 1.25rem;
+        -webkit-mask-image: url(/icons/settings.svg);
+        mask-image: url(/icons/settings.svg);
+      }
+
+      /* Drop overlay — covers the page during drag */
+      body.dragover::after {
+        content: "Drop your PDF";
+        position: fixed;
+        inset: var(--space-lg);
+        border: 3px dashed var(--colour-primary);
+        background: var(--colour-primary-light);
+        color: var(--colour-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.75rem;
+        z-index: 2000;
+        pointer-events: none;
+      }
+
+      /* Empty state — centred prompt */
+      .empty {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--space-lg);
+      }
+
+      .empty-card {
+        width: 100%;
+        max-width: 32rem;
+        background: var(--colour-block-bg);
+        border: 2px dashed var(--colour-border);
+        border-radius: 0.75rem;
+        padding: var(--space-2xl);
+        text-align: center;
+        cursor: pointer;
+        color: var(--colour-text);
+        font: inherit;
+        transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+      }
+
+      .empty-card:hover,
+      .empty-card:focus-visible {
+        border-color: var(--colour-primary);
+        outline: none;
+        transform: translateY(-1px);
+      }
+
+      .empty-icon {
+        width: 3rem;
+        height: 3rem;
+        margin: 0 auto var(--space-lg);
+        color: var(--colour-primary);
+      }
+
+      .empty-title {
+        font-family: Georgia, "Times New Roman", Times, serif;
+        font-weight: 700;
+        font-size: 1.5rem;
+        letter-spacing: -0.01em;
+        margin-bottom: var(--space-sm);
+      }
+
+      .empty-text {
+        color: var(--colour-text-secondary);
+        font-size: 0.9375rem;
+      }
+
+      .empty-text kbd {
+        display: inline-block;
+        padding: 0.1em 0.4em;
+        margin: 0 0.1em;
+        font-family: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Monaco, Consolas, monospace;
+        font-size: 0.8125rem;
+        background: var(--colour-bg-secondary);
+        border: 1px solid var(--colour-border);
+        border-radius: 0.25rem;
+        color: var(--colour-text);
+      }
+
+      .empty-loading {
+        display: none;
+        color: var(--colour-text-secondary);
+        font-size: 0.9375rem;
+        animation: empty-pulse 1.4s ease-in-out infinite;
+      }
+
+      @keyframes empty-pulse {
+        0%, 100% { opacity: 0.5; }
+        50% { opacity: 1; }
+      }
+
+      .empty.loading .empty-text { display: none; }
+      .empty.loading .empty-loading { display: block; }
+      .empty.loading .empty-card { cursor: progress; }
+
+      .empty-error {
+        margin-top: var(--space-lg);
+        color: #b91c1c;
+        font-size: 0.875rem;
+      }
+      @media (prefers-color-scheme: dark) {
+        .empty-error { color: #f87171; }
+      }
+
+      /* Top toolbar */
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        background: color-mix(in srgb, var(--colour-bg) 88%, transparent);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--colour-border);
+      }
+
+      .toolbar-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .toolbar-progress {
+        flex: 0 0 auto;
+        font-size: 0.75rem;
+        color: var(--colour-text-secondary);
+        white-space: nowrap;
+      }
+
+      .action-btn {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-xs);
+        padding: 0.4rem 0.6rem;
+        font: inherit;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--colour-text);
+        background: var(--colour-block-bg);
+        border: 1px solid var(--colour-border);
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+
+      .action-btn:hover {
+        background: var(--colour-bg-secondary);
+        border-color: var(--colour-text-secondary);
+      }
+
+      .action-btn.icon-only {
+        padding: 0.4rem;
+      }
+
+      /* Reading surface */
+      .reader {
+        max-width: var(--reading-width);
+        margin-inline: auto;
+        padding: var(--space-xl) var(--space-lg) 6rem;
+      }
+
+      .doc {
+        font-family: var(--reading-family);
+        font-size: var(--reading-size);
+        line-height: 1.7;
+        color: var(--colour-text);
+      }
+
+      .doc-title {
+        font-size: 1.6em;
+        line-height: 1.25;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin-bottom: 0.8em;
+      }
+
+      .doc h2, .doc h3, .doc h4, .doc h5, .doc h6 {
+        font-family: var(--reading-family);
+        line-height: 1.3;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin: 1.4em 0 0.5em;
+      }
+
+      .doc h2 { font-size: 1.4em; }
+      .doc h3 { font-size: 1.2em; }
+      .doc h4 { font-size: 1.05em; }
+      .doc h5, .doc h6 { font-size: 1em; }
+
+      .doc p {
+        margin: 0 0 0.9em;
+        overflow-wrap: break-word;
+        hyphens: auto;
+      }
+
+      .doc ul {
+        margin: 0 0 0.9em;
+        padding-left: 1.4em;
+      }
+
+      .doc li {
+        margin-bottom: 0.3em;
+      }
+
+      .doc strong { font-weight: 700; }
+      .doc em { font-style: italic; }
+
+      .doc figure {
+        margin: 1.2em 0;
+        text-align: center;
+      }
+
+      .doc img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.375rem;
+        background: var(--colour-block-bg);
+      }
+
+      .pdf-page + .pdf-page {
+        margin-top: 1.5em;
+      }
+
+      /* faint page divider so long docs stay legible */
+      .pdf-page::before {
+        content: "";
+        display: block;
+      }
+      .pdf-page:not(:first-child)::before {
+        margin: 1.8em 0;
+        border-top: 1px dashed var(--colour-border);
+      }
+
+      /* Settings dialog */
+      dialog {
+        margin: auto;
+        width: min(28rem, calc(100vw - 2rem));
+        max-width: 28rem;
+        padding: 0;
+        border: 1px solid var(--colour-border);
+        border-radius: 0.75rem;
+        background: var(--colour-block-bg);
+        color: var(--colour-text);
+        box-shadow: 0 12px 40px var(--colour-shadow);
+      }
+
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.45);
+      }
+
+      .dialog-inner {
+        padding: var(--space-xl);
+      }
+
+      .dialog-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-lg);
+      }
+
+      .dialog-header h2 {
+        font-size: 1.125rem;
+        font-weight: 700;
+      }
+
+      .dialog-close {
+        font-size: 1.5rem;
+        line-height: 1;
+        background: none;
+        border: none;
+        color: var(--colour-text-secondary);
+        cursor: pointer;
+        padding: 0 0.25rem;
+      }
+
+      .field {
+        margin-bottom: var(--space-lg);
+      }
+
+      .field-label {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--colour-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: var(--space-sm);
+      }
+
+      .segmented {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-xs);
+      }
+
+      .segmented button {
+        flex: 1 1 auto;
+        min-width: 3.5rem;
+        padding: 0.5rem 0.6rem;
+        font: inherit;
+        font-size: 0.875rem;
+        color: var(--colour-text);
+        background: var(--colour-bg-secondary);
+        border: 1px solid var(--colour-border);
+        border-radius: 0.375rem;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      }
+
+      .segmented button[aria-pressed="true"] {
+        background: var(--colour-primary);
+        border-color: var(--colour-primary);
+        color: #fff;
+      }
+
+      @media (max-width: 639px) {
+        dialog {
+          inset: 0;
+          margin: 0;
+          width: 100vw;
+          height: 100dvh;
+          max-width: 100vw;
+          max-height: 100dvh;
+          border-radius: 0;
+        }
+        .reader {
+          padding-inline: var(--space-md);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="empty" id="empty">
+      <button class="empty-card" id="empty-card" type="button" aria-label="Open a PDF file">
+        <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 12.5h8V14H8v-1.5zm0 3h8V17H8v-1.5zm0-6h3V11H8V9.5z" />
+        </svg>
+        <div class="empty-title">PDF Reader</div>
+        <p class="empty-text">
+          Drop a PDF anywhere, paste one with <kbd>⌘</kbd>+<kbd>V</kbd>, or click to choose a file.
+          It is reflowed into a responsive page you can read on your phone — no horizontal scrolling.
+        </p>
+        <p class="empty-loading">Loading…</p>
+      </button>
+      <p class="empty-error" id="empty-error" hidden></p>
+    </div>
+
+    <input type="file" id="file-input" accept="application/pdf,.pdf" hidden>
+
+    <script>
+      // Tiny early script: capture file/paste/drop input before the heavy
+      // PDF.js module loads, queue it, and show a loading state. The main
+      // module calls register() once it is ready.
+      (function () {
+        const empty = document.getElementById('empty');
+        const emptyCard = document.getElementById('empty-card');
+        const fileInput = document.getElementById('file-input');
+
+        let pending = null;
+        let handler = null;
+
+        function showLoading() {
+          empty.classList.add('loading');
+        }
+
+        function dispatch(payload) {
+          if (handler) {
+            handler(payload);
+          } else {
+            pending = payload;
+          }
+        }
+
+        function readFile(file) {
+          if (!file) return;
+          if (file.type && file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name || '')) return;
+          showLoading();
+          const reader = new FileReader();
+          reader.onload = () => dispatch({ buffer: reader.result, name: file.name || 'document.pdf' });
+          reader.onerror = () => empty.classList.remove('loading');
+          reader.readAsArrayBuffer(file);
+        }
+
+        emptyCard.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+          readFile(fileInput.files[0]);
+          fileInput.value = '';
+        });
+
+        let dragDepth = 0;
+        window.addEventListener('dragenter', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          e.preventDefault();
+          dragDepth++;
+          document.body.classList.add('dragover');
+        });
+        window.addEventListener('dragover', (e) => {
+          if (Array.from(e.dataTransfer?.types || []).includes('Files')) e.preventDefault();
+        });
+        window.addEventListener('dragleave', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          dragDepth = Math.max(0, dragDepth - 1);
+          if (dragDepth === 0) document.body.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dragDepth = 0;
+          document.body.classList.remove('dragover');
+          const file = e.dataTransfer?.files?.[0];
+          if (file) readFile(file);
+        });
+
+        window.addEventListener('paste', (e) => {
+          const target = e.target;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+          const file = Array.from(e.clipboardData?.files || [])[0];
+          if (file) {
+            e.preventDefault();
+            readFile(file);
+          }
+        });
+
+        window.__pdfEarly = {
+          openFilePicker() { fileInput.click(); },
+          register(fn) {
+            handler = fn;
+            if (pending !== null) {
+              const p = pending;
+              pending = null;
+              fn(p);
+            }
+          },
+        };
+      })();
+    </script>
+
+    <div id="reader-root" hidden>
+      <div class="toolbar">
+        <span class="toolbar-name" id="toolbar-name">document.pdf</span>
+        <span class="toolbar-progress" id="toolbar-progress" aria-live="polite"></span>
+        <button class="action-btn icon-only" id="btn-settings" aria-label="Settings">
+          <span class="icon-mask icon-settings" aria-hidden="true"></span>
+        </button>
+        <button class="action-btn" id="btn-new" type="button">New PDF</button>
+      </div>
+      <div class="reader">
+        <article class="doc" id="doc"></article>
+      </div>
+    </div>
+
+    <dialog id="settings-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h2>Reading settings</h2>
+          <button class="dialog-close" id="settings-close" type="button" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Text size</span>
+          <div class="segmented" id="seg-size" role="group" aria-label="Text size">
+            <button type="button" data-value="small">S</button>
+            <button type="button" data-value="medium">M</button>
+            <button type="button" data-value="large">L</button>
+            <button type="button" data-value="xlarge">XL</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Typeface</span>
+          <div class="segmented" id="seg-family" role="group" aria-label="Typeface">
+            <button type="button" data-value="serif">Serif</button>
+            <button type="button" data-value="sans">Sans</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Column width</span>
+          <div class="segmented" id="seg-width" role="group" aria-label="Column width">
+            <button type="button" data-value="narrow">Narrow</button>
+            <button type="button" data-value="comfortable">Comfortable</button>
+            <button type="button" data-value="wide">Wide</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module">
+      import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/build/pdf.min.mjs';
+
+      const PDFJS_BASE = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/';
+      pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'build/pdf.worker.min.mjs';
+
+      const empty = document.getElementById('empty');
+      const emptyError = document.getElementById('empty-error');
+      const readerRoot = document.getElementById('reader-root');
+      const doc = document.getElementById('doc');
+      const toolbarName = document.getElementById('toolbar-name');
+      const toolbarProgress = document.getElementById('toolbar-progress');
+
+      /* ---------- Reading preferences ---------- */
+
+      const SETTINGS_KEY = 'pdf-reader:settings';
+      const SIZES = { small: '1rem', medium: '1.125rem', large: '1.3125rem', xlarge: '1.5rem' };
+      const WIDTHS = { narrow: '34rem', comfortable: '42rem', wide: '52rem' };
+      const FAMILIES = {
+        serif: 'Georgia, "Iowan Old Style", "Times New Roman", Times, serif',
+        sans: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+      };
+
+      const defaults = { size: 'medium', family: 'serif', width: 'comfortable' };
+      let settings = { ...defaults };
+      try {
+        const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+        settings = { ...defaults, ...saved };
+      } catch (_) { /* ignore */ }
+
+      function applySettings() {
+        const root = document.documentElement.style;
+        root.setProperty('--reading-size', SIZES[settings.size] || SIZES.medium);
+        root.setProperty('--reading-width', WIDTHS[settings.width] || WIDTHS.comfortable);
+        root.setProperty('--reading-family', FAMILIES[settings.family] || FAMILIES.serif);
+        for (const [group, key] of [['seg-size', 'size'], ['seg-family', 'family'], ['seg-width', 'width']]) {
+          document.querySelectorAll('#' + group + ' button').forEach((b) => {
+            b.setAttribute('aria-pressed', String(b.dataset.value === settings[key]));
+          });
+        }
+      }
+
+      function bindSegment(id, key) {
+        document.getElementById(id).addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-value]');
+          if (!btn) return;
+          settings[key] = btn.dataset.value;
+          try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (_) { /* ignore */ }
+          applySettings();
+        });
+      }
+      bindSegment('seg-size', 'size');
+      bindSegment('seg-family', 'family');
+      bindSegment('seg-width', 'width');
+      applySettings();
+
+      const settingsDialog = document.getElementById('settings-dialog');
+      document.getElementById('btn-settings').addEventListener('click', () => settingsDialog.showModal());
+      document.getElementById('settings-close').addEventListener('click', () => settingsDialog.close());
+      settingsDialog.addEventListener('click', (e) => {
+        if (e.target === settingsDialog) settingsDialog.close();
+      });
+
+      document.getElementById('btn-new').addEventListener('click', () => window.__pdfEarly.openFilePicker());
+
+      /* ---------- Geometry / matrix helpers ---------- */
+
+      // Combine two transform matrices the same way PDF.js Util.transform does:
+      // returns m1 ∘ m2 (m2 applied, then m1).
+      function matMul(m1, m2) {
+        return [
+          m1[0] * m2[0] + m1[2] * m2[1],
+          m1[1] * m2[0] + m1[3] * m2[1],
+          m1[0] * m2[2] + m1[2] * m2[3],
+          m1[1] * m2[2] + m1[3] * m2[3],
+          m1[0] * m2[4] + m1[2] * m2[5] + m1[4],
+          m1[1] * m2[4] + m1[3] * m2[5] + m1[5],
+        ];
+      }
+
+      function median(nums) {
+        if (!nums.length) return 0;
+        const s = [...nums].sort((a, b) => a - b);
+        const m = s.length >> 1;
+        return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+      }
+
+      function esc(s) {
+        return s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+      }
+
+      function runsHTML(runs) {
+        return runs.map((r) => {
+          if (!r.text) return '';
+          let t = esc(r.text);
+          if (r.bold) t = '<strong>' + t + '</strong>';
+          if (r.italic) t = '<em>' + t + '</em>';
+          return t;
+        }).join('');
+      }
+
+      const BULLET_RE = /^\s*([•◦▪·‣○●∙*•‣◦]|[-–—]|\d{1,3}[.)])\s+/;
+
+      /* ---------- Text extraction & reflow ---------- */
+
+      async function extractText(page) {
+        const textContent = await page.getTextContent();
+        const styles = textContent.styles || {};
+        const fontCache = new Map();
+
+        function fontInfo(fontName) {
+          if (fontCache.has(fontName)) return fontCache.get(fontName);
+          let bold = false, italic = false;
+          try {
+            let name = '';
+            if (page.commonObjs.has && page.commonObjs.has(fontName)) {
+              const f = page.commonObjs.get(fontName);
+              name = (f && (f.name || f.loadedName)) || '';
+              if (f && f.bold) bold = true;
+              if (f && f.italic) italic = true;
+            }
+            if (!name) name = fontName || '';
+            if (/bold|black|heavy|semibold|demibold|extrabold/i.test(name)) bold = true;
+            if (/italic|oblique/i.test(name)) italic = true;
+          } catch (_) { /* best effort */ }
+          const info = { bold, italic };
+          fontCache.set(fontName, info);
+          return info;
+        }
+
+        // Normalise items into positioned glyph runs.
+        const items = [];
+        for (const it of textContent.items) {
+          if (typeof it.str !== 'string') continue;
+          const tr = it.transform;
+          items.push({
+            str: it.str,
+            x: tr[4],
+            y: tr[5],
+            w: it.width || 0,
+            size: Math.hypot(tr[2], tr[3]) || it.height || 10,
+            font: it.fontName,
+          });
+        }
+        if (!items.length) return [];
+
+        // Group into visual lines by baseline proximity.
+        items.sort((a, b) => (b.y - a.y) || (a.x - b.x));
+        const rawLines = [];
+        let cur = null;
+        for (const it of items) {
+          if (cur && Math.abs(it.y - cur.y) <= Math.max(it.size, cur.size) * 0.4) {
+            cur.items.push(it);
+          } else {
+            cur = { y: it.y, items: [it] };
+            rawLines.push(cur);
+          }
+        }
+
+        // Build each line into styled runs, inserting spaces across gaps.
+        const lines = [];
+        for (const rl of rawLines) {
+          const its = rl.items.filter((i) => i.str !== '').sort((a, b) => a.x - b.x);
+          if (!its.length) continue;
+          const runs = [];
+          let prev = null;
+          for (const it of its) {
+            const fi = fontInfo(it.font);
+            let text = it.str;
+            if (prev) {
+              const gap = it.x - (prev.x + prev.w);
+              const last = runs[runs.length - 1];
+              const endsSpace = last && /\s$/.test(last.text);
+              if (gap > prev.size * 0.2 && !endsSpace && !/^\s/.test(text)) text = ' ' + text;
+            }
+            const last = runs[runs.length - 1];
+            if (last && last.bold === fi.bold && last.italic === fi.italic) {
+              last.text += text;
+            } else {
+              runs.push({ text, bold: fi.bold, italic: fi.italic });
+            }
+            prev = it;
+          }
+          const plain = runs.map((r) => r.text).join('');
+          if (!plain.trim()) continue;
+          lines.push({ y: rl.y, x: its[0].x, size: median(its.map((i) => i.size)), runs, text: plain });
+        }
+        if (!lines.length) return [];
+
+        // Determine the dominant body font size (weighted by characters).
+        const sizeWeight = new Map();
+        for (const ln of lines) {
+          const key = Math.round(ln.size);
+          sizeWeight.set(key, (sizeWeight.get(key) || 0) + ln.text.length);
+        }
+        let bodySize = 10, best = -1;
+        for (const [k, v] of sizeWeight) if (v > best) { best = v; bodySize = k; }
+
+        // Group lines into heading / paragraph / list blocks.
+        const blocks = [];
+        let para = null, list = null;
+        const flushPara = () => { if (para) { blocks.push(para); para = null; } };
+        const flushList = () => { if (list) { blocks.push(list); list = null; } };
+
+        for (let i = 0; i < lines.length; i++) {
+          const ln = lines[i];
+          const prev = lines[i - 1];
+          const ratio = ln.size / bodySize;
+          const isHeading = ratio >= 1.18 && ln.text.trim().length > 0 && ln.text.trim().length < 160;
+          const isBullet = BULLET_RE.test(ln.text);
+          const gap = prev ? prev.y - ln.y : 0;
+          const bigGap = prev ? gap > ln.size * 1.7 : false;
+
+          if (isHeading) {
+            flushPara(); flushList();
+            const level = ratio >= 2 ? 1 : ratio >= 1.6 ? 2 : ratio >= 1.3 ? 3 : 4;
+            blocks.push({ type: 'heading', level, y: ln.y, runs: ln.runs });
+            continue;
+          }
+
+          if (isBullet) {
+            flushPara();
+            if (!list) list = { type: 'list', y: ln.y, items: [] };
+            list.items.push(stripBullet(ln));
+            continue;
+          }
+
+          flushList();
+          if (!para || bigGap) {
+            flushPara();
+            para = { type: 'para', y: ln.y, lines: [ln] };
+          } else {
+            para.lines.push(ln);
+          }
+        }
+        flushPara(); flushList();
+        return blocks;
+      }
+
+      function stripBullet(ln) {
+        const runs = ln.runs.map((r) => ({ ...r }));
+        const m = ln.text.match(BULLET_RE);
+        if (m) {
+          let n = m[0].length;
+          for (const r of runs) {
+            if (n <= 0) break;
+            if (r.text.length <= n) { n -= r.text.length; r.text = ''; }
+            else { r.text = r.text.slice(n); n = 0; }
+          }
+        }
+        return { y: ln.y, runs };
+      }
+
+      function renderParagraph(p) {
+        let html = '';
+        p.lines.forEach((ln, idx) => {
+          const runs = ln.runs.map((r) => ({ ...r }));
+          const isLast = idx === p.lines.length - 1;
+          let joiner = ' ';
+          // Soft line-wrap hyphen: drop the trailing hyphen and join without a space.
+          if (!isLast && /[A-Za-zÀ-ɏ]-$/.test(ln.text)) {
+            const last = runs[runs.length - 1];
+            last.text = last.text.replace(/-$/, '');
+            joiner = '';
+          }
+          html += runsHTML(runs);
+          if (!isLast) html += joiner;
+        });
+        return '<p>' + html + '</p>';
+      }
+
+      /* ---------- Image extraction ---------- */
+
+      function getObj(page, name) {
+        return new Promise((resolve) => {
+          try {
+            if (page.objs.has && page.objs.has(name)) { resolve(page.objs.get(name)); return; }
+          } catch (_) { /* fall through */ }
+          try { page.objs.get(name, resolve); } catch (_) { resolve(null); }
+        });
+      }
+
+      async function imageToData(img) {
+        try {
+          const width = img.width, height = img.height;
+          if (!width || !height) return null;
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+
+          if (img.bitmap) {
+            ctx.drawImage(img.bitmap, 0, 0);
+          } else if (img.data) {
+            const data = img.data;
+            const imageData = ctx.createImageData(width, height);
+            const dst = imageData.data;
+            const px = width * height;
+            if (img.kind === 3 || data.length === px * 4) {
+              dst.set(data.length > dst.length ? data.subarray(0, dst.length) : data);
+            } else if (img.kind === 2 || data.length === px * 3) {
+              for (let i = 0, j = 0; i < px; i++) {
+                dst[j++] = data[i * 3];
+                dst[j++] = data[i * 3 + 1];
+                dst[j++] = data[i * 3 + 2];
+                dst[j++] = 255;
+              }
+            } else if (img.kind === 1 || data.length === ((width + 7) >> 3) * height) {
+              const rowBytes = (width + 7) >> 3;
+              for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                  const bit = (data[y * rowBytes + (x >> 3)] >> (7 - (x & 7))) & 1;
+                  const v = bit ? 255 : 0;
+                  const o = (y * width + x) * 4;
+                  dst[o] = dst[o + 1] = dst[o + 2] = v;
+                  dst[o + 3] = 255;
+                }
+              }
+            } else {
+              return null;
+            }
+            ctx.putImageData(imageData, 0, 0);
+          } else {
+            return null;
+          }
+          return { src: canvas.toDataURL('image/png'), iw: width, ih: height };
+        } catch (_) {
+          return null;
+        }
+      }
+
+      async function extractImages(page) {
+        let opList;
+        try { opList = await page.getOperatorList(); } catch (_) { return []; }
+        const OPS = pdfjsLib.OPS;
+        const fns = opList.fnArray, args = opList.argsArray;
+        let ctm = [1, 0, 0, 1, 0, 0];
+        const stack = [];
+        const found = [];
+
+        for (let i = 0; i < fns.length; i++) {
+          const fn = fns[i];
+          if (fn === OPS.save) {
+            stack.push(ctm.slice());
+          } else if (fn === OPS.restore) {
+            ctm = stack.pop() || [1, 0, 0, 1, 0, 0];
+          } else if (fn === OPS.transform) {
+            ctm = matMul(ctm, args[i]);
+          } else if (fn === OPS.paintImageXObject || fn === OPS.paintImageXObjectRepeat) {
+            found.push({ name: args[i][0], ctm: ctm.slice(), inline: null });
+          } else if (fn === OPS.paintInlineImageXObject) {
+            found.push({ name: null, ctm: ctm.slice(), inline: args[i][0] });
+          }
+        }
+
+        const out = [];
+        for (const f of found) {
+          try {
+            const img = f.inline || await getObj(page, f.name);
+            if (!img) continue;
+            const data = await imageToData(img);
+            if (!data) continue;
+            const m = f.ctm;
+            const dispW = Math.abs(m[0]) || data.iw;
+            const dispH = Math.abs(m[3]) || data.ih;
+            // Skip hairlines / decorative rules / tiny mask fragments.
+            if (data.iw < 8 || data.ih < 8) continue;
+            if (dispW < 24 && dispH < 24) continue;
+            const top = Math.max(m[5], m[5] + m[3]);
+            out.push({ type: 'image', y: top, src: data.src, iw: data.iw, ih: data.ih });
+          } catch (_) { /* skip this image */ }
+        }
+        return out;
+      }
+
+      /* ---------- Rendering ---------- */
+
+      function blocksToHTML(blocks, pageNum) {
+        let html = '';
+        for (const b of blocks) {
+          if (b.type === 'heading') {
+            const lvl = Math.min(6, b.level + 1); // leave <h1> for the document title
+            html += '<h' + lvl + '>' + runsHTML(b.runs) + '</h' + lvl + '>';
+          } else if (b.type === 'para') {
+            html += renderParagraph(b);
+          } else if (b.type === 'list') {
+            html += '<ul>' + b.items.map((it) => '<li>' + runsHTML(it.runs) + '</li>').join('') + '</ul>';
+          } else if (b.type === 'image') {
+            html += '<figure><img loading="lazy" src="' + b.src + '" alt="Image from page ' + pageNum +
+              '" width="' + b.iw + '" height="' + b.ih + '"></figure>';
+          }
+        }
+        return html;
+      }
+
+      let currentToken = 0;
+
+      function showReader(name) {
+        empty.hidden = true;
+        empty.classList.remove('loading');
+        readerRoot.hidden = false;
+        toolbarName.textContent = name;
+        doc.innerHTML = '';
+      }
+
+      function showError(message) {
+        readerRoot.hidden = true;
+        empty.hidden = false;
+        empty.classList.remove('loading');
+        emptyError.textContent = message;
+        emptyError.hidden = false;
+      }
+
+      async function openPdf({ buffer, name }) {
+        const token = ++currentToken;
+        emptyError.hidden = true;
+        showReader(name || 'document.pdf');
+
+        let task;
+        try {
+          task = pdfjsLib.getDocument({
+            data: new Uint8Array(buffer),
+            cMapUrl: PDFJS_BASE + 'cmaps/',
+            cMapPacked: true,
+            standardFontDataUrl: PDFJS_BASE + 'standard_fonts/',
+          });
+          task.onPassword = (updatePassword, reason) => {
+            const pw = window.prompt(
+              reason === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD
+                ? 'Incorrect password. Try again:'
+                : 'This PDF is password protected. Enter the password:'
+            );
+            if (pw != null) updatePassword(pw);
+            else task.destroy();
+          };
+
+          const pdf = await task.promise;
+          if (token !== currentToken) return;
+
+          // Document title from metadata, if present.
+          try {
+            const meta = await pdf.getMetadata();
+            const title = meta && meta.info && meta.info.Title;
+            if (title && title.trim()) {
+              const h1 = document.createElement('h1');
+              h1.className = 'doc-title';
+              h1.textContent = title.trim();
+              doc.appendChild(h1);
+            }
+          } catch (_) { /* ignore */ }
+
+          const total = pdf.numPages;
+          for (let p = 1; p <= total; p++) {
+            if (token !== currentToken) return;
+            toolbarProgress.textContent = 'Reading page ' + p + ' of ' + total + '…';
+
+            const page = await pdf.getPage(p);
+            const [textBlocks, imageBlocks] = await Promise.all([
+              extractText(page),
+              extractImages(page),
+            ]);
+            if (token !== currentToken) return;
+
+            const blocks = textBlocks.concat(imageBlocks).sort((a, b) => b.y - a.y);
+            const section = document.createElement('section');
+            section.className = 'pdf-page';
+            section.dataset.page = String(p);
+            section.innerHTML = blocksToHTML(blocks, p);
+            doc.appendChild(section);
+
+            page.cleanup();
+            // Yield to the browser so the page stays responsive while parsing.
+            await new Promise((r) => requestAnimationFrame(r));
+          }
+
+          if (token !== currentToken) return;
+          toolbarProgress.textContent = total + (total === 1 ? ' page' : ' pages');
+        } catch (err) {
+          if (token !== currentToken) return;
+          console.error(err);
+          const msg = err && err.name === 'PasswordException'
+            ? 'Could not open this password-protected PDF.'
+            : 'Sorry, this file could not be read as a PDF.';
+          showError(msg);
+        }
+      }
+
+      window.__pdfEarly.register(openPdf);
+    </script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
