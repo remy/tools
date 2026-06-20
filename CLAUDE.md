@@ -129,3 +129,13 @@ If you need to preserve open state across a re-render, capture the open category
 If HTML or CSS is included in the web component code, it should include a command before the template string as `/* HTML */` and `/* CSS */` (the spaces are important) for syntax highlighting.
 
 The script should ALWAYS end in `.wc.js` - this way it can be served with CORS headers.
+
+## Pull requests
+
+When a task is complete, always create the pull request automatically — do not ask first.
+
+The PR title must always include the tool's directory name clearly (e.g. `[tool-name] Add feature X`).
+
+## Generate script
+
+Do not run the generate script — it is not required during development and runs automatically on merge.
