@@ -9,6 +9,21 @@ const readerRoot = document.getElementById('reader-root');
 const doc = document.getElementById('doc');
 const toolbarName = document.getElementById('toolbar-name');
 const toolbarProgress = document.getElementById('toolbar-progress');
+const readingProgress = document.getElementById('reading-progress');
+
+/* ---------- Reading progress bar ---------- */
+
+// Track scroll position with a thin bar at the top of the viewport. Updated
+// straight from the scroll event (no debounce / no CSS transition) so the bar
+// moves in lockstep with the scrollbar.
+function updateReadingProgress() {
+  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const pct = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+  readingProgress.style.transform = 'scaleX(' + pct + ')';
+}
+
+window.addEventListener('scroll', updateReadingProgress, { passive: true });
+window.addEventListener('resize', updateReadingProgress, { passive: true });
 
 /* ---------- Reading preferences ---------- */
 
@@ -325,6 +340,7 @@ async function openSharedDoc(id) {
     doc.innerHTML = docRec.html || '';
     restoreImages(doc, docRec._attachments);
     toolbarProgress.textContent = '';
+    updateReadingProgress();
   } catch (err) {
     console.error(err);
     showError('Could not load this shared document. Check that your CouchDB connection is correct and the link is valid.');
@@ -786,28 +802,58 @@ async function extractImages(page, { skipFullPage, columns }) {
 
 /* ---------- Rendering ---------- */
 
-// Heal paragraph breaks that PDF line spacing introduced mid-sentence: if
-// a paragraph doesn't end on sentence-terminating punctuation and the next
-// one clearly continues it, fold them back together.
+// Heal breaks that PDF line spacing introduced mid-sentence. Three cases:
+//   1. A paragraph that doesn't end on sentence punctuation followed by one
+//      that clearly continues it — fold them back together.
+//   2. A "dangling" fragment (e.g. a single wrapped word) that landed after a
+//      list as its own paragraph — fold it back into the last list item.
+//   3. A list that was split in two around such a fragment — rejoin them.
 function mergeBrokenParagraphs(blocks) {
+  const blockText = (lines) =>
+    lines.map((l) => l.text).join(' ').replace(/\s+/g, ' ').trim();
+
+  // Does `nextText` read as the continuation of `prevText` (cut mid-sentence)?
+  const continues = (prevText, nextText, prevSize, nextSize) => {
+    const sizeOk = Math.max(prevSize, nextSize) / Math.min(prevSize, nextSize) < 1.3;
+    // Closed = ends a sentence (. ! ?), allowing a trailing quote/bracket.
+    const prevClosed = /[.!?]["'”’)\]]?$/.test(prevText);
+    const nextContinues = /^[a-z0-9(]/.test(nextText);
+    const prevDangling = /[,–—-]$/.test(prevText);
+    return Boolean(sizeOk && nextText && ((!prevClosed && nextContinues) || prevDangling));
+  };
+
   const out = [];
   for (const b of blocks) {
     const prev = out[out.length - 1];
+
+    // 1. Paragraph continuing the previous paragraph.
     if (b.type === 'para' && prev && prev.type === 'para' && prev.col === b.col) {
-      const prevText = prev.lines.map((l) => l.text).join(' ').replace(/\s+/g, ' ').trim();
-      const nextText = b.lines.map((l) => l.text).join(' ').replace(/\s+/g, ' ').trim();
-      const prevSize = prev.lines[prev.lines.length - 1].size;
-      const nextSize = b.lines[0].size;
-      const sizeOk = Math.max(prevSize, nextSize) / Math.min(prevSize, nextSize) < 1.3;
-      // Closed = ends a sentence (. ! ?), allowing a trailing quote/bracket.
-      const prevClosed = /[.!?]["'”’)\]]?$/.test(prevText);
-      const nextContinues = /^[a-z0-9(]/.test(nextText);
-      const prevDangling = /[,–—-]$/.test(prevText);
-      if (sizeOk && nextText && ((!prevClosed && nextContinues) || prevDangling)) {
+      const prevLast = prev.lines[prev.lines.length - 1];
+      if (continues(blockText(prev.lines), blockText(b.lines), prevLast.size, b.lines[0].size)) {
         prev.lines = prev.lines.concat(b.lines);
         continue;
       }
     }
+
+    // 2. Dangling fragment that belongs to the previous list's last item. A
+    //    wrapped word landing just after a list is mistaken for a paragraph;
+    //    if it reads as a continuation (lowercase / unterminated), reunite it.
+    if (b.type === 'para' && prev && prev.type === 'list' && prev.col === b.col && prev.items.length) {
+      const lastItem = prev.items[prev.items.length - 1];
+      const itemLast = lastItem.lines[lastItem.lines.length - 1];
+      if (continues(blockText(lastItem.lines), blockText(b.lines), itemLast.size, b.lines[0].size)) {
+        lastItem.lines = lastItem.lines.concat(b.lines);
+        continue;
+      }
+    }
+
+    // 3. A list split around a now-removed fragment — rejoin with the previous
+    //    list (same column and marker style).
+    if (b.type === 'list' && prev && prev.type === 'list' && prev.col === b.col && prev.ordered === b.ordered) {
+      prev.items = prev.items.concat(b.items);
+      continue;
+    }
+
     out.push(b);
   }
   return out;
@@ -873,6 +919,8 @@ function showReader(name) {
   doc.innerHTML = '';
   lastSharedId = null;
   lastSharedHash = null;
+  window.scrollTo(0, 0);
+  updateReadingProgress();
 }
 
 function showError(message) {
@@ -957,6 +1005,7 @@ async function openPdf({ buffer, name }) {
     if (toc) doc.insertBefore(toc, doc.querySelector('.pdf-page'));
 
     toolbarProgress.textContent = '';
+    updateReadingProgress();
   } catch (err) {
     if (token !== currentToken) return;
     console.error(err);
