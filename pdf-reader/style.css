@@ -216,6 +216,21 @@ body.dragover::after {
   }
 }
 
+/* Reading progress bar — tracks the scroll position in real time */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 20;
+  background: var(--colour-primary);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+
 /* Top toolbar */
 .toolbar {
   position: sticky;
