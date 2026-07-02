@@ -110,12 +110,25 @@ export function renderItems() {
   const ul = $('todo-list');
   ul.replaceChildren();
 
+  renderProgress();
+
+  const empty = $('empty-list');
+  empty.hidden = items.length !== 0;
+
+  for (const item of items) {
+    ul.appendChild(item.kind === 'heading' ? headingRow(item) : itemRow(item));
+  }
+}
+
+// Progress summary + reset affordance. Split out from renderItems so a single
+// toggle can update the meter without rebuilding the whole list.
+function renderProgress() {
+  const items = state.items;
   // Progress counts checkable tasks only — headings are structural.
   const tasks = items.filter((i) => i.kind !== 'heading');
   const done = tasks.filter((i) => i.checked).length;
   const total = tasks.length;
 
-  // Progress summary + reset affordance
   const meter = $('progress-meter');
   const bar = $('progress-bar');
   const label = $('progress-label');
@@ -129,16 +142,18 @@ export function renderItems() {
     label.textContent = `${done} of ${total} done`;
   }
   $('reset-checks').hidden = done === 0;
+}
 
-  const empty = $('empty-list');
-  empty.hidden = items.length !== 0;
-
-  items.forEach((item, i) => {
-    const row = item.kind === 'heading' ? headingRow(item) : itemRow(item);
-    if (i === 0) row.querySelector('[data-action="moveup"]')?.setAttribute('disabled', '');
-    if (i === items.length - 1) row.querySelector('[data-action="movedown"]')?.setAttribute('disabled', '');
-    ul.appendChild(row);
-  });
+// Re-render one row in place instead of rebuilding the whole list. Rebuilding
+// empties the <ul>, which collapses the page height and makes the browser jump
+// the scroll position to the top — so toggling an item uses this instead.
+export function refreshItemRow(id) {
+  const ul = $('todo-list');
+  const old = ul.querySelector(`[data-id="${id}"]`);
+  const item = state.items.find((i) => i.id === id);
+  if (!old || !item) { renderItems(); return; }
+  old.replaceWith(item.kind === 'heading' ? headingRow(item) : itemRow(item));
+  renderProgress();
 }
 
 function svg(paths, size = 18) {
@@ -161,24 +176,12 @@ function iconBtn(action, label, paths, extraClass = '') {
   return btn;
 }
 
-// A drag handle (native drag source) — reorder on desktop via pointer drag.
+// A drag handle — reorder via pointer drag (mouse or touch). Reordering is
+// wired up with Pointer Events in events.js so it works on touch too.
 function dragHandle() {
-  const btn = iconBtn('drag', 'Drag to reorder',
+  return iconBtn('drag', 'Drag to reorder',
     '<path d="M6 4.5h.02M6 9h.02M6 13.5h.02M12 4.5h.02M12 9h.02M12 13.5h.02" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>',
     'todo-drag');
-  btn.setAttribute('draggable', 'true');
-  return btn;
-}
-
-// Up/down buttons — the accessible / touch reorder path.
-function moveButtons() {
-  const up = iconBtn('moveup', 'Move up',
-    '<path d="M4.5 11L9 6.5L13.5 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
-    'todo-move');
-  const down = iconBtn('movedown', 'Move down',
-    '<path d="M4.5 7L9 11.5L13.5 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
-    'todo-move');
-  return [up, down];
 }
 
 const EDIT_PATHS = '<path d="M11.5 3.5L14.5 6.5M3 15H6L13.5 7.5L10.5 4.5L3 12V15Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>';
@@ -224,8 +227,7 @@ function itemRow(item) {
   // Row actions
   const actions = document.createElement('div');
   actions.className = 'todo-actions';
-  const [up, down] = moveButtons();
-  actions.append(up, down,
+  actions.append(
     iconBtn('edit', 'Edit item', EDIT_PATHS),
     iconBtn('delete', 'Delete item', DELETE_PATHS, 'icon-danger'));
 
@@ -249,8 +251,7 @@ function headingRow(item) {
 
   const actions = document.createElement('div');
   actions.className = 'todo-actions';
-  const [up, down] = moveButtons();
-  actions.append(up, down,
+  actions.append(
     iconBtn('edit', 'Edit heading', EDIT_PATHS),
     iconBtn('delete', 'Delete heading', DELETE_PATHS, 'icon-danger'));
 
