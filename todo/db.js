@@ -79,6 +79,8 @@ function itemToDoc(item) {
   return {
     _id: itemDocId(item),
     type: 'item',
+    // 'item' (a checkable task, the default) or 'heading' (a section label).
+    kind: item.kind === 'heading' ? 'heading' : 'item',
     id: item.id,
     listId: item.listId,
     text: item.text,
@@ -94,6 +96,7 @@ function itemFromDoc(doc) {
   return {
     id: doc.id,
     listId: doc.listId,
+    kind: doc.kind === 'heading' ? 'heading' : 'item',
     text: doc.text,
     checked: !!doc.checked,
     checkedAt: doc.checkedAt ?? null,
@@ -351,6 +354,7 @@ class TodoDB {
     const map = {};
     for (const r of res.rows) {
       const d = r.doc;
+      if (d.kind === 'heading') continue; // headings aren't checkable
       const m = map[d.listId] || (map[d.listId] = { total: 0, done: 0 });
       m.total += 1;
       if (d.checked) m.done += 1;
@@ -458,6 +462,71 @@ class TodoDB {
       updates.push(doc);
     }
     if (updates.length) await db.bulkDocs(updates);
+  }
+
+  // Persist a new ordering for a list. `orderedIds` is the full list of item ids
+  // in their desired sequence; each doc's `order` becomes its index (0..n-1).
+  // Only docs whose order actually changed are written.
+  async reorderItems(listId, orderedIds) {
+    const db = await this.open();
+    const res = await db.allDocs({
+      include_docs: true,
+      startkey: `${ITEM_PREFIX}${listId}:`,
+      endkey: `${ITEM_PREFIX}${listId}:${HIGH}`,
+    });
+    const byId = new Map(res.rows.map((r) => [r.doc.id, r.doc]));
+    const updates = [];
+    orderedIds.forEach((id, i) => {
+      const doc = byId.get(id);
+      if (doc && doc.order !== i) {
+        doc.order = i;
+        updates.push(doc);
+      }
+    });
+    if (updates.length) await db.bulkDocs(updates);
+  }
+
+  // Import parsed Markdown entries ([{ kind, text, checked }]) into a list.
+  // When `replace` is set the list's existing items are cleared first;
+  // otherwise the new entries are appended after whatever is already there.
+  async importItems(listId, entries, { replace = false } = {}) {
+    const db = await this.open();
+    const res = await db.allDocs({
+      include_docs: true,
+      startkey: `${ITEM_PREFIX}${listId}:`,
+      endkey: `${ITEM_PREFIX}${listId}:${HIGH}`,
+    });
+
+    const docs = [];
+    let base = 0;
+    if (replace) {
+      for (const r of res.rows) {
+        docs.push({ _id: r.id, _rev: r.doc._rev, _deleted: true });
+      }
+    } else {
+      for (const r of res.rows) {
+        base = Math.max(base, (r.doc.order ?? 0) + 1);
+      }
+    }
+
+    const now = Date.now();
+    entries.forEach((entry, i) => {
+      const heading = entry.kind === 'heading';
+      const checked = !heading && !!entry.checked;
+      docs.push(itemToDoc({
+        id: crypto.randomUUID(),
+        listId,
+        kind: heading ? 'heading' : 'item',
+        text: entry.text,
+        checked,
+        checkedAt: checked ? now : null,
+        order: base + i,
+        createdAt: now + i,
+        history: checked ? [{ checked: true, at: now }] : [],
+      }));
+    });
+
+    if (docs.length) await db.bulkDocs(docs);
   }
 
   // ── Templates ──

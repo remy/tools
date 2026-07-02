@@ -77,7 +77,7 @@
       </main>
 
       <form class="add-bar" id="add-item-form">
-        <input type="text" id="add-item-input" placeholder="Add an item…" autocomplete="off" enterkeyhint="done">
+        <input type="text" id="add-item-input" placeholder="Add an item, or # for a heading…" autocomplete="off" enterkeyhint="done">
         <button type="submit" class="add-btn" aria-label="Add item">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -165,6 +165,26 @@
         </button>
       </div>
       <div class="pop-body">
+        <!-- Per-list settings — only shown while a list is open -->
+        <div class="settings-section" id="list-settings-section" hidden>
+          <h3 class="settings-heading">This list</h3>
+          <p class="list-settings-name" id="list-settings-name"></p>
+          <p class="field-hint-block">Import a Markdown file to add its headings and checklist items to this list.
+            Headings become sections, <code>- [x]</code> imports as done, and struck-through lines are skipped.</p>
+          <input type="file" id="import-file" accept=".md,.markdown,text/markdown,text/plain" hidden>
+          <div class="pop-actions">
+            <button class="btn btn-primary" id="import-open" type="button">Import Markdown…</button>
+          </div>
+          <div class="import-choice" id="import-choice" hidden>
+            <p class="import-summary" id="import-summary"></p>
+            <div class="pop-actions">
+              <button class="btn btn-primary" id="import-append" type="button">Append</button>
+              <button class="btn btn-ghost" id="import-replace" type="button">Replace</button>
+              <button class="btn btn-ghost" id="import-cancel" type="button">Cancel</button>
+            </div>
+          </div>
+        </div>
+
         <div class="settings-section">
           <div class="settings-head-row">
             <h3 class="settings-heading">Templates</h3>

@@ -1,6 +1,8 @@
 import { state } from './state.js';
 import { db, getSyncConfig, setSyncConfig, encodeSyncConfig, SHARE_PARAM } from './db.js';
-import { refreshAll } from './lists.js';
+import { refreshAll, refreshItems } from './lists.js';
+import { renderItems } from './render.js';
+import { parseMarkdown } from './import.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -38,8 +40,80 @@ export function openSettings() {
   if (unsubStatus) unsubStatus();
   unsubStatus = db.onSyncStatus(renderSyncStatus);
 
+  setupListSection();
   renderTemplates();
   $('settings-dialog').showModal();
+}
+
+// ── Per-list settings (shown at the top of the dialog while a list is open) ──
+
+// Entries parsed from the last chosen file, held while the user decides
+// between append and replace for a non-empty list.
+let pendingEntries = null;
+
+function setupListSection() {
+  const onList = state.view === 'list' && !!state.currentListId;
+  $('list-settings-section').hidden = !onList;
+  resetImportChoice();
+  $('import-file').value = '';
+  if (onList) {
+    const list = state.lists.find((l) => l.id === state.currentListId);
+    $('list-settings-name').textContent = list ? list.name : '';
+  }
+}
+
+function resetImportChoice() {
+  pendingEntries = null;
+  $('import-choice').hidden = true;
+  $('import-summary').textContent = '';
+}
+
+export async function handleImportFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  let entries;
+  try {
+    entries = parseMarkdown(await file.text());
+  } catch {
+    alert('Could not read that file.');
+    return;
+  }
+  if (!entries.length) {
+    alert('No headings or checklist items were found in that file.');
+    return;
+  }
+  // An empty list imports straight away; otherwise ask append vs replace.
+  if (!state.items.length) {
+    await runImport(entries, false);
+    return;
+  }
+  pendingEntries = entries;
+  const headings = entries.filter((x) => x.kind === 'heading').length;
+  const items = entries.length - headings;
+  $('import-summary').textContent =
+    `Found ${headings} section${headings === 1 ? '' : 's'} and ${items} item${items === 1 ? '' : 's'}. `
+    + 'This list already has items — append the import or replace them?';
+  $('import-choice').hidden = false;
+}
+
+async function runImport(entries, replace) {
+  await db.importItems(state.currentListId, entries, { replace });
+  await refreshItems();
+  renderItems();
+  resetImportChoice();
+  $('settings-dialog').close();
+}
+
+export async function handleImportAppend() {
+  if (pendingEntries) await runImport(pendingEntries, false);
+}
+
+export async function handleImportReplace() {
+  if (pendingEntries) await runImport(pendingEntries, true);
+}
+
+export function handleImportCancel() {
+  resetImportChoice();
 }
 
 // Build a link that encodes the current sync config and copy it to the

@@ -110,8 +110,10 @@ export function renderItems() {
   const ul = $('todo-list');
   ul.replaceChildren();
 
-  const done = items.filter((i) => i.checked).length;
-  const total = items.length;
+  // Progress counts checkable tasks only — headings are structural.
+  const tasks = items.filter((i) => i.kind !== 'heading');
+  const done = tasks.filter((i) => i.checked).length;
+  const total = tasks.length;
 
   // Progress summary + reset affordance
   const meter = $('progress-meter');
@@ -129,11 +131,14 @@ export function renderItems() {
   $('reset-checks').hidden = done === 0;
 
   const empty = $('empty-list');
-  empty.hidden = total !== 0;
+  empty.hidden = items.length !== 0;
 
-  for (const item of items) {
-    ul.appendChild(itemRow(item));
-  }
+  items.forEach((item, i) => {
+    const row = item.kind === 'heading' ? headingRow(item) : itemRow(item);
+    if (i === 0) row.querySelector('[data-action="moveup"]')?.setAttribute('disabled', '');
+    if (i === items.length - 1) row.querySelector('[data-action="movedown"]')?.setAttribute('disabled', '');
+    ul.appendChild(row);
+  });
 }
 
 function svg(paths, size = 18) {
@@ -145,6 +150,39 @@ function svg(paths, size = 18) {
   s.innerHTML = paths;
   return s;
 }
+
+function iconBtn(action, label, paths, extraClass = '') {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = `icon-btn${extraClass ? ' ' + extraClass : ''}`;
+  btn.dataset.action = action;
+  btn.setAttribute('aria-label', label);
+  btn.appendChild(svg(paths, 16));
+  return btn;
+}
+
+// A drag handle (native drag source) — reorder on desktop via pointer drag.
+function dragHandle() {
+  const btn = iconBtn('drag', 'Drag to reorder',
+    '<path d="M6 4.5h.02M6 9h.02M6 13.5h.02M12 4.5h.02M12 9h.02M12 13.5h.02" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>',
+    'todo-drag');
+  btn.setAttribute('draggable', 'true');
+  return btn;
+}
+
+// Up/down buttons — the accessible / touch reorder path.
+function moveButtons() {
+  const up = iconBtn('moveup', 'Move up',
+    '<path d="M4.5 11L9 6.5L13.5 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    'todo-move');
+  const down = iconBtn('movedown', 'Move down',
+    '<path d="M4.5 7L9 11.5L13.5 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    'todo-move');
+  return [up, down];
+}
+
+const EDIT_PATHS = '<path d="M11.5 3.5L14.5 6.5M3 15H6L13.5 7.5L10.5 4.5L3 12V15Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>';
+const DELETE_PATHS = '<path d="M4 5H14M7 5V3.5H11V5M6 5V14H12V5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>';
 
 function itemRow(item) {
   const li = document.createElement('li');
@@ -186,23 +224,37 @@ function itemRow(item) {
   // Row actions
   const actions = document.createElement('div');
   actions.className = 'todo-actions';
+  const [up, down] = moveButtons();
+  actions.append(up, down,
+    iconBtn('edit', 'Edit item', EDIT_PATHS),
+    iconBtn('delete', 'Delete item', DELETE_PATHS, 'icon-danger'));
 
-  const edit = document.createElement('button');
-  edit.className = 'icon-btn';
-  edit.type = 'button';
-  edit.dataset.action = 'edit';
-  edit.setAttribute('aria-label', 'Edit item');
-  edit.appendChild(svg('<path d="M11.5 3.5L14.5 6.5M3 15H6L13.5 7.5L10.5 4.5L3 12V15Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>', 16));
+  li.append(dragHandle(), toggle, body, actions);
+  return li;
+}
 
-  const del = document.createElement('button');
-  del.className = 'icon-btn icon-danger';
-  del.type = 'button';
-  del.dataset.action = 'delete';
-  del.setAttribute('aria-label', 'Delete item');
-  del.appendChild(svg('<path d="M4 5H14M7 5V3.5H11V5M6 5V14H12V5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>', 16));
+// A section heading — a flat list item without a checkbox, rendered as a
+// divider. Shares the drag / reorder / edit / delete controls with tasks.
+function headingRow(item) {
+  const li = document.createElement('li');
+  li.className = 'todo-heading';
+  li.dataset.id = item.id;
 
-  actions.append(edit, del);
-  li.append(toggle, body, actions);
+  const body = document.createElement('div');
+  body.className = 'todo-body';
+  const text = document.createElement('span');
+  text.className = 'todo-heading-text';
+  text.textContent = item.text;
+  body.appendChild(text);
+
+  const actions = document.createElement('div');
+  actions.className = 'todo-actions';
+  const [up, down] = moveButtons();
+  actions.append(up, down,
+    iconBtn('edit', 'Edit heading', EDIT_PATHS),
+    iconBtn('delete', 'Delete heading', DELETE_PATHS, 'icon-danger'));
+
+  li.append(dragHandle(), body, actions);
   return li;
 }
 
