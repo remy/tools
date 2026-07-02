@@ -189,6 +189,11 @@
     "description": "A live page editor: type directly into the page, toggle to raw HTML, edit minimal CSS in a side panel, and drag in files (images, fonts) that are cached in IndexedDB with nice names you can reference inside the page.",
     "title": "Page Editor"
   },
+  "pdf-reader": {
+    "category": "Productivity",
+    "description": "Upload a PDF and reflow it into a responsive, mobile-friendly article \u2014 carrying across images and as much formatting as possible \u2014 so you can read it without any horizontal scrolling. Optionally save and share converted documents via CouchDB.",
+    "title": "PDF Reader"
+  },
   "point-elevation": {
     "category": "Maps",
     "description": "Find the elevation above sea level for any point on an interactive map. Drag the map under the centre pin or search for an address with OpenStreetMap; elevation data comes from the Open-Meteo API.",
@@ -203,6 +208,11 @@
     "category": "Game",
     "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
     "title": "AFI Quote Master"
+  },
+  "screen-light": {
+    "category": "Web Demos",
+    "description": "Fill the whole screen with a solid colour of your choice and keep the display awake with the Screen Wake Lock API. Press and hold anywhere to exit.",
+    "title": "Screen Light"
   },
   "social-replies": {
     "category": "Productivity",
@@ -221,7 +231,7 @@
   },
   "sun-arc": {
     "category": "Productivity",
-    "description": "Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location. Defaults to today at the current moment, with a slider to scrub through the day.",
+    "description": "Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location, with UV levels across the day. Optionally factor in live cloud cover from OpenWeatherMap for your current location.",
     "title": "Sun Arc"
   },
   "tax": {

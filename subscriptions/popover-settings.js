@@ -39,7 +39,7 @@ export function openSettings() {
   if (unsubStatus) unsubStatus();
   unsubStatus = db.onSyncStatus(renderSyncStatus);
 
-  document.getElementById('settings-popover').showPopover();
+  document.getElementById('settings-popover').showModal();
 }
 
 export async function handleSettingsSave() {
@@ -50,7 +50,7 @@ export async function handleSettingsSave() {
   await db.setSetting('displayCurrency', ccy);
   await db.setSetting('exchangeRate', rate);
   render();
-  document.getElementById('settings-popover').hidePopover();
+  document.getElementById('settings-popover').close();
 }
 
 export async function handleSyncSave() {

@@ -84,15 +84,15 @@ Without these the tool will appear as "Uncategorized" and may have no descriptio
 
 **Valid categories** (match existing ones or add a new one consistently):
 
-| Category | Good fit when… |
-|---|---|
+| Category          | Good fit when…                                                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Developer Tools` | The primary user is a developer; the tool helps with code, data formats, APIs, dependencies, diffs, or hardware specs (e.g. JSON validator, package browser, merge tool, ESP32 comparison) |
-| `Calculators` | The tool takes numeric inputs and produces a computed result — rates, values, durations, or unit conversions (e.g. capacitor decoder, tax calculator, time adder) |
-| `Game` | The tool is an interactive game with scoring, winning, or challenge mechanics (e.g. quiz, puzzle, countdown numbers) |
-| `Home Assistant` | The tool queries, debugs, or integrates with a Home Assistant instance or its config format |
-| `Immich` | The tool queries, manages, or integrates with an Immich photo library via its API |
-| `Productivity` | The tool helps organise personal tasks, track progress, or plan real-world activities — not primarily a calculator or developer aid (e.g. cinema planner, reading tracker) |
-| `Web Demos` | The tool's main purpose is demonstrating a browser API or web platform feature, rather than solving a user problem (e.g. Popover API demo, Wake Lock demo) |
+| `Calculators`     | The tool takes numeric inputs and produces a computed result — rates, values, durations, or unit conversions (e.g. capacitor decoder, tax calculator, time adder)                          |
+| `Game`            | The tool is an interactive game with scoring, winning, or challenge mechanics (e.g. quiz, puzzle, countdown numbers)                                                                       |
+| `Home Assistant`  | The tool queries, debugs, or integrates with a Home Assistant instance or its config format                                                                                                |
+| `Immich`          | The tool queries, manages, or integrates with an Immich photo library via its API                                                                                                          |
+| `Productivity`    | The tool helps organise personal tasks, track progress, or plan real-world activities — not primarily a calculator or developer aid (e.g. cinema planner, reading tracker)                 |
+| `Web Demos`       | The tool's main purpose is demonstrating a browser API or web platform feature, rather than solving a user problem (e.g. Popover API demo, Wake Lock demo)                                 |
 
 **If you cannot confidently determine the category** from the tool's description and functionality during the agentic process, do not guess — ask the author:
 
@@ -294,7 +294,7 @@ Commit both the new tool directory and the updated `projects.json` / root `index
 - Keep tools small and focused.
 - Prefer many smaller files with clear responsibilities over one large file.
 - Default structure is `index.html` + `style.css` + `script.js`; split further (for example, `trace.js`, `ui.js`) when complexity grows.
-- As a guideline, keep individual files compact and readable (roughly up to ~20 KB where practical) rather than allowing one file to balloon.
+- As a guideline, keep individual files compact and readable (never over 1000 lines of code) rather than allowing one file to balloon.
 - External network requests from the tool itself (APIs, data fetches) are fine. External CSS/JS CDN dependencies are not.
 
 ---
@@ -313,5 +313,4 @@ Commit both the new tool directory and the updated `projects.json` / root `index
 - [ ] No Tailwind, Bootstrap, or utility CSS libraries
 - [ ] No external font or icon CDN imports
 - [ ] Service worker registration added before `</body>`: `<script>navigator.serviceWorker?.register("/sw.js")</script>`
-- [ ] `python scripts/generate_index.py` run before committing
 - [ ] Root `index.html` and `projects.json` updated and committed

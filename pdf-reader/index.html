@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="Upload a PDF and reflow it into a responsive, mobile-friendly article — carrying across images and as much formatting as possible — so you can read it without any horizontal scrolling. Optionally save and share converted documents via CouchDB." />
+    <meta name="category" content="Productivity" />
+    <title>PDF Reader</title>
+    <link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Epath%7Bfill:%2318181b%7D@media (prefers-color-scheme:dark)%7Bpath%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Cpath d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v1.5H8V13zm0 3h8v1.5H8V16zm0-6h3v1.5H8V10z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="./style.css">
+  </head>
+
+  <body>
+    <div class="empty" id="empty">
+      <button class="empty-card" id="empty-card" type="button" aria-label="Open a PDF file">
+        <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+          aria-hidden="true">
+          <path
+            d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 12.5h8V14H8v-1.5zm0 3h8V17H8v-1.5zm0-6h3V11H8V9.5z" />
+        </svg>
+        <div class="empty-title">PDF Reader</div>
+        <p class="empty-text">
+          Drop a PDF anywhere, paste one with <kbd>⌘</kbd>+<kbd>V</kbd>, or click to choose a file.
+          It is reflowed into a responsive page you can read on your phone — no horizontal scrolling.
+        </p>
+        <p class="empty-loading">Loading…</p>
+      </button>
+      <p class="empty-error" id="empty-error" hidden></p>
+    </div>
+
+    <input type="file" id="file-input" accept="application/pdf,.pdf" hidden>
+
+    <script>
+      // Tiny early script: capture file/paste/drop input before the heavy
+      // PDF.js module loads, queue it, and show a loading state. The main
+      // module calls register() once it is ready.
+      (function () {
+        const empty = document.getElementById('empty');
+        const emptyCard = document.getElementById('empty-card');
+        const fileInput = document.getElementById('file-input');
+
+        let pending = null;
+        let handler = null;
+
+        function showLoading() {
+          empty.classList.add('loading');
+        }
+
+        function dispatch(payload) {
+          if (handler) {
+            handler(payload);
+          } else {
+            pending = payload;
+          }
+        }
+
+        function readFile(file) {
+          if (!file) return;
+          if (file.type && file.type !== 'application/pdf' && !/\.pdf$/i.test(file.name || '')) return;
+          showLoading();
+          const reader = new FileReader();
+          reader.onload = () => dispatch({ buffer: reader.result, name: file.name || 'document.pdf' });
+          reader.onerror = () => empty.classList.remove('loading');
+          reader.readAsArrayBuffer(file);
+        }
+
+        emptyCard.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+          readFile(fileInput.files[0]);
+          fileInput.value = '';
+        });
+
+        let dragDepth = 0;
+        window.addEventListener('dragenter', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          e.preventDefault();
+          dragDepth++;
+          document.body.classList.add('dragover');
+        });
+        window.addEventListener('dragover', (e) => {
+          if (Array.from(e.dataTransfer?.types || []).includes('Files')) e.preventDefault();
+        });
+        window.addEventListener('dragleave', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          dragDepth = Math.max(0, dragDepth - 1);
+          if (dragDepth === 0) document.body.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dragDepth = 0;
+          document.body.classList.remove('dragover');
+          const file = e.dataTransfer?.files?.[0];
+          if (file) readFile(file);
+        });
+
+        window.addEventListener('paste', (e) => {
+          const target = e.target;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+          const file = Array.from(e.clipboardData?.files || [])[0];
+          if (file) {
+            e.preventDefault();
+            readFile(file);
+          }
+        });
+
+        window.__pdfEarly = {
+          openFilePicker() { fileInput.click(); },
+          register(fn) {
+            handler = fn;
+            if (pending !== null) {
+              const p = pending;
+              pending = null;
+              fn(p);
+            }
+          },
+        };
+      })();
+    </script>
+
+    <div id="reader-root" hidden>
+      <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+      <div class="toolbar">
+        <span class="toolbar-name" id="toolbar-name">document.pdf</span>
+        <span class="toolbar-progress" id="toolbar-progress" aria-live="polite"></span>
+        <button class="action-btn" id="btn-share" type="button">Share</button>
+        <button class="action-btn icon-only" id="btn-settings" aria-label="Settings">
+          <span class="icon-mask icon-settings" aria-hidden="true"></span>
+        </button>
+        <button class="action-btn" id="btn-new" type="button">New PDF</button>
+      </div>
+      <div class="reader">
+        <article class="doc" id="doc"></article>
+      </div>
+    </div>
+
+    <dialog id="share-dialog" class="share-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h2>Share link</h2>
+          <button class="dialog-close" id="share-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="share-url-row">
+          <input type="url" id="share-url-input" readonly aria-label="Share URL">
+          <button class="action-btn primary" id="share-copy-btn" type="button">Copy</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog id="settings-dialog">
+      <div class="dialog-inner">
+        <div class="dialog-header">
+          <h2>Reading settings</h2>
+          <button class="dialog-close" id="settings-close" type="button" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Text size</span>
+          <div class="segmented" id="seg-size" role="group" aria-label="Text size">
+            <button type="button" data-value="small">S</button>
+            <button type="button" data-value="medium">M</button>
+            <button type="button" data-value="large">L</button>
+            <button type="button" data-value="xlarge">XL</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Typeface</span>
+          <div class="segmented" id="seg-family" role="group" aria-label="Typeface">
+            <button type="button" data-value="serif">Serif</button>
+            <button type="button" data-value="sans">Sans</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Column width</span>
+          <div class="segmented" id="seg-width" role="group" aria-label="Column width">
+            <button type="button" data-value="narrow">Narrow</button>
+            <button type="button" data-value="comfortable">Comfortable</button>
+            <button type="button" data-value="wide">Wide</button>
+          </div>
+        </div>
+
+        <hr class="dialog-divider">
+
+        <div class="field">
+          <span class="field-label">Share via CouchDB</span>
+          <p class="field-hint">
+            Connect a CouchDB database to save converted documents and share them by link.
+            Anyone you share a document link with needs this same connection in their settings —
+            send them the setup link below to add it automatically.
+          </p>
+          <label class="input-label" for="couch-url">Database URL</label>
+          <input type="url" id="couch-url" placeholder="https://example.com/pdf-reader" autocomplete="off"
+            autocapitalize="off" spellcheck="false">
+          <label class="input-label" for="couch-token">Access token <span class="muted">(optional)</span></label>
+          <input type="password" id="couch-token" placeholder="Bearer token" autocomplete="off" autocapitalize="off"
+            spellcheck="false">
+          <div class="button-row">
+            <button class="action-btn primary" id="couch-save" type="button">Save connection</button>
+            <button class="action-btn" id="couch-share-setup" type="button" disabled>Copy setup link</button>
+          </div>
+          <p class="couch-status" id="couch-status" aria-live="polite"></p>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="/vendor/pouchdb/pouchdb.min.js"></script>
+    <script type="module" src="./script.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>

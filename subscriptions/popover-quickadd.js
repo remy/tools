@@ -12,7 +12,7 @@ export function openQuickAdd() {
   document.getElementById('qa-cycle-monthly').checked = true;
   document.getElementById('qa-month').value = state.currentMonth;
   updateRenewalVisibility('qa-cycle-radio', 'qa-month');
-  document.getElementById('quick-add-popover').showPopover();
+  document.getElementById('quick-add-popover').showModal();
   setTimeout(() => document.getElementById('qa-name').focus(), 50);
 }
 
@@ -41,7 +41,7 @@ export async function handleQuickAddSubmit(e) {
   await db.put(sub);
   state.subscriptions = await db.getAll();
   render();
-  document.getElementById('quick-add-popover').hidePopover();
+  document.getElementById('quick-add-popover').close();
 }
 
 export async function handleSaveAndAddMore() {

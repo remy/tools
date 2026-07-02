@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+Always read AGENTS.md which has the code design rules.
+
 ## Service Worker
 
 Every `index.html` in this project (root and each tool) must include the following line just before `</body>`:
@@ -24,7 +26,7 @@ Always add this rule near the top of the stylesheet (after the reset/box-sizing 
 
 ## Modal dialogs
 
-For modal-type UI (command palettes, modals, drawers, confirmations) use the native `<dialog>` element opened with `.showModal()` rather than the popover API. `<dialog>` makes the rest of the page `inert` automatically (so background content is not focusable or interactive), is exposed correctly to assistive technology, traps focus, and provides built-in Escape-to-dismiss.
+For modal-type UI (command palettes, modals, drawers, confirmations, settings panels, "add/edit" forms, detail sheets) **always** use the native `<dialog>` element opened with `.showModal()` rather than the popover API. Never reach for `popover="auto"` for anything modal. `<dialog>` makes the rest of the page `inert` automatically (so background content is not focusable or interactive), is exposed correctly to assistive technology, traps focus, and provides built-in Escape-to-dismiss.
 
 Wire up backdrop click-to-dismiss explicitly — `<dialog>` does not do this for you:
 
@@ -36,7 +38,7 @@ dialog.addEventListener('click', (e) => {
 
 This works as long as the dialog has no padding (or the inner content fills it), so the only clicks whose `target` is the dialog itself are the ones on the backdrop.
 
-On mobile / narrow viewports, modals must fill the screen rather than float as a centred card or partial sheet. Add a media query that makes the `<dialog>` cover the full viewport with no rounded corners:
+On mobile / narrow viewports, every `<dialog>` must **always** fill the screen rather than float as a centred card or partial sheet. Add a media query that makes the `<dialog>` cover the full viewport with no rounded corners. Apply this to the `dialog` element itself (not a per-id override) so it covers every modal in the tool:
 
 ```css
 @media (max-width: 639px) {
@@ -52,7 +54,13 @@ On mobile / narrow viewports, modals must fill the screen rather than float as a
 }
 ```
 
+The smallest mobile viewport to support is **325px wide** — full-screen dialogs (`width: 100vw`) handle this automatically, but make sure the dialog's contents (form rows, button groups, etc.) still lay out without horizontal overflow at 325px, collapsing multi-column rows to a single column at a narrow breakpoint where needed.
+
 Reserve `popover="auto"` for non-modal UI (menus, tooltips, dropdowns) where the rest of the page should remain interactive.
+
+## File upload and drag and drop
+
+When a file upload is supported, always support Dragon Drop, ideally in the largest area possible. And most importantly, the capturing of that file should happen in JavaScript as early as possible so that the rest of the code can continue to load asynchronously, if required, see the `./markdown` project for a practical example of this.
 
 ## Shared icons
 
@@ -127,3 +135,13 @@ If you need to preserve open state across a re-render, capture the open category
 If HTML or CSS is included in the web component code, it should include a command before the template string as `/* HTML */` and `/* CSS */` (the spaces are important) for syntax highlighting.
 
 The script should ALWAYS end in `.wc.js` - this way it can be served with CORS headers.
+
+## Pull requests
+
+When a task is complete, always create the pull request automatically — do not ask first.
+
+The PR title must always include the tool's directory name clearly (e.g. `[tool-name] Add feature X`).
+
+## Generate script
+
+Do not run the generate script — it is not required during development and runs automatically on merge.

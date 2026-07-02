@@ -44,6 +44,7 @@ function wireTodoList() {
       await refreshItems();
       renderItems();
     } else if (action === 'delete') {
+      if (!confirm(`Delete "${item.text}"? This cannot be undone.`)) return;
       await db.deleteItem(item.listId, item.id);
       await refreshItems();
       renderItems();

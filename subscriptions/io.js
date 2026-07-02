@@ -25,7 +25,7 @@ export async function handleImport(file) {
     state.settings.exchangeRate = saved.exchangeRate || DEFAULT_RATE;
     state.subscriptions = await db.getAll();
     render();
-    document.getElementById('settings-popover').hidePopover();
+    document.getElementById('settings-popover').close();
   } catch (err) {
     alert('Import failed: ' + err.message);
   }
