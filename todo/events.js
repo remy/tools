@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { db } from './db.js';
-import { render, renderItems, beginEdit, relativeTime, fullTime } from './render.js';
+import { render, renderItems, refreshItemRow, beginEdit, relativeTime, fullTime } from './render.js';
 import {
   goHome, openNewListDialog, onNewListTemplateChange,
   createList, renameList, deleteList, selectList, refreshItems,
@@ -42,7 +42,8 @@ function wireTodoList() {
     if (action === 'toggle') {
       await db.setItemChecked(item.listId, item.id, !item.checked);
       await refreshItems();
-      renderItems();
+      // Update just this row so the page doesn't jump to the top.
+      refreshItemRow(item.id);
     } else if (action === 'delete') {
       if (!confirm(`Delete "${item.text}"? This cannot be undone.`)) return;
       await db.deleteItem(item.listId, item.id);
@@ -54,26 +55,12 @@ function wireTodoList() {
         await refreshItems();
         renderItems();
       });
-    } else if (action === 'moveup' || action === 'movedown') {
-      await moveItem(item, action === 'moveup' ? -1 : 1);
     } else if (action === 'history') {
       openHistory(item);
     }
   });
 
   wireReorderDnD(ul);
-}
-
-// Swap an item with its neighbour and persist the new order.
-async function moveItem(item, delta) {
-  const ids = state.items.map((i) => i.id);
-  const idx = ids.indexOf(item.id);
-  const swap = idx + delta;
-  if (idx < 0 || swap < 0 || swap >= ids.length) return;
-  [ids[idx], ids[swap]] = [ids[swap], ids[idx]];
-  await db.reorderItems(item.listId, ids);
-  await refreshItems();
-  renderItems();
 }
 
 // The first row whose vertical midpoint sits below the pointer (drop target).
@@ -86,45 +73,47 @@ function rowAfter(ul, y) {
   return null;
 }
 
-// Native drag-and-drop reordering (desktop). Touch devices don't fire these
-// events and fall back to the up/down buttons.
+// Pointer-based drag reordering. Uses Pointer Events (not native HTML5
+// drag-and-drop) so it works on touch as well as mouse — the drag handle has
+// touch-action:none so dragging it reorders rather than scrolling the page.
 function wireReorderDnD(ul) {
-  let draggingId = null;
+  let dragging = null;
 
-  ul.addEventListener('dragstart', (e) => {
-    const handle = e.target.closest('.todo-drag');
-    if (!handle) { e.preventDefault(); return; }
-    const li = handle.closest('[data-id]');
-    if (!li) { e.preventDefault(); return; }
-    draggingId = li.dataset.id;
-    li.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', draggingId);
-    try { e.dataTransfer.setDragImage(li, 20, 20); } catch {}
-  });
-
-  ul.addEventListener('dragover', (e) => {
-    if (draggingId == null) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    const dragging = ul.querySelector('.dragging');
+  const onMove = (e) => {
     if (!dragging) return;
+    e.preventDefault();
     const after = rowAfter(ul, e.clientY);
     if (after == null) ul.appendChild(dragging);
     else if (after !== dragging.nextSibling) ul.insertBefore(dragging, after);
-  });
+  };
 
-  ul.addEventListener('drop', (e) => { e.preventDefault(); });
-
-  ul.addEventListener('dragend', async () => {
-    const dragging = ul.querySelector('.dragging');
-    if (dragging) dragging.classList.remove('dragging');
-    if (draggingId == null || !state.currentListId) { draggingId = null; return; }
-    draggingId = null;
+  const onEnd = async () => {
+    if (!dragging) return;
+    dragging.classList.remove('dragging');
+    dragging = null;
+    document.body.classList.remove('reordering');
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onEnd);
+    window.removeEventListener('pointercancel', onEnd);
+    if (!state.currentListId) return;
     const ids = [...ul.querySelectorAll('[data-id]')].map((li) => li.dataset.id);
     await db.reorderItems(state.currentListId, ids);
     await refreshItems();
     renderItems();
+  };
+
+  ul.addEventListener('pointerdown', (e) => {
+    const handle = e.target.closest('.todo-drag');
+    if (!handle) return;
+    const li = handle.closest('[data-id]');
+    if (!li) return;
+    e.preventDefault();
+    dragging = li;
+    li.classList.add('dragging');
+    document.body.classList.add('reordering');
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onEnd);
+    window.addEventListener('pointercancel', onEnd);
   });
 }
 

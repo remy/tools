@@ -320,8 +320,7 @@ body {
   color: var(--danger);
 }
 
-.icon-btn[disabled],
-.todo-move[disabled] {
+.icon-btn[disabled] {
   opacity: 0.3;
   pointer-events: none;
 }
@@ -337,6 +336,12 @@ body {
 .todo-item.dragging,
 .todo-heading.dragging {
   opacity: 0.5;
+}
+
+/* Suppress text selection while a drag is in progress. */
+body.reordering {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Section heading — a flat list item rendered as a divider, no checkbox */
@@ -524,10 +529,6 @@ dialog {
     max-height: 100dvh;
     border-radius: 0;
   }
-
-  /* Native drag-and-drop doesn't fire on touch — reorder via the up/down
-     buttons instead, so the drag handle only adds clutter here. */
-  .todo-drag { display: none; }
 }
 
 .pop-header {
