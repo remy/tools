@@ -550,7 +550,8 @@ body.circuit-border.circuit-phase-longRest { --circuit-border-color: #f59e0b; --
 }
 
 /* ── Edit-exercise dialog ── */
-.exercise-row {
+.exercise-row,
+.cardio-block {
   -webkit-touch-callout: none;
 }
 

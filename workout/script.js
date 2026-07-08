@@ -181,7 +181,7 @@ function renderWorkouts(workouts) {
             <button class="circuit-btn circuit-btn-reset" data-action="reset">RESET</button>
           </div>
           ${workout.cardio ? `
-          <div class="cardio-block">
+          <div class="cardio-block" data-workout-index="${index}">
             <div class="cardio-icon">${workout.cardio.icon}</div>
             <div>
               <div class="cardio-title">${workout.cardio.title}</div>
@@ -215,7 +215,7 @@ function renderWorkouts(workouts) {
           `).join('')}
         </div>
         ${workout.cardio ? `
-        <div class="cardio-block">
+        <div class="cardio-block" data-workout-index="${index}">
           <div class="cardio-icon">${workout.cardio.icon}</div>
           <div>
             <div class="cardio-title">${workout.cardio.title}</div>
@@ -782,39 +782,113 @@ async function deleteEditedExercise() {
   document.getElementById('edit-ex-delete').addEventListener('click', () => deleteEditedExercise());
 })();
 
-/* ── Long-press (1s+) on an exercise row opens the edit dialog ── */
+/* ── Edit-cardio dialog ── */
+let cardioEditTarget = null; // { workoutIndex }
+
+function openCardioDialog(block) {
+  const workoutIndex = parseInt(block.dataset.workoutIndex, 10);
+  const workout = currentData?.workouts?.[workoutIndex];
+  const cardio = workout?.cardio;
+  if (!cardio) return;
+
+  cardioEditTarget = { workoutIndex };
+
+  const dialog = document.getElementById('edit-cardio-dialog');
+  dialog.querySelector('#edit-cardio-icon').value = cardio.icon || '';
+  dialog.querySelector('#edit-cardio-title').value = cardio.title || '';
+  dialog.querySelector('#edit-cardio-description').value = cardio.description || '';
+
+  dialog.showModal();
+}
+
+function closeCardioDialog() {
+  document.getElementById('edit-cardio-dialog').close();
+  cardioEditTarget = null;
+}
+
+async function saveEditedCardio() {
+  if (!cardioEditTarget) return;
+  const { workoutIndex } = cardioEditTarget;
+  const cardio = currentData.workouts[workoutIndex]?.cardio;
+  if (!cardio) return;
+
+  const dialog = document.getElementById('edit-cardio-dialog');
+  const title = dialog.querySelector('#edit-cardio-title').value.trim();
+  const description = dialog.querySelector('#edit-cardio-description').value.trim();
+  if (!title || !description) return;
+  cardio.icon = dialog.querySelector('#edit-cardio-icon').value.trim();
+  cardio.title = title;
+  cardio.description = description;
+
+  cardioEditTarget = null;
+  document.getElementById('edit-cardio-dialog').close();
+  await WorkoutDB.save(currentData);
+  reRenderPreservingTab();
+}
+
+async function deleteEditedCardio() {
+  if (!cardioEditTarget) return;
+  const { workoutIndex } = cardioEditTarget;
+  delete currentData.workouts[workoutIndex].cardio;
+  cardioEditTarget = null;
+  closeCardioDialog();
+  await WorkoutDB.save(currentData);
+  reRenderPreservingTab();
+}
+
+(function() {
+  const cardioDialog = document.getElementById('edit-cardio-dialog');
+  const cardioForm = cardioDialog.querySelector('.edit-exercise-form');
+
+  cardioDialog.addEventListener('click', (e) => {
+    if (e.target === cardioDialog) cardioDialog.close();
+  });
+  cardioForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveEditedCardio();
+  });
+  document.getElementById('edit-cardio-cancel').addEventListener('click', () => closeCardioDialog());
+  document.getElementById('edit-cardio-delete').addEventListener('click', () => deleteEditedCardio());
+})();
+
+/* ── Long-press (1s+) on an exercise row or the cardio block opens its edit dialog ── */
 (function() {
   const HOLD_MS = 1000;
   const MOVE_PX = 10;
+  const TARGET_SELECTOR = '.exercise-row, .cardio-block';
   let timer = null;
   let startX = 0, startY = 0;
-  let pressRow = null;
+  let pressEl = null;
   let suppressClick = false;
 
   function cancelPress() {
     clearTimeout(timer);
     timer = null;
-    pressRow = null;
+    pressEl = null;
   }
 
   document.addEventListener('pointerdown', function(e) {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const row = e.target.closest('.exercise-row');
-    if (!row) return;
+    const el = e.target.closest(TARGET_SELECTOR);
+    if (!el) return;
     startX = e.clientX;
     startY = e.clientY;
-    pressRow = row;
+    pressEl = el;
     timer = setTimeout(() => {
-      if (!pressRow) return;
+      if (!pressEl) return;
       suppressClick = true;
       if (navigator.vibrate) navigator.vibrate(15);
-      openEditDialog(pressRow);
+      if (pressEl.classList.contains('cardio-block')) {
+        openCardioDialog(pressEl);
+      } else {
+        openEditDialog(pressEl);
+      }
       cancelPress();
     }, HOLD_MS);
   });
 
   document.addEventListener('pointermove', function(e) {
-    if (!pressRow) return;
+    if (!pressEl) return;
     const moved = Math.hypot(e.clientX - startX, e.clientY - startY);
     if (moved > MOVE_PX) cancelPress();
   });
@@ -823,7 +897,7 @@ async function deleteEditedExercise() {
   document.addEventListener('pointercancel', cancelPress);
 
   document.addEventListener('contextmenu', function(e) {
-    if (e.target.closest('.exercise-row')) e.preventDefault();
+    if (e.target.closest(TARGET_SELECTOR)) e.preventDefault();
   });
 
   // Suppress the tap/click that follows a long-press so it doesn't also toggle a set.

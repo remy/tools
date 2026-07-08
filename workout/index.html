@@ -50,6 +50,31 @@
   </form>
 </dialog>
 
+<dialog id="edit-cardio-dialog" closedby="any">
+  <form method="dialog" class="edit-exercise-form">
+    <h2>Edit Cardio</h2>
+    <label>
+      Icon
+      <input type="text" id="edit-cardio-icon" maxlength="4">
+    </label>
+    <label>
+      Title
+      <input type="text" id="edit-cardio-title" required>
+    </label>
+    <label>
+      Description
+      <input type="text" id="edit-cardio-description" required>
+    </label>
+    <div class="edit-exercise-actions">
+      <button type="button" id="edit-cardio-delete" class="btn-delete">Delete</button>
+      <div class="edit-exercise-actions-right">
+        <button type="button" id="edit-cardio-cancel" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
 <script src="db.js"></script>
 <script src="script.js"></script>
 <script>navigator.serviceWorker?.register("/sw.js")</script>
