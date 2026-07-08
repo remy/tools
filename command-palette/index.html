@@ -376,11 +376,17 @@
 <span class="tag">&lt;command-palette&gt;&lt;/command-palette&gt;</span>
 <span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"command-palette.wc.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
 
-<span class="cm">&lt;!-- 3. Listen for events --&gt;</span>
+<span class="cm">&lt;!-- 3. Listen for a command by name, OR the "@select" system event --&gt;</span>
 <span class="tag">&lt;script&gt;</span>
 <span class="kw">const</span> palette = document.querySelector(<span class="val">'command-palette'</span>);
-palette.addEventListener(<span class="val">'save'</span>, () =&gt; {
-  console.log(<span class="val">'Save triggered!'</span>);
+
+<span class="cm">// (a) one command by its name</span>
+palette.addEventListener(<span class="val">'save'</span>, (e) =&gt; console.log(<span class="val">'Save triggered!'</span>));
+
+<span class="cm">// (b) or one listener for every selection</span>
+palette.addEventListener(<span class="val">'@select'</span>, (e) =&gt; {
+  <span class="kw">const</span> { command, query } = e.detail;
+  console.log(command.name, query);
 });
 <span class="tag">&lt;/script&gt;</span></code></pre>
         </div>
@@ -396,7 +402,7 @@ palette.addEventListener(<span class="val">'save'</span>, () =&gt; {
           <pre class="code-hint"><code><span class="cm">// Command with keepOpen stays open on select</span>
 { <span class="val">"name"</span>: <span class="val">"pick-dom"</span>, <span class="val">"description"</span>: <span class="val">"Pick DOM elements"</span>, <span class="val">"keepOpen"</span>: <span class="kw">true</span> }
 
-<span class="cm">// Handle the event: swap in dynamic data</span>
+<span class="cm">// Handle it (by name, or in a shared @select listener): swap in data</span>
 palette.addEventListener(<span class="val">'pick-dom'</span>, () =&gt; {
   <span class="kw">const</span> elements = [...document.querySelectorAll(<span class="val">'[class]'</span>)].map(el =&gt; ({
     name: <span class="val">'element-picked'</span>,
@@ -434,7 +440,7 @@ palette.<span class="attr">onBeforeOpen</span> = () =&gt; {
   palette.<span class="attr">setBaseCommands</span>(commands);
 };
 
-<span class="cm">// One listener handles every matching command</span>
+<span class="cm">// One listener handles every "edit-sub" command; extra metadata rides along</span>
 palette.addEventListener(<span class="val">'edit-sub'</span>, (e) =&gt; {
   <span class="kw">const</span> sub = state.subscriptions.find(s =&gt; s.id === e.detail.command._subId);
   openEditor(sub);
@@ -464,11 +470,23 @@ palette.<span class="attr">setCommands</span>(commands, {
   label: <span class="val">'Elements'</span>               <span class="cm">// optional aria-label</span>
 });
 
-<span class="cm">// Each selected command fires a CustomEvent</span>
-<span class="cm">// where event.type === command.name</span>
-palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
-  console.log(e.detail.command);
-  <span class="cm">// { name: "theme-toggle", description: "Toggle theme" }</span>
+<span class="cm">// Fallback for when a query matches nothing (404-like search).</span>
+<span class="cm">// Pass a command, or a (query) =&gt; command fn for a dynamic label.</span>
+palette.<span class="attr">setFallback</span>((query) =&gt; ({
+  name: <span class="val">'search'</span>,
+  description: <span class="val">`Search for "${query}"`</span>
+}));
+
+<span class="cm">// Each selection fires TWO events, same detail: { command, query, isFallback? }</span>
+<span class="cm">//   1. a per-command event named after command.name</span>
+<span class="cm">//   2. the "@select" system event (fires for every selection)</span>
+<span class="cm">// Listen to one command by name…</span>
+palette.addEventListener(<span class="val">'theme-toggle'</span>, () =&gt; toggleTheme());
+
+<span class="cm">// …or handle everything in one place via @select</span>
+palette.addEventListener(<span class="val">'@select'</span>, (e) =&gt; {
+  <span class="kw">const</span> { command, query, isFallback } = e.detail;
+  <span class="kw">if</span> (isFallback) runSearch(query);
 });
 
 <span class="cm">// Declarative open / close via the Invoker Commands API:</span>
@@ -515,37 +533,40 @@ palette.addEventListener(<span class="val">'theme-toggle'</span>, (e) =&gt; {
       const palette = document.querySelector('command-palette');
       const logEl = document.getElementById('event-log');
 
-      const commands = JSON.parse(
-        document.querySelector('script[data-palette]').textContent
-      );
+      // Fallback for "404-like" searching: when nothing matches, offer to search.
+      palette.setFallback((query) => ({
+        name: 'search-web',
+        description: `Search the web for "${query}"`,
+      }));
 
-      commands.forEach((cmd) => {
-        palette.addEventListener(cmd.name, (e) => {
-          addLogEntry(cmd.name, e.detail.command.description);
-        });
-      });
+      // One "@select" listener handles every selection. Distinguish via command.name.
+      // (Per-command events e.g. "pick-dom" still fire too — use whichever you prefer.)
+      palette.addEventListener('@select', (e) => {
+        const { command, query, isFallback } = e.detail;
 
-      // Drill-down demo: "Pick DOM elements" swaps in page elements
-      palette.addEventListener('pick-dom', () => {
-        const elements = [...document.querySelectorAll('[class]')]
-          .filter(el => !el.closest('command-palette'))
-          .map(el => {
-            const tag = el.tagName.toLowerCase();
-            const classes = [...el.classList].join('.');
-            return {
-              name: 'element-picked',
-              description: `<${tag}> .${classes}`,
-            };
+        // Drill-down demo: "Pick DOM elements" swaps in page elements (keepOpen)
+        if (command.name === 'pick-dom') {
+          const elements = [...document.querySelectorAll('[class]')]
+            .filter(el => !el.closest('command-palette'))
+            .map(el => {
+              const tag = el.tagName.toLowerCase();
+              const classes = [...el.classList].join('.');
+              return {
+                name: 'element-picked',
+                description: `<${tag}> .${classes}`,
+              };
+            });
+          palette.setCommands(elements, {
+            placeholder: 'Pick an element...',
+            label: 'DOM elements',
           });
-        palette.setCommands(elements, {
-          placeholder: 'Pick an element...',
-          label: 'DOM elements',
-        });
-      });
+          return;
+        }
 
-      // Handle the secondary selection
-      palette.addEventListener('element-picked', (e) => {
-        addLogEntry('element-picked', e.detail.command.description);
+        addLogEntry(
+          command.name,
+          isFallback ? `${command.description} (query: "${query}")` : command.description
+        );
       });
 
       document.getElementById('btn-clear').addEventListener('click', () => {
