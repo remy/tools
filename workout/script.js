@@ -859,12 +859,14 @@ async function deleteEditedCardio() {
   let timer = null;
   let startX = 0, startY = 0;
   let pressEl = null;
+  let longPressReady = false;
   let suppressClick = false;
 
   function cancelPress() {
     clearTimeout(timer);
     timer = null;
     pressEl = null;
+    longPressReady = false;
   }
 
   document.addEventListener('pointerdown', function(e) {
@@ -874,16 +876,11 @@ async function deleteEditedCardio() {
     startX = e.clientX;
     startY = e.clientY;
     pressEl = el;
+    longPressReady = false;
     timer = setTimeout(() => {
       if (!pressEl) return;
-      suppressClick = true;
+      longPressReady = true;
       if (navigator.vibrate) navigator.vibrate(15);
-      if (pressEl.classList.contains('cardio-block')) {
-        openCardioDialog(pressEl);
-      } else {
-        openEditDialog(pressEl);
-      }
-      cancelPress();
     }, HOLD_MS);
   });
 
@@ -893,7 +890,24 @@ async function deleteEditedCardio() {
     if (moved > MOVE_PX) cancelPress();
   });
 
-  document.addEventListener('pointerup', cancelPress);
+  // Open the dialog only once the finger/mouse has actually lifted, and defer
+  // it a tick past that — opening mid-gesture means the release lands on
+  // whatever's now under it in the freshly-opened dialog (e.g. Cancel),
+  // dismissing it instantly.
+  document.addEventListener('pointerup', function(e) {
+    if (longPressReady && pressEl) {
+      suppressClick = true;
+      const el = pressEl;
+      setTimeout(() => {
+        if (el.classList.contains('cardio-block')) {
+          openCardioDialog(el);
+        } else {
+          openEditDialog(el);
+        }
+      }, 0);
+    }
+    cancelPress();
+  });
   document.addEventListener('pointercancel', cancelPress);
 
   document.addEventListener('contextmenu', function(e) {
