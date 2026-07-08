@@ -19,6 +19,62 @@
   <!-- Tabs will be rendered here -->
 </div>
 
+<dialog id="edit-exercise-dialog" closedby="any">
+  <form method="dialog" class="edit-exercise-form">
+    <h2>Edit Exercise</h2>
+    <label>
+      Name
+      <input type="text" id="edit-ex-name" required>
+    </label>
+    <label>
+      Position
+      <select id="edit-ex-position"></select>
+    </label>
+    <div class="edit-exercise-row" id="edit-sets-reps-row">
+      <label>
+        Sets
+        <input type="text" id="edit-ex-sets">
+      </label>
+      <label>
+        Reps
+        <input type="text" id="edit-ex-reps">
+      </label>
+    </div>
+    <div class="edit-exercise-actions">
+      <button type="button" id="edit-ex-delete" class="btn-delete">Delete</button>
+      <div class="edit-exercise-actions-right">
+        <button type="button" id="edit-ex-cancel" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="edit-cardio-dialog" closedby="any">
+  <form method="dialog" class="edit-exercise-form">
+    <h2>Edit Cardio</h2>
+    <label>
+      Icon
+      <input type="text" id="edit-cardio-icon" maxlength="4">
+    </label>
+    <label>
+      Title
+      <input type="text" id="edit-cardio-title" required>
+    </label>
+    <label>
+      Description
+      <input type="text" id="edit-cardio-description" required>
+    </label>
+    <div class="edit-exercise-actions">
+      <button type="button" id="edit-cardio-delete" class="btn-delete">Delete</button>
+      <div class="edit-exercise-actions-right">
+        <button type="button" id="edit-cardio-cancel" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
 <script src="db.js"></script>
 <script src="script.js"></script>
 <script>navigator.serviceWorker?.register("/sw.js")</script>

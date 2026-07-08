@@ -88,6 +88,8 @@ function releaseWakeLock() {
   try { wakeLock?.release(); wakeLock = null; } catch (e) {}
 }
 
+let currentData = null;
+
 /* ── Init ── */
 async function init() {
   try {
@@ -96,12 +98,20 @@ async function init() {
       const response = await fetch('workouts.json');
       data = await response.json();
     }
+    currentData = data;
     renderWorkouts(data.workouts);
     restoreTab();
     restoreTheme();
   } catch (error) {
     console.error('Error loading workouts:', error);
   }
+}
+
+function reRenderPreservingTab() {
+  const activeIndex = Math.max(0, [...document.querySelectorAll('.tab')].findIndex(t => t.classList.contains('active')));
+  renderWorkouts(currentData.workouts);
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === activeIndex));
+  document.querySelectorAll('.day-panel').forEach((p, i) => p.classList.toggle('active', i === activeIndex));
 }
 
 /* ── Render ── */
@@ -157,7 +167,7 @@ function renderWorkouts(workouts) {
           <div class="circuit-round">Round 1 of ${rounds}</div>
           <div class="exercise-list">
             ${workout.exercises.map((ex, i) => `
-              <div class="exercise-row" data-exercise-index="${i}">
+              <div class="exercise-row" data-workout-index="${index}" data-exercise-index="${i}">
                 <div class="ex-name">${ex.name}</div>
               </div>
             `).join('')}
@@ -171,7 +181,7 @@ function renderWorkouts(workouts) {
             <button class="circuit-btn circuit-btn-reset" data-action="reset">RESET</button>
           </div>
           ${workout.cardio ? `
-          <div class="cardio-block">
+          <div class="cardio-block" data-workout-index="${index}">
             <div class="cardio-icon">${workout.cardio.icon}</div>
             <div>
               <div class="cardio-title">${workout.cardio.title}</div>
@@ -196,8 +206,8 @@ function renderWorkouts(workouts) {
           <span>Exercise</span><span>Sets</span><span>Reps</span>
         </div>
         <div class="exercise-list">
-          ${workout.exercises.map(ex => `
-            <div class="exercise-row" data-total-sets="${ex.sets}" data-completed-sets="0">
+          ${workout.exercises.map((ex, i) => `
+            <div class="exercise-row" data-workout-index="${index}" data-exercise-index="${i}" data-total-sets="${ex.sets}" data-completed-sets="0">
               <div class="ex-name">${ex.name}</div>
               <div class="ex-sets"><span class="ex-sets-current">0</span>/<span class="ex-sets-total">${ex.sets}</span><span class="ex-sets-label">sets</span></div>
               <div class="ex-reps">${ex.reps}<span class="ex-reps-label">reps</span></div>
@@ -205,7 +215,7 @@ function renderWorkouts(workouts) {
           `).join('')}
         </div>
         ${workout.cardio ? `
-        <div class="cardio-block">
+        <div class="cardio-block" data-workout-index="${index}">
           <div class="cardio-icon">${workout.cardio.icon}</div>
           <div>
             <div class="cardio-title">${workout.cardio.title}</div>
@@ -682,6 +692,241 @@ document.addEventListener('input', function(e) {
 
   document.addEventListener('touchend', function() { tracking = false; }, { passive: true });
   document.addEventListener('touchcancel', function() { tracking = false; }, { passive: true });
+})();
+
+/* ── Edit-exercise dialog ── */
+let editTarget = null; // { workoutIndex, exerciseIndex }
+
+function openEditDialog(row) {
+  const workoutIndex = parseInt(row.dataset.workoutIndex, 10);
+  const exerciseIndex = parseInt(row.dataset.exerciseIndex, 10);
+  const workout = currentData?.workouts?.[workoutIndex];
+  const exercise = workout?.exercises?.[exerciseIndex];
+  if (!exercise) return;
+
+  editTarget = { workoutIndex, exerciseIndex };
+
+  const dialog = document.getElementById('edit-exercise-dialog');
+  const isCircuit = workout.type === 'circuit';
+  dialog.querySelector('#edit-ex-name').value = exercise.name || '';
+  dialog.querySelector('#edit-ex-sets').value = exercise.sets || '';
+  dialog.querySelector('#edit-ex-reps').value = exercise.reps || '';
+  dialog.querySelector('#edit-sets-reps-row').hidden = isCircuit;
+
+  const total = workout.exercises.length;
+  const positionSelect = dialog.querySelector('#edit-ex-position');
+  positionSelect.innerHTML = Array.from({ length: total }, (_, i) =>
+    `<option value="${i}">${i + 1} of ${total}</option>`
+  ).join('');
+  positionSelect.value = exerciseIndex;
+
+  dialog.showModal();
+}
+
+function closeEditDialog() {
+  document.getElementById('edit-exercise-dialog').close();
+  editTarget = null;
+}
+
+async function saveEditedExercise() {
+  if (!editTarget) return;
+  const { workoutIndex, exerciseIndex } = editTarget;
+  const workout = currentData.workouts[workoutIndex];
+  const exercise = workout?.exercises?.[exerciseIndex];
+  if (!exercise) return;
+
+  const dialog = document.getElementById('edit-exercise-dialog');
+  const name = dialog.querySelector('#edit-ex-name').value.trim();
+  if (!name) return;
+  exercise.name = name;
+
+  if (workout.type !== 'circuit') {
+    exercise.sets = dialog.querySelector('#edit-ex-sets').value.trim();
+    exercise.reps = dialog.querySelector('#edit-ex-reps').value.trim();
+  }
+
+  const newIndex = parseInt(dialog.querySelector('#edit-ex-position').value, 10);
+  if (!Number.isNaN(newIndex) && newIndex !== exerciseIndex) {
+    workout.exercises.splice(exerciseIndex, 1);
+    workout.exercises.splice(newIndex, 0, exercise);
+  }
+
+  editTarget = null;
+  document.getElementById('edit-exercise-dialog').close();
+  await WorkoutDB.save(currentData);
+  reRenderPreservingTab();
+}
+
+async function deleteEditedExercise() {
+  if (!editTarget) return;
+  const { workoutIndex, exerciseIndex } = editTarget;
+  currentData.workouts[workoutIndex].exercises.splice(exerciseIndex, 1);
+  editTarget = null;
+  closeEditDialog();
+  await WorkoutDB.save(currentData);
+  reRenderPreservingTab();
+}
+
+(function() {
+  const editDialog = document.getElementById('edit-exercise-dialog');
+  const editForm = editDialog.querySelector('.edit-exercise-form');
+
+  editDialog.addEventListener('click', (e) => {
+    if (e.target === editDialog) editDialog.close();
+  });
+  editForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveEditedExercise();
+  });
+  document.getElementById('edit-ex-cancel').addEventListener('click', () => closeEditDialog());
+  document.getElementById('edit-ex-delete').addEventListener('click', () => deleteEditedExercise());
+})();
+
+/* ── Edit-cardio dialog ── */
+let cardioEditTarget = null; // { workoutIndex }
+
+function openCardioDialog(block) {
+  const workoutIndex = parseInt(block.dataset.workoutIndex, 10);
+  const workout = currentData?.workouts?.[workoutIndex];
+  const cardio = workout?.cardio;
+  if (!cardio) return;
+
+  cardioEditTarget = { workoutIndex };
+
+  const dialog = document.getElementById('edit-cardio-dialog');
+  dialog.querySelector('#edit-cardio-icon').value = cardio.icon || '';
+  dialog.querySelector('#edit-cardio-title').value = cardio.title || '';
+  dialog.querySelector('#edit-cardio-description').value = cardio.description || '';
+
+  dialog.showModal();
+}
+
+function closeCardioDialog() {
+  document.getElementById('edit-cardio-dialog').close();
+  cardioEditTarget = null;
+}
+
+async function saveEditedCardio() {
+  if (!cardioEditTarget) return;
+  const { workoutIndex } = cardioEditTarget;
+  const cardio = currentData.workouts[workoutIndex]?.cardio;
+  if (!cardio) return;
+
+  const dialog = document.getElementById('edit-cardio-dialog');
+  const title = dialog.querySelector('#edit-cardio-title').value.trim();
+  const description = dialog.querySelector('#edit-cardio-description').value.trim();
+  if (!title || !description) return;
+  cardio.icon = dialog.querySelector('#edit-cardio-icon').value.trim();
+  cardio.title = title;
+  cardio.description = description;
+
+  cardioEditTarget = null;
+  document.getElementById('edit-cardio-dialog').close();
+  await WorkoutDB.save(currentData);
+  reRenderPreservingTab();
+}
+
+async function deleteEditedCardio() {
+  if (!cardioEditTarget) return;
+  const { workoutIndex } = cardioEditTarget;
+  delete currentData.workouts[workoutIndex].cardio;
+  cardioEditTarget = null;
+  closeCardioDialog();
+  await WorkoutDB.save(currentData);
+  reRenderPreservingTab();
+}
+
+(function() {
+  const cardioDialog = document.getElementById('edit-cardio-dialog');
+  const cardioForm = cardioDialog.querySelector('.edit-exercise-form');
+
+  cardioDialog.addEventListener('click', (e) => {
+    if (e.target === cardioDialog) cardioDialog.close();
+  });
+  cardioForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveEditedCardio();
+  });
+  document.getElementById('edit-cardio-cancel').addEventListener('click', () => closeCardioDialog());
+  document.getElementById('edit-cardio-delete').addEventListener('click', () => deleteEditedCardio());
+})();
+
+/* ── Long-press (1s+) on an exercise row or the cardio block opens its edit dialog ── */
+(function() {
+  const HOLD_MS = 1000;
+  const MOVE_PX = 10;
+  const TARGET_SELECTOR = '.exercise-row, .cardio-block';
+  let timer = null;
+  let startX = 0, startY = 0;
+  let pressEl = null;
+  let longPressReady = false;
+  let suppressClick = false;
+
+  function cancelPress() {
+    if (pressEl) pressEl.classList.remove('long-press-charging', 'long-press-ready');
+    clearTimeout(timer);
+    timer = null;
+    pressEl = null;
+    longPressReady = false;
+  }
+
+  document.addEventListener('pointerdown', function(e) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const el = e.target.closest(TARGET_SELECTOR);
+    if (!el) return;
+    startX = e.clientX;
+    startY = e.clientY;
+    pressEl = el;
+    longPressReady = false;
+    el.style.setProperty('--hold-duration', HOLD_MS + 'ms');
+    el.classList.add('long-press-charging');
+    timer = setTimeout(() => {
+      if (!pressEl) return;
+      longPressReady = true;
+      pressEl.classList.remove('long-press-charging');
+      pressEl.classList.add('long-press-ready');
+      if (navigator.vibrate) navigator.vibrate(15);
+    }, HOLD_MS);
+  });
+
+  document.addEventListener('pointermove', function(e) {
+    if (!pressEl) return;
+    const moved = Math.hypot(e.clientX - startX, e.clientY - startY);
+    if (moved > MOVE_PX) cancelPress();
+  });
+
+  // Open the dialog only once the finger/mouse has actually lifted, and defer
+  // it a tick past that — opening mid-gesture means the release lands on
+  // whatever's now under it in the freshly-opened dialog (e.g. Cancel),
+  // dismissing it instantly.
+  document.addEventListener('pointerup', function(e) {
+    if (longPressReady && pressEl) {
+      suppressClick = true;
+      const el = pressEl;
+      setTimeout(() => {
+        if (el.classList.contains('cardio-block')) {
+          openCardioDialog(el);
+        } else {
+          openEditDialog(el);
+        }
+      }, 0);
+    }
+    cancelPress();
+  });
+  document.addEventListener('pointercancel', cancelPress);
+
+  document.addEventListener('contextmenu', function(e) {
+    if (e.target.closest(TARGET_SELECTOR)) e.preventDefault();
+  });
+
+  // Suppress the tap/click that follows a long-press so it doesn't also toggle a set.
+  document.addEventListener('click', function(e) {
+    if (suppressClick) {
+      suppressClick = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }, true);
 })();
 
 init();
