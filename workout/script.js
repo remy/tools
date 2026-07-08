@@ -713,6 +713,13 @@ function openEditDialog(row) {
   dialog.querySelector('#edit-ex-reps').value = exercise.reps || '';
   dialog.querySelector('#edit-sets-reps-row').hidden = isCircuit;
 
+  const total = workout.exercises.length;
+  const positionSelect = dialog.querySelector('#edit-ex-position');
+  positionSelect.innerHTML = Array.from({ length: total }, (_, i) =>
+    `<option value="${i}">${i + 1} of ${total}</option>`
+  ).join('');
+  positionSelect.value = exerciseIndex;
+
   dialog.showModal();
 }
 
@@ -736,6 +743,12 @@ async function saveEditedExercise() {
   if (workout.type !== 'circuit') {
     exercise.sets = dialog.querySelector('#edit-ex-sets').value.trim();
     exercise.reps = dialog.querySelector('#edit-ex-reps').value.trim();
+  }
+
+  const newIndex = parseInt(dialog.querySelector('#edit-ex-position').value, 10);
+  if (!Number.isNaN(newIndex) && newIndex !== exerciseIndex) {
+    workout.exercises.splice(exerciseIndex, 1);
+    workout.exercises.splice(newIndex, 0, exercise);
   }
 
   editTarget = null;

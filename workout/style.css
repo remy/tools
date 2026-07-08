@@ -612,7 +612,8 @@ dialog {
     color: var(--muted);
   }
 
-  & input[type="text"] {
+  & input[type="text"],
+  & select {
     font-family: 'DM Sans', sans-serif;
     font-size: 16px;
     padding: 10px 12px;
