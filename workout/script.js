@@ -88,6 +88,8 @@ function releaseWakeLock() {
   try { wakeLock?.release(); wakeLock = null; } catch (e) {}
 }
 
+let currentData = null;
+
 /* ── Init ── */
 async function init() {
   try {
@@ -96,12 +98,20 @@ async function init() {
       const response = await fetch('workouts.json');
       data = await response.json();
     }
+    currentData = data;
     renderWorkouts(data.workouts);
     restoreTab();
     restoreTheme();
   } catch (error) {
     console.error('Error loading workouts:', error);
   }
+}
+
+function reRenderPreservingTab() {
+  const activeIndex = Math.max(0, [...document.querySelectorAll('.tab')].findIndex(t => t.classList.contains('active')));
+  renderWorkouts(currentData.workouts);
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === activeIndex));
+  document.querySelectorAll('.day-panel').forEach((p, i) => p.classList.toggle('active', i === activeIndex));
 }
 
 /* ── Render ── */
@@ -157,7 +167,7 @@ function renderWorkouts(workouts) {
           <div class="circuit-round">Round 1 of ${rounds}</div>
           <div class="exercise-list">
             ${workout.exercises.map((ex, i) => `
-              <div class="exercise-row" data-exercise-index="${i}">
+              <div class="exercise-row" data-workout-index="${index}" data-exercise-index="${i}">
                 <div class="ex-name">${ex.name}</div>
               </div>
             `).join('')}
@@ -196,8 +206,8 @@ function renderWorkouts(workouts) {
           <span>Exercise</span><span>Sets</span><span>Reps</span>
         </div>
         <div class="exercise-list">
-          ${workout.exercises.map(ex => `
-            <div class="exercise-row" data-total-sets="${ex.sets}" data-completed-sets="0">
+          ${workout.exercises.map((ex, i) => `
+            <div class="exercise-row" data-workout-index="${index}" data-exercise-index="${i}" data-total-sets="${ex.sets}" data-completed-sets="0">
               <div class="ex-name">${ex.name}</div>
               <div class="ex-sets"><span class="ex-sets-current">0</span>/<span class="ex-sets-total">${ex.sets}</span><span class="ex-sets-label">sets</span></div>
               <div class="ex-reps">${ex.reps}<span class="ex-reps-label">reps</span></div>
@@ -682,6 +692,135 @@ document.addEventListener('input', function(e) {
 
   document.addEventListener('touchend', function() { tracking = false; }, { passive: true });
   document.addEventListener('touchcancel', function() { tracking = false; }, { passive: true });
+})();
+
+/* ── Edit-exercise dialog ── */
+let editTarget = null; // { workoutIndex, exerciseIndex }
+
+function openEditDialog(row) {
+  const workoutIndex = parseInt(row.dataset.workoutIndex, 10);
+  const exerciseIndex = parseInt(row.dataset.exerciseIndex, 10);
+  const workout = currentData?.workouts?.[workoutIndex];
+  const exercise = workout?.exercises?.[exerciseIndex];
+  if (!exercise) return;
+
+  editTarget = { workoutIndex, exerciseIndex };
+
+  const dialog = document.getElementById('edit-exercise-dialog');
+  const isCircuit = workout.type === 'circuit';
+  dialog.querySelector('#edit-ex-name').value = exercise.name || '';
+  dialog.querySelector('#edit-ex-sets').value = exercise.sets || '';
+  dialog.querySelector('#edit-ex-reps').value = exercise.reps || '';
+  dialog.querySelector('#edit-sets-reps-row').hidden = isCircuit;
+
+  dialog.showModal();
+}
+
+function closeEditDialog() {
+  document.getElementById('edit-exercise-dialog').close();
+  editTarget = null;
+}
+
+async function saveEditedExercise() {
+  if (!editTarget) return;
+  const { workoutIndex, exerciseIndex } = editTarget;
+  const workout = currentData.workouts[workoutIndex];
+  const exercise = workout?.exercises?.[exerciseIndex];
+  if (!exercise) return;
+
+  const dialog = document.getElementById('edit-exercise-dialog');
+  const name = dialog.querySelector('#edit-ex-name').value.trim();
+  if (!name) return;
+  exercise.name = name;
+
+  if (workout.type !== 'circuit') {
+    exercise.sets = dialog.querySelector('#edit-ex-sets').value.trim();
+    exercise.reps = dialog.querySelector('#edit-ex-reps').value.trim();
+  }
+
+  editTarget = null;
+  document.getElementById('edit-exercise-dialog').close();
+  await WorkoutDB.save(currentData);
+  reRenderPreservingTab();
+}
+
+async function deleteEditedExercise() {
+  if (!editTarget) return;
+  const { workoutIndex, exerciseIndex } = editTarget;
+  currentData.workouts[workoutIndex].exercises.splice(exerciseIndex, 1);
+  editTarget = null;
+  closeEditDialog();
+  await WorkoutDB.save(currentData);
+  reRenderPreservingTab();
+}
+
+(function() {
+  const editDialog = document.getElementById('edit-exercise-dialog');
+  const editForm = editDialog.querySelector('.edit-exercise-form');
+
+  editDialog.addEventListener('click', (e) => {
+    if (e.target === editDialog) editDialog.close();
+  });
+  editForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    saveEditedExercise();
+  });
+  document.getElementById('edit-ex-cancel').addEventListener('click', () => closeEditDialog());
+  document.getElementById('edit-ex-delete').addEventListener('click', () => deleteEditedExercise());
+})();
+
+/* ── Long-press (1s+) on an exercise row opens the edit dialog ── */
+(function() {
+  const HOLD_MS = 1000;
+  const MOVE_PX = 10;
+  let timer = null;
+  let startX = 0, startY = 0;
+  let pressRow = null;
+  let suppressClick = false;
+
+  function cancelPress() {
+    clearTimeout(timer);
+    timer = null;
+    pressRow = null;
+  }
+
+  document.addEventListener('pointerdown', function(e) {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const row = e.target.closest('.exercise-row');
+    if (!row) return;
+    startX = e.clientX;
+    startY = e.clientY;
+    pressRow = row;
+    timer = setTimeout(() => {
+      if (!pressRow) return;
+      suppressClick = true;
+      if (navigator.vibrate) navigator.vibrate(15);
+      openEditDialog(pressRow);
+      cancelPress();
+    }, HOLD_MS);
+  });
+
+  document.addEventListener('pointermove', function(e) {
+    if (!pressRow) return;
+    const moved = Math.hypot(e.clientX - startX, e.clientY - startY);
+    if (moved > MOVE_PX) cancelPress();
+  });
+
+  document.addEventListener('pointerup', cancelPress);
+  document.addEventListener('pointercancel', cancelPress);
+
+  document.addEventListener('contextmenu', function(e) {
+    if (e.target.closest('.exercise-row')) e.preventDefault();
+  });
+
+  // Suppress the tap/click that follows a long-press so it doesn't also toggle a set.
+  document.addEventListener('click', function(e) {
+    if (suppressClick) {
+      suppressClick = false;
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  }, true);
 })();
 
 init();
