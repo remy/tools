@@ -863,6 +863,7 @@ async function deleteEditedCardio() {
   let suppressClick = false;
 
   function cancelPress() {
+    if (pressEl) pressEl.classList.remove('long-press-charging', 'long-press-ready');
     clearTimeout(timer);
     timer = null;
     pressEl = null;
@@ -877,9 +878,13 @@ async function deleteEditedCardio() {
     startY = e.clientY;
     pressEl = el;
     longPressReady = false;
+    el.style.setProperty('--hold-duration', HOLD_MS + 'ms');
+    el.classList.add('long-press-charging');
     timer = setTimeout(() => {
       if (!pressEl) return;
       longPressReady = true;
+      pressEl.classList.remove('long-press-charging');
+      pressEl.classList.add('long-press-ready');
       if (navigator.vibrate) navigator.vibrate(15);
     }, HOLD_MS);
   });
