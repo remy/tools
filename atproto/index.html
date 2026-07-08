@@ -77,22 +77,17 @@
     </details>
 
     <div class="controls">
-      <div class="search-wrap">
-        <input type="search" id="search" placeholder="Search terms, acronyms or definitions…"
-          aria-label="Search glossary" autocomplete="off" spellcheck="false" />
-        <button type="button" id="clear-search" class="clear-btn" aria-label="Clear search" hidden>&times;</button>
-      </div>
-      <button type="button" id="quick-jump" class="quick-jump">
-        <span>Quick jump to any term or category</span>
+      <button type="button" id="quick-jump" class="quick-jump" aria-label="Search the glossary">
+        <span class="qj-icon" aria-hidden="true"></span>
+        <span class="qj-label">Search terms, acronyms or definitions…</span>
         <kbd>⌘K</kbd>
       </button>
+      <p class="qj-hint">Start typing anywhere, or press <kbd>⌘K</kbd> / <kbd>Ctrl&nbsp;K</kbd>, to search and jump.</p>
     </div>
 
     <p class="count" id="count" aria-live="polite"></p>
 
     <main id="glossary"></main>
-
-    <p class="empty" id="empty" hidden>No terms match your search.</p>
 
     <footer class="page-foot">
       <p>
@@ -103,7 +98,7 @@
     </footer>
   </div>
 
-  <command-palette></command-palette>
+  <command-palette open-on-type></command-palette>
 
   <script src="/command-palette/command-palette.wc.js"></script>
   <script src="terms.js"></script>
