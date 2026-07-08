@@ -1,4 +1,9 @@
 {
+  "atproto": {
+    "category": "Developer Tools",
+    "description": "A plain-English glossary of the AT Protocol (atproto): every key term \u2014 DID, PDS, Relay, AppView, Lexicon, firehose and more \u2014 explained simply with links to read more.",
+    "title": "AT Protocol Glossary"
+  },
   "audio-shape": {
     "category": "Audio",
     "description": "Sculpt a custom oscillator waveform by tapping to add control points. The Web Audio API renders the resulting PeriodicWave through an OscillatorNode you can connect to your speakers.",
