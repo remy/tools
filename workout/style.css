@@ -629,6 +629,15 @@ dialog {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+
+  & label {
+    min-width: 0;
+  }
+
+  & input {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 360px) {
