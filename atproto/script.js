@@ -121,9 +121,7 @@ function jumpTo(target) {
   const el = document.getElementById(target);
   if (!el) return;
   history.replaceState(null, '', '#' + target);
-  const controls = document.querySelector('.controls');
-  const offset = (controls ? controls.offsetHeight : 0) + 12;
-  const top = el.getBoundingClientRect().top + window.scrollY - offset;
+  const top = el.getBoundingClientRect().top + window.scrollY - 16;
   window.scrollTo({
     top,
     behavior: prefersReducedMotion.matches ? 'auto' : 'smooth',
@@ -156,8 +154,11 @@ function initPalette() {
     palette.setBaseCommands(buildPaletteCommands());
     palette.addEventListener('navigate', (e) => jumpTo(e.detail.command.target));
   }
-  const jumpBtn = document.getElementById('quick-jump');
-  if (jumpBtn) jumpBtn.addEventListener('click', () => palette && palette.open());
+  const openPalette = () => palette && palette.open();
+  for (const id of ['quick-jump', 'search-fab']) {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener('click', openPalette);
+  }
 }
 
 // --- events --------------------------------------------------------------
