@@ -1,11 +1,9 @@
-// AT Protocol glossary — search, filter, cross-link rendering.
+// AT Protocol glossary — renders the full listing and wires the
+// command-palette as the search / quick-jump feature.
 // Depends on CATEGORIES and TERMS from terms.js.
 
 const glossaryEl = document.getElementById('glossary');
-const searchEl = document.getElementById('search');
-const clearBtn = document.getElementById('clear-search');
 const countEl = document.getElementById('count');
-const emptyEl = document.getElementById('empty');
 
 // --- helpers -------------------------------------------------------------
 
@@ -59,55 +57,16 @@ function renderDef(text) {
     .join('');
 }
 
-// Highlight a query inside already-rendered HTML, skipping tags.
-function highlight(html, query) {
-  if (!query) return html;
-  const re = new RegExp(
-    '(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')',
-    'gi'
-  );
-  // Only touch text between tags.
-  return html.replace(/>([^<]+)</g, (m, txt) => {
-    return '>' + txt.replace(re, '<mark>$1</mark>') + '<';
-  });
-}
-
-// --- state ---------------------------------------------------------------
-
-let query = '';
-
-// --- matching ------------------------------------------------------------
-
-function matches(term, q) {
-  if (!q) return true;
-  const hay = [
-    term.term,
-    term.abbr || '',
-    (term.aka || []).join(' '),
-    term.def,
-  ]
-    .join(' ')
-    .toLowerCase();
-  return hay.includes(q);
-}
-
 // --- render --------------------------------------------------------------
 
 function render() {
-  const q = query.trim().toLowerCase();
-  let total = 0;
-
   const sections = CATEGORIES.map((cat) => {
-    const items = TERMS.filter((t) => t.cat === cat.id && matches(t, q));
+    const items = TERMS.filter((t) => t.cat === cat.id);
     if (!items.length) return '';
-    total += items.length;
 
     const cards = items
       .map((t) => {
         const id = slug(t.term);
-        let name = escapeHtml(t.term);
-        if (q) name = highlight('>' + name + '<', q).slice(1, -1);
-
         const abbr = t.abbr
           ? `<span class="term-abbr">${escapeHtml(t.abbr)}</span>`
           : '';
@@ -118,18 +77,15 @@ function render() {
               )}</span>`
             : '';
 
-        let def = renderDef(t.def);
-        if (q) def = highlight(def, q);
-
         const refLabel = t.refLabel || 'Read more';
         return `
           <article class="term-card" id="${id}">
             <div class="term-top">
-              <span class="term-name">${name}</span>
+              <span class="term-name">${escapeHtml(t.term)}</span>
               ${abbr}
               ${aka}
             </div>
-            <p class="term-def">${def}</p>
+            <p class="term-def">${renderDef(t.def)}</p>
             <div class="term-ref">
               <a href="${t.ref}" target="_blank" rel="noopener">${escapeHtml(
           refLabel
@@ -152,34 +108,29 @@ function render() {
   }).join('');
 
   glossaryEl.innerHTML = sections;
-  emptyEl.hidden = total > 0;
-
-  const grand = TERMS.length;
-  if (q) {
-    countEl.textContent = `Showing ${total} of ${grand} terms`;
-  } else {
-    countEl.textContent = `${grand} terms across ${CATEGORIES.length} categories`;
-  }
-
-  clearBtn.hidden = !query;
+  countEl.textContent = `${TERMS.length} terms across ${CATEGORIES.length} categories`;
 }
 
-// Clear any active search and scroll a target anchor into view.
+// Scroll a target anchor into view, offset for the sticky header. Smooth when
+// motion is allowed, instant otherwise (respects prefers-reduced-motion).
+const prefersReducedMotion = window.matchMedia(
+  '(prefers-reduced-motion: reduce)'
+);
+
 function jumpTo(target) {
-  if (query) {
-    query = '';
-    searchEl.value = '';
-    clearBtn.hidden = true;
-    render();
-  }
   const el = document.getElementById(target);
-  if (el) {
-    history.replaceState(null, '', '#' + target);
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+  if (!el) return;
+  history.replaceState(null, '', '#' + target);
+  const controls = document.querySelector('.controls');
+  const offset = (controls ? controls.offsetHeight : 0) + 12;
+  const top = el.getBoundingClientRect().top + window.scrollY - offset;
+  window.scrollTo({
+    top,
+    behavior: prefersReducedMotion.matches ? 'auto' : 'smooth',
+  });
 }
 
-// --- command palette (quick jump) ---------------------------------------
+// --- command palette (search / quick jump) ------------------------------
 
 function buildPaletteCommands() {
   const catName = (id) => (CATEGORIES.find((c) => c.id === id) || {}).name || '';
@@ -199,6 +150,9 @@ function buildPaletteCommands() {
 function initPalette() {
   const palette = document.querySelector('command-palette');
   if (palette) {
+    // Dynamic base commands: (re)built each time the palette opens so the
+    // list always reflects the current glossary data.
+    palette.onBeforeOpen = () => palette.setBaseCommands(buildPaletteCommands());
     palette.setBaseCommands(buildPaletteCommands());
     palette.addEventListener('navigate', (e) => jumpTo(e.detail.command.target));
   }
@@ -208,33 +162,13 @@ function initPalette() {
 
 // --- events --------------------------------------------------------------
 
-searchEl.addEventListener('input', () => {
-  query = searchEl.value;
-  render();
-});
-
-clearBtn.addEventListener('click', () => {
-  query = '';
-  searchEl.value = '';
-  searchEl.focus();
-  render();
-});
-
-// Clicking a cross-link: clear any active search so the target is visible.
+// Cross-links jump within the page (the browser handles the #hash too, but
+// this keeps the smooth-scroll behaviour consistent with palette jumps).
 glossaryEl.addEventListener('click', (e) => {
   const link = e.target.closest('.xlink');
-  if (!link) return;
-  if (query) {
+  if (link && link.dataset.jump) {
     e.preventDefault();
     jumpTo(link.dataset.jump);
-  }
-});
-
-// Keyboard shortcut: "/" focuses search.
-document.addEventListener('keydown', (e) => {
-  if (e.key === '/' && document.activeElement !== searchEl) {
-    e.preventDefault();
-    searchEl.focus();
   }
 });
 
