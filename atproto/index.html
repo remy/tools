@@ -82,7 +82,10 @@
           aria-label="Search glossary" autocomplete="off" spellcheck="false" />
         <button type="button" id="clear-search" class="clear-btn" aria-label="Clear search" hidden>&times;</button>
       </div>
-      <div class="filters" id="filters" role="group" aria-label="Filter by category"></div>
+      <button type="button" id="quick-jump" class="quick-jump">
+        <span>Quick jump to any term or category</span>
+        <kbd>⌘K</kbd>
+      </button>
     </div>
 
     <p class="count" id="count" aria-live="polite"></p>
@@ -100,6 +103,9 @@
     </footer>
   </div>
 
+  <command-palette></command-palette>
+
+  <script src="/command-palette/command-palette.wc.js"></script>
   <script src="terms.js"></script>
   <script src="script.js"></script>
   <script>navigator.serviceWorker?.register("/sw.js")</script>

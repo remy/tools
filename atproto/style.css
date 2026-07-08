@@ -17,6 +17,13 @@
   --radius: 0.75rem;
   --radius-sm: 0.5rem;
   --maxw: 52rem;
+
+  /* Theme hooks consumed by the shared <command-palette> component.
+     These reference our tokens above, so they follow light/dark automatically. */
+  --surface: var(--bg-card);
+  --surface-2: var(--bg-secondary);
+  --text-dim: var(--text-muted);
+  --accent-dim: var(--accent-soft);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -261,39 +268,38 @@ h1 .at {
   color: var(--text);
 }
 
-.filters {
+.quick-jump {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
   margin-top: 0.6rem;
-}
-
-.chip {
+  padding: 0.5rem 0.75rem;
   font: inherit;
-  font-size: 0.82rem;
-  padding: 0.3rem 0.7rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg-card);
+  font-size: 0.88rem;
   color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  transition: border-color 0.12s, color 0.12s;
 }
 
-.chip:hover {
+.quick-jump:hover {
   border-color: var(--accent);
   color: var(--text);
 }
 
-.chip[aria-pressed="true"] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-@media (prefers-color-scheme: dark) {
-  .chip[aria-pressed="true"] { color: #09090b; font-weight: 600; }
+.quick-jump kbd {
+  flex: none;
+  font-family: inherit;
+  font-size: 0.78rem;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
 .count {
