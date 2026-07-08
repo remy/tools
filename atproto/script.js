@@ -130,19 +130,50 @@ function jumpTo(target) {
 
 // --- command palette (search / quick jump) ------------------------------
 
+const catName = (id) => (CATEGORIES.find((c) => c.id === id) || {}).name || '';
+
+// A "navigate" command for a single term — used both in the base list (jump
+// by name) and in full-text search results.
+function termCommand(t) {
+  const extra = [t.abbr, ...(t.aka || [])].filter(Boolean).join(' · ');
+  return {
+    name: 'navigate',
+    description: `${t.term}${extra ? ' · ' + extra : ''}  —  ${catName(t.cat)}`,
+    target: slug(t.term),
+  };
+}
+
 function buildPaletteCommands() {
-  const catName = (id) => (CATEGORIES.find((c) => c.id === id) || {}).name || '';
-  const terms = TERMS.map((t) => {
-    const extra = [t.abbr, ...(t.aka || [])].filter(Boolean).join(' · ');
-    const desc = `${t.term}${extra ? ' · ' + extra : ''}  —  ${catName(t.cat)}`;
-    return { name: 'navigate', description: desc, target: slug(t.term) };
-  });
+  const terms = TERMS.map(termCommand);
   const cats = CATEGORIES.map((c) => ({
     name: 'navigate',
     description: `▸ ${c.name} (category)`,
     target: 'cat-' + c.id,
   }));
   return [...terms, ...cats];
+}
+
+// Full-text index: strip our tiny markup so definitions search cleanly.
+const stripMarkup = (s) =>
+  s
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\[\[([^\]]+)\]\]/g, (_, inner) => inner.replace('|', ' '));
+
+const searchIndex = TERMS.map((t) => ({
+  t,
+  hay: `${t.term} ${t.abbr || ''} ${(t.aka || []).join(' ')} ${stripMarkup(
+    t.def
+  )}`.toLowerCase(),
+}));
+
+// Terms whose name, aliases or definition contain every word of the query.
+function textMatches(query) {
+  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!tokens.length) return [];
+  return searchIndex
+    .filter(({ hay }) => tokens.every((tok) => hay.includes(tok)))
+    .map(({ t }) => t);
 }
 
 function initPalette() {
@@ -152,6 +183,31 @@ function initPalette() {
     // list always reflects the current glossary data.
     palette.onBeforeOpen = () => palette.setBaseCommands(buildPaletteCommands());
     palette.setBaseCommands(buildPaletteCommands());
+
+    // Fallback: when the query matches no term name, offer a full-text search
+    // across every definition (only if there's actually something to find).
+    palette.setFallback((query) => {
+      const n = textMatches(query).length;
+      if (!n) return null;
+      return {
+        name: 'search-text',
+        keepOpen: true, // stay open so we can drill into the results
+        description: `Search definitions for “${query}” — ${n} match${
+          n === 1 ? '' : 'es'
+        }`,
+      };
+    });
+
+    // Selecting the fallback drills down into the matching terms.
+    palette.addEventListener('search-text', (e) => {
+      const query = e.detail.query;
+      const results = textMatches(query).map(termCommand);
+      palette.setCommands(results, {
+        placeholder: `Terms mentioning “${query}”…`,
+        label: 'Definition matches',
+      });
+    });
+
     palette.addEventListener('navigate', (e) => jumpTo(e.detail.command.target));
   }
   const openPalette = () => palette && palette.open();
