@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="A plain-English glossary of the AT Protocol (atproto): every key term — DID, PDS, Relay, AppView, Lexicon, firehose and more — explained simply with links to read more." />
+  <meta name="category" content="Developer Tools" />
+  <title>AT Protocol Glossary</title>
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Etext%7Bfill:%2318181b%7D@media(prefers-color-scheme:dark)%7Btext%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Ctext x='12' y='19' font-size='20' font-family='sans-serif' font-weight='700' text-anchor='middle'%3E@%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <header class="page-head">
+      <h1><span class="at">@</span> AT Protocol Glossary</h1>
+      <p class="tagline">
+        A plain-English reference for the terms you’ll meet around
+        <strong>atproto</strong> — the open, decentralised protocol behind
+        Bluesky and the wider Atmosphere.
+      </p>
+    </header>
+
+    <details class="explainer" open>
+      <summary>
+        <span>New here? What <em>is</em> the AT Protocol?</span>
+        <span class="chevron" aria-hidden="true"></span>
+      </summary>
+      <div class="explainer-body">
+        <p>
+          The <strong>AT Protocol</strong> (short for <em>Authenticated
+          Transfer Protocol</em>, or just <strong>atproto</strong>) is an open
+          standard for building social apps that aren’t owned by any one
+          company — the way email or the web aren’t owned by anyone.
+        </p>
+        <p>The core idea is simple, and rests on three moving parts:</p>
+        <ol>
+          <li>
+            <strong>Your data lives in a signed “repository.”</strong> Every
+            post, like and follow you make is a small record cryptographically
+            signed by you. Because it’s signed, <em>anyone</em> can verify it’s
+            genuinely yours without asking a central server for permission.
+          </li>
+          <li>
+            <strong>Your identity is permanent and portable.</strong> You get a
+            stable ID (a <em>DID</em>) and a friendly username (a
+            <em>handle</em>, which is just a domain name). You can move your
+            whole account — data, followers and all — from one host to another
+            and keep your identity. That’s the “credible exit” that stops
+            lock-in.
+          </li>
+          <li>
+            <strong>Anyone can build the apps.</strong> Independent services
+            store data (a <em>PDS</em>), aggregate it into one big stream (a
+            <em>Relay</em>), and turn it into a usable product (an
+            <em>AppView</em>). Bluesky is just the first big app built this
+            way — others share the same identities and data.
+          </li>
+        </ol>
+        <p>
+          The glossary below breaks every one of these terms — and the more
+          technical ones underneath them — into a one-paragraph explanation,
+          with a link to the official spec or docs if you want to go deeper.
+        </p>
+        <p class="explainer-links">
+          Official sources:
+          <a href="https://atproto.com" target="_blank" rel="noopener">atproto.com</a>
+          ·
+          <a href="https://atproto.com/guides/glossary" target="_blank" rel="noopener">Official glossary</a>
+          ·
+          <a href="https://docs.bsky.app" target="_blank" rel="noopener">Bluesky docs</a>
+        </p>
+      </div>
+    </details>
+
+    <div class="controls">
+      <div class="search-wrap">
+        <input type="search" id="search" placeholder="Search terms, acronyms or definitions…"
+          aria-label="Search glossary" autocomplete="off" spellcheck="false" />
+        <button type="button" id="clear-search" class="clear-btn" aria-label="Clear search" hidden>&times;</button>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="Filter by category"></div>
+    </div>
+
+    <p class="count" id="count" aria-live="polite"></p>
+
+    <main id="glossary"></main>
+
+    <p class="empty" id="empty" hidden>No terms match your search.</p>
+
+    <footer class="page-foot">
+      <p>
+        Definitions summarised for clarity — always confirm details against the
+        <a href="https://atproto.com" target="_blank" rel="noopener">official specifications</a>.
+        Not affiliated with Bluesky PBC.
+      </p>
+    </footer>
+  </div>
+
+  <script src="terms.js"></script>
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+
+</html>
