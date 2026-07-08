@@ -212,13 +212,7 @@ h1 .at {
 
 /* ------------------------------------------------------------- controls */
 .controls {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
-  backdrop-filter: blur(8px);
-  padding: 0.75rem 0;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 /* Search entry point — looks like a search field, opens the palette. */
@@ -246,7 +240,7 @@ h1 .at {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.quick-jump .qj-icon {
+.qj-icon {
   flex: none;
   width: 1.05rem;
   height: 1.05rem;
@@ -276,19 +270,32 @@ h1 .at {
   color: var(--text-secondary);
 }
 
-.qj-hint {
-  margin-top: 0.45rem;
-  font-size: 0.8rem;
-  color: var(--text-muted);
+/* Floating search button — a compact, opaque sticky affordance for mobile,
+   where there's no keyboard shortcut. Hidden on larger screens. */
+.search-fab {
+  display: none;
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 20;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  place-items: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
 }
 
-.qj-hint kbd {
-  font-family: inherit;
-  font-size: 0.9em;
-  padding: 0.02rem 0.3rem;
-  border: 1px solid var(--border-soft);
-  border-radius: 0.25rem;
-  background: var(--bg-secondary);
+@media (prefers-color-scheme: dark) {
+  .search-fab { color: #09090b; }
+}
+
+.search-fab .qj-icon {
+  width: 1.4rem;
+  height: 1.4rem;
 }
 
 .count {
@@ -300,7 +307,7 @@ h1 .at {
 /* ------------------------------------------------------------- glossary */
 .cat-section {
   margin-bottom: 2rem;
-  scroll-margin-top: 6rem;
+  scroll-margin-top: 1rem;
 }
 
 .cat-head {
@@ -338,7 +345,7 @@ h1 .at {
   border-radius: var(--radius);
   padding: 1rem 1.1rem;
   box-shadow: 0 1px 2px var(--shadow);
-  scroll-margin-top: 6rem;
+  scroll-margin-top: 1rem;
 }
 
 .term-card:target {
@@ -428,6 +435,13 @@ h1 .at {
   font-size: 0.85rem;
   color: var(--text-muted);
   text-align: center;
+}
+
+/* --------------------------------------------------------------- mobile */
+@media (max-width: 639px) {
+  .search-fab {
+    display: grid;
+  }
 }
 
 /* ------------------------------------------------------------ desktop up */
