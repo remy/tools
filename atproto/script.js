@@ -186,23 +186,35 @@ function initPalette() {
 
     // Fallback: when the query matches no term name, offer a full-text search
     // across every definition (only if there's actually something to find).
+    // A single hit jumps straight there; several drill into a list.
     palette.setFallback((query) => {
-      const n = textMatches(query).length;
-      if (!n) return null;
+      const matches = textMatches(query);
+      if (!matches.length) return null;
+      if (matches.length === 1) {
+        return {
+          name: 'search-text',
+          description: `Go to “${matches[0].term}” — mentions “${query}”`,
+        };
+      }
       return {
         name: 'search-text',
         keepOpen: true, // stay open so we can drill into the results
-        description: `Search definitions for “${query}” — ${n} match${
-          n === 1 ? '' : 'es'
-        }`,
+        description: `Search definitions for “${query}” — ${matches.length} matches`,
       };
     });
 
-    // Selecting the fallback drills down into the matching terms.
+    // Selecting the fallback: jump straight to the sole match, otherwise drill
+    // down into the list of matching terms.
     palette.addEventListener('search-text', (e) => {
       const query = e.detail.query;
-      const results = textMatches(query).map(termCommand);
-      palette.setCommands(results, {
+      const matches = textMatches(query);
+      if (matches.length === 1) {
+        // No keepOpen on the single-match command, so the palette has already
+        // closed itself — just navigate.
+        jumpTo(slug(matches[0].term));
+        return;
+      }
+      palette.setCommands(matches.map(termCommand), {
         placeholder: `Terms mentioning “${query}”…`,
         label: 'Definition matches',
       });
