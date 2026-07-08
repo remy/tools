@@ -4,7 +4,6 @@
 const glossaryEl = document.getElementById('glossary');
 const searchEl = document.getElementById('search');
 const clearBtn = document.getElementById('clear-search');
-const filtersEl = document.getElementById('filters');
 const countEl = document.getElementById('count');
 const emptyEl = document.getElementById('empty');
 
@@ -75,31 +74,7 @@ function highlight(html, query) {
 
 // --- state ---------------------------------------------------------------
 
-let activeCat = 'all';
 let query = '';
-
-// --- filters -------------------------------------------------------------
-
-function buildFilters() {
-  const chips = [{ id: 'all', name: 'All' }, ...CATEGORIES];
-  filtersEl.innerHTML = chips
-    .map(
-      (c) =>
-        `<button class="chip" type="button" data-cat="${c.id}" aria-pressed="${
-          c.id === 'all'
-        }">${c.name}</button>`
-    )
-    .join('');
-  filtersEl.addEventListener('click', (e) => {
-    const btn = e.target.closest('.chip');
-    if (!btn) return;
-    activeCat = btn.dataset.cat;
-    for (const chip of filtersEl.querySelectorAll('.chip')) {
-      chip.setAttribute('aria-pressed', chip.dataset.cat === activeCat);
-    }
-    render();
-  });
-}
 
 // --- matching ------------------------------------------------------------
 
@@ -123,7 +98,6 @@ function render() {
   let total = 0;
 
   const sections = CATEGORIES.map((cat) => {
-    if (activeCat !== 'all' && activeCat !== cat.id) return '';
     const items = TERMS.filter((t) => t.cat === cat.id && matches(t, q));
     if (!items.length) return '';
     total += items.length;
@@ -181,13 +155,55 @@ function render() {
   emptyEl.hidden = total > 0;
 
   const grand = TERMS.length;
-  if (q || activeCat !== 'all') {
+  if (q) {
     countEl.textContent = `Showing ${total} of ${grand} terms`;
   } else {
     countEl.textContent = `${grand} terms across ${CATEGORIES.length} categories`;
   }
 
   clearBtn.hidden = !query;
+}
+
+// Clear any active search and scroll a target anchor into view.
+function jumpTo(target) {
+  if (query) {
+    query = '';
+    searchEl.value = '';
+    clearBtn.hidden = true;
+    render();
+  }
+  const el = document.getElementById(target);
+  if (el) {
+    history.replaceState(null, '', '#' + target);
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// --- command palette (quick jump) ---------------------------------------
+
+function buildPaletteCommands() {
+  const catName = (id) => (CATEGORIES.find((c) => c.id === id) || {}).name || '';
+  const terms = TERMS.map((t) => {
+    const extra = [t.abbr, ...(t.aka || [])].filter(Boolean).join(' · ');
+    const desc = `${t.term}${extra ? ' · ' + extra : ''}  —  ${catName(t.cat)}`;
+    return { name: 'navigate', description: desc, target: slug(t.term) };
+  });
+  const cats = CATEGORIES.map((c) => ({
+    name: 'navigate',
+    description: `▸ ${c.name} (category)`,
+    target: 'cat-' + c.id,
+  }));
+  return [...terms, ...cats];
+}
+
+function initPalette() {
+  const palette = document.querySelector('command-palette');
+  if (palette) {
+    palette.setBaseCommands(buildPaletteCommands());
+    palette.addEventListener('navigate', (e) => jumpTo(e.detail.command.target));
+  }
+  const jumpBtn = document.getElementById('quick-jump');
+  if (jumpBtn) jumpBtn.addEventListener('click', () => palette && palette.open());
 }
 
 // --- events --------------------------------------------------------------
@@ -204,25 +220,13 @@ clearBtn.addEventListener('click', () => {
   render();
 });
 
-// Clicking a cross-link: clear filters/search so the target is visible.
+// Clicking a cross-link: clear any active search so the target is visible.
 glossaryEl.addEventListener('click', (e) => {
   const link = e.target.closest('.xlink');
   if (!link) return;
-  const target = link.dataset.jump;
-  if (activeCat !== 'all' || query) {
+  if (query) {
     e.preventDefault();
-    activeCat = 'all';
-    query = '';
-    searchEl.value = '';
-    for (const chip of filtersEl.querySelectorAll('.chip')) {
-      chip.setAttribute('aria-pressed', chip.dataset.cat === 'all');
-    }
-    render();
-    const el = document.getElementById(target);
-    if (el) {
-      history.replaceState(null, '', '#' + target);
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    jumpTo(link.dataset.jump);
   }
 });
 
@@ -236,8 +240,8 @@ document.addEventListener('keydown', (e) => {
 
 // --- init ----------------------------------------------------------------
 
-buildFilters();
 render();
+initPalette();
 
 // Deep-link on load (e.g. #pds).
 if (location.hash) {
