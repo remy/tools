@@ -34,12 +34,18 @@ export function render() {
   // Only stay in the single-list view when a valid list is selected; otherwise
   // fall back to the home view (e.g. the open list was just deleted).
   const onList = state.view === 'list' && !!list;
+  // Edit mode is only meaningful while a list is open — leaving the list resets
+  // it so every list opens in the clean, controls-hidden state.
+  if (!onList) state.editMode = false;
 
   $('header-title').textContent = onList ? list.name : 'Todo Lists';
   $('btn-back').hidden = !onList;
+  $('btn-edit-mode').hidden = !onList;
+  $('btn-edit-mode').setAttribute('aria-pressed', String(state.editMode));
 
   $('home-view').hidden = onList;
   $('list-view').hidden = !onList;
+  $('list-view').classList.toggle('editing', state.editMode);
   $('add-item-form').hidden = !onList;
 
   if (onList) renderItems();

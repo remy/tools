@@ -17,4 +17,5 @@ export const state = {
   counts: {},         // listId -> { total, done } for the home view
   currentListId: null,
   view: 'home',       // 'home' (all lists) | 'list' (a single list)
+  editMode: false,    // when true the open list shows drag / edit / delete controls
 };
