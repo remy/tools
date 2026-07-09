@@ -214,6 +214,11 @@
     "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
     "title": "AFI Quote Master"
   },
+  "route-planner": {
+    "category": "Maps",
+    "description": "Plan a walking or running route from your location or a chosen destination with a distance or time budget. Generates loops, out-and-back, and point-to-point routes on an interactive map, downloadable as GPX.",
+    "title": "Route Planner"
+  },
   "screen-light": {
     "category": "Web Demos",
     "description": "Fill the whole screen with a solid colour of your choice and keep the display awake with the Screen Wake Lock API. Press and hold anywhere to exit.",
