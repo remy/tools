@@ -234,7 +234,6 @@ export function bindEvents() {
   $('print-open').addEventListener('click', () => { $('print-choice').hidden = false; });
   $('print-unchecked').addEventListener('click', () => handlePrint(true));
   $('print-current').addEventListener('click', () => handlePrint(false));
-  $('print-cancel').addEventListener('click', () => { $('print-choice').hidden = true; });
 
   // New list dialog — the submit button is type="submit", so the form's submit
   // event is the single source of truth (a separate click handler would fire
