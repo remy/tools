@@ -24,6 +24,7 @@
         <h1 class="header-title" id="header-title">Todo Lists</h1>
         <button class="action-btn" id="btn-settings" aria-label="Settings">
           <span class="icon-mask icon-settings" aria-hidden="true"></span>
+          <span class="sync-error-dot" id="sync-error-dot" hidden></span>
         </button>
       </header>
 
@@ -174,6 +175,16 @@
           <input type="file" id="import-file" accept=".md,.markdown,text/markdown,text/plain" hidden>
           <div class="pop-actions">
             <button class="btn btn-primary" id="import-open" type="button">Import Markdown…</button>
+            <button class="btn btn-ghost" id="clone-list" type="button">Clone…</button>
+            <button class="btn btn-ghost" id="print-open" type="button">Print…</button>
+          </div>
+          <div class="import-choice" id="print-choice" hidden>
+            <p class="import-summary">Print this list as:</p>
+            <div class="pop-actions">
+              <button class="btn btn-primary" id="print-unchecked" type="button">Unchecked</button>
+              <button class="btn btn-ghost" id="print-current" type="button">In current state</button>
+              <button class="btn btn-ghost" id="print-cancel" type="button">Cancel</button>
+            </div>
           </div>
           <div class="import-choice" id="import-choice" hidden>
             <p class="import-summary" id="import-summary"></p>
@@ -221,6 +232,10 @@
         </div>
       </div>
     </dialog>
+
+    <!-- Printable rendering of the current list — hidden on screen, shown only
+         by the @media print stylesheet. Populated just before window.print(). -->
+    <div class="print-sheet" id="print-sheet" aria-hidden="true"></div>
 
     <script src="/vendor/pouchdb/pouchdb.min.js"></script>
     <script type="module" src="main.js"></script>

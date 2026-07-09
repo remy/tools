@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { db, getSyncConfig, setSyncConfig, encodeSyncConfig, SHARE_PARAM } from './db.js';
-import { refreshAll, refreshItems } from './lists.js';
+import { refreshAll, refreshItems, selectList } from './lists.js';
 import { renderItems } from './render.js';
 import { parseMarkdown } from './import.js';
 
@@ -12,10 +12,18 @@ function updateShareAvailability(url) {
 }
 
 // ── Sync status ──
+// PouchDB errors are inconsistent about where the useful detail lives, so try
+// message, then reason, then name, and append the HTTP status when present.
+function errorText(err) {
+  const detail = err?.message || err?.reason || err?.name || 'Unknown error';
+  const status = err?.status ? ` (HTTP ${err.status})` : '';
+  return `Sync error: ${detail}${status}`;
+}
+
 function statusText(s) {
   if (!s || s.state === 'disabled') return 'Sync disabled.';
   if (s.state === 'syncing') return 'Syncing…';
-  if (s.state === 'error') return `Error: ${s.lastError?.message || 'Unknown error'}`;
+  if (s.state === 'error') return errorText(s.lastError);
   const last = s.lastSyncedAt
     ? ` · last synced ${new Date(s.lastSyncedAt).toLocaleTimeString()}`
     : '';
@@ -29,16 +37,23 @@ function renderSyncStatus(s) {
   el.dataset.state = s?.state ?? 'disabled';
 }
 
-let unsubStatus = null;
+// Subscribe once at startup: keeps the settings-dialog status line current and
+// drives the red badge on the header cog so a failing sync is visible without
+// opening settings.
+export function initSyncStatus() {
+  db.onSyncStatus((s) => {
+    renderSyncStatus(s);
+    const failing = s?.state === 'error';
+    $('sync-error-dot').hidden = !failing;
+    $('btn-settings').title = failing ? statusText(s) : '';
+  });
+}
 
 export function openSettings() {
   const cfg = getSyncConfig();
   $('sync-url').value = cfg.url;
   $('sync-token').value = cfg.token;
   updateShareAvailability(cfg.url);
-
-  if (unsubStatus) unsubStatus();
-  unsubStatus = db.onSyncStatus(renderSyncStatus);
 
   setupListSection();
   renderTemplates();
@@ -55,6 +70,7 @@ function setupListSection() {
   const onList = state.view === 'list' && !!state.currentListId;
   $('list-settings-section').hidden = !onList;
   resetImportChoice();
+  $('print-choice').hidden = true;
   $('import-file').value = '';
   if (onList) {
     const list = state.lists.find((l) => l.id === state.currentListId);
@@ -114,6 +130,65 @@ export async function handleImportReplace() {
 
 export function handleImportCancel() {
   resetImportChoice();
+}
+
+// ── Clone list ──
+// Copy the open list (items, headings, check state) into a brand new list,
+// asking for its name first, then navigate straight into the clone.
+export async function handleCloneList() {
+  const list = state.lists.find((l) => l.id === state.currentListId);
+  if (!list) return;
+  const name = prompt('Name for the new list', `${list.name} copy`);
+  if (name == null) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  const newId = await db.cloneList(list.id, trimmed);
+  $('settings-dialog').close();
+  state.lists = await db.getLists();
+  state.counts = await db.getCounts();
+  await selectList(newId);
+}
+
+// ── Print ──
+// Fill the hidden print sheet with the open list. `unchecked` prints every
+// task with an empty box regardless of its current state.
+function buildPrintSheet(unchecked) {
+  const list = state.lists.find((l) => l.id === state.currentListId);
+  const sheet = $('print-sheet');
+  sheet.replaceChildren();
+
+  const title = document.createElement('h1');
+  title.textContent = list ? list.name : 'Todo list';
+  sheet.appendChild(title);
+
+  const ul = document.createElement('ul');
+  for (const item of state.items) {
+    const li = document.createElement('li');
+    if (item.kind === 'heading') {
+      li.className = 'print-heading';
+      li.textContent = item.text;
+    } else {
+      li.className = 'print-item';
+      if (!unchecked && item.checked) li.classList.add('checked');
+      const box = document.createElement('span');
+      box.className = 'print-box';
+      const text = document.createElement('span');
+      text.className = 'print-text';
+      text.textContent = item.text;
+      li.append(box, text);
+    }
+    ul.appendChild(li);
+  }
+  sheet.appendChild(ul);
+}
+
+export function handlePrint(unchecked) {
+  buildPrintSheet(unchecked);
+  $('print-choice').hidden = true;
+  // Close the dialog first — print styles hide it, but leaving a modal open
+  // behind the print preview would be confusing once printing finishes.
+  $('settings-dialog').close();
+  window.print();
 }
 
 // Build a link that encodes the current sync config and copy it to the

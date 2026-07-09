@@ -1,6 +1,7 @@
 import { db, setSyncConfig, decodeSyncConfig, SHARE_PARAM } from './db.js';
 import { bindEvents } from './events.js';
 import { refreshAll } from './lists.js';
+import { initSyncStatus } from './settings.js';
 
 // If the page was opened from a share link (?sync=<base64>), save the encoded
 // sync config, then strip the query string by reloading via location.replace.
@@ -35,6 +36,7 @@ function scheduleRefresh() {
 async function init() {
   await refreshAll();
   bindEvents();
+  initSyncStatus();
   db.onChange(scheduleRefresh);
 }
 

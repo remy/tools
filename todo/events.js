@@ -9,6 +9,7 @@ import {
   openSettings, openTemplateEditor, saveTemplate, deleteTemplate,
   handleSyncSave, handleSyncNow, handleSyncPull, handleShareLink,
   handleImportFile, handleImportAppend, handleImportReplace, handleImportCancel,
+  handleCloneList, handlePrint,
 } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
@@ -227,6 +228,13 @@ export function bindEvents() {
   $('import-append').addEventListener('click', handleImportAppend);
   $('import-replace').addEventListener('click', handleImportReplace);
   $('import-cancel').addEventListener('click', handleImportCancel);
+
+  // Settings: clone & print (per-list section)
+  $('clone-list').addEventListener('click', handleCloneList);
+  $('print-open').addEventListener('click', () => { $('print-choice').hidden = false; });
+  $('print-unchecked').addEventListener('click', () => handlePrint(true));
+  $('print-current').addEventListener('click', () => handlePrint(false));
+  $('print-cancel').addEventListener('click', () => { $('print-choice').hidden = true; });
 
   // New list dialog — the submit button is type="submit", so the form's submit
   // event is the single source of truth (a separate click handler would fire

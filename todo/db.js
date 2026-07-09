@@ -146,6 +146,7 @@ class TodoDB {
     this._statusListeners = new Set();
     this._lastStatus = null;
     this._changeSubscribers = new Set();
+    this._probeSeq = 0;
   }
 
   async open() {
@@ -196,6 +197,23 @@ class TodoDB {
     };
   }
 
+  // With retry:true PouchDB swallows connection failures: 'paused' fires with
+  // no error while it backs off between retries, which looks identical to
+  // "all caught up". Probe the remote to tell the two apart before reporting
+  // idle. Guarded against stale handles (reopen) and out-of-order responses.
+  async _verifyIdle(remote, handle) {
+    const probe = ++this._probeSeq;
+    let status;
+    try {
+      await remote.info();
+      status = { state: 'idle', lastSyncedAt: Date.now() };
+    } catch (err) {
+      status = { state: 'error', lastError: err };
+    }
+    if (this._syncHandle !== handle || probe !== this._probeSeq) return;
+    this._emitStatus(status);
+  }
+
   _startSync({ pullFirst = false } = {}) {
     const cfg = getSyncConfig();
     if (!cfg.url) {
@@ -219,7 +237,7 @@ class TodoDB {
         .on('active', () => this._emitStatus({ state: 'syncing' }))
         .on('paused', (err) => {
           if (err) this._emitStatus({ state: 'error', lastError: err });
-          else this._emitStatus({ state: 'idle', lastSyncedAt: Date.now() });
+          else this._verifyIdle(remote, handle);
         })
         .on('denied', (err) => this._emitStatus({ state: 'error', lastError: err }))
         .on('error', (err) => this._emitStatus({ state: 'error', lastError: err }));
@@ -585,6 +603,26 @@ class TodoDB {
         createdAt: now + i,
         history: [],
       }));
+    if (docs.length) await db.bulkDocs(docs);
+    return listId;
+  }
+
+  // Duplicate a list and every item in it under a new name. Text, headings,
+  // ordering and check state are all carried over, but per-item history is
+  // not — the clone starts with a clean timeline. Returns the new list's id.
+  async cloneList(sourceId, name) {
+    const db = await this.open();
+    const items = await this.getItems(sourceId);
+    const listId = crypto.randomUUID();
+    const now = Date.now();
+    await this.putList({ id: listId, name, order: now, createdAt: now });
+    const docs = items.map((item, i) => itemToDoc({
+      ...item,
+      id: crypto.randomUUID(),
+      listId,
+      createdAt: now + i,
+      history: item.checked ? [{ checked: true, at: now }] : [],
+    }));
     if (docs.length) await db.bulkDocs(docs);
     return listId;
   }
