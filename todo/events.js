@@ -133,8 +133,9 @@ function wireAddItem() {
     const text = isHeading ? raw.replace(/^#+\s*/, '').trim() : raw;
     if (!text) return;
     const now = Date.now();
+    const newId = crypto.randomUUID();
     await db.putItem({
-      id: crypto.randomUUID(),
+      id: newId,
       listId: state.currentListId,
       kind: isHeading ? 'heading' : 'item',
       text,
@@ -147,6 +148,9 @@ function wireAddItem() {
     input.value = '';
     await refreshItems();
     renderItems();
+    // Bring the freshly added row into view — it's appended at the bottom, so
+    // in a long list it can land below the fold.
+    $('todo-list').querySelector(`[data-id="${newId}"]`)?.scrollIntoView({ block: 'nearest' });
     input.focus();
   });
 }
