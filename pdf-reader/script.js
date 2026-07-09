@@ -373,12 +373,17 @@ function esc(s) {
   return s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 }
 
+function escAttr(s) {
+  return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+}
+
 function runsHTML(runs) {
   return runs.map((r) => {
     if (!r.text) return '';
     let t = esc(r.text);
     if (r.bold) t = '<strong>' + t + '</strong>';
     if (r.italic) t = '<em>' + t + '</em>';
+    if (r.url) t = '<a href="' + escAttr(r.url) + '" target="_blank" rel="noopener noreferrer">' + t + '</a>';
     return t;
   }).join('');
 }
@@ -390,6 +395,18 @@ const BULLET_RE = /^\s*([•◦▪·‣○●∙*•‣◦]|[-–—]|\d{1,3}[.)
 async function extractText(page) {
   const textContent = await page.getTextContent();
   const styles = textContent.styles || {};
+
+  // Collect link annotation rects for this page.
+  const links = [];
+  try {
+    const annotations = await page.getAnnotations();
+    for (const ann of annotations) {
+      if (ann.subtype !== 'Link') continue;
+      const url = ann.url || ann.unsafeUrl;
+      if (!url) continue;
+      links.push({ rect: ann.rect, url });
+    }
+  } catch (_) { /* best effort */ }
   const fontCache = new Map();
 
   function fontInfo(fontName) {
@@ -417,14 +434,17 @@ async function extractText(page) {
   for (const it of textContent.items) {
     if (typeof it.str !== 'string') continue;
     const tr = it.transform;
-    items.push({
-      str: it.str,
-      x: tr[4],
-      y: tr[5],
-      w: it.width || 0,
-      size: Math.hypot(tr[2], tr[3]) || it.height || 10,
-      font: it.fontName,
-    });
+    const x = tr[4], y = tr[5], w = it.width || 0;
+    const size = Math.hypot(tr[2], tr[3]) || it.height || 10;
+    let url = null;
+    for (const link of links) {
+      const [rx1, ry1, rx2, ry2] = link.rect;
+      if (x < rx2 && x + w > rx1 && y < ry2 && y + size > ry1) {
+        url = link.url;
+        break;
+      }
+    }
+    items.push({ str: it.str, x, y, w, size, font: it.fontName, url });
   }
   const itemCount = items.length;
   if (!itemCount) return { blocks: [], itemCount: 0, columns: [0] };
@@ -623,9 +643,10 @@ function buildFragment(group, y, fontInfo) {
       const endsSpace = last && /\s$/.test(last.text);
       if (gap > prev.size * 0.2 && !endsSpace && !/^\s/.test(text)) text = ' ' + text;
     }
+    const url = it.url || null;
     const last = runs[runs.length - 1];
-    if (last && last.bold === fi.bold && last.italic === fi.italic) last.text += text;
-    else runs.push({ text, bold: fi.bold, italic: fi.italic });
+    if (last && last.bold === fi.bold && last.italic === fi.italic && last.url === url) last.text += text;
+    else runs.push({ text, bold: fi.bold, italic: fi.italic, url });
     prev = it;
   }
   const plain = runs.map((r) => r.text).join('');
