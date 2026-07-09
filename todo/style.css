@@ -116,6 +116,13 @@ body {
 
   &:hover { background: var(--bg-hover); color: var(--text); }
   &:active { scale: 0.92; }
+
+  /* Toggle buttons (e.g. edit mode) reflect their pressed state with the
+     accent colour so it's clear the mode is active. */
+  &[aria-pressed="true"] {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
 }
 
 /* Red badge on the settings cog while sync is in an error state. */
@@ -345,6 +352,23 @@ body {
 }
 
 .todo-drag:active { cursor: grabbing; }
+
+/* Edit mode: the per-row drag handle and edit/delete actions are hidden by
+   default and only revealed once the list's edit mode is toggled on from the
+   header — keeping the resting UI clean. Placed after .icon-btn so the hide
+   rule wins over its display:inline-flex on the drag handle. */
+.todo-drag,
+.todo-actions {
+  display: none;
+}
+
+.list-view.editing .todo-drag {
+  display: inline-flex;
+}
+
+.list-view.editing .todo-actions {
+  display: flex;
+}
 
 .todo-item.dragging,
 .todo-heading.dragging {

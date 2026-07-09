@@ -223,6 +223,10 @@ function wireTemplates() {
 export function bindEvents() {
   // Header
   $('btn-back').addEventListener('click', goHome);
+  $('btn-edit-mode').addEventListener('click', () => {
+    state.editMode = !state.editMode;
+    render();
+  });
   $('btn-settings').addEventListener('click', openSettings);
   $('empty-new-list').addEventListener('click', openNewListDialog);
 
