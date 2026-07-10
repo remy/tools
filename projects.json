@@ -214,6 +214,11 @@
     "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
     "title": "AFI Quote Master"
   },
+  "rss-reader": {
+    "category": "Developer Tools",
+    "description": "Drop an RSS or Atom feed file to browse it. Titles collapse for skimming and expand to show the rendered article body.",
+    "title": "RSS Reader"
+  },
   "screen-light": {
     "category": "Web Demos",
     "description": "Fill the whole screen with a solid colour of your choice and keep the display awake with the Screen Wake Lock API. Press and hold anywhere to exit.",
