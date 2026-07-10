@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="Drop an RSS or Atom feed file to browse it. Titles collapse for skimming and expand to show the rendered article body." />
+    <meta name="category" content="Developer Tools" />
+    <title>RSS Reader</title>
+    <link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Epath%7Bfill:%2318181b%7D@media (prefers-color-scheme:dark)%7Bpath%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Cpath d='M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1Z'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="empty" id="empty">
+      <button class="empty-card" id="empty-card" type="button" aria-label="Open an RSS feed file">
+        <svg class="empty-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"
+          fill="currentColor" aria-hidden="true">
+          <path
+            d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19 7.38 20 6.18 20C5 20 4 19 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1Z" />
+        </svg>
+        <div class="empty-title">RSS Reader</div>
+        <p class="empty-text">
+          Drop an <strong>.xml</strong> / <strong>.rss</strong> / <strong>.atom</strong> feed anywhere, paste it with
+          <kbd>⌘</kbd>+<kbd>V</kbd>, or click to open a file.
+        </p>
+        <p class="empty-loading">Loading…</p>
+      </button>
+      <p class="empty-error" id="empty-error" hidden></p>
+    </div>
+
+    <input type="file" id="file-input" accept=".xml,.rss,.atom,application/rss+xml,application/atom+xml,application/xml,text/xml"
+      hidden>
+
+    <script>
+      // Tiny early script: capture file/paste/drop input before the main
+      // script loads, queue it, and show a loading state. The main script
+      // calls register() once it is ready.
+      (function () {
+        const empty = document.getElementById('empty');
+        const emptyCard = document.getElementById('empty-card');
+        const fileInput = document.getElementById('file-input');
+
+        let pending = null;
+        let handler = null;
+        let consumed = false;
+
+        function showLoading() {
+          if (!handler) empty.classList.add('loading');
+        }
+
+        function dispatch(payload) {
+          if (handler) {
+            empty.classList.remove('loading');
+            handler(payload);
+          } else {
+            pending = payload;
+          }
+        }
+
+        function readFile(file) {
+          if (!file) return;
+          showLoading();
+          const reader = new FileReader();
+          reader.onload = () => dispatch({ text: String(reader.result ?? ''), name: file.name });
+          reader.readAsText(file);
+        }
+
+        emptyCard.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+          readFile(fileInput.files[0]);
+          fileInput.value = '';
+        });
+
+        let dragDepth = 0;
+        window.addEventListener('dragenter', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          e.preventDefault();
+          dragDepth++;
+          document.body.classList.add('dragover');
+        });
+        window.addEventListener('dragover', (e) => {
+          if (Array.from(e.dataTransfer?.types || []).includes('Files')) e.preventDefault();
+        });
+        window.addEventListener('dragleave', (e) => {
+          if (!Array.from(e.dataTransfer?.types || []).includes('Files')) return;
+          dragDepth = Math.max(0, dragDepth - 1);
+          if (dragDepth === 0) document.body.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dragDepth = 0;
+          document.body.classList.remove('dragover');
+          const file = e.dataTransfer?.files?.[0];
+          if (file) readFile(file);
+        });
+
+        window.addEventListener('paste', (e) => {
+          const target = e.target;
+          if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+          const clipboard = e.clipboardData;
+          if (!clipboard) return;
+          const file = Array.from(clipboard.files || [])[0];
+          if (file) {
+            e.preventDefault();
+            readFile(file);
+            return;
+          }
+          const text = clipboard.getData('text/plain');
+          if (text) {
+            e.preventDefault();
+            showLoading();
+            dispatch({ text, name: null });
+          }
+        });
+
+        window.__rssEarly = {
+          register(fn) {
+            handler = fn;
+            empty.classList.remove('loading');
+            if (pending !== null) {
+              consumed = true;
+              const p = pending;
+              pending = null;
+              fn(p);
+            }
+          },
+          get consumed() { return consumed; },
+        };
+      })();
+    </script>
+
+    <header class="toolbar" id="toolbar" hidden>
+      <div class="toolbar-meta">
+        <span class="feed-count" id="feed-count"></span>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn" id="btn-expand" type="button">Expand all</button>
+        <button class="btn" id="btn-collapse" type="button">Collapse all</button>
+        <button class="btn btn-primary" id="btn-clear" type="button">Open another</button>
+      </div>
+    </header>
+
+    <main class="container" id="container" hidden>
+      <div class="feed-header" id="feed-header"></div>
+      <div class="items" id="items"></div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
