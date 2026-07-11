@@ -285,6 +285,25 @@ class TodoDB {
     return this._db;
   }
 
+  // Tear down the live-sync connection and start a fresh one, leaving the local
+  // DB and its change subscribers untouched (unlike reopen(), which closes
+  // IndexedDB). Mobile browsers freeze the page while backgrounded and Data
+  // Saver throttles long-lived connections, which can leave a zombie sync
+  // socket that looks alive but never resumes — stranding a queued change like
+  // an unticked item. Call this when the app regains the foreground or the
+  // network returns to force a fresh push/pull. Safe to call when sync is
+  // unconfigured (_startSync emits 'disabled' and returns) or before the DB is
+  // open (open() starts sync itself).
+  restartSync() {
+    if (!this._db) return;
+    if (this._pullFirstPromise) return; // an initial pull-then-live is in flight
+    if (this._syncHandle) {
+      try { this._syncHandle.cancel(); } catch {}
+      this._syncHandle = null;
+    }
+    this._startSync();
+  }
+
   onSyncStatus(cb) {
     this._statusListeners.add(cb);
     if (this._lastStatus) {
