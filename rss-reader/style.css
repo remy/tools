@@ -164,6 +164,83 @@ body.dragover::after {
 .empty.loading .empty-loading { display: block; }
 .empty.loading .empty-card { cursor: progress; }
 
+/* Load-by-URL form — the primary path on mobile, where dropping a file or
+   pasting XML is awkward. Fetches through the site's CORS proxy. */
+.url-form {
+  width: 100%;
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.url-label {
+  font-size: 0.8125rem;
+  color: var(--colour-text-secondary);
+  text-align: center;
+}
+
+.url-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.url-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.55rem var(--space-md);
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--colour-text);
+  background: var(--colour-block-bg);
+  border: 1px solid var(--colour-border);
+  border-radius: 0.5rem;
+  transition: border-color 0.15s ease;
+}
+
+.url-input::placeholder { color: var(--colour-text-secondary); }
+
+.url-input:focus {
+  outline: none;
+  border-color: var(--colour-primary);
+}
+
+.url-submit {
+  flex: none;
+  padding: 0.55rem var(--space-xl);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: var(--colour-primary);
+  border: 1px solid var(--colour-primary);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.url-submit:hover {
+  background: var(--colour-primary-hover);
+  border-color: var(--colour-primary-hover);
+}
+
+.url-submit:focus-visible {
+  outline: 2px solid var(--colour-primary);
+  outline-offset: 2px;
+}
+
+.url-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+@media (prefers-color-scheme: dark) {
+  .url-submit { color: #0a0a0a; }
+}
+
+/* Hide the form while a feed is loading to avoid a double submit. */
+.empty.loading .url-form { display: none; }
+
 .empty-error {
   max-width: 32rem;
   color: var(--colour-danger);

@@ -28,6 +28,15 @@
         </p>
         <p class="empty-loading">Loading…</p>
       </button>
+      <form class="url-form" id="url-form" novalidate>
+        <label class="url-label" for="url-input">Or load a feed by URL</label>
+        <div class="url-row">
+          <input class="url-input" id="url-input" type="url" inputmode="url" autocapitalize="off"
+            autocorrect="off" spellcheck="false" placeholder="https://example.com/feed.xml"
+            aria-label="RSS or Atom feed URL">
+          <button class="url-submit" id="url-submit" type="submit">Load</button>
+        </div>
+      </form>
       <p class="empty-error" id="empty-error" hidden></p>
     </div>
 

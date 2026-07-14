@@ -1,0 +1,6 @@
+# Static site with serverless functions. No build step is declared here so the
+# existing deploy settings are left untouched; this only points Netlify at the
+# functions directory (which is also the default) and pins the bundler.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
