@@ -12,8 +12,16 @@
   const btnExpand = document.getElementById('btn-expand');
   const btnCollapse = document.getElementById('btn-collapse');
   const btnClear = document.getElementById('btn-clear');
+  const urlForm = document.getElementById('url-form');
+  const urlInput = document.getElementById('url-input');
+  const urlSubmit = document.getElementById('url-submit');
 
   const STORAGE_KEY = 'rss-reader:input';
+
+  // Feeds are usually served without CORS headers, so a browser can't fetch
+  // them directly. The site's generic CORS proxy (a Netlify function) fetches
+  // the URL server-side and re-serves it with permissive CORS headers.
+  const CORS_PROXY = '/cors-proxy';
 
   // ---- Feed parsing --------------------------------------------------------
 
@@ -299,6 +307,7 @@
     }
 
     renderFeed(feed);
+    empty.classList.remove('loading');
     empty.hidden = true;
     emptyError.hidden = true;
     toolbar.hidden = false;
@@ -332,6 +341,51 @@
   btnExpand.addEventListener('click', () => setAllOpen(true));
   btnCollapse.addEventListener('click', () => setAllOpen(false));
   btnClear.addEventListener('click', clearFeed);
+
+  // ---- Load a feed from a URL (via the CORS proxy) -------------------------
+
+  async function loadFromUrl(rawUrl) {
+    // Be forgiving about a missing scheme — people paste "example.com/feed".
+    let target = rawUrl.trim();
+    if (!target) return;
+    if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(target)) target = 'https://' + target;
+
+    empty.classList.add('loading');
+    emptyError.hidden = true;
+    urlSubmit.disabled = true;
+
+    try {
+      let res;
+      try {
+        res = await fetch(`${CORS_PROXY}?url=${encodeURIComponent(target)}`);
+      } catch (_) {
+        showError('Could not reach the feed. Check the address and your connection, then try again.');
+        return;
+      }
+
+      if (!res.ok) {
+        // The proxy returns a JSON { error } for its own failures; upstream
+        // errors come through with the upstream status code.
+        let message = `The feed could not be fetched (HTTP ${res.status}).`;
+        try {
+          const data = await res.clone().json();
+          if (data && data.error) message = data.error;
+        } catch (_) { /* not JSON — keep the generic message */ }
+        showError(message);
+        return;
+      }
+
+      const text = await res.text();
+      showFeed(text);
+    } finally {
+      urlSubmit.disabled = false;
+    }
+  }
+
+  urlForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    loadFromUrl(urlInput.value);
+  });
 
   // ---- Wire up the early-capture handoff -----------------------------------
 
