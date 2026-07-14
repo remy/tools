@@ -28,6 +28,14 @@
         </p>
         <p class="empty-loading">Loading…</p>
       </button>
+      <button class="paste-btn" id="btn-paste" type="button" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+        </svg>
+        Paste from clipboard
+      </button>
       <p class="empty-error" id="empty-error" hidden></p>
     </div>
 
@@ -41,7 +49,9 @@
       (function () {
         const empty = document.getElementById('empty');
         const emptyCard = document.getElementById('empty-card');
+        const emptyError = document.getElementById('empty-error');
         const fileInput = document.getElementById('file-input');
+        const pasteBtn = document.getElementById('btn-paste');
 
         let pending = null;
         let handler = null;
@@ -49,6 +59,12 @@
 
         function showLoading() {
           if (!handler) empty.classList.add('loading');
+        }
+
+        function showPasteError(message) {
+          empty.classList.remove('loading');
+          emptyError.textContent = message;
+          emptyError.hidden = false;
         }
 
         function dispatch(payload) {
@@ -115,6 +131,30 @@
             dispatch({ text, name: null });
           }
         });
+
+        // Clipboard-read button: on mobile there is no keyboard to trigger
+        // ⌘/Ctrl+V, so let a tap pull the feed text straight off the clipboard.
+        // readText() needs a user gesture (the tap provides it) and a secure
+        // context; hide the button where the API is unavailable.
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          pasteBtn.hidden = false;
+          pasteBtn.addEventListener('click', async () => {
+            emptyError.hidden = true;
+            let text;
+            try {
+              text = await navigator.clipboard.readText();
+            } catch (_) {
+              showPasteError('Could not read the clipboard. Your browser may have blocked access — copy the feed again, then tap Paste from clipboard.');
+              return;
+            }
+            if (text && text.trim()) {
+              showLoading();
+              dispatch({ text, name: null });
+            } else {
+              showPasteError('Your clipboard is empty. Copy a feed’s XML first, then tap Paste from clipboard.');
+            }
+          });
+        }
 
         window.__rssEarly = {
           register(fn) {

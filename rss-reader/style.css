@@ -164,6 +164,47 @@ body.dragover::after {
 .empty.loading .empty-loading { display: block; }
 .empty.loading .empty-card { cursor: progress; }
 
+/* Paste-from-clipboard button — primary path on mobile, where there is no
+   keyboard shortcut to paste with. */
+.paste-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0.6rem var(--space-xl);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: #fff;
+  background: var(--colour-primary);
+  border: 1px solid var(--colour-primary);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.paste-btn:hover {
+  background: var(--colour-primary-hover);
+  border-color: var(--colour-primary-hover);
+  transform: translateY(-1px);
+}
+
+.paste-btn:focus-visible {
+  outline: 2px solid var(--colour-primary);
+  outline-offset: 2px;
+}
+
+.paste-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .paste-btn { color: #0a0a0a; }
+}
+
+/* Hide the button while a feed is being read to avoid a double tap. */
+.empty.loading .paste-btn { display: none; }
+
 .empty-error {
   max-width: 32rem;
   color: var(--colour-danger);
