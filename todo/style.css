@@ -62,16 +62,24 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
-  height: 100dvh;
+  height: 100svh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
 /* ── App Shell ── */
+/* Anchor the shell to the visible viewport with position:fixed + inset:0 rather
+   than height:100dvh. In an iOS standalone PWA, 100dvh can resolve taller than
+   the actually-visible area, pushing the fixed .add-bar footer below the fold
+   where body{overflow:hidden} makes it unreachable. inset:0 ties the shell to
+   the true layout viewport, so the footer always stays on-screen. The 100svh is
+   a defensive fallback for any browser without position:fixed viewport anchoring. */
 .app {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100svh;
   max-width: 560px;
   margin-inline: auto;
 }
