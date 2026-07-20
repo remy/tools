@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed to calculate how long a journey will take.">
+  <meta name="description" content="Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed or running pace (min/km) to calculate how long a journey will take.">
   <meta name="category" content="Calculators">
   <title>Distance &amp; Time Converter</title>
   <link rel="stylesheet" href="style.css">
@@ -50,7 +50,7 @@
 
     <section class="speed-section card">
       <div class="speed-header">
-        <h2>Travel Speed <span class="optional">(optional)</span></h2>
+        <h2>Travel Speed / Pace <span class="optional">(optional)</span></h2>
         <label class="toggle-label">
           <input type="checkbox" id="speedEnabled" />
           <span class="toggle-track">
@@ -59,32 +59,72 @@
         </label>
       </div>
       <div class="speed-controls" id="speedControls" aria-hidden="true">
-        <div class="input-row">
-          <input
-            type="number"
-            id="speedInput"
-            class="distance-input"
-            placeholder="Enter speed"
-            min="0"
-            step="any"
-          />
-          <select id="speedUnitSelect" class="unit-select">
-            <option value="m">m / hour</option>
-            <option value="km" selected>km / hour</option>
-            <option value="mi">miles / hour</option>
-            <option value="yd">yards / hour</option>
-            <option value="ft">feet / hour</option>
-            <option value="nmi">knots (nmi / hour)</option>
-            <option value="steps">steps / hour</option>
-          </select>
+        <div class="mode-switch" role="group" aria-label="Input mode">
+          <button type="button" class="mode-btn active" data-mode="speed">Speed</button>
+          <button type="button" class="mode-btn" data-mode="pace">Pace</button>
         </div>
-        <div class="presets">
-          <span class="presets-label">Presets:</span>
-          <button class="preset-btn" data-speed="5" data-unit="km">Walking (5 km/h)</button>
-          <button class="preset-btn" data-speed="6000" data-unit="steps">Walking (6000 steps/h)</button>
-          <button class="preset-btn" data-speed="20" data-unit="km">Cycling (20 km/h)</button>
-          <button class="preset-btn" data-speed="100" data-unit="km">Driving (100 km/h)</button>
-          <button class="preset-btn" data-speed="900" data-unit="km">Flying (900 km/h)</button>
+
+        <div class="mode-panel" id="speedPanel">
+          <div class="input-row">
+            <input
+              type="number"
+              id="speedInput"
+              class="distance-input"
+              placeholder="Enter speed"
+              min="0"
+              step="any"
+            />
+            <select id="speedUnitSelect" class="unit-select">
+              <option value="m">m / hour</option>
+              <option value="km" selected>km / hour</option>
+              <option value="mi">miles / hour</option>
+              <option value="yd">yards / hour</option>
+              <option value="ft">feet / hour</option>
+              <option value="nmi">knots (nmi / hour)</option>
+              <option value="steps">steps / hour</option>
+            </select>
+          </div>
+          <div class="presets">
+            <span class="presets-label">Presets:</span>
+            <button class="preset-btn" data-speed="5" data-unit="km">Walking (5 km/h)</button>
+            <button class="preset-btn" data-speed="6000" data-unit="steps">Walking (6000 steps/h)</button>
+            <button class="preset-btn" data-speed="20" data-unit="km">Cycling (20 km/h)</button>
+            <button class="preset-btn" data-speed="100" data-unit="km">Driving (100 km/h)</button>
+            <button class="preset-btn" data-speed="900" data-unit="km">Flying (900 km/h)</button>
+          </div>
+        </div>
+
+        <div class="mode-panel hidden" id="pacePanel">
+          <div class="input-row pace-row">
+            <input
+              type="number"
+              id="paceMinutes"
+              class="distance-input pace-input"
+              placeholder="min"
+              min="0"
+              step="1"
+              aria-label="Pace minutes per kilometre"
+            />
+            <span class="pace-sep" aria-hidden="true">:</span>
+            <input
+              type="number"
+              id="paceSeconds"
+              class="distance-input pace-input"
+              placeholder="sec"
+              min="0"
+              max="59"
+              step="1"
+              aria-label="Pace seconds per kilometre"
+            />
+            <span class="pace-unit">/ km</span>
+          </div>
+          <div class="presets">
+            <span class="presets-label">Presets:</span>
+            <button class="preset-btn" data-pace-min="4" data-pace-sec="0">Fast run (4:00 /km)</button>
+            <button class="preset-btn" data-pace-min="5" data-pace-sec="30">Run (5:30 /km)</button>
+            <button class="preset-btn" data-pace-min="7" data-pace-sec="0">Jog (7:00 /km)</button>
+            <button class="preset-btn" data-pace-min="12" data-pace-sec="0">Walk (12:00 /km)</button>
+          </div>
         </div>
       </div>
     </section>
