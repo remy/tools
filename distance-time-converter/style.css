@@ -239,10 +239,74 @@ header {
   pointer-events: none;
 
   &.open {
-    max-height: 16rem;
+    max-height: 26rem;
     opacity: 1;
     pointer-events: auto;
   }
+}
+
+/* Speed / Pace mode switch */
+.mode-switch {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  align-self: flex-start;
+}
+
+.mode-btn {
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius) - 0.2rem);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    color: var(--text);
+  }
+
+  &.active {
+    background: var(--accent-subtle);
+    color: var(--accent);
+    font-weight: 600;
+  }
+}
+
+.mode-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Pace input row */
+.pace-row {
+  align-items: center;
+}
+
+.pace-input {
+  flex: 1 1 0;
+  text-align: center;
+}
+
+.pace-sep {
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.pace-unit {
+  flex: 0 0 auto;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* Toggle switch */
@@ -478,6 +542,6 @@ header {
   }
 
   .speed-controls.open {
-    max-height: 10rem;
+    max-height: 16rem;
   }
 }
