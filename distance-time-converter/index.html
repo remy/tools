@@ -103,7 +103,7 @@
               placeholder="min"
               min="0"
               step="1"
-              aria-label="Pace minutes per kilometre"
+              aria-label="Pace minutes"
             />
             <span class="pace-sep" aria-hidden="true">:</span>
             <input
@@ -114,16 +114,20 @@
               min="0"
               max="59"
               step="1"
-              aria-label="Pace seconds per kilometre"
+              aria-label="Pace seconds"
             />
-            <span class="pace-unit">/ km</span>
+            <select id="paceUnitSelect" class="unit-select pace-unit-select" aria-label="Pace distance unit">
+              <option value="km" selected>/ km</option>
+              <option value="mi">/ mile</option>
+            </select>
           </div>
           <div class="presets">
             <span class="presets-label">Presets:</span>
-            <button class="preset-btn" data-pace-min="4" data-pace-sec="0">Fast run (4:00 /km)</button>
-            <button class="preset-btn" data-pace-min="5" data-pace-sec="30">Run (5:30 /km)</button>
-            <button class="preset-btn" data-pace-min="7" data-pace-sec="0">Jog (7:00 /km)</button>
-            <button class="preset-btn" data-pace-min="12" data-pace-sec="0">Walk (12:00 /km)</button>
+            <button class="preset-btn" data-pace-min="5" data-pace-sec="30" data-pace-unit="km">Run (5:30 /km)</button>
+            <button class="preset-btn" data-pace-min="7" data-pace-sec="0" data-pace-unit="km">Jog (7:00 /km)</button>
+            <button class="preset-btn" data-pace-min="12" data-pace-sec="0" data-pace-unit="km">Walk (12:00 /km)</button>
+            <button class="preset-btn" data-pace-min="9" data-pace-sec="0" data-pace-unit="mi">Run (9:00 /mi)</button>
+            <button class="preset-btn" data-pace-min="19" data-pace-sec="0" data-pace-unit="mi">Walk (19:00 /mi)</button>
           </div>
         </div>
       </div>

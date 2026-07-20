@@ -302,11 +302,8 @@ header {
   line-height: 1;
 }
 
-.pace-unit {
+.pace-unit-select {
   flex: 0 0 auto;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
 }
 
 /* Toggle switch */

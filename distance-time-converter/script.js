@@ -132,6 +132,7 @@ const speedPanel     = document.getElementById('speedPanel');
 const pacePanel      = document.getElementById('pacePanel');
 const paceMinutes    = document.getElementById('paceMinutes');
 const paceSeconds    = document.getElementById('paceSeconds');
+const paceUnitSelect = document.getElementById('paceUnitSelect');
 const resultsEmpty   = document.getElementById('resultsEmpty');
 const resultsContent = document.getElementById('resultsContent');
 const resultsGrid    = document.getElementById('resultsGrid');
@@ -211,6 +212,7 @@ document.querySelectorAll('.preset-btn').forEach(btn => {
       setMode('pace');
       paceMinutes.value = btn.dataset.paceMin;
       paceSeconds.value = btn.dataset.paceSec;
+      paceUnitSelect.value = btn.dataset.paceUnit;
     } else {
       setMode('speed');
       speedInput.value = btn.dataset.speed;
@@ -227,6 +229,7 @@ speedInput.addEventListener('input', () => { clearActivePresets(); update(); });
 speedUnitSelect.addEventListener('change', () => { clearActivePresets(); update(); });
 paceMinutes.addEventListener('input', () => { clearActivePresets(); update(); });
 paceSeconds.addEventListener('input', () => { clearActivePresets(); update(); });
+paceUnitSelect.addEventListener('change', () => { clearActivePresets(); update(); });
 
 // --- Main update ---
 distanceInput.addEventListener('input', update);
@@ -289,12 +292,13 @@ function update() {
   } else if (speedOn && currentMode === 'pace') {
     const mins = parseFloat(paceMinutes.value);
     const secs = parseFloat(paceSeconds.value);
-    const paceSecondsPerKm =
+    const paceSecondsPerUnit =
       (isNaN(mins) ? 0 : mins) * 60 + (isNaN(secs) ? 0 : secs);
-    if (paceSecondsPerKm > 0) {
-      const distanceKm = (value * TO_METERS[fromUnit]) / 1000;
-      totalSeconds = distanceKm * paceSecondsPerKm;
-      rateLabel = `at ${formatPace(paceSecondsPerKm)} /km`;
+    if (paceSecondsPerUnit > 0) {
+      const paceUnit = paceUnitSelect.value; // 'km' or 'mi'
+      const distanceInPaceUnits = (value * TO_METERS[fromUnit]) / TO_METERS[paceUnit];
+      totalSeconds = distanceInPaceUnits * paceSecondsPerUnit;
+      rateLabel = `at ${formatPace(paceSecondsPerUnit)} /${paceUnit === 'mi' ? 'mi' : 'km'}`;
     }
   }
 
