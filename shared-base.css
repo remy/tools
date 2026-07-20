@@ -1,0 +1,126 @@
+/* Shared base layer
+ *
+ * Minimal, unopinionated foundation: the colour/spacing tokens, theme
+ * definitions, CSS reset, the [hidden] rule and the body defaults — and
+ * nothing else. No heading fonts, link styling, focus rings or component
+ * classes, so it can be linked into existing tools that have their own
+ * look without changing their appearance.
+ *
+ * Usage: <link rel="stylesheet" href="/shared-base.css"> BEFORE the
+ * tool's own stylesheet. The tool's own :root / rules then override
+ * these defaults via the cascade.
+ *
+ * For new tools / full component library, use /shared.css instead.
+ * See style-guide.md for the full reference.
+ */
+
+/* CSS Custom Properties - Default Theme */
+:root {
+  --colour-primary: #2563eb;
+  --colour-primary-hover: #1d4ed8;
+  --colour-primary-light: #dbeafe;
+
+  --colour-accent: #0891b2;
+  --colour-accent-hover: #0e7490;
+  --colour-accent-light: #cffafe;
+
+  --colour-tertiary: #f59e0b;
+  --colour-tertiary-hover: #d97706;
+  --colour-tertiary-light: #fef3c7;
+
+  --colour-bg: #fafafa;
+  --colour-bg-secondary: #f4f4f5;
+  --colour-bg-tertiary: #e4e4e7;
+  --colour-border: #d4d4d8;
+  --colour-text: #18181b;
+  --colour-text-secondary: #52525b;
+  --colour-text-tertiary: #a1a1aa;
+
+  --colour-success: #10b981;
+  --colour-success-light: #d1fae5;
+  --colour-warning: #f59e0b;
+  --colour-warning-light: #fef3c7;
+  --colour-error: #ef4444;
+  --colour-error-light: #fee2e2;
+  --colour-info: #3b82f6;
+  --colour-info-light: #dbeafe;
+
+  --colour-input-border: #d4d4d8;
+  --colour-input-focus: #2563eb;
+  --colour-shadow: rgba(0, 0, 0, 0.1);
+
+  --colour-block-bg: #ffffff;
+  --colour-block-border: #e4e4e7;
+
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 0.75rem;
+  --space-lg: 1rem;
+  --space-xl: 1.5rem;
+  --space-2xl: 2rem;
+  --space-3xl: 3rem;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --colour-bg: #0a0a0a;
+  --colour-bg-secondary: #171717;
+  --colour-bg-tertiary: #262626;
+  --colour-border: #404040;
+  --colour-text: #fafafa;
+  --colour-text-secondary: #a1a1aa;
+  --colour-text-tertiary: #71717a;
+  --colour-input-border: #404040;
+  --colour-shadow: rgba(0, 0, 0, 0.5);
+  --colour-block-bg: #171717;
+  --colour-block-border: #262626;
+}
+
+/* Orange Theme */
+[data-theme="orange"] {
+  --colour-primary: #ea580c;
+  --colour-primary-hover: #c2410c;
+  --colour-primary-light: #ffedd5;
+  --colour-accent: #f59e0b;
+  --colour-accent-hover: #d97706;
+  --colour-accent-light: #fef3c7;
+}
+
+/* Green Theme */
+[data-theme="green"] {
+  --colour-primary: #059669;
+  --colour-primary-hover: #047857;
+  --colour-primary-light: #d1fae5;
+  --colour-accent: #10b981;
+  --colour-accent-hover: #059669;
+  --colour-accent-light: #d1fae5;
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure the hidden attribute works even when display is overridden */
+[hidden] {
+  display: none !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--colour-text);
+  background: var(--colour-bg);
+}
+</content>

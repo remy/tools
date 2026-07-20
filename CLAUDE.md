@@ -12,17 +12,44 @@ Every `index.html` in this project (root and each tool) must include the followi
 
 When creating a new tool, always add this line. The service worker (`sw.js` at the repo root) provides offline support using a network-first strategy with cache fallback. Its version is stamped with the git commit SHA by the GitHub Actions workflow on each push to `main`.
 
-## Hidden attribute
+## Shared CSS
 
-Every tool's CSS must include the following rule to ensure the `hidden` attribute works reliably across browsers (Firefox does not hide elements when a CSS `display` property like `flex` or `grid` overrides it):
+Two stylesheets at the repo root hold the common CSS so it is not copied
+into every tool. **Always link one of them** rather than re-declaring the
+colour/spacing tokens, CSS reset, `[hidden]` rule or body defaults:
 
-```css
-[hidden] {
-  display: none !important;
-}
+- **`/shared.css`** — the full design system: tokens, themes, reset,
+  base element styles **and** the component library (`.btn`, `.card`,
+  `.alert`, `.modal`, `.table`, utilities, …). Use this for **new tools**.
+  It is the extracted, single source of `kitchen-sink.html` /
+  `style-guide.md`.
+- **`/shared-base.css`** — minimal, unopinionated: tokens, themes, reset,
+  `[hidden]` and body defaults only (no heading fonts, link styling,
+  focus rings or components). Use this for tools that have their own
+  bespoke look and only want the shared foundation without inheriting
+  opinionated component/base styles.
+
+Link the shared file **before** any tool-specific stylesheet so the
+tool's own rules win via the cascade:
+
+```html
+<link rel="stylesheet" href="/shared.css">       <!-- or /shared-base.css -->
+<link rel="stylesheet" href="style.css">
 ```
 
-Always add this rule near the top of the stylesheet (after the reset/box-sizing rules).
+For new tools, prefer `/shared.css` and the `--colour-*` / `--space-*`
+tokens it defines; only override tokens in a local `:root` when the tool
+genuinely needs a different palette.
+
+## Hidden attribute
+
+The `[hidden] { display: none !important; }` rule (needed because
+Firefox does not hide elements when a CSS `display` value like `flex` or
+`grid` overrides the attribute) is provided by **both** `/shared.css`
+and `/shared-base.css`. Linking either one satisfies this requirement —
+do not duplicate the rule in the tool's own stylesheet. If a tool for
+some reason links neither shared file, it must still include this rule
+near the top of its stylesheet (after the reset/box-sizing rules).
 
 ## Modal dialogs
 

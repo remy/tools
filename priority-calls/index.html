@@ -6,7 +6,10 @@
   <meta name="description" content="An Android app that lets priority contacts break through silent, Do Not Disturb, and bedtime modes.">
   <meta name="category" content="Productivity">
   <title>Priority Calls &mdash; let the people who matter reach you</title>
+  <link rel="stylesheet" href="/shared-base.css">
   <style>
+    /* Reset, [hidden], html base and base tokens come from /shared-base.css.
+       The :root below overrides shared tokens with this tool's palette. */
     :root {
       /* Primary */
       --colour-primary: #2563eb;
@@ -68,26 +71,8 @@
       }
     }
 
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      -webkit-text-size-adjust: 100%;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       font-size: 1rem;
-      line-height: 1.5;
-      color: var(--colour-text);
-      background: var(--colour-bg);
     }
 
     h1, h2, h3, h4 {
