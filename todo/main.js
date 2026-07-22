@@ -2,6 +2,7 @@ import { db, setSyncConfig, decodeSyncConfig, SHARE_PARAM } from './db.js';
 import { bindEvents } from './events.js';
 import { refreshAll } from './lists.js';
 import { initSyncStatus } from './settings.js';
+import { initViewport } from './viewport.js';
 
 // If the page was opened from a share link (?sync=<base64>), save the encoded
 // sync config, then strip the query string by reloading via location.replace.
@@ -47,6 +48,7 @@ function kickSync() {
 async function init() {
   await refreshAll();
   bindEvents();
+  initViewport();
   initSyncStatus();
   db.onChange(scheduleRefresh);
   document.addEventListener('visibilitychange', () => {
