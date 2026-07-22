@@ -21,8 +21,20 @@ export function initViewport() {
   if (!app) return;
 
   const apply = () => {
-    app.style.height = `${vv.height}px`;
-    app.style.transform = `translateY(${vv.offsetTop}px)`;
+    // window.innerHeight tracks the *layout* viewport, which doesn't shrink for
+    // the soft keyboard; visualViewport.height does. A large gap between them
+    // means the keyboard is up. Only squeeze the shell then — otherwise clear
+    // the inline styles so the resting layout defers to CSS (inset:0 / 100svh),
+    // which parks the footer flush at the bottom with just the safe-area inset.
+    // (The threshold ignores small differences from browser UI like the URL bar.)
+    const keyboardOpen = window.innerHeight - vv.height > 150;
+    if (keyboardOpen) {
+      app.style.height = `${vv.height}px`;
+      app.style.transform = `translateY(${vv.offsetTop}px)`;
+    } else {
+      app.style.height = '';
+      app.style.transform = '';
+    }
   };
 
   vv.addEventListener('resize', apply);
