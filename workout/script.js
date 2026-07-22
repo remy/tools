@@ -90,6 +90,16 @@ function releaseWakeLock() {
 
 let currentData = null;
 
+/* ── Per-day progress ──
+   Persisted to IndexedDB so ticked sets survive reloads and tab switches.
+   Shape: { date: 'YYYY-MM-DD', days: { [workoutId]: { [exerciseIndex]: completedSets } } } */
+let progressState = { date: '', days: {} };
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 /* ── Init ── */
 async function init() {
   try {
@@ -99,12 +109,80 @@ async function init() {
       data = await response.json();
     }
     currentData = data;
+    progressState = (await WorkoutDB.loadProgress()) || { date: todayKey(), days: {} };
+    if (!progressState.days) progressState.days = {};
     renderWorkouts(data.workouts);
     restoreTab();
     restoreTheme();
   } catch (error) {
     console.error('Error loading workouts:', error);
   }
+}
+
+/* Overlay the stored set counts onto the freshly rendered rep panels. */
+function applyStoredProgress() {
+  if (!currentData) return;
+  currentData.workouts.forEach((workout, wi) => {
+    if (workout.type === 'circuit') return;
+    const panel = document.getElementById(`panel-${wi}`);
+    if (!panel) return;
+    const dayProg = progressState.days[workout.id] || {};
+    panel.querySelectorAll('.exercise-row').forEach((row) => {
+      const ei = row.dataset.exerciseIndex;
+      const total = parseInt(row.dataset.totalSets, 10);
+      const completed = parseInt(dayProg[ei], 10) || 0;
+      row.dataset.completedSets = completed;
+      const cur = row.querySelector('.ex-sets-current');
+      if (cur) cur.textContent = completed;
+      row.classList.toggle('done', total > 0 && completed >= total);
+    });
+    updateDayControls(panel);
+  });
+}
+
+/* Record the current set count for a rep row and persist it. */
+function recordProgress(row) {
+  const wi = parseInt(row.dataset.workoutIndex, 10);
+  const workout = currentData?.workouts?.[wi];
+  if (!workout || workout.type === 'circuit') return;
+  const ei = row.dataset.exerciseIndex;
+  const completed = parseInt(row.dataset.completedSets, 10) || 0;
+  const day = progressState.days[workout.id] || (progressState.days[workout.id] = {});
+  if (completed > 0) day[ei] = completed;
+  else delete day[ei];
+  if (Object.keys(day).length === 0) delete progressState.days[workout.id];
+  progressState.date = todayKey();
+  WorkoutDB.saveProgress(progressState);
+}
+
+/* Show/label the reset button: hidden until the day has any progress, and
+   promoted to a "day complete" state once every exercise is done. */
+function updateDayControls(panel) {
+  const btn = panel.querySelector('.day-reset');
+  if (!btn) return;
+  const rows = [...panel.querySelectorAll('.exercise-row')];
+  const anyProgress = rows.some(r => (parseInt(r.dataset.completedSets, 10) || 0) > 0 || r.classList.contains('done'));
+  const allDone = rows.length > 0 && rows.every(r => r.classList.contains('done'));
+  btn.hidden = !anyProgress;
+  btn.classList.toggle('complete', allDone);
+  btn.textContent = allDone ? 'Day complete · Clear' : 'Reset day';
+}
+
+/* Wipe the active day's progress back to zero. */
+function clearDay(panel) {
+  const first = panel.querySelector('.exercise-row');
+  const wi = first ? parseInt(first.dataset.workoutIndex, 10) : -1;
+  const workout = currentData?.workouts?.[wi];
+  panel.querySelectorAll('.exercise-row').forEach((row) => {
+    row.classList.remove('done');
+    row.dataset.completedSets = 0;
+    const cur = row.querySelector('.ex-sets-current');
+    if (cur) cur.textContent = '0';
+  });
+  if (workout) delete progressState.days[workout.id];
+  WorkoutDB.saveProgress(progressState);
+  resetRepTimer();
+  updateDayControls(panel);
 }
 
 function reRenderPreservingTab() {
@@ -222,6 +300,7 @@ function renderWorkouts(workouts) {
             <div class="cardio-desc">${workout.cardio.description}</div>
           </div>
         </div>` : ''}
+        <div class="panel-spacer"></div>
         <div class="rep-timer" hidden>
           <div class="rep-timer-seg">
             <span class="rep-timer-label">Elapsed</span>
@@ -232,6 +311,7 @@ function renderWorkouts(workouts) {
             <span class="rep-timer-rest-time">0:00</span>
           </div>
         </div>
+        <button type="button" class="day-reset" hidden>Reset day</button>
       `;
     }
 
@@ -243,6 +323,8 @@ function renderWorkouts(workouts) {
     tab.innerHTML = `${workout.id}<span class="day-label">${workout.label}</span>`;
     tabsContainer.appendChild(tab);
   });
+
+  applyStoredProgress();
 }
 
 function formatTime(seconds) {
@@ -534,17 +616,11 @@ function restoreTheme() {
 
 /* ── Tabs ── */
 function switchTab(index) {
-  // Stop any running circuit timer
+  // Stop any running circuit / elapsed timer, but keep the logged sets — they
+  // are persisted per day and restored so switching tabs never loses progress.
   resetCircuit();
   resetRepTimer();
 
-  // Reset ticks on previous tab (rep-based)
-  document.querySelectorAll('.day-panel.active .exercise-row').forEach(r => {
-    r.classList.remove('done');
-    r.dataset.completedSets = 0;
-    const setsEl = r.querySelector('.ex-sets-current');
-    if (setsEl) setsEl.textContent = '0';
-  });
   document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === index));
   document.querySelectorAll('.day-panel').forEach((p, i) => p.classList.toggle('active', i === index));
   try { localStorage.setItem('activeTab', index); } catch (e) {}
@@ -558,6 +634,14 @@ function restoreTab() {
 
 /* ── Event delegation ── */
 document.addEventListener('click', function(e) {
+  // Reset / clear the current day
+  const resetBtn = e.target.closest('.day-reset');
+  if (resetBtn) {
+    const panel = resetBtn.closest('.day-panel');
+    if (panel) clearDay(panel);
+    return;
+  }
+
   // Circuit controls
   const circuitBtn = e.target.closest('.circuit-btn');
   if (circuitBtn) {
@@ -594,6 +678,9 @@ document.addEventListener('click', function(e) {
   row.dataset.completedSets = completed;
   row.querySelector('.ex-sets-current').textContent = completed;
 
+  // Persist the new set count for this day.
+  recordProgress(row);
+
   // Elapsed timer: start on first rep, freeze when the whole panel is done.
   const panel = row.closest('.day-panel');
   if (panel) {
@@ -614,6 +701,8 @@ document.addEventListener('click', function(e) {
       repTimer.restStart = Date.now();
       renderRepTimer();
     }
+
+    updateDayControls(panel);
   }
 });
 
