@@ -12,7 +12,10 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    min-height: 100dvh;
+    /* svh, not dvh: Firefox does not shrink the dynamic viewport for the
+       toolbar, so 100dvh over-sizes the page there. */
+    min-height: 100vh;
+    min-height: 100svh;
   }
 
   .manage-header {
