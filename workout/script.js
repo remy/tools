@@ -325,7 +325,18 @@ function renderWorkouts(workouts) {
   });
 
   applyStoredProgress();
+  measureTabs();
 }
+
+/* Publish the pinned tab bar's height as --tabs-h so the floating elapsed
+   timer can sit just above it (see .rep-timer in the stylesheet). */
+function measureTabs() {
+  const tabs = document.querySelector('.tabs');
+  if (!tabs) return;
+  document.documentElement.style.setProperty('--tabs-h', `${Math.round(tabs.offsetHeight)}px`);
+}
+
+window.addEventListener('resize', measureTabs);
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);

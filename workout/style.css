@@ -307,6 +307,13 @@ body.light .cardio-title { color: #997700; }
   padding: 10px 16px 20px;
   border-top: 1px solid var(--border);
   background: var(--bg);
+  /* Pin to the bottom of the viewport so growing content (the elapsed timer
+     and Reset-day button that appear once a set is logged) can never push the
+     tab buttons off-screen. On a short workout the flex body already holds
+     these at the bottom, so sticky is a no-op there. */
+  position: sticky;
+  bottom: 0;
+  z-index: 60;
 }
 
 .tab {
@@ -347,7 +354,9 @@ body.light .cardio-title { color: #997700; }
 /* ── Rep-workout elapsed timer ── */
 .rep-timer {
   position: sticky;
-  bottom: 12px;
+  /* Float clear of the pinned tab bar (its measured height is exposed as
+     --tabs-h by the script; fall back to a sensible default). */
+  bottom: calc(var(--tabs-h, 92px) + 12px);
   z-index: 50;
   width: max-content;
   margin: 12px auto 0;
