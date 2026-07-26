@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { db } from './db.js';
 import { render, renderItems, refreshItemRow, beginEdit, relativeTime, fullTime } from './render.js';
+import { findUrls, shortUrl, openUrl } from './links.js';
 import {
   goHome, openNewListDialog, onNewListTemplateChange,
   createList, renameList, deleteList, selectList, refreshItems,
@@ -28,6 +29,55 @@ function findItem(id) {
   return state.items.find((i) => i.id === id);
 }
 
+async function toggleItem(item) {
+  await db.setItemChecked(item.listId, item.id, !item.checked);
+  await refreshItems();
+  // Update just this row so the page doesn't jump to the top.
+  refreshItemRow(item.id);
+}
+
+// ── Link choice dialog ──
+// An item whose text contains a URL is ambiguous to tap: the tap might mean
+// "done" or "open that link". Rather than guess, offer both.
+function openLinkChoice(item, urls) {
+  const dlg = $('link-dialog');
+  $('link-title').textContent = item.text;
+
+  const wrap = $('link-choices');
+  wrap.replaceChildren();
+
+  const doneBtn = document.createElement('button');
+  doneBtn.type = 'button';
+  doneBtn.className = 'btn btn-primary';
+  doneBtn.textContent = item.checked ? 'Mark as not done' : 'Mark as done';
+  doneBtn.addEventListener('click', async () => {
+    dlg.close();
+    await toggleItem(item);
+  });
+  wrap.appendChild(doneBtn);
+
+  for (const { href } of urls) {
+    const openBtn = document.createElement('button');
+    openBtn.type = 'button';
+    openBtn.className = 'btn btn-ghost link-open-btn';
+    const label = document.createElement('span');
+    label.className = 'link-open-label';
+    label.textContent = urls.length > 1 ? 'Open link' : 'Open link in a new tab';
+    const url = document.createElement('span');
+    url.className = 'link-open-url';
+    url.textContent = shortUrl(href);
+    openBtn.append(label, url);
+    openBtn.addEventListener('click', () => {
+      dlg.close();
+      openUrl(href);
+    });
+    wrap.appendChild(openBtn);
+  }
+
+  dlg.showModal();
+  doneBtn.focus();
+}
+
 // ── Item interactions (event-delegated on the list) ──
 function wireTodoList() {
   const ul = $('todo-list');
@@ -40,11 +90,14 @@ function wireTodoList() {
     if (!item) return;
     const action = actionEl.dataset.action;
 
-    if (action === 'toggle') {
-      await db.setItemChecked(item.listId, item.id, !item.checked);
-      await refreshItems();
-      // Update just this row so the page doesn't jump to the top.
-      refreshItemRow(item.id);
+    if (action === 'open-link') {
+      openUrl(actionEl.dataset.href);
+    } else if (action === 'toggle') {
+      // Tapping the text of an item with a link asks first; the checkbox stays
+      // an unambiguous "mark done" so nothing gets slower for the common case.
+      const urls = actionEl.classList.contains('todo-text') ? findUrls(item.text) : [];
+      if (urls.length) openLinkChoice(item, urls);
+      else await toggleItem(item);
     } else if (action === 'delete') {
       if (!confirm(`Delete "${item.text}"? This cannot be undone.`)) return;
       await db.deleteItem(item.listId, item.id);
@@ -260,7 +313,7 @@ export function bindEvents() {
     btn.addEventListener('click', () => $(btn.dataset.close).close());
   });
 
-  ['new-list-dialog', 'history-dialog', 'settings-dialog', 'template-dialog']
+  ['new-list-dialog', 'history-dialog', 'settings-dialog', 'template-dialog', 'link-dialog']
     .forEach(wireBackdropDismiss);
 
   wireTodoList();

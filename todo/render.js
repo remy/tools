@@ -1,4 +1,5 @@
 import { state } from './state.js';
+import { linkify, hasUrl } from './links.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -215,8 +216,11 @@ function itemRow(item) {
 
   const text = document.createElement('span');
   text.className = 'todo-text';
-  text.textContent = item.text;
+  text.append(linkify(item.text));
+  // Tapping the text normally toggles the item; when it contains a link the
+  // click handler intercepts and asks what to do instead (see events.js).
   text.dataset.action = 'toggle';
+  if (hasUrl(item.text)) li.classList.add('has-link');
   body.appendChild(text);
 
   if (item.checkedAt) {
@@ -252,7 +256,9 @@ function headingRow(item) {
   body.className = 'todo-body';
   const text = document.createElement('span');
   text.className = 'todo-heading-text';
-  text.textContent = item.text;
+  // A heading has nothing to check, so its links open straight away rather
+  // than going through the "done or open?" choice.
+  text.append(linkify(item.text, { action: 'open-link' }));
   body.appendChild(text);
 
   const actions = document.createElement('div');

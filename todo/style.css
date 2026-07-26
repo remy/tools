@@ -293,6 +293,36 @@ body {
   color: var(--text-3);
 }
 
+/* A URL inside an item's text. Not an <a> — tapping an item with a link opens
+   the "mark done or open link?" dialog instead of navigating outright. */
+.todo-link {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  /* Negative margin matching the inline padding keeps the highlight from
+     pushing the surrounding words apart — it just bleeds under the spaces. */
+  padding: 0.0625rem 0.25rem;
+  margin-inline: -0.25rem;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+
+/* Muted once the item is done, so the row still reads as complete. */
+.todo-item.checked .todo-link {
+  color: var(--text-3);
+  background: transparent;
+  padding-inline: 0;
+}
+
+/* Headings have nothing to check, so their links are directly clickable. */
+.todo-heading-text .todo-link {
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .todo-meta {
   align-self: flex-start;
   border: none;
@@ -623,6 +653,39 @@ dialog {
   gap: 0.5rem;
   justify-content: flex-end;
   padding-top: 0.75rem;
+}
+
+/* ── Link choice dialog ── */
+.link-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  & .btn {
+    width: 100%;
+  }
+}
+
+.link-open-btn {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  text-align: left;
+  padding-block: 0.5rem;
+}
+
+.link-open-label {
+  font-weight: 600;
+}
+
+.link-open-url {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-3);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Forms ── */
