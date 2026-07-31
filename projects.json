@@ -194,6 +194,11 @@
     "description": "A live page editor: type directly into the page, toggle to raw HTML, edit minimal CSS in a side panel, and drag in files (images, fonts) that are cached in IndexedDB with nice names you can reference inside the page.",
     "title": "Page Editor"
   },
+  "pcb-tracer": {
+    "category": "Developer Tools",
+    "description": "Drop a KiCad board or a Gerber zip and click any trace, pad or via to highlight the whole net across both copper layers.",
+    "title": "PCB net tracer"
+  },
   "pdf-reader": {
     "category": "Productivity",
     "description": "Upload a PDF and reflow it into a responsive, mobile-friendly article \u2014 carrying across images and as much formatting as possible \u2014 so you can read it without any horizontal scrolling. Optionally save and share converted documents via CouchDB.",
