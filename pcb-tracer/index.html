@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Drop a KiCad board or a Gerber zip and click any trace, pad or via to highlight the whole net across both copper layers.">
+<meta name="category" content="Developer Tools">
+<title>PCB net tracer</title>
+<link rel="stylesheet" href="css/tracer.css">
+</head>
+<body>
+<div id="app">
+  <div id="side" class="empty">
+    <h1 id="title">PCB net tracer</h1>
+    <div class="sub" id="stats"></div>
+    <div class="group">
+      <h2>Layers</h2>
+      <div id="layers"></div>
+    </div>
+    <div class="group">
+      <h2>Nets</h2>
+      <input id="q" placeholder="Filter nets&hellip;" autocomplete="off" spellcheck="false">
+    </div>
+    <div id="nets"></div>
+    <div id="warn"></div>
+  </div>
+
+  <div id="main">
+    <div id="stage"><div id="wrap"></div></div>
+
+    <div id="drop">
+      <div class="plate">
+        <div class="big">Drop a board here</div>
+        <div class="small">
+          <b>.kicad_pcb</b> &mdash; nets are read straight out of the file, with real
+          net names and pad references.<br><br>
+          <b>Gerber .zip</b> (or the loose files) &mdash; Gerbers carry no netlist, so
+          connectivity is recovered from the copper geometry and stitched between
+          layers through the drill file.<br><br>
+          Whichever you drop is detected automatically. Everything runs in the
+          browser; nothing is uploaded.
+        </div>
+        <button id="pick">Choose files&hellip;</button>
+        <div id="err"></div>
+      </div>
+    </div>
+
+    <div id="busy">Reading board&hellip;</div>
+
+    <div id="hud" class="empty" hidden>Hover a trace, pad or via &mdash; click to pin the net.</div>
+    <div id="btns" hidden>
+      <button id="load">Open&hellip;</button>
+      <button id="flip">Flip board</button>
+      <button id="fit">Fit</button>
+      <button id="clear">Clear</button>
+    </div>
+    <div id="keys" hidden>
+      <div><kbd>drag</kbd> pan &middot; <kbd>wheel</kbd> zoom &middot; <kbd>click</kbd> pin net</div>
+      <div><kbd>shift</kbd>+click add &middot; <kbd>F</kbd> flip &middot; <kbd>Esc</kbd> clear</div>
+    </div>
+  </div>
+</div>
+<input type="file" id="file" accept=".kicad_pcb,.zip,.gbr,.gtl,.gbl,.gko,.gto,.gbo,.gm1,.drl,.xln,.txt" multiple hidden>
+
+<!-- Classic scripts, deliberately not ES modules: a module is fetched with
+     CORS, which fails on a file:// origin, and this page must work by
+     double-clicking it with no server. Load order is the dependency order. -->
+<script src="js/util.js"></script>
+<script src="js/kicad-sexpr.js"></script>
+<script src="js/kicad-geometry.js"></script>
+<script src="js/kicad-render.js"></script>
+<script src="js/gerber-zip.js"></script>
+<script src="js/gerber-parse.js"></script>
+<script src="js/gerber-raster.js"></script>
+<script src="js/backend-kicad.js"></script>
+<script src="js/backend-gerber.js"></script>
+<script src="js/viewer.js"></script>
+<script src="js/main.js"></script>
+<script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
