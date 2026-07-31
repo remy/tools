@@ -33,11 +33,26 @@ function scheduleRefresh() {
   }, 50);
 }
 
+// Mobile browsers freeze the page while backgrounded and Data Saver throttles
+// the live-sync socket, so a queued change (e.g. an unticked item) can sit
+// unpushed behind a zombie connection. Restart sync when the app regains the
+// foreground or the network returns to flush it promptly. Debounced so a burst
+// of visibility/online events collapses into one restart.
+let syncKickTimer = null;
+function kickSync() {
+  clearTimeout(syncKickTimer);
+  syncKickTimer = setTimeout(() => db.restartSync(), 300);
+}
+
 async function init() {
   await refreshAll();
   bindEvents();
   initSyncStatus();
   db.onChange(scheduleRefresh);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') kickSync();
+  });
+  window.addEventListener('online', kickSync);
 }
 
 if (!consumeShareLink()) init();

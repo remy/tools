@@ -1,0 +1,127 @@
+:root{
+  --bg:#0b1020; --panel:#131a2e; --line:#243050; --ink:#e7ecf6; --dim:#8b97b4;
+  --f:#e04a4a; --b:#3f7fd0; --via:#c9c9c9; --edge:#e8d44d; --silk:#dfe6f5;
+  --hl:#ffe14d; --hl2:#fff8c8;
+}
+*{box-sizing:border-box}
+/* Firefox won't hide an element whose display is overridden (e.g. #btns is
+   display:flex and starts hidden), so the attribute needs help. */
+[hidden]{display:none !important}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font:13px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  overscroll-behavior:none}
+#app{display:flex;height:100%}
+#side{width:300px;flex:none;background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;min-height:0}
+#side h1{font-size:14px;margin:0;padding:14px 14px 4px;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#side .sub{padding:0 14px 12px;color:var(--dim);font-size:11px}
+.group{border-top:1px solid var(--line);padding:10px 14px}
+.group h2{font-size:10px;text-transform:uppercase;letter-spacing:.09em;
+  color:var(--dim);margin:0 0 8px}
+label.tog{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer;
+  user-select:none}
+label.tog input{accent-color:#6ea8ff;margin:0}
+.swatch{width:10px;height:10px;border-radius:2px;flex:none}
+#q{width:100%;background:#0a0f1e;border:1px solid var(--line);color:var(--ink);
+  border-radius:6px;padding:7px 9px;font:inherit;outline:none}
+#q:focus{border-color:#4f6ea8}
+#nets{flex:1;overflow:auto;padding:4px 6px 20px;min-height:0}
+.net{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;
+  border-radius:5px;cursor:pointer;font-size:12px}
+.net:hover{background:#1d2742}
+.net.on{background:#3a3413;color:var(--hl)}
+.net .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.net .ct{color:var(--dim);font-variant-numeric:tabular-nums;flex:none}
+.net.on .ct{color:#c9b455}
+#main{flex:1;position:relative;min-width:0;overflow:hidden}
+#stage{position:absolute;inset:0;cursor:crosshair}
+#wrap{position:absolute;left:0;top:0;transform-origin:0 0}
+#wrap canvas{position:absolute;left:0;top:0}
+#wrap.crisp canvas{image-rendering:pixelated}
+#wrap svg{display:block}
+#hud{position:absolute;left:12px;top:12px;background:rgba(11,16,32,.86);
+  border:1px solid var(--line);border-radius:8px;padding:9px 12px;max-width:min(48ch,60%);
+  pointer-events:none;backdrop-filter:blur(6px)}
+#hud .nn{font-weight:600;color:var(--hl)}
+#hud .meta{color:var(--dim);font-size:11px;margin-top:3px}
+#hud .pads{margin-top:6px;font-size:11px;line-height:1.9;color:#c3cee6}
+#hud .pads b{color:#fff;font-weight:500;background:#233152;border-radius:4px;padding:2px 6px}
+#hud.empty{color:var(--dim)}
+#keys{position:absolute;right:12px;bottom:12px;color:var(--dim);font-size:11px;
+  text-align:right;line-height:1.7;pointer-events:none}
+kbd{background:#1b2440;border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:4px;padding:1px 5px;font:inherit;font-size:10px;color:#c3cee6}
+#btns{position:absolute;right:12px;top:12px;display:flex;gap:6px}
+button{background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  border-radius:6px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
+button:hover{border-color:#4f6ea8}
+button.on{background:#3a3413;color:var(--hl);border-color:#6b5f24}
+
+#drop{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:40px;background:var(--bg);z-index:5}
+#drop.hide{display:none}
+#drop .plate{border:2px dashed var(--line);border-radius:16px;padding:40px 56px;
+  display:flex;flex-direction:column;gap:14px;align-items:center;transition:.12s;
+  max-width:62ch}
+body.dragging #drop .plate{border-color:var(--hl);background:#151d33}
+body.dragging #drop{display:flex!important}
+#drop .big{font-size:17px;font-weight:600}
+#drop .small{color:var(--dim);line-height:1.7;text-align:left}
+#drop .small b{color:var(--ink);font-weight:600}
+#err{color:#ff9a9a;font-size:12px;white-space:pre-wrap;text-align:left}
+#warn{padding:8px 14px;color:#e5c06a;font-size:11px;background:#241f10;
+  border-top:1px solid var(--line);white-space:pre-wrap}
+#warn:empty{display:none}
+#busy{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(11,16,32,.8);z-index:6;font-size:14px;color:var(--dim)}
+body.busy #busy{display:flex}
+#side.empty .group,#side.empty #nets,#side.empty .sub{display:none}
+
+/* ---- KiCad backend: an SVG whose elements carry data-net ---- */
+.trk{fill:none;stroke-linecap:round}
+.trk.f{stroke:var(--f)}
+.trk.b{stroke:var(--b)}
+.zone{stroke:none;fill-opacity:.30}
+.zone.f{fill:var(--f)}
+.zone.b{fill:var(--b)}
+.pad.f>g>*{fill:#f26a6a;stroke:none}
+.pad.b>g>*{fill:#5f9be0;stroke:none}
+.pad .hole{fill:#0b1020}
+.via .ring{fill:var(--via)}
+.via .hole{fill:#0b1020}
+.edge{stroke:var(--edge);fill:none;stroke-linecap:round}
+.silk{stroke:var(--silk);fill:none;stroke-linecap:round;opacity:.55;pointer-events:none}
+.silk.filled{fill:var(--silk);stroke:none}
+.fab{stroke:#7f8db0;fill:none;opacity:.4;stroke-linecap:round}
+.fab.filled{fill:none}
+.lbl{fill:#aebbd8;text-anchor:middle;dominant-baseline:middle;
+  font-family:ui-monospace,Menlo,monospace;paint-order:stroke;
+  stroke:#0b1020;stroke-width:.18;stroke-linejoin:round;pointer-events:none}
+.lbl.usr{fill:#8d9cbd}
+#wrap.no-f .f{display:none}
+#wrap.no-b .b{display:none}
+#wrap.no-zones .zone{display:none}
+#wrap.no-pads .pad{display:none}
+#wrap.no-vias .via{display:none}
+#wrap.no-silk #g-silk,#wrap.no-silk #g-labels{display:none}
+#wrap.no-fab #g-fab{display:none}
+
+/* ---- Gerber backend: stacked canvases ---- */
+#wrap.no-top #c-top,#wrap.no-bot #c-bot,#wrap.no-gsilk #c-silk,
+#wrap.no-edge #c-edge{display:none}
+
+/* ---- highlight, shared ---- */
+#wrap.dim .cu{opacity:.10}
+#wrap.dim .cu.on{opacity:1}
+#wrap.dim #g-silk,#wrap.dim #g-fab{opacity:.35}
+#wrap.dim #c-top,#wrap.dim #c-bot,#wrap.dim #c-silk{opacity:.13}
+.trk.on{stroke:var(--hl)!important}
+.zone.on{fill:var(--hl)!important;fill-opacity:.42}
+.pad.on>g>*{fill:var(--hl2)!important}
+.pad.on .hole{fill:#0b1020!important}
+.via.on .ring{fill:var(--hl)!important}
+.cu.on{filter:drop-shadow(0 0 .35px var(--hl))}
+
+/* flipped: the mirror is on #wrap, so only un-mirror the text */
+#wrap.flip .lbl{transform:scale(-1,1);transform-box:fill-box;transform-origin:center}

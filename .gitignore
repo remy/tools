@@ -1,5 +1,6 @@
 .DS_Store
 .venv
+__pycache__/
 movies/cineworld-events/*
 .playwright-screenshots/
 .playwright-mcp/
