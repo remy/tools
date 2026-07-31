@@ -9,74 +9,152 @@
 [hidden]{display:none !important}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
   font:13px/1.45 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
-  overscroll-behavior:none}
-#app{display:flex;height:100%}
-#side{width:300px;flex:none;background:var(--panel);border-right:1px solid var(--line);
-  display:flex;flex-direction:column;min-height:0}
-#side h1{font-size:14px;margin:0;padding:14px 14px 4px;letter-spacing:.02em;
+  overscroll-behavior:none;-webkit-text-size-adjust:100%}
+
+/* ==========================================================================
+   Layout. Mobile first: the board fills the screen with a toolbar under it,
+   and the nets/layers panel lives in a full-screen <dialog>. From 640px the
+   panel becomes a permanent sidebar and the toolbar floats over the board.
+   ========================================================================== */
+#app{display:flex;height:100dvh}
+#main{flex:1;min-width:0;position:relative;overflow:hidden;
+  display:flex;flex-direction:column}
+#stage{position:relative;flex:1;min-height:0;overflow:hidden;cursor:crosshair;
+  touch-action:none}
+#wrap{position:absolute;left:0;top:0;transform-origin:0 0;
+  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#wrap canvas{position:absolute;left:0;top:0}
+#wrap.crisp canvas{image-rendering:pixelated}
+#wrap svg{display:block}
+
+/* ---- the nets / layers panel ---- */
+#side{background:var(--panel);display:flex;flex-direction:column;min-height:0}
+#app>#side{display:none}          /* on mobile it is moved into #panel instead */
+#panel>#side{flex:1;min-height:0}
+.side-head{display:flex;align-items:center;gap:6px;padding:12px 8px 4px 14px}
+#side h1{font-size:14px;margin:0;letter-spacing:.02em;flex:1;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#panel-close{display:none;flex:none;width:40px;height:40px;padding:0;
+  font-size:20px;line-height:1}
+#panel>#side #panel-close{display:block}
 #side .sub{padding:0 14px 12px;color:var(--dim);font-size:11px}
 .group{border-top:1px solid var(--line);padding:10px 14px}
 .group h2{font-size:10px;text-transform:uppercase;letter-spacing:.09em;
   color:var(--dim);margin:0 0 8px}
-label.tog{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer;
+label.tog{display:flex;align-items:center;gap:10px;padding:7px 0;cursor:pointer;
   user-select:none}
-label.tog input{accent-color:#6ea8ff;margin:0}
+label.tog input{accent-color:#6ea8ff;margin:0;width:17px;height:17px;flex:none}
 .swatch{width:10px;height:10px;border-radius:2px;flex:none}
 #q{width:100%;background:#0a0f1e;border:1px solid var(--line);color:var(--ink);
-  border-radius:6px;padding:7px 9px;font:inherit;outline:none}
+  border-radius:6px;padding:9px;font-family:inherit;font-size:16px;outline:none}
 #q:focus{border-color:#4f6ea8}
-#nets{flex:1;overflow:auto;padding:4px 6px 20px;min-height:0}
-.net{display:flex;justify-content:space-between;gap:8px;padding:5px 8px;
-  border-radius:5px;cursor:pointer;font-size:12px}
+#nets{flex:1;overflow:auto;overscroll-behavior:contain;padding:4px 6px 20px;
+  min-height:0;-webkit-overflow-scrolling:touch}
+.net{display:flex;justify-content:space-between;gap:8px;padding:9px 10px;
+  border-radius:5px;cursor:pointer;font-size:13px}
 .net:hover{background:#1d2742}
 .net.on{background:#3a3413;color:var(--hl)}
 .net .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .net .ct{color:var(--dim);font-variant-numeric:tabular-nums;flex:none}
 .net.on .ct{color:#c9b455}
-#main{flex:1;position:relative;min-width:0;overflow:hidden}
-#stage{position:absolute;inset:0;cursor:crosshair}
-#wrap{position:absolute;left:0;top:0;transform-origin:0 0}
-#wrap canvas{position:absolute;left:0;top:0}
-#wrap.crisp canvas{image-rendering:pixelated}
-#wrap svg{display:block}
-#hud{position:absolute;left:12px;top:12px;background:rgba(11,16,32,.86);
-  border:1px solid var(--line);border-radius:8px;padding:9px 12px;max-width:min(48ch,60%);
-  pointer-events:none;backdrop-filter:blur(6px)}
+#warn{padding:8px 14px;color:#e5c06a;font-size:11px;background:#241f10;
+  border-top:1px solid var(--line);white-space:pre-wrap}
+#warn:empty{display:none}
+#side.empty .group,#side.empty #nets,#side.empty .sub{display:none}
+
+/* The panel is a modal <dialog> on mobile only; JS closes it if the viewport
+   grows past the sidebar breakpoint. */
+#panel{padding:0;border:none;background:var(--panel);color:var(--ink);
+  font:inherit;overflow:hidden}
+#panel[open]{display:flex;flex-direction:column}
+#panel::backdrop{background:rgba(5,8,18,.55)}
+
+@media (max-width:639px){
+  dialog{
+    inset:0;
+    margin:0;
+    width:100vw;
+    height:100dvh;
+    max-width:100vw;
+    max-height:100dvh;
+    border-radius:0;
+  }
+}
+
+/* ---- overlays on the board ---- */
+#hud{position:absolute;left:8px;right:8px;top:8px;background:rgba(11,16,32,.86);
+  border:1px solid var(--line);border-radius:8px;padding:9px 12px;
+  max-height:34dvh;overflow:hidden;pointer-events:none;backdrop-filter:blur(6px)}
 #hud .nn{font-weight:600;color:var(--hl)}
 #hud .meta{color:var(--dim);font-size:11px;margin-top:3px}
 #hud .pads{margin-top:6px;font-size:11px;line-height:1.9;color:#c3cee6}
 #hud .pads b{color:#fff;font-weight:500;background:#233152;border-radius:4px;padding:2px 6px}
 #hud.empty{color:var(--dim)}
-#keys{position:absolute;right:12px;bottom:12px;color:var(--dim);font-size:11px;
-  text-align:right;line-height:1.7;pointer-events:none}
+#keys{display:none;position:absolute;right:12px;bottom:12px;color:var(--dim);
+  font-size:11px;text-align:right;line-height:1.7;pointer-events:none}
 kbd{background:#1b2440;border:1px solid var(--line);border-bottom-width:2px;
   border-radius:4px;padding:1px 5px;font:inherit;font-size:10px;color:#c3cee6}
-#btns{position:absolute;right:12px;top:12px;display:flex;gap:6px}
+
 button{background:var(--panel);border:1px solid var(--line);color:var(--ink);
-  border-radius:6px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
+  border-radius:6px;padding:9px 12px;font-family:inherit;font-size:13px;
+  cursor:pointer}
 button:hover{border-color:#4f6ea8}
 button.on{background:#3a3413;color:var(--hl);border-color:#6b5f24}
 
+/* a real toolbar under the board on mobile, so nothing covers the copper */
+#btns{display:flex;gap:6px;flex:none;padding:8px;background:var(--panel);
+  border-top:1px solid var(--line);
+  padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+/* 1 1 auto, not 1 1 0: the spare width is shared out on top of each label's
+   own width, so "Flip board" still fits on a 325px screen */
+#btns button{flex:1 1 auto;min-width:0;padding:11px 4px;font-size:12px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 #drop{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:40px;background:var(--bg);z-index:5}
+  text-align:center;padding:16px;background:var(--bg);z-index:5;overflow:auto}
 #drop.hide{display:none}
-#drop .plate{border:2px dashed var(--line);border-radius:16px;padding:40px 56px;
-  display:flex;flex-direction:column;gap:14px;align-items:center;transition:.12s;
+#drop .plate{border:2px dashed var(--line);border-radius:14px;padding:24px 20px;
+  display:flex;flex-direction:column;gap:12px;align-items:center;transition:.12s;
   max-width:62ch}
 body.dragging #drop .plate{border-color:var(--hl);background:#151d33}
 body.dragging #drop{display:flex!important}
-#drop .big{font-size:17px;font-weight:600}
-#drop .small{color:var(--dim);line-height:1.7;text-align:left}
+#drop .big{font-size:16px;font-weight:600}
+#drop .small{color:var(--dim);line-height:1.65;text-align:left;font-size:12px}
 #drop .small b{color:var(--ink);font-weight:600}
+#pick{padding:12px 22px;font-size:14px}
+.tap-only{display:none}
+/* no pointer that can hover means no drag and drop either */
+@media (hover:none){
+  .drag-only{display:none}
+  .tap-only{display:inline}
+}
 #err{color:#ff9a9a;font-size:12px;white-space:pre-wrap;text-align:left}
-#warn{padding:8px 14px;color:#e5c06a;font-size:11px;background:#241f10;
-  border-top:1px solid var(--line);white-space:pre-wrap}
-#warn:empty{display:none}
 #busy{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
   background:rgba(11,16,32,.8);z-index:6;font-size:14px;color:var(--dim)}
 body.busy #busy{display:flex}
-#side.empty .group,#side.empty #nets,#side.empty .sub{display:none}
+
+/* ---- from here up, the panel is a sidebar and the toolbar floats ---- */
+@media (min-width:640px){
+  #app>#side{display:flex;width:clamp(230px,32vw,300px);flex:none;
+    border-right:1px solid var(--line)}
+  #panel-open{display:none}
+  #stage{position:absolute;inset:0}
+  #q{font-size:13px;padding:7px 9px}
+  label.tog{padding:3px 0;gap:8px}
+  label.tog input{width:auto;height:auto}
+  .net{padding:5px 8px;font-size:12px}
+  button{padding:6px 10px;font-size:11px}
+  #btns{position:absolute;right:12px;top:12px;padding:0;background:none;
+    border-top:none;width:auto}
+  #btns button{flex:0 0 auto;padding:6px 10px;font-size:11px}
+  #hud{left:12px;top:12px;right:auto;max-width:min(48ch,60%);max-height:none}
+  #keys{display:block}
+  #drop{padding:40px}
+  #drop .plate{padding:40px 56px;gap:14px;border-radius:16px}
+  #drop .big{font-size:17px}
+  #drop .small{font-size:13px;line-height:1.7}
+  #pick{padding:6px 10px;font-size:11px}
+}
 
 /* ---- KiCad backend: an SVG whose elements carry data-net ---- */
 .trk{fill:none;stroke-linecap:round}

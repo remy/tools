@@ -214,6 +214,27 @@ labels stay readable.
 A `.kicad_pcb` anywhere in a drop beats Gerbers in the same drop, with a warning:
 it states its own connectivity, so it's strictly better.
 
+**Pointer events, not mouse events.** Pan, pinch and pick are one code path for
+mouse and touch. Two details make it work and are easy to break:
+
+* `#stage` must keep `touch-action:none`. Without it the browser claims the
+  gesture for scrolling and sends `pointercancel` mid-drag, so panning dies after
+  a few pixels.
+* Touch gets *implicit* pointer capture, so `pointerup` reports the element the
+  finger went down on. That is what the KiCad backend's `netAt` reads to find the
+  net, so nothing here may call `setPointerCapture` on `#stage` — that would
+  retarget every event to the stage and `netAt` would always return null.
+
+A press that moved less than a few pixels is the pick; a second finger sets the
+moved flag so a pinch can never end in a pick.
+
+**The sidebar is one element in two places.** Below 640px the board wants the
+whole viewport, so `#side` is *moved* into a modal `<dialog>` and moved back when
+it closes, rather than duplicated. Moving the live node keeps the layer
+checkboxes, the filter text and every listener intact; two copies would drift.
+`#app>#side` / `#panel>#side` selectors do the rest, so no JS decides how it
+looks.
+
 ---
 
 ## 7. How this was tested, and how to test changes
