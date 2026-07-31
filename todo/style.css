@@ -62,16 +62,24 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
-  height: 100dvh;
+  height: 100svh;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
 /* ── App Shell ── */
+/* Anchor the shell to the visible viewport with position:fixed + inset:0 rather
+   than height:100dvh. In an iOS standalone PWA, 100dvh can resolve taller than
+   the actually-visible area, pushing the fixed .add-bar footer below the fold
+   where body{overflow:hidden} makes it unreachable. inset:0 ties the shell to
+   the true layout viewport, so the footer always stays on-screen. The 100svh is
+   a defensive fallback for any browser without position:fixed viewport anchoring. */
 .app {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: 100svh;
   max-width: 560px;
   margin-inline: auto;
 }
@@ -283,6 +291,36 @@ body {
 .todo-item.checked .todo-text {
   text-decoration: line-through;
   color: var(--text-3);
+}
+
+/* A URL inside an item's text. Not an <a> — tapping an item with a link opens
+   the "mark done or open link?" dialog instead of navigating outright. */
+.todo-link {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  /* Negative margin matching the inline padding keeps the highlight from
+     pushing the surrounding words apart — it just bleeds under the spaces. */
+  padding: 0.0625rem 0.25rem;
+  margin-inline: -0.25rem;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
+
+/* Muted once the item is done, so the row still reads as complete. */
+.todo-item.checked .todo-link {
+  color: var(--text-3);
+  background: transparent;
+  padding-inline: 0;
+}
+
+/* Headings have nothing to check, so their links are directly clickable. */
+.todo-heading-text .todo-link {
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .todo-meta {
@@ -615,6 +653,39 @@ dialog {
   gap: 0.5rem;
   justify-content: flex-end;
   padding-top: 0.75rem;
+}
+
+/* ── Link choice dialog ── */
+.link-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  & .btn {
+    width: 100%;
+  }
+}
+
+.link-open-btn {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  text-align: left;
+  padding-block: 0.5rem;
+}
+
+.link-open-label {
+  font-weight: 600;
+}
+
+.link-open-url {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-3);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ── Forms ── */

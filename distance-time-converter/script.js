@@ -112,6 +112,14 @@ function formatDuration(totalSeconds) {
   return { main, breakdown: breakdown.join(', ') || null };
 }
 
+/** Format seconds-per-km as a M:SS pace string */
+function formatPace(secondsPerKm) {
+  let m = Math.floor(secondsPerKm / 60);
+  let s = Math.round(secondsPerKm % 60);
+  if (s === 60) { m += 1; s = 0; }
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 // --- DOM refs ---
 const distanceInput  = document.getElementById('distanceInput');
 const unitSelect     = document.getElementById('unitSelect');
@@ -119,6 +127,12 @@ const speedEnabled   = document.getElementById('speedEnabled');
 const speedControls  = document.getElementById('speedControls');
 const speedInput     = document.getElementById('speedInput');
 const speedUnitSelect = document.getElementById('speedUnitSelect');
+const modeButtons    = document.querySelectorAll('.mode-btn');
+const speedPanel     = document.getElementById('speedPanel');
+const pacePanel      = document.getElementById('pacePanel');
+const paceMinutes    = document.getElementById('paceMinutes');
+const paceSeconds    = document.getElementById('paceSeconds');
+const paceUnitSelect = document.getElementById('paceUnitSelect');
 const resultsEmpty   = document.getElementById('resultsEmpty');
 const resultsContent = document.getElementById('resultsContent');
 const resultsGrid    = document.getElementById('resultsGrid');
@@ -153,6 +167,35 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 
 applyTheme();
 
+// --- Speed / Pace mode ---
+let currentMode = 'speed'; // 'speed' | 'pace'
+
+function setMode(mode) {
+  currentMode = mode;
+  modeButtons.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  speedPanel.classList.toggle('hidden', mode !== 'speed');
+  pacePanel.classList.toggle('hidden', mode !== 'pace');
+}
+
+function enableSpeed() {
+  if (!speedEnabled.checked) {
+    speedEnabled.checked = true;
+    speedControls.classList.add('open');
+    speedControls.setAttribute('aria-hidden', 'false');
+  }
+}
+
+function clearActivePresets() {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+}
+
+modeButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    setMode(btn.dataset.mode);
+    update();
+  });
+});
+
 // --- Speed toggle ---
 speedEnabled.addEventListener('change', () => {
   const on = speedEnabled.checked;
@@ -161,34 +204,32 @@ speedEnabled.addEventListener('change', () => {
   update();
 });
 
-// --- Preset buttons ---
+// --- Preset buttons (speed and pace) ---
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    const speed = btn.dataset.speed;
-    const unit  = btn.dataset.unit;
-    speedInput.value = speed;
-    speedUnitSelect.value = unit;
-    // Enable speed if not already
-    if (!speedEnabled.checked) {
-      speedEnabled.checked = true;
-      speedControls.classList.add('open');
-      speedControls.setAttribute('aria-hidden', 'false');
+    enableSpeed();
+    if (btn.dataset.paceMin !== undefined) {
+      setMode('pace');
+      paceMinutes.value = btn.dataset.paceMin;
+      paceSeconds.value = btn.dataset.paceSec;
+      paceUnitSelect.value = btn.dataset.paceUnit;
+    } else {
+      setMode('speed');
+      speedInput.value = btn.dataset.speed;
+      speedUnitSelect.value = btn.dataset.unit;
     }
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    clearActivePresets();
     btn.classList.add('active');
     update();
   });
 });
 
-// Clear active preset when speed inputs change manually
-speedInput.addEventListener('input', () => {
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  update();
-});
-speedUnitSelect.addEventListener('change', () => {
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  update();
-});
+// Clear active preset when inputs change manually
+speedInput.addEventListener('input', () => { clearActivePresets(); update(); });
+speedUnitSelect.addEventListener('change', () => { clearActivePresets(); update(); });
+paceMinutes.addEventListener('input', () => { clearActivePresets(); update(); });
+paceSeconds.addEventListener('input', () => { clearActivePresets(); update(); });
+paceUnitSelect.addEventListener('change', () => { clearActivePresets(); update(); });
 
 // --- Main update ---
 distanceInput.addEventListener('input', update);
@@ -233,18 +274,35 @@ function update() {
     resultsGrid.appendChild(card);
   });
 
-  // Travel time
+  // Travel time — computed from either a speed or a pace
   const speedOn = speedEnabled.checked;
-  const speedVal = parseFloat(speedInput.value);
+  let totalSeconds = null;
+  let rateLabel = '';
 
-  if (speedOn && speedInput.value.trim() !== '' && !isNaN(speedVal) && speedVal > 0) {
-    const speedUnit = speedUnitSelect.value;
-    // Convert distance to meters, speed to m/hour
-    const distanceMeters = value * TO_METERS[fromUnit];
-    const speedMetersPerHour = speedVal * TO_METERS[speedUnit];
-    const hours = distanceMeters / speedMetersPerHour;
-    const totalSeconds = hours * 3600;
+  if (speedOn && currentMode === 'speed') {
+    const speedVal = parseFloat(speedInput.value);
+    if (speedInput.value.trim() !== '' && !isNaN(speedVal) && speedVal > 0) {
+      const speedUnit = speedUnitSelect.value;
+      // Convert distance to meters, speed to m/hour
+      const distanceMeters = value * TO_METERS[fromUnit];
+      const speedMetersPerHour = speedVal * TO_METERS[speedUnit];
+      totalSeconds = (distanceMeters / speedMetersPerHour) * 3600;
+      rateLabel = `at ${formatNumber(speedVal)} ${UNIT_SHORT[speedUnit]}/hr`;
+    }
+  } else if (speedOn && currentMode === 'pace') {
+    const mins = parseFloat(paceMinutes.value);
+    const secs = parseFloat(paceSeconds.value);
+    const paceSecondsPerUnit =
+      (isNaN(mins) ? 0 : mins) * 60 + (isNaN(secs) ? 0 : secs);
+    if (paceSecondsPerUnit > 0) {
+      const paceUnit = paceUnitSelect.value; // 'km' or 'mi'
+      const distanceInPaceUnits = (value * TO_METERS[fromUnit]) / TO_METERS[paceUnit];
+      totalSeconds = distanceInPaceUnits * paceSecondsPerUnit;
+      rateLabel = `at ${formatPace(paceSecondsPerUnit)} /${paceUnit === 'mi' ? 'mi' : 'km'}`;
+    }
+  }
 
+  if (totalSeconds !== null) {
     const duration = formatDuration(totalSeconds);
 
     timeResults.classList.remove('hidden');
@@ -271,7 +329,7 @@ function update() {
 
       const right = document.createElement('div');
       right.className = 'time-speed-label';
-      right.textContent = `at ${formatNumber(speedVal)} ${UNIT_SHORT[speedUnit]}/hr`;
+      right.textContent = rateLabel;
 
       card.append(left, right);
       timeDisplay.appendChild(card);

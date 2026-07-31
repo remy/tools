@@ -135,6 +135,21 @@
       </div>
     </dialog>
 
+    <!-- Link choice — shown when tapping an item whose text contains a URL -->
+    <dialog id="link-dialog">
+      <div class="pop-header">
+        <h2 id="link-title">Item</h2>
+        <button class="pop-close" data-close="link-dialog" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="pop-body">
+        <div class="link-choices" id="link-choices"></div>
+      </div>
+    </dialog>
+
     <!-- Template editor -->
     <dialog id="template-dialog">
       <div class="pop-header">

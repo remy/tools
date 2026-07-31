@@ -42,9 +42,16 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: 'DM Sans', sans-serif;
-  min-height: 100dvh;
+  /* Use svh, not dvh: Firefox does not shrink the dynamic viewport for the
+     browser toolbar, so 100dvh here left the body taller than the visible
+     area and pushed the bottom of the tab buttons off-screen. svh is the
+     toolbar-visible (smallest) viewport, so the pinned tabs stay visible. */
+  min-height: 100vh;
+  min-height: 100svh;
   max-width: 600px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .theme-toggle {
@@ -87,10 +94,27 @@ body.light .theme-toggle {
 
 .content {
   padding: 10px 16px 16px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .day-panel { display: none; }
-.day-panel.active { display: block; }
+.day-panel.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Absorbs the leftover height on a short workout so the trailing controls
+   (elapsed timer, reset button) hug the bottom instead of floating up. When
+   the list is long enough to scroll, this collapses to nothing. */
+.panel-spacer {
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
 .focus-bar {
   display: flex;
@@ -379,6 +403,32 @@ body.light .cardio-title { color: #997700; }
   color: #22c55e;
 }
 
+/* ── Reset / clear-day control ── */
+.day-reset {
+  align-self: center;
+  margin: 14px auto 4px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 9px 22px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, color 0.2s, background 0.2s, opacity 0.15s;
+}
+
+.day-reset:active { opacity: 0.7; }
+
+.day-reset.complete {
+  border-color: #22c55e;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.10);
+}
+
 /* ── Circuit Training ── */
 
 body.circuit-border::after {
@@ -600,9 +650,11 @@ dialog {
     margin: 0;
     transform: none;
     width: 100vw;
-    height: 100dvh;
+    height: 100vh;
+    height: 100svh;
     max-width: 100vw;
-    max-height: 100dvh;
+    max-height: 100vh;
+    max-height: 100svh;
     border-radius: 0;
   }
 }
