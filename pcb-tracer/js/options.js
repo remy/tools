@@ -4,27 +4,27 @@
    D2. view options -- the two switches under Layers
    ========================================================================== */
 
-/* ---- highlight without dimming ----
-   Lighting a net normally drops everything else to 10% opacity, which reads
-   well on a monitor and badly on a phone: outdoors the rest of the board
-   vanishes into the background and you lose the context you were tracing
-   against. With this on, the board keeps its own colours at full strength and
-   the net is picked out by the yellow alone.
+/* ---- dim the board on highlight ----
+   Off by default: the board keeps its own colours at full strength and the lit
+   net is picked out by the yellow alone. Dropping everything else to 10%
+   opacity reads well on a monitor and badly on a phone, where outdoors the rest
+   of the board vanishes into the background and you lose the context you were
+   tracing against — so it is the option rather than the default.
 
    It is the one preference worth remembering — someone who wants it wants it
    every time — so it is stored. localStorage throws rather than returning null
    on a file:// origin in some browsers, hence the guards. */
 
-const BRIGHT_KEY = 'pcb-tracer.no-dim';
+const DIM_KEY = 'pcb-tracer.dim';
 
-let keepBright = false;
-try { keepBright = localStorage.getItem(BRIGHT_KEY) === '1'; } catch (ex) { /* private mode */ }
+let dimOnHighlight = false;
+try { dimOnHighlight = localStorage.getItem(DIM_KEY) === '1'; } catch (ex) { /* private mode */ }
 
-const brightBox = $('opt-bright');
-brightBox.checked = keepBright;
-brightBox.addEventListener('change', () => {
-  keepBright = brightBox.checked;
-  try { localStorage.setItem(BRIGHT_KEY, keepBright ? '1' : '0'); } catch (ex) { /* ditto */ }
+const dimBox = $('opt-dim');
+dimBox.checked = dimOnHighlight;
+dimBox.addEventListener('change', () => {
+  dimOnHighlight = dimBox.checked;
+  try { localStorage.setItem(DIM_KEY, dimOnHighlight ? '1' : '0'); } catch (ex) { /* ditto */ }
   paint();
 });
 

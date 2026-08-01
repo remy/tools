@@ -230,7 +230,8 @@ body.busy #busy{display:flex}
 .pad.on .hole{fill:#0b1020!important}
 .via.on .ring{fill:var(--hl)!important}
 .cu.on{filter:drop-shadow(0 0 .35px var(--hl))}
-/* undimmed, the net competes with full-strength copper, so lean on the glow */
+/* undimmed -- the default -- the net competes with full-strength copper rather
+   than with copper at 10%, so lean on the glow */
 #wrap:not(.dim) .cu.on{filter:drop-shadow(0 0 .7px var(--hl)) drop-shadow(0 0 .35px var(--hl))}
 
 /* flipped: the mirror is on #wrap, so only un-mirror the text */

@@ -246,15 +246,19 @@ labels stay readable.
 A `.kicad_pcb` anywhere in a drop beats Gerbers in the same drop, with a warning:
 it states its own connectivity, so it's strictly better.
 
-**Highlighting and dimming are separate mechanisms, which is what makes the
-no-dim option a one-liner.** Lighting a net is the backend's job — `.on` classes
-on SVG elements, or yellow pixels on an overlay canvas — and happens
-unconditionally. Knocking *everything else* back is a single `dim` class on
-`#wrap`, and the CSS under it covers both backends (`.cu` for KiCad, `#c-top`
-and friends for Gerber). So "highlight without dimming" is just not adding that
-class, and it needed no backend change at all. The only addition was a wider
-glow on `#wrap:not(.dim) .cu.on`, because a yellow trace has to compete with
-full-strength copper rather than with copper at 10%.
+**Highlighting and dimming are separate mechanisms, which is what makes the dim
+option a one-liner.** Lighting a net is the backend's job — `.on` classes on SVG
+elements, or yellow pixels on an overlay canvas — and happens unconditionally.
+Knocking *everything else* back is a single `dim` class on `#wrap`, and the CSS
+under it covers both backends (`.cu` for KiCad, `#c-top` and friends for
+Gerber). So "dim board on highlight" is just whether that class goes on, and it
+needed no backend change at all.
+
+Dimming is **off** by default. It isolates a net beautifully on a monitor, but
+the tool gets used on a phone at a bench, where 10% opacity means the board you
+were tracing against is gone. The only supporting change is a wider glow on
+`#wrap:not(.dim) .cu.on`, because in the default view a yellow trace has to
+compete with full-strength copper rather than with copper at 10%.
 
 **Pointer events, not mouse events.** Pan, pinch and pick are one code path for
 mouse and touch. Two details make it work and are easy to break:

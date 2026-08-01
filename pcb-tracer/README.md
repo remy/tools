@@ -59,7 +59,7 @@ Two switches under **View** in the sidebar:
 
 | | |
 |---|---|
-| **Highlight without dimming** | Lighting a net normally drops the rest of the board to 10% opacity. With this on the board keeps its own colours at full strength and the net is picked out by the yellow alone, with a wider glow to carry it against live copper. Meant for a phone, where the dimmed-back board disappears in daylight. Remembered between visits. |
+| **Dim board on highlight** | Off by default: lighting a net leaves the board at full strength and picks the net out by the yellow alone, with a wide glow to carry it against live copper. Tick it to drop everything else to 10% opacity instead, which isolates the net completely — good on a monitor, less so on a phone where the dimmed-back board disappears in daylight. Remembered between visits. |
 | **Keep the screen awake** | Holds a screen wake lock so the device doesn't lock while you're looking at a board and not touching it. Deliberately not remembered — it starts off every time. The row is hidden where the browser has no Wake Lock API. |
 
 The sidebar carries the View switches, per-board layer toggles, and every net
@@ -89,7 +89,7 @@ js/
   backend-kicad.js      SVG backend
   backend-gerber.js     canvas backend, layer identification
   viewer.js             viewport, net list, highlight, pan/zoom/flip
-  options.js            the two View switches: no-dim (stored), wake lock
+  options.js            the two View switches: dim (stored, off), wake lock
   remote.js             ?url= loading: GitHub blob -> raw, fetch, CORS errors
   main.js               detect what was dropped, wire up input
 KNOWLEDGE.md            format gotchas and design rationale — read before changing parsers
