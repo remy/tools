@@ -196,7 +196,7 @@
   },
   "pcb-tracer": {
     "category": "Developer Tools",
-    "description": "Drop a KiCad board or a Gerber zip and click any trace, pad or via to highlight the whole net across both copper layers.",
+    "description": "Drop a KiCad board or a Gerber zip \u2014 or point it at one on GitHub \u2014 and click any trace, pad or via to highlight the whole net across both copper layers.",
     "title": "PCB net tracer"
   },
   "pdf-reader": {
