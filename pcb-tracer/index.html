@@ -18,11 +18,16 @@
     <div class="sub" id="stats"></div>
     <div class="group">
       <h2>View</h2>
+      <!-- autocomplete=off: a reload must not restore these ticks. The dim one
+           is owned by localStorage and the wake one by whether a lock is
+           actually held; a browser putting back what it saw last would be
+           overruling both. -->
       <label class="tog">
-        <input type="checkbox" id="opt-dim">Dim board on highlight
+        <input type="checkbox" id="opt-dim" autocomplete="off">Dim board on highlight
       </label>
       <label class="tog" id="opt-wake-row" hidden>
-        <input type="checkbox" id="opt-wake">Keep the screen awake
+        <input type="checkbox" id="opt-wake" autocomplete="off">Keep the screen awake
+        <span class="lock-state" id="opt-wake-state" hidden></span>
       </label>
       <div class="note" id="opt-note"></div>
     </div>

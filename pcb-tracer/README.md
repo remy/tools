@@ -60,7 +60,7 @@ Two switches under **View** in the sidebar:
 | | |
 |---|---|
 | **Dim board on highlight** | Off by default: lighting a net leaves the board at full strength and picks the net out by the yellow alone, with a wide glow to carry it against live copper. Tick it to drop everything else to 10% opacity instead, which isolates the net completely — good on a monitor, less so on a phone where the dimmed-back board disappears in daylight. Remembered between visits. |
-| **Keep the screen awake** | Holds a screen wake lock so the device doesn't lock while you're looking at a board and not touching it. Deliberately not remembered — it starts off every time. The row is hidden where the browser has no Wake Lock API. |
+| **Keep the screen awake** | Holds a screen wake lock so the device doesn't lock while you're looking at a board and not touching it. Deliberately not remembered — it starts off every time, including after a refresh. The pill beside it says what is actually held (**holding** / **not held**) rather than what was asked for, because the system can drop the lock on its own. The row is hidden where the browser has no Wake Lock API. |
 
 The sidebar carries the View switches, per-board layer toggles, and every net
 with a filter box, in that order. Any caveats about the board you loaded appear

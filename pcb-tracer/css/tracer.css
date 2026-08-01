@@ -47,6 +47,11 @@ label.tog input{accent-color:#6ea8ff;margin:0;width:17px;height:17px;flex:none}
 .swatch{width:10px;height:10px;border-radius:2px;flex:none}
 .note{color:#e5c06a;font-size:11px;line-height:1.5;padding-top:4px}
 .note:empty{display:none}
+/* what the wake lock is actually doing, as against what the box asks for */
+.lock-state{margin-left:auto;flex:none;font-size:10px;letter-spacing:.06em;
+  text-transform:uppercase;padding:2px 7px;border-radius:999px;
+  border:1px solid var(--line);color:var(--dim);background:#0a0f1e}
+.lock-state.on{color:#8fd89b;border-color:#2f5c3a;background:#14251a}
 #q{width:100%;background:#0a0f1e;border:1px solid var(--line);color:var(--ink);
   border-radius:6px;padding:9px;font-family:inherit;font-size:16px;outline:none}
 #q:focus{border-color:#4f6ea8}

@@ -208,16 +208,34 @@ own sibling files is blocked.
 The service worker ignores it: `sw.js` returns early for any request whose origin
 isn't its own, so board URLs are never cached or intercepted.
 
-**The wake lock has to be taken again after the page is hidden.** The system
-releases a screen wake lock whenever the document stops being visible and does
-*not* hand it back on return — so a board left behind another app silently stops
-holding the screen. `visibilitychange` re-requests it while the box is still
-ticked. Two related facts: the sentinel also fires `release` when the platform
-drops the lock on its own (a low battery will), which is why the code tracks it
-through that event rather than assuming it holds; and `request()` rejects rather
-than resolving-with-null when it's refused, so the checkbox unticks itself and
-says why. Secure contexts only, and absent before Firefox 126 / iOS 16.4, hence
-the feature test that hides the row.
+**A ticked checkbox is not evidence that a wake lock is held.** This is the
+subtle one, and it went wrong before it went right. Four separate ways the box
+and the lock come apart:
+
+* **The system releases the lock whenever the document stops being visible**,
+  and does *not* hand it back on return — so a board left behind another app
+  silently stops holding the screen. `visibilitychange` re-requests it.
+* **A reload starts with no lock, but browsers restore form state**, so the box
+  comes back ticked. That is a straight lie about the device, and it is what
+  prompted the pill. `autocomplete="off"` opts out of the restoration, and the
+  script asserts the tick from its own state on top of that.
+* **A bfcache restore brings the script's state back with it** — `wakeSentinel`
+  is non-null and looks fine — but the lock was released while the page sat in
+  the cache, so the sentinel's `released` flag is the thing to read, not whether
+  the object exists. `pageshow` covers it.
+* **The platform can drop the lock at any moment** (a flat battery will), and
+  says so only through the sentinel's `release` event.
+
+So `wantWake` holds what the user asked for and drives the tick, the sentinel
+holds what is actually granted and drives the pill, and one `verifyWakeLock()`
+reconciles them from every event that can invalidate the display behind the
+page's back. Not auto-re-requesting from the `release` event is deliberate: a
+platform that keeps refusing would spin, and "not held" on screen is more useful
+than a retry loop.
+
+`request()` rejects rather than resolving with null when it's refused, so the
+checkbox unticks itself and says why. Secure contexts only, and absent before
+Firefox 126 / iOS 16.4, hence the feature test that hides the row.
 
 ---
 
