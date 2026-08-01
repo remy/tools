@@ -183,9 +183,30 @@ a `DecompressionStream`.
 **Canvas stays untainted** because everything is drawn as shapes, never as loaded
 images, so `getImageData` works from `file://`.
 
-**Nothing leaves the machine.** No `fetch`/XHR/WebSocket/`sendBeacon`, no external
-script, style, font or image, no forms. The only URL in the source is the SVG
-namespace string, which is an identifier passed to `createElementNS`.
+**No board ever leaves the machine.** There is no upload path, no analytics, no
+external script, style, font or image. The single outbound request in the project
+is the `fetch` in `remote.js`: a GET of a board URL the user typed or put on the
+query string, and nothing else.
+
+**`?url=` and CORS.** A cross-origin read needs the *host's* permission, and
+github.com doesn't give it; `raw.githubusercontent.com` sends
+`access-control-allow-origin: *`, so a `/blob/` URL is rewritten to its raw form
+before fetching. Two things that would break it:
+
+* **Don't set a request header.** Any custom header makes the GET a preflighted
+  request, and `raw.githubusercontent.com` answers `OPTIONS` with a 403 — so the
+  fetch would fail before it started. Nothing in `fetchBoard` sets one.
+* **Don't fetch the `/blob/` URL as given.** It's an HTML page wrapping the file,
+  and the parsers would choke on markup a long way from the actual cause. A
+  response starting `<!doctype html` is rejected up front with that as the error.
+
+This works from a `file://` origin too, which is not obvious: the origin is
+`null`, and `null` is what `*` allows. Verified in Chromium — the page double
+clicked off the disk still loads a board from GitHub, even though a `fetch` of its
+own sibling files is blocked.
+
+The service worker ignores it: `sw.js` returns early for any request whose origin
+isn't its own, so board URLs are never cached or intercepted.
 
 ---
 

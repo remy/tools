@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Drop a KiCad board or a Gerber zip and click any trace, pad or via to highlight the whole net across both copper layers.">
+<meta name="description" content="Drop a KiCad board or a Gerber zip — or point it at one on GitHub — and click any trace, pad or via to highlight the whole net across both copper layers.">
 <meta name="category" content="Developer Tools">
 <title>PCB net tracer</title>
 <link rel="stylesheet" href="css/tracer.css">
@@ -42,9 +42,24 @@
           connectivity is recovered from the copper geometry and stitched between
           layers through the drill file.<br><br>
           Whichever you pick is detected automatically. Everything runs in the
-          browser; nothing is uploaded.
+          browser; a board you open from disk is never uploaded.
         </div>
         <button id="pick">Choose files&hellip;</button>
+
+        <div class="rule"><span>or load one from a URL</span></div>
+        <form id="url-form">
+          <input id="url" type="text" inputmode="url" autocomplete="off"
+                 spellcheck="false" autocapitalize="off"
+                 aria-label="URL of a board file"
+                 placeholder="https://github.com/&hellip;/board.kicad_pcb">
+          <button type="submit">Load</button>
+        </form>
+        <div class="small">
+          Paste a GitHub file page and it is read from
+          <b>raw.githubusercontent.com</b>. The same thing works from the address
+          bar as <b>?url=&hellip;</b>, so a link to a board is a link to it already
+          open &mdash; repeat <b>?url=</b> for a loose set of Gerbers.
+        </div>
         <div id="err"></div>
       </div>
     </div>
@@ -85,6 +100,7 @@
 <script src="js/backend-kicad.js"></script>
 <script src="js/backend-gerber.js"></script>
 <script src="js/viewer.js"></script>
+<script src="js/remote.js"></script>
 <script src="js/main.js"></script>
 <script>navigator.serviceWorker?.register("/sw.js")</script>
 </body>

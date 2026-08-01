@@ -13,7 +13,27 @@ Open **`index.html`** and drop a board on it:
 Which one you dropped is detected automatically.
 
 No build step, no dependencies, no server — double-click `index.html` and it
-works. Nothing is uploaded; there is no network code in the project at all.
+works. A board you open from disk is never uploaded.
+
+## Loading a board from a URL
+
+Paste a link into the box on the drop screen, or put it on the query string:
+
+```
+index.html?url=https://github.com/HDR/NintendoPCBs/blob/master/DMG-KFDN-01/DMG-KFDN-01.kicad_pcb
+```
+
+so a link to a board is a link to it already open. Repeat `?url=` for a loose
+Gerber set; a `.zip` behind a URL is unpacked the same as a dropped one, and is
+recognised by its bytes, so the URL doesn't have to end in `.zip`.
+
+A GitHub file page is rewritten to `raw.githubusercontent.com`, which is the part
+that actually permits a cross-origin read — pasting the `/blob/` URL is fine.
+Any other host works if it sends `access-control-allow-origin`, and says so
+plainly if it doesn't. This works from `file://` as well as over http.
+
+Opening a board over the network is the only request the page ever makes; the
+board itself is still parsed and traced entirely in the browser.
 
 ## Controls
 
@@ -54,6 +74,7 @@ js/
   backend-kicad.js      SVG backend
   backend-gerber.js     canvas backend, layer identification
   viewer.js             viewport, net list, highlight, pan/zoom/flip
+  remote.js             ?url= loading: GitHub blob -> raw, fetch, CORS errors
   main.js               detect what was dropped, wire up input
 KNOWLEDGE.md            format gotchas and design rationale — read before changing parsers
 ```

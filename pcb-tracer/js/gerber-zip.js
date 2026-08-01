@@ -4,6 +4,14 @@
    B1. Gerber: zip reader -- central directory + DecompressionStream('deflate-raw')
    ========================================================================== */
 
+/* A file name is not always available (a URL can end in anything), so the
+   local-file, empty-archive and spanned-archive signatures decide it. */
+function looksLikeZip(buf) {
+  if (buf.byteLength < 4) return false;
+  const sig = new DataView(buf).getUint32(0, true);
+  return sig === 0x04034b50 || sig === 0x06054b50 || sig === 0x08074b50;
+}
+
 async function readZip(buf) {
   const dv = new DataView(buf), u8 = new Uint8Array(buf);
   let eocd = -1;
