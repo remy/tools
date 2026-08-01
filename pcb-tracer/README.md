@@ -13,7 +13,27 @@ Open **`index.html`** and drop a board on it:
 Which one you dropped is detected automatically.
 
 No build step, no dependencies, no server — double-click `index.html` and it
-works. Nothing is uploaded; there is no network code in the project at all.
+works. A board you open from disk is never uploaded.
+
+## Loading a board from a URL
+
+Paste a link into the box on the drop screen, or put it on the query string:
+
+```
+index.html?url=https://github.com/HDR/NintendoPCBs/blob/master/DMG-KFDN-01/DMG-KFDN-01.kicad_pcb
+```
+
+so a link to a board is a link to it already open. Repeat `?url=` for a loose
+Gerber set; a `.zip` behind a URL is unpacked the same as a dropped one, and is
+recognised by its bytes, so the URL doesn't have to end in `.zip`.
+
+A GitHub file page is rewritten to `raw.githubusercontent.com`, which is the part
+that actually permits a cross-origin read — pasting the `/blob/` URL is fine.
+Any other host works if it sends `access-control-allow-origin`, and says so
+plainly if it doesn't. This works from `file://` as well as over http.
+
+Opening a board over the network is the only request the page ever makes; the
+board itself is still parsed and traced entirely in the browser.
 
 ## Controls
 
@@ -30,13 +50,28 @@ works. Nothing is uploaded; there is no network code in the project at all.
 
 On a touchscreen: tap a trace to light up its net, tap it again (or tap bare
 board) to clear, drag to pan, pinch to zoom. There is no hover, so a tap does
-what a click does on the desktop.
+what a click does on the desktop. There is no Clear button — tapping bare board
+is already the gesture for it, and on a keyboard so is <kbd>Esc</kbd>.
 
-The sidebar lists every net with a filter box, plus per-board layer toggles. Any
-caveats about the board you loaded appear in the warning strip at the bottom of
-the sidebar. Below 640px the board gets the whole viewport and the sidebar moves
-behind the **Nets** button, opening as a full-screen dialog; picking a net closes
-it again.
+## View options
+
+Two switches under **View** in the sidebar:
+
+| | |
+|---|---|
+| **Dim board on highlight** | Off by default: lighting a net leaves the board at full strength and picks the net out by the yellow alone, with a wide glow to carry it against live copper. Tick it to drop everything else to 10% opacity instead, which isolates the net completely — good on a monitor, less so on a phone where the dimmed-back board disappears in daylight. Remembered between visits. |
+| **Keep the screen awake** | Holds a screen wake lock so the device doesn't lock while you're looking at a board and not touching it. Deliberately not remembered — it starts off every time, including after a refresh. The pill beside it says what is actually held (**holding** / **not held**) rather than what was asked for, because the system can drop the lock on its own. The row is hidden where the browser has no Wake Lock API. |
+
+The sidebar carries the View switches, per-board layer toggles, and every net
+with a filter box, in that order. Any caveats about the board you loaded appear
+in the warning strip at the bottom.
+
+Below 640px the board gets the whole viewport and the sidebar moves behind the
+**Options** button, opening as a full-screen dialog; picking a net closes it
+again. In the dialog the whole body scrolls as one, rather than the net list
+scrolling inside a fixed frame — with the switches and toggles above it, a
+self-scrolling list is only a couple of rows tall on a phone. The title bar and
+the warning strip stay put at either end while it scrolls.
 
 ## Layout
 
@@ -54,6 +89,8 @@ js/
   backend-kicad.js      SVG backend
   backend-gerber.js     canvas backend, layer identification
   viewer.js             viewport, net list, highlight, pan/zoom/flip
+  options.js            the two View switches: dim (stored, off), wake lock
+  remote.js             ?url= loading: GitHub blob -> raw, fetch, CORS errors
   main.js               detect what was dropped, wire up input
 KNOWLEDGE.md            format gotchas and design rationale — read before changing parsers
 ```

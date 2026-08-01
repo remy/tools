@@ -183,9 +183,59 @@ a `DecompressionStream`.
 **Canvas stays untainted** because everything is drawn as shapes, never as loaded
 images, so `getImageData` works from `file://`.
 
-**Nothing leaves the machine.** No `fetch`/XHR/WebSocket/`sendBeacon`, no external
-script, style, font or image, no forms. The only URL in the source is the SVG
-namespace string, which is an identifier passed to `createElementNS`.
+**No board ever leaves the machine.** There is no upload path, no analytics, no
+external script, style, font or image. The single outbound request in the project
+is the `fetch` in `remote.js`: a GET of a board URL the user typed or put on the
+query string, and nothing else.
+
+**`?url=` and CORS.** A cross-origin read needs the *host's* permission, and
+github.com doesn't give it; `raw.githubusercontent.com` sends
+`access-control-allow-origin: *`, so a `/blob/` URL is rewritten to its raw form
+before fetching. Two things that would break it:
+
+* **Don't set a request header.** Any custom header makes the GET a preflighted
+  request, and `raw.githubusercontent.com` answers `OPTIONS` with a 403 — so the
+  fetch would fail before it started. Nothing in `fetchBoard` sets one.
+* **Don't fetch the `/blob/` URL as given.** It's an HTML page wrapping the file,
+  and the parsers would choke on markup a long way from the actual cause. A
+  response starting `<!doctype html` is rejected up front with that as the error.
+
+This works from a `file://` origin too, which is not obvious: the origin is
+`null`, and `null` is what `*` allows. Verified in Chromium — the page double
+clicked off the disk still loads a board from GitHub, even though a `fetch` of its
+own sibling files is blocked.
+
+The service worker ignores it: `sw.js` returns early for any request whose origin
+isn't its own, so board URLs are never cached or intercepted.
+
+**A ticked checkbox is not evidence that a wake lock is held.** This is the
+subtle one, and it went wrong before it went right. Four separate ways the box
+and the lock come apart:
+
+* **The system releases the lock whenever the document stops being visible**,
+  and does *not* hand it back on return — so a board left behind another app
+  silently stops holding the screen. `visibilitychange` re-requests it.
+* **A reload starts with no lock, but browsers restore form state**, so the box
+  comes back ticked. That is a straight lie about the device, and it is what
+  prompted the pill. `autocomplete="off"` opts out of the restoration, and the
+  script asserts the tick from its own state on top of that.
+* **A bfcache restore brings the script's state back with it** — `wakeSentinel`
+  is non-null and looks fine — but the lock was released while the page sat in
+  the cache, so the sentinel's `released` flag is the thing to read, not whether
+  the object exists. `pageshow` covers it.
+* **The platform can drop the lock at any moment** (a flat battery will), and
+  says so only through the sentinel's `release` event.
+
+So `wantWake` holds what the user asked for and drives the tick, the sentinel
+holds what is actually granted and drives the pill, and one `verifyWakeLock()`
+reconciles them from every event that can invalidate the display behind the
+page's back. Not auto-re-requesting from the `release` event is deliberate: a
+platform that keeps refusing would spin, and "not held" on screen is more useful
+than a retry loop.
+
+`request()` rejects rather than resolving with null when it's refused, so the
+checkbox unticks itself and says why. Secure contexts only, and absent before
+Firefox 126 / iOS 16.4, hence the feature test that hides the row.
 
 ---
 
@@ -214,6 +264,20 @@ labels stay readable.
 A `.kicad_pcb` anywhere in a drop beats Gerbers in the same drop, with a warning:
 it states its own connectivity, so it's strictly better.
 
+**Highlighting and dimming are separate mechanisms, which is what makes the dim
+option a one-liner.** Lighting a net is the backend's job — `.on` classes on SVG
+elements, or yellow pixels on an overlay canvas — and happens unconditionally.
+Knocking *everything else* back is a single `dim` class on `#wrap`, and the CSS
+under it covers both backends (`.cu` for KiCad, `#c-top` and friends for
+Gerber). So "dim board on highlight" is just whether that class goes on, and it
+needed no backend change at all.
+
+Dimming is **off** by default. It isolates a net beautifully on a monitor, but
+the tool gets used on a phone at a bench, where 10% opacity means the board you
+were tracing against is gone. The only supporting change is a wider glow on
+`#wrap:not(.dim) .cu.on`, because in the default view a yellow trace has to
+compete with full-strength copper rather than with copper at 10%.
+
 **Pointer events, not mouse events.** Pan, pinch and pick are one code path for
 mouse and touch. Two details make it work and are easy to break:
 
@@ -234,6 +298,14 @@ it closes, rather than duplicated. Moving the live node keeps the layer
 checkboxes, the filter text and every listener intact; two copies would drift.
 `#app>#side` / `#panel>#side` selectors do the rest, so no JS decides how it
 looks.
+
+That parent selector is also what lets the two scroll differently. In the
+sidebar the net list scrolls inside a fixed column, which is right when the
+column is full height. In the dialog it isn't: View, Layers and the filter box
+above it leave the list about five rows tall on a phone, so `#panel>#side`
+scrolls as one body and `#nets` goes back to `flex:none`. The title bar and the
+warning strip are `position:sticky` at either end so the close button and any
+caveat stay put while the middle scrolls.
 
 ---
 

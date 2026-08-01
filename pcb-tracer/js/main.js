@@ -24,17 +24,22 @@ function detect(entries) {
   return {kind: 'gerber'};
 }
 
-async function openFiles(files) {
+/** `files` are Files whether they came off the disk or off the network, so
+    there is one parse path. `urls` is what to leave in the address bar: the
+    URLs a remote board came from, or nothing at all for a local one. */
+async function openFiles(files, urls) {
   warnings.length = 0;
   errBox.textContent = '';
+  busy.textContent = 'Reading board…';
   document.body.classList.add('busy');
   await new Promise(r => setTimeout(r, 16));        // let the spinner paint
   try {
     const entries = [];
     for (const file of files) {
-      if (/\.zip$/i.test(file.name))
-        entries.push(...await readZip(await file.arrayBuffer()));
-      else entries.push({name: file.name, text: await file.text()});
+      const buf = await file.arrayBuffer();
+      if (/\.zip$/i.test(file.name) || looksLikeZip(buf))
+        entries.push(...await readZip(buf));
+      else entries.push({name: file.name, text: new TextDecoder().decode(buf)});
     }
     if (!entries.length) throw new Error('nothing readable in that drop');
 
@@ -48,6 +53,7 @@ async function openFiles(files) {
                        : (files.length === 1 ? files[0].name : files.length + ' Gerber files');
       activate(gerberBackend(entries), name);
     }
+    rememberUrls(urls);
   } catch (ex) {
     showError(ex.message, ex);
   } finally {
@@ -55,6 +61,24 @@ async function openFiles(files) {
   }
 }
 
+/** Same, but the files are fetched first. */
+async function openUrls(urls) {
+  errBox.textContent = '';
+  busy.textContent = urls.length > 1 ? 'Downloading ' + urls.length + ' files…'
+                                     : 'Downloading board…';
+  document.body.classList.add('busy');
+  let files;
+  try {
+    files = await Promise.all(urls.map(fetchBoard));
+  } catch (ex) {
+    document.body.classList.remove('busy');
+    showError(ex.message, ex);
+    return;
+  }
+  await openFiles(files, urls);
+}
+
+const busy = $('busy');
 const fileInput = $('file');
 // iOS greys out anything whose extension it has no registered type for, and
 // .kicad_pcb has none, so on a touch device filter nothing.
@@ -83,3 +107,24 @@ addEventListener('drop', e => {
   if (files.length) openFiles(files);
   else showError('That drop had no files in it.');
 });
+
+/* ---- loading over the network ---- */
+
+// Several URLs at once is how a loose Gerber set arrives, matching a multi-file
+// drop; whitespace and commas both separate them.
+$('url-form').onsubmit = e => {
+  e.preventDefault();
+  const urls = $('url').value.split(/[\s,]+/).filter(Boolean);
+  if (urls.length) openUrls(urls);
+};
+
+// A board named on the query string opens straight away, so a link to a board
+// is a link to it already traced.
+{
+  const urls = boardUrlsFromQuery();
+  if (urls.length) {
+    $('url').value = urls.join(' ');
+    drop.classList.add('hide');       // don't flash the drop screen first
+    openUrls(urls);
+  }
+}

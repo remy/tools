@@ -45,6 +45,13 @@ label.tog{display:flex;align-items:center;gap:10px;padding:7px 0;cursor:pointer;
   user-select:none}
 label.tog input{accent-color:#6ea8ff;margin:0;width:17px;height:17px;flex:none}
 .swatch{width:10px;height:10px;border-radius:2px;flex:none}
+.note{color:#e5c06a;font-size:11px;line-height:1.5;padding-top:4px}
+.note:empty{display:none}
+/* what the wake lock is actually doing, as against what the box asks for */
+.lock-state{margin-left:auto;flex:none;font-size:10px;letter-spacing:.06em;
+  text-transform:uppercase;padding:2px 7px;border-radius:999px;
+  border:1px solid var(--line);color:var(--dim);background:#0a0f1e}
+.lock-state.on{color:#8fd89b;border-color:#2f5c3a;background:#14251a}
 #q{width:100%;background:#0a0f1e;border:1px solid var(--line);color:var(--ink);
   border-radius:6px;padding:9px;font-family:inherit;font-size:16px;outline:none}
 #q:focus{border-color:#4f6ea8}
@@ -68,6 +75,19 @@ label.tog input{accent-color:#6ea8ff;margin:0;width:17px;height:17px;flex:none}
   font:inherit;overflow:hidden}
 #panel[open]{display:flex;flex-direction:column}
 #panel::backdrop{background:rgba(5,8,18,.55)}
+
+/* In the dialog the whole body scrolls, rather than the net list scrolling
+   inside a fixed frame: View, Layers and the filter box between them leave the
+   list a couple of rows tall on a phone, which is the one thing you came for.
+   The title bar and the warning strip stay put at either end. */
+#panel>#side{overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch}
+/* a soft shadow rather than a rule, so it reads as depth once rows slide under
+   it and is invisible against the stats line at the top of the scroll */
+#panel>#side .side-head{position:sticky;top:0;z-index:2;background:var(--panel);
+  box-shadow:0 8px 8px -8px rgba(0,0,0,.6)}
+#panel>#side #nets{flex:none;overflow:visible}
+#panel>#side #warn{position:sticky;bottom:0}
 
 @media (max-width:639px){
   dialog{
@@ -123,6 +143,19 @@ body.dragging #drop{display:flex!important}
 #drop .small b{color:var(--ink);font-weight:600}
 #pick{padding:12px 22px;font-size:14px}
 .tap-only{display:none}
+
+/* "or load one from a URL" — a caption sitting on a hairline */
+#drop .rule{display:flex;align-items:center;gap:10px;width:100%;
+  color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+#drop .rule::before,#drop .rule::after{content:"";flex:1;height:1px;
+  background:var(--line)}
+/* Wraps to two rows in the 325px case; the input keeps the full width. */
+#url-form{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+#url{flex:1 1 14ch;min-width:0;background:#0a0f1e;border:1px solid var(--line);
+  color:var(--ink);border-radius:6px;padding:9px;font-family:inherit;
+  font-size:16px;outline:none}      /* 16px: anything less zooms iOS on focus */
+#url:focus{border-color:#4f6ea8}
+#url-form button{flex:0 0 auto;padding:9px 16px;font-size:14px}
 /* no pointer that can hover means no drag and drop either */
 @media (hover:none){
   .drag-only{display:none}
@@ -154,6 +187,8 @@ body.busy #busy{display:flex}
   #drop .big{font-size:17px}
   #drop .small{font-size:13px;line-height:1.7}
   #pick{padding:6px 10px;font-size:11px}
+  #url{font-size:13px;padding:7px 9px}
+  #url-form button{padding:7px 12px;font-size:12px}
 }
 
 /* ---- KiCad backend: an SVG whose elements carry data-net ---- */
@@ -200,6 +235,9 @@ body.busy #busy{display:flex}
 .pad.on .hole{fill:#0b1020!important}
 .via.on .ring{fill:var(--hl)!important}
 .cu.on{filter:drop-shadow(0 0 .35px var(--hl))}
+/* undimmed -- the default -- the net competes with full-strength copper rather
+   than with copper at 10%, so lean on the glow */
+#wrap:not(.dim) .cu.on{filter:drop-shadow(0 0 .7px var(--hl)) drop-shadow(0 0 .35px var(--hl))}
 
 /* flipped: the mirror is on #wrap, so only un-mirror the text */
 #wrap.flip .lbl{transform:scale(-1,1);transform-box:fill-box;transform-origin:center}
