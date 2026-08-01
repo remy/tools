@@ -45,6 +45,8 @@ label.tog{display:flex;align-items:center;gap:10px;padding:7px 0;cursor:pointer;
   user-select:none}
 label.tog input{accent-color:#6ea8ff;margin:0;width:17px;height:17px;flex:none}
 .swatch{width:10px;height:10px;border-radius:2px;flex:none}
+.note{color:#e5c06a;font-size:11px;line-height:1.5;padding-top:4px}
+.note:empty{display:none}
 #q{width:100%;background:#0a0f1e;border:1px solid var(--line);color:var(--ink);
   border-radius:6px;padding:9px;font-family:inherit;font-size:16px;outline:none}
 #q:focus{border-color:#4f6ea8}
@@ -215,6 +217,8 @@ body.busy #busy{display:flex}
 .pad.on .hole{fill:#0b1020!important}
 .via.on .ring{fill:var(--hl)!important}
 .cu.on{filter:drop-shadow(0 0 .35px var(--hl))}
+/* undimmed, the net competes with full-strength copper, so lean on the glow */
+#wrap:not(.dim) .cu.on{filter:drop-shadow(0 0 .7px var(--hl)) drop-shadow(0 0 .35px var(--hl))}
 
 /* flipped: the mirror is on #wrap, so only un-mirror the text */
 #wrap.flip .lbl{transform:scale(-1,1);transform-box:fill-box;transform-origin:center}

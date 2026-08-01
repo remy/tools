@@ -208,6 +208,17 @@ own sibling files is blocked.
 The service worker ignores it: `sw.js` returns early for any request whose origin
 isn't its own, so board URLs are never cached or intercepted.
 
+**The wake lock has to be taken again after the page is hidden.** The system
+releases a screen wake lock whenever the document stops being visible and does
+*not* hand it back on return — so a board left behind another app silently stops
+holding the screen. `visibilitychange` re-requests it while the box is still
+ticked. Two related facts: the sentinel also fires `release` when the platform
+drops the lock on its own (a low battery will), which is why the code tracks it
+through that event rather than assuming it holds; and `request()` rejects rather
+than resolving-with-null when it's refused, so the checkbox unticks itself and
+says why. Secure contexts only, and absent before Firefox 126 / iOS 16.4, hence
+the feature test that hides the row.
+
 ---
 
 ## 6. Architecture
@@ -234,6 +245,16 @@ labels stay readable.
 
 A `.kicad_pcb` anywhere in a drop beats Gerbers in the same drop, with a warning:
 it states its own connectivity, so it's strictly better.
+
+**Highlighting and dimming are separate mechanisms, which is what makes the
+no-dim option a one-liner.** Lighting a net is the backend's job — `.on` classes
+on SVG elements, or yellow pixels on an overlay canvas — and happens
+unconditionally. Knocking *everything else* back is a single `dim` class on
+`#wrap`, and the CSS under it covers both backends (`.cu` for KiCad, `#c-top`
+and friends for Gerber). So "highlight without dimming" is just not adding that
+class, and it needed no backend change at all. The only addition was a wider
+glow on `#wrap:not(.dim) .cu.on`, because a yellow trace has to compete with
+full-strength copper rather than with copper at 10%.
 
 **Pointer events, not mouse events.** Pan, pinch and pick are one code path for
 mouse and touch. Two details make it work and are easy to break:

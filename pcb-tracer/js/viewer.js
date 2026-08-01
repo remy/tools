@@ -87,7 +87,9 @@ function paint() {
   const want = new Set(pinned);
   if (hovered) want.add(hovered);
   BE.setHighlight(want);
-  wrap.classList.toggle('dim', want.size > 0);
+  // the highlight itself is unconditional; `dim` only knocks back everything
+  // it isn't, which is what the View option opts out of
+  wrap.classList.toggle('dim', want.size > 0 && !keepBright);
   for (const row of netList.children)
     row.classList.toggle('on', pinned.has(+row.dataset.net));
 
