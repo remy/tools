@@ -38,6 +38,24 @@ function kid(node, name) {
 
 const hasFlag = (node, name) => node.some(c => c === name);
 
+/** `hide` is a bare atom up to KiCad 7 and `(hide yes)` from KiCad 8. */
+function isHidden(node) {
+  if (hasFlag(node, 'hide')) return true;
+  const h = kid(node, 'hide');
+  return !!h && h[1] !== 'no';
+}
+
+/** Reference and value live in `(fp_text reference …)` up to KiCad 7 and in
+    `(property "Reference" …)` from KiCad 8. Boards in the wild have either. */
+function fpField(fpn, which) {
+  for (const t of kids(fpn, 'fp_text'))
+    if (t[1] === which) return t.length > 2 ? String(t[2]) : '';
+  const want = which === 'reference' ? 'Reference' : 'Value';
+  for (const p of kids(fpn, 'property'))
+    if (p[1] === want) return p.length > 2 ? String(p[2]) : '';
+  return '';
+}
+
 function f(x, dflt) {
   const v = parseFloat(x);
   return Number.isFinite(v) ? v : (dflt === undefined ? 0 : dflt);

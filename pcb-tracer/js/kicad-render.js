@@ -37,6 +37,7 @@ function buildKicad(pcb) {
   };
 
   const counts = {segment: 0, via: 0, pad: 0, zone: 0};
+  const parts = [];                      // one entry per footprint, see A4
 
   /* ---- copper pours ---------------------------------------------------- */
   for (const z of kids(pcb, 'zone')) {
@@ -143,17 +144,40 @@ function buildKicad(pcb) {
 
   for (const fpn of footprints) {
     const [fx, fy, frot] = atOf(fpn);
-    let ref = '';
-    for (const t of kids(fpn, 'fp_text'))
-      if (t[1] === 'reference') { ref = t.length > 2 ? t[2] : ''; break; }
+    const ref = fpField(fpn, 'reference');
+    const gt = 'translate(' + n(fx) + ',' + n(fy) + ') rotate(' + n(-frot) + ')';
+
+    /* Footprint-local extents, for the box you point at to identify the part.
+       The F.Fab body is the part's silhouette and the pads are what sticks out
+       of it, so the two together are the part as you see it on the board. The
+       courtyard is the fallback for footprints that draw no body -- it is the
+       keep-clear area rather than the part, so it is a size or two too big. */
+    const fabBox = newBox(), yardBox = newBox(), padBox = newBox(), cutBox = newBox();
 
     for (const name of ['fp_line', 'fp_arc', 'fp_circle', 'fp_poly', 'fp_rect'])
-      for (const g of kids(fpn, name)) graphic(g, fx, fy, frot);
+      for (const g of kids(fpn, name)) {
+        graphic(g, fx, fy, frot);
+        const lay = kid(g, 'layer');
+        const l = lay ? lay[1] : '';
+        if (/\.Fab$/.test(l)) growBox(fabBox, g);
+        else if (/\.CrtYd$/.test(l)) growBox(yardBox, g);
+        else if (l === 'Edge.Cuts') growBox(cutBox, g);
+      }
 
-    for (const t of kids(fpn, 'fp_text')) {
-      if (hasFlag(t, 'hide')) continue;
-      if (t[1] !== 'reference' && t[1] !== 'user') continue;
-      const label = t.length > 2 ? t[2] : '';
+    const labels = [];
+    for (const t of kids(fpn, 'fp_text'))
+      if (t[1] === 'reference' || t[1] === 'user')
+        labels.push([t, t[1], t.length > 2 ? t[2] : '']);
+    // KiCad 8 moved the reference out of fp_text and into (property …); only
+    // a property that carries its own (at …) is a thing to draw, since v7 also
+    // writes properties that are pure metadata.
+    if (!labels.some(l => l[1] === 'reference'))
+      for (const p of kids(fpn, 'property'))
+        if (p[1] === 'Reference' && kid(p, 'at'))
+          labels.push([p, 'reference', p.length > 2 ? p[2] : '']);
+
+    for (const [t, kind, label] of labels) {
+      if (isHidden(t)) continue;
       if (!label || label.indexOf('${') >= 0) continue;
       const [tx, ty] = atOf(t);
       const a = -frot * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
@@ -161,10 +185,13 @@ function buildKicad(pcb) {
       const eff = kid(t, 'effects');
       const fo = eff && kid(eff, 'font');
       const size = fo && kid(fo, 'size') ? f(kid(fo, 'size')[1], 1) : 1;
-      push('labels', '<text class="lbl' + (t[1] === 'user' ? ' usr' : '') +
+      push('labels', '<text class="lbl' + (kind === 'user' ? ' usr' : '') +
            '" x="' + n(ax) + '" y="' + n(ay) + '" font-size="' + n(size) + '">' +
            esc(label) + '</text>');
     }
+
+    const partPads = [];
+    let anyThru = false;
 
     for (const p of kids(fpn, 'pad')) {
       if (p.length < 4) continue;
@@ -179,19 +206,29 @@ function buildKicad(pcb) {
       if (!sides.length) continue;
 
       const net = netOf(p);
+      const fn = kid(p, 'pinfunction');
       if (net && nets[net]) {
-        const fn = kid(p, 'pinfunction');
         let label = (ref || '?') + '.' + padNo;
         if (fn && fn.length > 1 && fn[1] !== padNo) label += ' (' + fn[1] + ')';
         nets[net].pads.push(label);
       }
+      partPads.push({no: String(padNo), net,
+                     name: (nets[net] && nets[net].name) || '',
+                     fn: fn && fn.length > 1 && fn[1] !== padNo ? String(fn[1]) : ''});
+      if (ptype === 'thru_hole' || ptype === 'np_thru_hole') anyThru = true;
 
       const sz = kid(p, 'size');
       const w = sz ? f(sz[1], 1) : 1;
       const h = sz && sz.length > 2 ? f(sz[2], w) : w;
 
-      const gt = 'translate(' + n(fx) + ',' + n(fy) + ') rotate(' + n(-frot) + ')';
       const rel = prot - frot;
+      // a pad square-on to its footprint bounds tightly; one turned inside it
+      // (rare -- see KNOWLEDGE §2) only bounds by its longest half-dimension
+      if (Math.abs(rel) < 1e-9) {
+        putBox(padBox, px - w / 2, py - h / 2);
+        putBox(padBox, px + w / 2, py + h / 2);
+      } else putBox(padBox, px, py, Math.max(w, h) / 2);
+
       let pt = 'translate(' + n(px) + ',' + n(py) + ')';
       if (Math.abs(rel) > 1e-9) pt += ' rotate(' + n(-rel) + ')';
 
@@ -250,12 +287,42 @@ function buildKicad(pcb) {
         if (dr) hole = '<circle class="hole" cx="0" cy="0" r="' + n(dr / 2) + '"/>';
       }
 
-      const info = esc((ref || '?') + ' pad ' + padNo);
       for (const side of sides)
         push('pads-' + side, '<g class="cu pad ' + side + '" transform="' + gt + '"' +
-             netAttr(net) + ' data-info="' + info + '"><g transform="' + pt + '">' +
+             netAttr(net) + '><g transform="' + pt + '">' +
              body.join('') + hole + '</g></g>');
     }
+
+    /* ---- the part itself --------------------------------------------- */
+    const lay = kid(fpn, 'layer');
+    const attrNode = kid(fpn, 'attr');
+    const lib = typeof fpn[1] === 'string' ? fpn[1] : '';
+
+    /* Body plus pads is the part as you see it. Failing a body, the courtyard
+       is the whole part and then some. Failing both -- a crystal whose only
+       outline is the slot milled for it -- the cutout is where the part sits,
+       and without it there is nothing left but the pads, which lose to their
+       own copper and leave nothing to point at. */
+    const hit = boxOk(fabBox) ? unionBox(fabBox, padBox)
+              : boxOk(yardBox) ? unionBox(yardBox, padBox)
+              : unionBox(cutBox, padBox);
+    if (hit)
+      push('cmp', '<rect class="cmp" data-cmp="' + parts.length + '" transform="' + gt +
+           '" x="' + n(hit[0]) + '" y="' + n(hit[1]) +
+           '" width="' + n(hit[2] - hit[0]) + '" height="' + n(hit[3] - hit[1]) + '"/>');
+
+    parts.push({
+      ref, lib, value: partValue(fpField(fpn, 'value'), ref, lib),
+      descr: partDescription(kid(fpn, 'descr') ? kid(fpn, 'descr')[1] : ''),
+      tags: kid(fpn, 'tags') ? String(kid(fpn, 'tags')[1] || '') : '',
+      attr: attrNode
+        ? (hasFlag(attrNode, 'smd') ? 'smd'
+          : hasFlag(attrNode, 'through_hole') ? 'through_hole'
+          : hasFlag(attrNode, 'virtual') || hasFlag(attrNode, 'board_only') ? 'virtual' : '')
+        : (anyThru ? 'through_hole' : partPads.length ? 'smd' : ''),
+      side: lay && String(lay[1])[0] === 'B' ? 'b' : 'f',
+      x: fx, y: fy, rot: frot, box: hit, pads: partPads,
+    });
   }
 
   /* ---- tracks ---------------------------------------------------------- */
@@ -309,8 +376,11 @@ function buildKicad(pcb) {
 
   /* ---- assemble -------------------------------------------------------- */
   // b/f pairs are adjacent so the viewer can swap their stacking on flip
+  // 'cmp' sits above the fab outlines it lights up, and below the labels. Its
+  // stacking is only about paint order: the component hit test is geometric,
+  // so those rects never take a pointer event (see backend-kicad).
   const order = ['zones-b', 'zones-f', 'tracks-b', 'tracks-f', 'pads-b', 'pads-f',
-                 'vias', 'silk', 'fab', 'edge', 'labels'];
+                 'vias', 'silk', 'fab', 'cmp', 'edge', 'labels'];
   const html = order.filter(k => buckets[k] && buckets[k].length)
     .map(k => '<g id="g-' + k + '">' + buckets[k].join('') + '</g>').join('');
 
@@ -333,6 +403,6 @@ function buildKicad(pcb) {
     });
   }
 
-  return {html, nets, viewBox, counts,
+  return {html, nets, parts, viewBox, counts,
           cx: (bbox[0] + bbox[2]) / 2};
 }

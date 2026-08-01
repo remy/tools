@@ -110,6 +110,20 @@ label.tog input{accent-color:#6ea8ff;margin:0;width:17px;height:17px;flex:none}
 #hud .pads{margin-top:6px;font-size:11px;line-height:1.9;color:#c3cee6}
 #hud .pads b{color:#fff;font-weight:500;background:#233152;border-radius:4px;padding:2px 6px}
 #hud.empty{color:var(--dim)}
+/* ---- the component card ---- */
+#hud .cval{color:var(--hl2);font-weight:400}
+#hud .cval::before{content:"— ";color:var(--dim)}
+#hud .cfp{margin-top:5px;font-size:11px;color:#9fb0d0;overflow-wrap:anywhere;
+  font-family:ui-monospace,Menlo,monospace}
+/* descriptions run to a full sentence or two; the box is not the place for it */
+#hud .cdesc{margin-top:4px;font-size:11px;color:var(--dim);overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+/* pin number, then its function, then its net: "14 CLK VCC" */
+#hud .pads b i,#hud .pads b u{font-style:normal;text-decoration:none;
+  font-weight:400;margin-left:5px}
+#hud .pads b i{color:#9fb0d0}
+#hud .pads b u{color:var(--hl)}
+#hud .pads .more{color:var(--dim)}
 #keys{display:none;position:absolute;right:12px;bottom:12px;color:var(--dim);
   font-size:11px;text-align:right;line-height:1.7;pointer-events:none}
 kbd{background:#1b2440;border:1px solid var(--line);border-bottom-width:2px;
@@ -203,11 +217,17 @@ body.busy #busy{display:flex}
 .pad .hole{fill:#0b1020}
 .via .ring{fill:var(--via)}
 .via .hole{fill:#0b1020}
-.edge{stroke:var(--edge);fill:none;stroke-linecap:round}
+/* artwork, not copper: none of it may swallow a pick from the copper below */
+.edge{stroke:var(--edge);fill:none;stroke-linecap:round;pointer-events:none}
 .silk{stroke:var(--silk);fill:none;stroke-linecap:round;opacity:.55;pointer-events:none}
 .silk.filled{fill:var(--silk);stroke:none}
-.fab{stroke:#7f8db0;fill:none;opacity:.4;stroke-linecap:round}
+.fab{stroke:#7f8db0;fill:none;opacity:.4;stroke-linecap:round;pointer-events:none}
 .fab.filled{fill:none}
+/* Component bodies. Invisible until pointed at — the fab outlines are already
+   the artwork, and a box round every part would be a mess. Hit testing is
+   geometric (see backend-kicad), so these never take a pointer event. */
+.cmp{fill:none;stroke:none;pointer-events:none}
+.cmp.on{fill:var(--hl);fill-opacity:.12;stroke:var(--hl);stroke-width:.1}
 .lbl{fill:#aebbd8;text-anchor:middle;dominant-baseline:middle;
   font-family:ui-monospace,Menlo,monospace;paint-order:stroke;
   stroke:#0b1020;stroke-width:.18;stroke-linejoin:round;pointer-events:none}
@@ -218,7 +238,7 @@ body.busy #busy{display:flex}
 #wrap.no-pads .pad{display:none}
 #wrap.no-vias .via{display:none}
 #wrap.no-silk #g-silk,#wrap.no-silk #g-labels{display:none}
-#wrap.no-fab #g-fab{display:none}
+#wrap.no-cmp #g-fab,#wrap.no-cmp #g-cmp{display:none}
 
 /* ---- Gerber backend: stacked canvases ---- */
 #wrap.no-top #c-top,#wrap.no-bot #c-bot,#wrap.no-gsilk #c-silk,

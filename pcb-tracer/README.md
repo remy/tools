@@ -39,7 +39,7 @@ board itself is still parsed and traced entirely in the browser.
 
 | | |
 |---|---|
-| hover | preview a net |
+| hover | preview a net, or a component with **Components** on |
 | click | pin it (click again to unpin) |
 | shift / ⌘ / ctrl-click | pin several at once |
 | drag | pan |
@@ -66,6 +66,33 @@ The sidebar carries the View switches, per-board layer toggles, and every net
 with a filter box, in that order. Any caveats about the board you loaded appear
 in the warning strip at the bottom.
 
+## Components
+
+Tick **Components** under Layers on a `.kicad_pcb` and every footprint becomes
+something you can point at. Hover one and the info box tells you what it is:
+
+> **C5 — 0.1pF**
+> SMD capacitor · 0603 (1608 metric) · front · 2 pads
+> `Nintendo:C_0603_Pad_HandSolder`
+> Capacitor SMD 0603, square (rectangular) end terminal, IPC_7351 nominal…
+> `1 VOUT`  `2 GND`
+
+Click to pin it so the card stays while you look elsewhere; Esc or bare board
+clears it, exactly as for a net.
+
+Nothing in the file actually says "0402 SMD capacitor" — that line is assembled
+from the reference designator, the `(attr smd)`, and the package size written
+into the footprint's name, so the library name and the description are always
+shown verbatim underneath it. Where a footprint gives nothing to go on, the
+line simply says less.
+
+A pad or via inside a footprint still resolves to its **net**, not the part —
+that copper is what you meant to click. Tracks and pours crossing under a part
+lose to it while the layer is on; untick it and they come back.
+
+Gerbers have no components: the switch and everything behind it only appear for
+a `.kicad_pcb`.
+
 Below 640px the board gets the whole viewport and the sidebar moves behind the
 **Options** button, opening as a full-screen dialog; picking a net closes it
 again. In the dialog the whole body scrolls as one, rather than the net list
@@ -82,6 +109,7 @@ js/
   util.js               warnings, escaping
   kicad-sexpr.js        s-expression parser
   kicad-geometry.js     arcs, polygons, number formatting
+  kicad-parts.js        what a footprint is: designator, package, value, boxes
   kicad-render.js       .kicad_pcb -> SVG, with data-net on every copper element
   gerber-zip.js         zip reader (central directory + DecompressionStream)
   gerber-parse.js       RS-274X and Excellon parsers
@@ -107,12 +135,17 @@ which it is drawing:
   describe(id), toggles, stats, onFlip(bool) }
 ```
 
+plus, where a backend has components to offer — only KiCad does — an optional
+`{ parts, componentAt(ev), setComponentHighlight(Set), describeComponent(i) }`.
+
 ## What it handles
 
 **KiCad** — board outline, poured copper, track segments and arcs, vias with drill
 holes, pads (rect / roundrect / oval / circle / custom), silkscreen and mask
-artwork, reference designators. Both the KiCad 6/7/8 syntax and KiCad 5 and
-earlier. Verified against all six boards in the `NintendoPCBs` collection.
+artwork, reference designators, and per-footprint component detail. Both the
+KiCad 6/7/8 syntax and KiCad 5 and earlier — including the KiCad 8 move of the
+reference out of `fp_text` and into `(property …)`. Verified against all six
+boards in the `NintendoPCBs` collection.
 
 **Gerber** — apertures C/R/O/P and aperture macros, region fills, `LPD`/`LPC`
 polarity, linear and circular interpolation (`G74` and `G75`), inch and millimetre

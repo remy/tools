@@ -54,6 +54,39 @@ For a v5 arc, the end point is the start rotated about the centre by `−angle`
 using KiCad's own matrix, which in SVG's y-down space is a positive rotation by
 `+angle`. So the SVG sweep flag simply follows the sign of the angle.
 
+**Nothing in the file says what a part is.** There is no "0402 SMD capacitor,
+1.5nF" field, and there never was. What a footprint carries is a reference
+designator, a value, a library footprint name, a free-text `(descr …)`,
+`(tags …)` and an `(attr smd)`. Everything the Components card says above the
+footprint name is assembled from those four, in decreasing order of how much
+you can trust them:
+
+* **the designator prefix** — `C12` is a capacitor. This is a genuine standard
+  and KiCad's own symbol libraries follow it, so it goes first.
+* **the library name** — `Capacitor_SMD:…`, `TestPoint:…`, `Package_QFP:…`.
+  Needed because plenty of boards use net names as designators: DMG-A04-01 has
+  footprints referenced `VCC` and `GND`, where the prefix says nothing at all.
+* **the package size**, which is only ever written in the footprint's *name* —
+  `C_0402_1005Metric`. Matched as a bare four-digit token so `Batt_CR2025` and
+  `CGB-002` don't read as chip sizes. The imperial code is the one people say
+  out loud, so it leads and the metric follows in brackets.
+* **`(tags …)`**, free text, last and lowercase-only — `"QFP LQFP"` must not
+  become a kind of part.
+
+Which is why the raw footprint name and description are always shown verbatim
+underneath: the derived line is a convenience on top of the file's own words,
+and where a footprint gives nothing to go on it simply says less.
+
+**KiCad fills an unset value in rather than leaving it empty**, with one of
+three placeholders: the footprint's own short name (`TestPoint_3.5x1.7mm`), the
+designator, or just the prefix (`C` for a capacitor, `D` for a diode). All
+three are dropped, or half the parts on a board read "C1 — C".
+
+**KiCad 8 moved the reference out of `fp_text` and into `(property "Reference"
+…)`**, and writes `hide` as `(hide yes)` where 6 and 7 wrote a bare atom. Both
+spellings are handled, and only a property carrying its own `(at …)` is treated
+as something to draw — v7 also writes properties that are pure metadata.
+
 **Some boards use mask layers as artwork.** The Nintendo boards put reference
 designators and logos on `F.Mask`/`B.Mask` rather than `F.SilkS`. The renderer
 treats mask graphics like silkscreen for that reason — otherwise those boards
@@ -249,6 +282,14 @@ drawing:
   describe(id), toggles, stats, onFlip(bool) }
 ```
 
+Components are an *optional* second half of that interface — `parts`,
+`componentAt`, `setComponentHighlight`, `describeComponent` — rather than
+something the Gerber backend has to stub out. Gerbers have no components and
+never will, so the viewer asks with `BE.componentAt ? … : null` and the switch
+that gates the whole thing (`componentsLive()`) is false for them by
+construction, which is also what keeps the hover hint honest about what is
+pointable.
+
 Shared once: viewport, pan/zoom, flip, net list, pinning, the dim-the-rest
 highlight, drop handling, errors. The backends differ only where they must —
 KiCad is an SVG whose elements carry `data-net` and highlights by toggling a
@@ -277,6 +318,39 @@ the tool gets used on a phone at a bench, where 10% opacity means the board you
 were tracing against is gone. The only supporting change is a wider glow on
 `#wrap:not(.dim) .cu.on`, because in the default view a yellow trace has to
 compete with full-strength copper rather than with copper at 10%.
+
+**The component hit test is geometric, and it has to be.** A footprint's box has
+copper on *both* sides of it in the stack — pads and vias painted over it, pours
+and tracks under it — so no z-order exists that lets the browser hit-test it
+correctly. Put the box on top and it swallows every pad; put it underneath and a
+ground pour makes the part unreachable. So the rects in `#g-cmp` are
+`pointer-events:none` and exist only to be lit up, while `componentAt()` maps
+the pointer through `getScreenCTM()` into board millimetres and tests the boxes
+itself. A few hundred rotated-rect tests cost nothing, it is exact under pan,
+zoom and flip for free, and — the actual point — it is the only way to *choose*
+what wins.
+
+What it chooses: **pads and vias beat the part; tracks and pours lose to it.**
+Copper you can trace inside a footprint is what you meant to click. A track
+running under a chip body is not, and a pour under it certainly isn't — and the
+whole thing is behind a layer switch that is off by default, so untick it and
+every previous behaviour is back.
+
+**The box is the body plus the pads, not the courtyard.** The courtyard is the
+keep-clear area, a size or two larger than the part, and on a dense board that
+means swallowing routing that isn't the component's. `F.Fab` is the part's
+silhouette and the pads are what sticks out of it, so the union of the two is
+the part as you actually see it. Courtyard is the fallback for footprints that
+draw no body, and the fallback after *that* is the footprint's `Edge.Cuts` — the
+horizontal crystal on DMG-KGDU draws neither body nor courtyard, only the slot
+milled for it, and with pads-beat-part there would otherwise be nothing left to
+point at.
+
+**A pad bounds tightly only when it is square-on to its footprint.** Pad angles
+are absolute (§2), so the pad's own rotation is `padAngle − footprintAngle`;
+where that is zero the box is `w × h`, and where it isn't the only safe bound
+without doing the trigonometry is a disc of `max(w,h)/2`. Using the disc
+unconditionally inflated a 4 × 1.4 mm crystal pad to 4 × 4.
 
 **Pointer events, not mouse events.** Pan, pinch and pick are one code path for
 mouse and touch. Two details make it work and are easy to break:

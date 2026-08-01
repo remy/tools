@@ -8,21 +8,31 @@ const $ = id => document.getElementById(id);
 const stage = $('stage'), wrap = $('wrap'), hud = $('hud'), netList = $('nets');
 const drop = $('drop'), errBox = $('err');
 
-/** No hovering pointer means no net preview, so the prompt has to say "tap". */
-const HINT = matchMedia('(hover:none)').matches
+/** No hovering pointer means no net preview, so the prompt has to say "tap".
+    The second pair is what the Components layer adds, and only shows while it
+    is on -- there is nothing to point at otherwise. */
+const TOUCH = matchMedia('(hover:none)').matches;
+const HINT = TOUCH
   ? 'Tap a trace, pad or via to light up its net.'
   : 'Hover a trace, pad or via — click to pin the net.';
+const HINT_CMP = TOUCH
+  ? 'Tap a trace, pad or via for its net — or a component for the part.'
+  : 'Hover a trace, pad or via for its net — or a component for the part.';
 
 let BE = null;
 let view = {x: 0, y: 0, k: 1};
 let flipped = false;
 let pinned = new Set(), hovered = null;
+/* Components are a second, parallel selection: a part is not a net, so it gets
+   its own hovered/pinned pair rather than being squeezed into the net sets. */
+let pinnedCmp = null, hoveredCmp = null;
 
 function activate(be, title) {
   BE = be;
   flipped = false;
   pinned.clear();
   hovered = null;
+  pinnedCmp = hoveredCmp = null;
 
   wrap.className = '';
   wrap.textContent = '';
@@ -40,7 +50,9 @@ function activate(be, title) {
                   esc(t.label);
     const cb = l.firstChild;
     const apply = () => wrap.classList.toggle(t.cls, !cb.checked);
-    cb.addEventListener('change', apply);
+    // repaint on a real change, not on the first apply: the net list belongs to
+    // the previous board until buildNetList() below runs
+    cb.addEventListener('change', () => { apply(); paint(); });
     apply();
     box.appendChild(l);
   }
@@ -68,10 +80,11 @@ function buildNetList() {
     d.dataset.net = nn.id;
     d.innerHTML = '<span class="nm">' + esc(nn.name) + '</span>' +
                   '<span class="ct">' + esc(nn.right) + '</span>';
-    d.onmouseenter = () => { hovered = nn.id; paint(); };
+    d.onmouseenter = () => { hovered = nn.id; hoveredCmp = null; paint(); };
     d.onmouseleave = () => { hovered = null; paint(); };
     d.onclick = e => {
       const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+      if (!additive) pinnedCmp = null;
       toggle(nn.id, additive);
       // on mobile the list covers the board, so picking one gets out of the way
       if (panel.open && !additive) panel.close();
@@ -87,20 +100,45 @@ function paint() {
   const want = new Set(pinned);
   if (hovered) want.add(hovered);
   BE.setHighlight(want);
+
+  const cmps = new Set();
+  if (pinnedCmp != null) cmps.add(pinnedCmp);
+  if (hoveredCmp != null) cmps.add(hoveredCmp);
+  BE.setComponentHighlight?.(cmps);
+
   // the highlight itself is unconditional; `dim` only knocks back everything
   // it isn't, which is what the View option opts into
-  wrap.classList.toggle('dim', want.size > 0 && dimOnHighlight);
+  wrap.classList.toggle('dim', (want.size > 0 || cmps.size > 0) && dimOnHighlight);
   for (const row of netList.children)
     row.classList.toggle('on', pinned.has(+row.dataset.net));
 
-  const show = hovered ?? (pinned.size ? [...pinned][pinned.size - 1] : null);
-  if (show == null) {
+  // whatever the pointer is on beats whatever is pinned; within each of those,
+  // a part can only be reported when nothing traceable was under the pointer,
+  // so it is never competing with a net for the same click
+  const lastNet = pinned.size ? [...pinned][pinned.size - 1] : null;
+  hud.className = '';
+  if (hoveredCmp != null) hud.innerHTML = BE.describeComponent(hoveredCmp);
+  else if (hovered != null) hud.innerHTML = BE.describe(hovered);
+  else if (pinnedCmp != null) hud.innerHTML = BE.describeComponent(pinnedCmp);
+  else if (lastNet != null) hud.innerHTML = BE.describe(lastNet);
+  else {
     hud.className = 'empty';
-    hud.textContent = pinned.size ? pinned.size + ' nets pinned' : HINT;
-  } else {
-    hud.className = '';
-    hud.innerHTML = BE.describe(show);
+    hud.textContent = pinned.size ? pinned.size + ' nets pinned'
+      : (componentsLive() ? HINT_CMP : HINT);
   }
+}
+
+/** Whether picking a part is on the table at all: a backend that knows about
+    components, with the Components layer showing. Gerbers never do. */
+const componentsLive = () => !!(BE && BE.componentAt && !wrap.classList.contains('no-cmp'));
+
+/** What is under the pointer -- {cmp} or {net} or null. The backend decides
+    which wins where they overlap; here they are just two kinds of answer. */
+function hitAt(ev) {
+  const i = BE.componentAt ? BE.componentAt(ev) : null;
+  if (i != null) return {cmp: i};
+  const id = BE.netAt(ev);
+  return id == null ? null : {net: id};
 }
 
 function toggle(id, additive) {
@@ -223,19 +261,30 @@ addEventListener('pointercancel', release);
 function pick(e) {
   if (!BE) return;
   const additive = e.shiftKey || e.metaKey || e.ctrlKey;
-  const id = BE.netAt(e);
-  if (id == null) { if (!additive) { pinned.clear(); paint(); } return; }
-  toggle(id, additive);
+  const hit = hitAt(e);
+  if (!hit) { if (!additive) { pinned.clear(); pinnedCmp = null; paint(); } return; }
+  if (hit.cmp != null) {
+    // clicking the pinned part again unpins it, matching how a net behaves
+    pinnedCmp = pinnedCmp === hit.cmp ? null : hit.cmp;
+    if (!additive) pinned.clear();
+    paint();
+    return;
+  }
+  if (!additive) pinnedCmp = null;
+  toggle(hit.net, additive);
 }
 
 /* hover preview, mouse only -- there is no hovering on a touchscreen */
 stage.addEventListener('pointermove', e => {
   if (e.pointerType !== 'mouse' || pointers.size || !BE) return;
-  const id = BE.netAt(e);
-  if (id !== hovered) { hovered = id; paint(); }
+  const hit = hitAt(e);
+  const net = hit && hit.net != null ? hit.net : null;
+  const cmp = hit && hit.cmp != null ? hit.cmp : null;
+  if (net !== hovered || cmp !== hoveredCmp) { hovered = net; hoveredCmp = cmp; paint(); }
 });
 stage.addEventListener('pointerleave', e => {
-  if (e.pointerType === 'mouse' && BE && hovered != null) { hovered = null; paint(); }
+  if (e.pointerType !== 'mouse' || !BE) return;
+  if (hovered != null || hoveredCmp != null) { hovered = hoveredCmp = null; paint(); }
 });
 
 stage.addEventListener('wheel', e => {
@@ -260,7 +309,8 @@ function openPanel() {
 }
 panel.addEventListener('close', () => {
   if (side.parentNode === panel) $('app').insertBefore(side, $('main'));
-  if (hovered != null) { hovered = null; paint(); }   // drop any list-row preview
+  // drop any list-row preview
+  if (hovered != null || hoveredCmp != null) { hovered = hoveredCmp = null; paint(); }
 });
 panel.addEventListener('click', e => { if (e.target === panel) panel.close(); });
 $('panel-open').onclick = openPanel;
@@ -288,7 +338,7 @@ $('fit').onclick = () => { if (BE) fit(); };
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }
   if (!BE) return;
-  if (e.key === 'Escape') { pinned.clear(); paint(); }
+  if (e.key === 'Escape') { pinned.clear(); pinnedCmp = null; paint(); }
   else if (e.key === 'f' || e.key === 'F') $('flip').click();
   else if (e.key === '1' || e.key === '2') {
     const cb = $('layers').querySelectorAll('input')[+e.key - 1];
