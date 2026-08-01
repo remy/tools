@@ -283,7 +283,7 @@ $('flip').onclick = () => {
   applyView();
 };
 $('fit').onclick = () => { if (BE) fit(); };
-$('clear').onclick = () => { pinned.clear(); paint(); };
+// no Clear button: tapping bare board already clears, and Esc does on a keyboard
 
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') { if (e.key === 'Escape') e.target.blur(); return; }

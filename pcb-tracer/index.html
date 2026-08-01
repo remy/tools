@@ -17,10 +17,6 @@
     </div>
     <div class="sub" id="stats"></div>
     <div class="group">
-      <h2>Layers</h2>
-      <div id="layers"></div>
-    </div>
-    <div class="group">
       <h2>View</h2>
       <label class="tog">
         <input type="checkbox" id="opt-bright">Highlight without dimming
@@ -29,6 +25,10 @@
         <input type="checkbox" id="opt-wake">Keep the screen awake
       </label>
       <div class="note" id="opt-note"></div>
+    </div>
+    <div class="group">
+      <h2>Layers</h2>
+      <div id="layers"></div>
     </div>
     <div class="group">
       <h2>Nets</h2>
@@ -78,11 +78,10 @@
 
     <div id="hud" class="empty" hidden>Hover a trace, pad or via &mdash; click to pin the net.</div>
     <div id="btns" hidden>
-      <button id="panel-open" aria-label="Nets and layers">Nets</button>
+      <button id="panel-open">Options</button>
       <button id="load">Open&hellip;</button>
       <button id="flip">Flip board</button>
       <button id="fit">Fit</button>
-      <button id="clear">Clear</button>
     </div>
     <div id="keys" hidden>
       <div><kbd>drag</kbd> pan &middot; <kbd>wheel</kbd> zoom &middot; <kbd>click</kbd> pin net</div>
@@ -93,7 +92,7 @@
 
 <!-- On narrow screens #side is moved in here and shown modally, so the board
      keeps the whole viewport. -->
-<dialog id="panel" aria-label="Nets and layers"></dialog>
+<dialog id="panel" aria-label="Options"></dialog>
 
 <input type="file" id="file" accept=".kicad_pcb,.zip,.gbr,.gtl,.gbl,.gko,.gto,.gbo,.gm1,.drl,.xln,.txt" multiple hidden>
 

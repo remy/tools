@@ -71,6 +71,19 @@ label.tog input{accent-color:#6ea8ff;margin:0;width:17px;height:17px;flex:none}
 #panel[open]{display:flex;flex-direction:column}
 #panel::backdrop{background:rgba(5,8,18,.55)}
 
+/* In the dialog the whole body scrolls, rather than the net list scrolling
+   inside a fixed frame: View, Layers and the filter box between them leave the
+   list a couple of rows tall on a phone, which is the one thing you came for.
+   The title bar and the warning strip stay put at either end. */
+#panel>#side{overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch}
+/* a soft shadow rather than a rule, so it reads as depth once rows slide under
+   it and is invisible against the stats line at the top of the scroll */
+#panel>#side .side-head{position:sticky;top:0;z-index:2;background:var(--panel);
+  box-shadow:0 8px 8px -8px rgba(0,0,0,.6)}
+#panel>#side #nets{flex:none;overflow:visible}
+#panel>#side #warn{position:sticky;bottom:0}
+
 @media (max-width:639px){
   dialog{
     inset:0;

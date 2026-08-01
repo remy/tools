@@ -50,7 +50,8 @@ board itself is still parsed and traced entirely in the browser.
 
 On a touchscreen: tap a trace to light up its net, tap it again (or tap bare
 board) to clear, drag to pan, pinch to zoom. There is no hover, so a tap does
-what a click does on the desktop.
+what a click does on the desktop. There is no Clear button — tapping bare board
+is already the gesture for it, and on a keyboard so is <kbd>Esc</kbd>.
 
 ## View options
 
@@ -61,11 +62,16 @@ Two switches under **View** in the sidebar:
 | **Highlight without dimming** | Lighting a net normally drops the rest of the board to 10% opacity. With this on the board keeps its own colours at full strength and the net is picked out by the yellow alone, with a wider glow to carry it against live copper. Meant for a phone, where the dimmed-back board disappears in daylight. Remembered between visits. |
 | **Keep the screen awake** | Holds a screen wake lock so the device doesn't lock while you're looking at a board and not touching it. Deliberately not remembered — it starts off every time. The row is hidden where the browser has no Wake Lock API. |
 
-The sidebar lists every net with a filter box, plus per-board layer toggles. Any
-caveats about the board you loaded appear in the warning strip at the bottom of
-the sidebar. Below 640px the board gets the whole viewport and the sidebar moves
-behind the **Nets** button, opening as a full-screen dialog; picking a net closes
-it again.
+The sidebar carries the View switches, per-board layer toggles, and every net
+with a filter box, in that order. Any caveats about the board you loaded appear
+in the warning strip at the bottom.
+
+Below 640px the board gets the whole viewport and the sidebar moves behind the
+**Options** button, opening as a full-screen dialog; picking a net closes it
+again. In the dialog the whole body scrolls as one, rather than the net list
+scrolling inside a fixed frame — with the switches and toggles above it, a
+self-scrolling list is only a couple of rows tall on a phone. The title bar and
+the warning strip stay put at either end while it scrolls.
 
 ## Layout
 

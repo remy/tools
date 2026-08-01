@@ -277,6 +277,14 @@ checkboxes, the filter text and every listener intact; two copies would drift.
 `#app>#side` / `#panel>#side` selectors do the rest, so no JS decides how it
 looks.
 
+That parent selector is also what lets the two scroll differently. In the
+sidebar the net list scrolls inside a fixed column, which is right when the
+column is full height. In the dialog it isn't: View, Layers and the filter box
+above it leave the list about five rows tall on a phone, so `#panel>#side`
+scrolls as one body and `#nets` goes back to `flex:none`. The title bar and the
+warning strip are `position:sticky` at either end so the close button and any
+caveat stay put while the middle scrolls.
+
 ---
 
 ## 7. How this was tested, and how to test changes
