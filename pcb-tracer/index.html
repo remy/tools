@@ -11,7 +11,10 @@
 <body>
 <div id="app">
   <div id="side" class="empty">
-    <h1 id="title">PCB net tracer</h1>
+    <div class="side-head">
+      <h1 id="title">PCB net tracer</h1>
+      <button id="panel-close" aria-label="Close panel">&times;</button>
+    </div>
     <div class="sub" id="stats"></div>
     <div class="group">
       <h2>Layers</h2>
@@ -30,14 +33,15 @@
 
     <div id="drop">
       <div class="plate">
-        <div class="big">Drop a board here</div>
+        <div class="big"><span class="drag-only">Drop a board here</span><span
+          class="tap-only">Open a board</span></div>
         <div class="small">
           <b>.kicad_pcb</b> &mdash; nets are read straight out of the file, with real
           net names and pad references.<br><br>
           <b>Gerber .zip</b> (or the loose files) &mdash; Gerbers carry no netlist, so
           connectivity is recovered from the copper geometry and stitched between
           layers through the drill file.<br><br>
-          Whichever you drop is detected automatically. Everything runs in the
+          Whichever you pick is detected automatically. Everything runs in the
           browser; nothing is uploaded.
         </div>
         <button id="pick">Choose files&hellip;</button>
@@ -49,6 +53,7 @@
 
     <div id="hud" class="empty" hidden>Hover a trace, pad or via &mdash; click to pin the net.</div>
     <div id="btns" hidden>
+      <button id="panel-open" aria-label="Nets and layers">Nets</button>
       <button id="load">Open&hellip;</button>
       <button id="flip">Flip board</button>
       <button id="fit">Fit</button>
@@ -60,6 +65,11 @@
     </div>
   </div>
 </div>
+
+<!-- On narrow screens #side is moved in here and shown modally, so the board
+     keeps the whole viewport. -->
+<dialog id="panel" aria-label="Nets and layers"></dialog>
+
 <input type="file" id="file" accept=".kicad_pcb,.zip,.gbr,.gtl,.gbl,.gko,.gto,.gbo,.gm1,.drl,.xln,.txt" multiple hidden>
 
 <!-- Classic scripts, deliberately not ES modules: a module is fetched with

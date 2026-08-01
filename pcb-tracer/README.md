@@ -28,9 +28,15 @@ works. Nothing is uploaded; there is no network code in the project at all.
 | <kbd>1</kbd> / <kbd>2</kbd> | toggle the copper layers |
 | <kbd>Esc</kbd> | clear |
 
+On a touchscreen: tap a trace to light up its net, tap it again (or tap bare
+board) to clear, drag to pan, pinch to zoom. There is no hover, so a tap does
+what a click does on the desktop.
+
 The sidebar lists every net with a filter box, plus per-board layer toggles. Any
 caveats about the board you loaded appear in the warning strip at the bottom of
-the sidebar.
+the sidebar. Below 640px the board gets the whole viewport and the sidebar moves
+behind the **Nets** button, opening as a full-screen dialog; picking a net closes
+it again.
 
 ## Layout
 

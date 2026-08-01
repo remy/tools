@@ -56,6 +56,9 @@ async function openFiles(files) {
 }
 
 const fileInput = $('file');
+// iOS greys out anything whose extension it has no registered type for, and
+// .kicad_pcb has none, so on a touch device filter nothing.
+if (matchMedia('(hover:none)').matches) fileInput.removeAttribute('accept');
 for (const el of [$('pick'), $('load')]) el.onclick = () => fileInput.click();
 fileInput.onchange = () => {
   if (fileInput.files.length) openFiles([...fileInput.files]);
