@@ -39,12 +39,26 @@ export function render() {
   // it so every list opens in the clean, controls-hidden state.
   if (!onList) state.editMode = false;
 
+  // The landing page borrows the same header toggle to expose drag handles for
+  // reordering the lists — only worth offering once there are two to shuffle.
+  const canReorderLists = !onList && state.lists.length > 1;
+  if (!canReorderLists) state.reorderLists = false;
+
   $('header-title').textContent = onList ? list.name : 'Todo Lists';
   $('btn-back').hidden = !onList;
-  $('btn-edit-mode').hidden = !onList;
-  $('btn-edit-mode').setAttribute('aria-pressed', String(state.editMode));
+
+  const modeBtn = $('btn-edit-mode');
+  modeBtn.hidden = !onList && !canReorderLists;
+  modeBtn.setAttribute('aria-pressed', String(onList ? state.editMode : state.reorderLists));
+  modeBtn.setAttribute('aria-label', onList ? 'Edit items' : 'Reorder lists');
+  // toggleAttribute, not .hidden: the IDL property is defined on HTMLElement
+  // only, so assigning it on an <svg> sets a dead expando instead of the
+  // attribute the [hidden] rule keys off.
+  $('icon-edit-items').toggleAttribute('hidden', !onList);
+  $('icon-reorder-lists').toggleAttribute('hidden', onList);
 
   $('home-view').hidden = onList;
+  $('home-view').classList.toggle('editing', state.reorderLists);
   $('list-view').hidden = !onList;
   $('list-view').classList.toggle('editing', state.editMode);
   $('add-item-form').hidden = !onList;
@@ -70,6 +84,9 @@ export function renderHome() {
 function homeRow(list) {
   const li = document.createElement('li');
   li.className = 'pick-row';
+  li.dataset.id = list.id;
+
+  li.appendChild(dragHandle('pick-drag'));
 
   const pick = document.createElement('button');
   pick.type = 'button';
@@ -184,11 +201,13 @@ function iconBtn(action, label, paths, extraClass = '') {
 }
 
 // A drag handle — reorder via pointer drag (mouse or touch). Reordering is
-// wired up with Pointer Events in events.js so it works on touch too.
-function dragHandle() {
+// wired up with Pointer Events in events.js so it works on touch too. The
+// class differs per view (items vs lists) because each has its own CSS rule
+// for when the handle is revealed.
+function dragHandle(cls = 'todo-drag') {
   return iconBtn('drag', 'Drag to reorder',
     '<path d="M6 4.5h.02M6 9h.02M6 13.5h.02M12 4.5h.02M12 9h.02M12 13.5h.02" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>',
-    'todo-drag');
+    cls);
 }
 
 const EDIT_PATHS = '<path d="M11.5 3.5L14.5 6.5M3 15H6L13.5 7.5L10.5 4.5L3 12V15Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>';

@@ -483,6 +483,30 @@ body.reordering {
   margin-top: 0.25rem;
 }
 
+/* Status line for a ?list= share link — either waiting on sync or gone. Tap
+   to dismiss, hence a button rather than a paragraph. */
+.share-notice {
+  flex-shrink: 0;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-2);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.625rem 0.75rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+
+  &[data-state="missing"] {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-color: var(--danger);
+  }
+}
+
 /* ── Empty app state ── */
 .empty-app {
   flex: 1;
@@ -830,6 +854,25 @@ dialog {
   cursor: pointer;
 
   &:hover .pick-name { color: var(--accent); }
+}
+
+/* Reordering the landing page mirrors the list view's edit mode: the handle
+   only appears once the header toggle is on, keeping the resting UI clean.
+   Placed after .icon-btn so the hide rule wins over its display:inline-flex. */
+.pick-drag {
+  display: none;
+  cursor: grab;
+  touch-action: none;
+
+  &:active { cursor: grabbing; }
+}
+
+.home-view.editing .pick-drag {
+  display: inline-flex;
+}
+
+.pick-row.dragging {
+  opacity: 0.5;
 }
 
 .pick-name {

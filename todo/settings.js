@@ -1,8 +1,10 @@
 import { state } from './state.js';
 import { db, getSyncConfig, setSyncConfig, encodeSyncConfig, SHARE_PARAM } from './db.js';
-import { refreshAll, refreshItems, selectList } from './lists.js';
-import { renderItems } from './render.js';
+import { refreshAll, refreshItems, selectList, loadLists } from './lists.js';
+import { render, renderItems } from './render.js';
 import { parseMarkdown } from './import.js';
+import { buildListLink } from './share.js';
+import { hasListOrder, clearListOrder } from './order.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -55,6 +57,8 @@ export function openSettings() {
   $('sync-token').value = cfg.token;
   updateShareAvailability(cfg.url);
 
+  // Only worth offering the reset once the landing page has been rearranged.
+  $('list-order-section').hidden = !hasListOrder();
   setupListSection();
   renderTemplates();
   $('settings-dialog').showModal();
@@ -71,6 +75,9 @@ function setupListSection() {
   $('list-settings-section').hidden = !onList;
   resetImportChoice();
   $('print-choice').hidden = true;
+  $('share-choice').hidden = true;
+  // A link can only carry the data itself when there's a server behind it.
+  $('share-list-sync').disabled = !getSyncConfig().url;
   $('import-file').value = '';
   if (onList) {
     const list = state.lists.find((l) => l.id === state.currentListId);
@@ -144,7 +151,7 @@ export async function handleCloneList() {
   if (!trimmed) return;
   const newId = await db.cloneList(list.id, trimmed);
   $('settings-dialog').close();
-  state.lists = await db.getLists();
+  await loadLists();
   state.counts = await db.getCounts();
   await selectList(newId);
 }
@@ -191,27 +198,48 @@ export function handlePrint(unchecked) {
   window.print();
 }
 
+// ── Share links ──
+// Copy to the clipboard, flashing confirmation on the button that was pressed
+// and restoring its label afterwards. One timer per button so two links copied
+// in quick succession don't cancel each other's reset.
+const shareResetTimers = new WeakMap();
+async function copyLink(link, btn, label) {
+  try {
+    await navigator.clipboard.writeText(link);
+    btn.textContent = 'Copied!';
+    clearTimeout(shareResetTimers.get(btn));
+    shareResetTimers.set(btn, setTimeout(() => { btn.textContent = label; }, 2000));
+  } catch {
+    // Clipboard blocked (e.g. insecure context) — surface the link to copy by hand.
+    prompt('Copy this link:', link);
+  }
+}
+
 // Build a link that encodes the current sync config and copy it to the
 // clipboard. Opening it on another device saves the config and reloads.
-let shareResetTimer = null;
 export async function handleShareLink() {
   const cfg = getSyncConfig();
   if (!cfg.url) return;
   const link = `${location.origin}${location.pathname}?${SHARE_PARAM}=${encodeSyncConfig(cfg)}`;
+  await copyLink(link, $('sync-share'), 'Copy share link');
+}
 
-  const btn = $('sync-share');
-  const flash = (msg) => {
-    btn.textContent = msg;
-    clearTimeout(shareResetTimer);
-    shareResetTimer = setTimeout(() => { btn.textContent = 'Copy share link'; }, 2000);
-  };
-  try {
-    await navigator.clipboard.writeText(link);
-    flash('Copied!');
-  } catch {
-    // Clipboard blocked (e.g. insecure context) — surface the link to copy by hand.
-    prompt('Copy this sync link:', link);
-  }
+// A link straight to the open list. Without `includeSync` it only opens the
+// list for someone who already has the data; with it, the link also carries
+// the sync config so a brand new device can download the list first.
+export async function handleShareList(includeSync) {
+  if (!state.currentListId) return;
+  const btn = $(includeSync ? 'share-list-sync' : 'share-list-plain');
+  const label = includeSync ? 'Link + sync access' : 'Link to this list';
+  await copyLink(buildListLink(state.currentListId, { includeSync }), btn, label);
+}
+
+// ── Landing-page order ──
+export async function handleResetListOrder() {
+  clearListOrder();
+  await loadLists();
+  $('list-order-section').hidden = true;
+  render();
 }
 
 // ── Templates ──

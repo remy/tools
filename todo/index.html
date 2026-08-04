@@ -23,9 +23,13 @@
         </button>
         <h1 class="header-title" id="header-title">Todo Lists</h1>
         <button class="action-btn" id="btn-edit-mode" aria-label="Edit items" aria-pressed="false" hidden>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <svg id="icon-edit-items" width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M12.5 4.5L15.5 7.5M4 16H7L15 8L12 5L4 13V16Z" stroke="currentColor" stroke-width="1.6"
               stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <svg id="icon-reorder-lists" width="20" height="20" viewBox="0 0 20 20" fill="none" hidden>
+            <path d="M7 7L10 4L13 7M7 13L10 16L13 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
           </svg>
         </button>
         <button class="action-btn" id="btn-settings" aria-label="Settings">
@@ -36,6 +40,12 @@
 
       <!-- Home / landing: all lists -->
       <main class="home-view" id="home-view" hidden>
+        <!-- Status of a ?list= share link that is still waiting on sync. A
+             button so it can be tapped away (and reached by keyboard) once
+             it has been read. -->
+        <button class="share-notice" id="share-notice" type="button" title="Dismiss" aria-live="polite"
+          hidden></button>
+
         <!-- No lists yet -->
         <div class="empty-app" id="empty-app" hidden>
           <div class="empty-illustration">
@@ -198,6 +208,17 @@
             <button class="btn btn-primary" id="import-open" type="button">Import Markdown…</button>
             <button class="btn btn-ghost" id="clone-list" type="button">Clone…</button>
             <button class="btn btn-ghost" id="print-open" type="button">Print…</button>
+            <button class="btn btn-ghost" id="share-open" type="button">Share…</button>
+          </div>
+          <div class="import-choice" id="share-choice" hidden>
+            <p class="import-summary">Copy a link that opens straight into this list:</p>
+            <div class="pop-actions">
+              <button class="btn btn-ghost" id="share-list-plain" type="button">Link to this list</button>
+              <button class="btn btn-ghost" id="share-list-sync" type="button" disabled>Link + sync access</button>
+            </div>
+            <p class="sync-hint">The plain link only opens the list on a device that already syncs this data.
+              "Link + sync access" also carries your CouchDB URL and token so a brand new device can download it —
+              only send that one to people you trust.</p>
           </div>
           <div class="import-choice" id="print-choice" hidden>
             <p class="import-summary">Print this list as:</p>
@@ -213,6 +234,15 @@
               <button class="btn btn-ghost" id="import-replace" type="button">Replace</button>
               <button class="btn btn-ghost" id="import-cancel" type="button">Cancel</button>
             </div>
+          </div>
+        </div>
+
+        <div class="settings-section" id="list-order-section" hidden>
+          <h3 class="settings-heading">List order</h3>
+          <p class="field-hint-block">You've arranged the lists on the home screen by hand. That order is stored on
+            this device only — it never syncs, so everyone sharing these lists can arrange their own.</p>
+          <div class="pop-actions">
+            <button class="btn btn-ghost" id="list-order-reset" type="button">Reset to default order</button>
           </div>
         </div>
 
