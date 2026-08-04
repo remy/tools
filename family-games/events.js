@@ -1,0 +1,123 @@
+import { state, gameById } from './state.js';
+import { $ } from './ui.js';
+import { goHome, selectGame, renameGame, deleteGame, deleteSession } from './games.js';
+import {
+  openEntry, saveEntry, deleteEntry, togglePlayer, clearOrder,
+  syncNewGameField, toggleQuickAdd, addPlayerFromEntry,
+} from './entry.js';
+import {
+  openPlayerEditor, savePlayer, onPlayerFieldInput, removePlayer, restorePlayer,
+} from './players.js';
+import {
+  openSettings, handleSyncSave, handleSyncNow, handleSyncPull,
+  handleShareLink, handleShareGame,
+} from './settings.js';
+
+// Native <dialog>: dismiss when the backdrop (the dialog element itself) is
+// clicked. Relies on the dialog having no padding so only backdrop clicks
+// target the element directly.
+function wireBackdropDismiss(id) {
+  const dlg = $(id);
+  dlg.addEventListener('click', (e) => {
+    if (e.target === dlg) dlg.close();
+  });
+}
+
+// ── Home: pick a game ──
+function wireHome() {
+  $('home-list').addEventListener('click', (e) => {
+    const el = e.target.closest('[data-action="pick"]');
+    if (el) selectGame(el.dataset.id);
+  });
+}
+
+// ── Game view: edit or delete a recorded result ──
+function wireSessions() {
+  $('session-list').addEventListener('click', async (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    const card = el.closest('.session');
+    if (!card) return;
+    if (el.dataset.action === 'edit-session') openEntry({ sessionId: card.dataset.id });
+    else if (el.dataset.action === 'delete-session') await deleteSession(card.dataset.id);
+  });
+}
+
+// ── Record dialog ──
+function wireEntry() {
+  $('btn-record').addEventListener('click', () => {
+    openEntry({ gameId: state.view === 'game' ? state.currentGameId : null });
+  });
+  $('entry-players').addEventListener('click', (e) => {
+    const chip = e.target.closest('.player-chip');
+    if (chip) togglePlayer(chip.dataset.id);
+  });
+  $('entry-game').addEventListener('change', syncNewGameField);
+  $('entry-clear').addEventListener('click', clearOrder);
+  $('entry-add-player').addEventListener('click', toggleQuickAdd);
+  $('entry-player-save').addEventListener('click', addPlayerFromEntry);
+  // Enter in the quick-add box adds the player rather than submitting the
+  // whole result, which is almost never what's meant mid-typing.
+  $('entry-player-name').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    addPlayerFromEntry();
+  });
+  $('entry-delete').addEventListener('click', deleteEntry);
+  $('entry-form').addEventListener('submit', (e) => { e.preventDefault(); saveEntry(); });
+}
+
+// ── Player editor ──
+function wirePlayers() {
+  $('players-list').addEventListener('click', async (e) => {
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    const { action, id } = el.dataset;
+    if (action === 'edit-player') openPlayerEditor(id);
+    else if (action === 'delete-player') await removePlayer(id);
+    else if (action === 'restore-player') await restorePlayer(id);
+  });
+  $('player-new').addEventListener('click', () => openPlayerEditor(null));
+  $('player-name').addEventListener('input', onPlayerFieldInput);
+  $('player-emoji').addEventListener('input', onPlayerFieldInput);
+  $('player-form').addEventListener('submit', (e) => { e.preventDefault(); savePlayer(); });
+}
+
+export function bindEvents() {
+  $('btn-back').addEventListener('click', goHome);
+  $('btn-settings').addEventListener('click', openSettings);
+
+  // Settings: this game
+  $('game-rename').addEventListener('click', async () => {
+    await renameGame(state.currentGameId);
+    // The dialog stays open over the renamed game, so keep its label honest.
+    const game = gameById(state.currentGameId);
+    if (game) $('game-settings-name').textContent = game.title;
+  });
+  $('game-delete').addEventListener('click', async () => {
+    const id = state.currentGameId;
+    $('settings-dialog').close();
+    await deleteGame(id);
+  });
+  $('game-share-open').addEventListener('click', () => { $('share-choice').hidden = false; });
+  $('share-game-plain').addEventListener('click', () => handleShareGame(false));
+  $('share-game-sync').addEventListener('click', () => handleShareGame(true));
+
+  // Settings: sync
+  $('sync-save').addEventListener('click', handleSyncSave);
+  $('sync-now').addEventListener('click', handleSyncNow);
+  $('sync-pull').addEventListener('click', handleSyncPull);
+  $('sync-share').addEventListener('click', handleShareLink);
+
+  // Close buttons (any element with data-close pointing at a dialog id)
+  document.querySelectorAll('[data-close]').forEach((btn) => {
+    btn.addEventListener('click', () => $(btn.dataset.close).close());
+  });
+
+  ['entry-dialog', 'player-dialog', 'settings-dialog'].forEach(wireBackdropDismiss);
+
+  wireHome();
+  wireSessions();
+  wireEntry();
+  wirePlayers();
+}

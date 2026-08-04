@@ -1,0 +1,1123 @@
+/* ── Palette ── */
+:root {
+  --bg: #f8f8fa;
+  --bg-card: #ffffff;
+  --bg-hover: #f0f0f4;
+  --bg-input: #f4f4f7;
+  --border: #e4e4e9;
+  --border-light: #eeeeef;
+  --text: #1a1a2e;
+  --text-2: #5a5a72;
+  --text-3: #8e8ea0;
+  --accent: #6c5ce7;
+  --accent-soft: #e8e4fd;
+  --accent-glow: rgba(108, 92, 231, 0.12);
+  --danger: #e74c3c;
+  --danger-soft: #fde8e6;
+  --green: #00b894;
+  --gold: #d69e00;
+  --gold-soft: #fdf3d8;
+  --silver: #8d97a5;
+  --silver-soft: #eef1f5;
+  --bronze: #b1702f;
+  --bronze-soft: #f8ecdf;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-pop: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e14;
+    --bg-card: #1a1a26;
+    --bg-hover: #22222e;
+    --bg-input: #16161f;
+    --border: #2a2a3a;
+    --border-light: #222230;
+    --text: #ededf0;
+    --text-2: #9898aa;
+    --text-3: #5e5e70;
+    --accent: #a29bfe;
+    --accent-soft: #262040;
+    --accent-glow: rgba(162, 155, 254, 0.1);
+    --danger: #ff6b6b;
+    --danger-soft: #2e1515;
+    --green: #55efc4;
+    --gold: #f5c518;
+    --gold-soft: #302614;
+    --silver: #b7c0cd;
+    --silver-soft: #23262d;
+    --bronze: #d98b3f;
+    --bronze-soft: #2c1f13;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --shadow-pop: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ensure the hidden attribute always wins, even over flex/grid display. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100svh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── App shell ── */
+/* Anchored to the visible viewport with position:fixed + inset:0 rather than
+   height:100dvh — in an iOS standalone PWA 100dvh can resolve taller than the
+   visible area, pushing the fixed action bar below the fold where
+   body{overflow:hidden} makes it unreachable. */
+.app {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100svh;
+  max-width: 560px;
+  margin-inline: auto;
+}
+
+/* ── Header ── */
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+}
+
+.header-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 0.125rem;
+}
+
+.action-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: var(--bg-hover); color: var(--text); }
+  &:active { scale: 0.92; }
+}
+
+/* Red badge on the settings cog while sync is in an error state. */
+.sync-error-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+/* Mask-based icons: load a shared SVG from /icons and paint it with
+   currentColor so it inherits text colour and adapts to the theme. */
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-settings {
+  width: 1.25rem;
+  height: 1.25rem;
+  -webkit-mask-image: url(/icons/settings.svg);
+  mask-image: url(/icons/settings.svg);
+}
+
+/* ── Avatars ── */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  font-size: 1.0625rem;
+  line-height: 1;
+  background: color-mix(in srgb, var(--avatar-colour, var(--accent)) 20%, var(--bg-card));
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--avatar-colour, var(--accent)) 55%, transparent);
+}
+
+/* Initials stand in when no emoji is set — they need the full colour to read. */
+.avatar-initials {
+  background: var(--avatar-colour, var(--accent));
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.avatar-sm {
+  width: 1.625rem;
+  height: 1.625rem;
+  font-size: 0.875rem;
+
+  &.avatar-initials { font-size: 0.625rem; }
+}
+
+.avatar-lg {
+  width: 3.25rem;
+  height: 3.25rem;
+  font-size: 1.75rem;
+
+  &.avatar-initials { font-size: 1.125rem; }
+}
+
+/* ── Scrolling views ── */
+.home-view,
+.game-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.25rem 0.75rem 0.75rem;
+}
+
+.game-view {
+  gap: 1.25rem;
+}
+
+.section-heading {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.empty-note {
+  color: var(--text-3);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  padding: 0.75rem 0.25rem;
+}
+
+/* Status line for a ?game= share link — either waiting on sync or gone. Tap
+   to dismiss, hence a button rather than a paragraph. */
+.share-notice {
+  flex-shrink: 0;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-2);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.625rem 0.75rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+
+  &[data-state="missing"] {
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-color: var(--danger);
+  }
+}
+
+/* ── Empty app state ── */
+.empty-app {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 2rem 1.5rem;
+
+  & .empty-illustration { color: var(--text-3); margin-bottom: 0.5rem; }
+  & h2 { font-size: 1.25rem; font-weight: 700; }
+  & p { color: var(--text-2); font-size: 0.9375rem; max-width: 22rem; line-height: 1.45; }
+}
+
+/* ── Pick lists (games on the landing page, players in settings) ── */
+.pick-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.pick-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.375rem 0.25rem 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-sm);
+
+  &.archived { opacity: 0.65; }
+}
+
+.pick-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:hover .pick-name { color: var(--accent); }
+}
+
+.pick-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.pick-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pick-meta {
+  font-size: 0.75rem;
+  color: var(--text-3);
+}
+
+.pick-winner {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding-right: 0.125rem;
+}
+
+/* ── Standings ── */
+.standings-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.standing-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem 0.5rem 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+
+  &[data-rank="1"] { border-color: color-mix(in srgb, var(--gold) 50%, var(--border)); }
+}
+
+.standing-rank {
+  flex-shrink: 0;
+  width: 1.5rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+
+  .standing-row[data-rank="1"] & { color: var(--gold); }
+  .standing-row[data-rank="2"] & { color: var(--silver); }
+  .standing-row[data-rank="3"] & { color: var(--bronze); }
+}
+
+.standing-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+}
+
+.standing-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.standing-meta {
+  font-size: 0.6875rem;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.standing-wins {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 2.75rem;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+
+.standing-wins-label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+
+/* ── History ── */
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.session {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.session-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker { display: none; }
+  &:hover { background: var(--bg-hover); }
+}
+
+.session-when {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+}
+
+.session-date {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.session-ago {
+  font-size: 0.6875rem;
+  color: var(--text-3);
+}
+
+.session-winner {
+  flex-shrink: 1;
+  min-width: 0;
+  /* Give way before the date does — a long name ellipsises inside the pill
+     rather than wrapping the date on a narrow phone. */
+  max-width: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1875rem 0.5rem 0.1875rem 0.1875rem;
+  border-radius: 99px;
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+
+.session-winner-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--text-3);
+  transition: transform 0.2s ease;
+}
+
+.session[open] .chevron {
+  transform: rotate(180deg);
+}
+
+.session-body {
+  padding: 0.25rem 0.75rem 0.625rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.result-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding-top: 0.5rem;
+}
+
+.result-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3125rem 0.5rem;
+  border-radius: 8px;
+  background: var(--bg-input);
+
+  &[data-position="1"] { background: var(--gold-soft); }
+  &[data-position="2"] { background: var(--silver-soft); }
+  &[data-position="3"] { background: var(--bronze-soft); }
+}
+
+.result-pos {
+  flex-shrink: 0;
+  width: 2.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+
+  .result-row[data-position="1"] & { color: var(--gold); }
+  .result-row[data-position="2"] & { color: var(--silver); }
+  .result-row[data-position="3"] & { color: var(--bronze); }
+}
+
+.result-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-note {
+  font-size: 0.8125rem;
+  color: var(--text-2);
+  padding: 0.5rem 0.5rem 0;
+  line-height: 1.4;
+}
+
+.session-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.125rem;
+  padding-top: 0.375rem;
+}
+
+/* ── Action bar ── */
+.action-bar {
+  flex-shrink: 0;
+  display: flex;
+  padding: 0.625rem 0.75rem;
+  padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-card);
+}
+
+.record-btn {
+  flex: 1;
+  min-width: 0;
+  padding-block: 0.75rem;
+
+  /* A long game title rides in this label, so let it ellipsis rather than
+     push the bar wider than the phone. */
+  & span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5625rem 1.125rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  font-family: inherit;
+  transition: all 0.15s;
+  white-space: nowrap;
+
+  &:active { scale: 0.97; }
+  &:disabled { opacity: 0.6; cursor: default; }
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.3);
+
+  &:hover { filter: brightness(1.1); }
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  border-color: var(--border);
+
+  &:hover { background: var(--bg-hover); border-color: var(--accent); color: var(--accent); }
+}
+
+.btn-danger {
+  color: var(--danger);
+
+  &:hover { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+}
+
+.btn-sm {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: var(--bg-hover); color: var(--text); }
+  &:active { scale: 0.9; }
+}
+
+.icon-danger:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* ── Dialogs ── */
+dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: var(--shadow-pop);
+  padding: 0;
+  max-width: min(28rem, calc(100vw - 2rem));
+  width: 100%;
+  max-height: 90dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-family: inherit;
+  opacity: 0;
+  scale: 0.97;
+  transition:
+    opacity 0.2s ease,
+    scale 0.2s ease,
+    display 0.2s allow-discrete,
+    overlay 0.2s allow-discrete;
+
+  &[open] {
+    opacity: 1;
+    scale: 1;
+
+    @starting-style {
+      opacity: 0;
+      scale: 0.97;
+    }
+  }
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0;
+    transition: opacity 0.2s ease, display 0.2s allow-discrete, overlay 0.2s allow-discrete;
+  }
+
+  &[open]::backdrop {
+    opacity: 1;
+
+    @starting-style { opacity: 0; }
+  }
+}
+
+@media (max-width: 639px) {
+  dialog {
+    inset: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+
+.pop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-light);
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 1;
+
+  & h2 {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.pop-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  color: var(--text-3);
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: var(--danger-soft); color: var(--danger); }
+}
+
+.pop-body { padding: 1.25rem; }
+
+.pop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  padding-top: 0.75rem;
+}
+
+/* ── Forms ── */
+.field {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.375rem;
+}
+
+.field input[type="text"],
+.field input[type="url"],
+.field input[type="date"],
+.field input[type="password"],
+.field select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9375rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &::placeholder { color: var(--text-3); }
+  &:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+}
+
+.field select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238e8ea0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+
+.field-hint-block {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  line-height: 1.4;
+  margin: -0.125rem 0 0.5rem;
+}
+
+.field-hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-3);
+}
+
+.form-error {
+  font-size: 0.8125rem;
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  line-height: 1.4;
+}
+
+/* ── Player picker (record dialog) ── */
+.player-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.player-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  padding: 0.3125rem 0.75rem 0.3125rem 0.3125rem;
+  border: 1.5px solid var(--border);
+  border-radius: 99px;
+  background: var(--bg-input);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover { border-color: var(--accent); }
+  &:active { scale: 0.96; }
+
+  &[aria-pressed="true"] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  /* The podium places get their medal colour so the top three read at a glance. */
+  &[data-position="1"] { border-color: var(--gold); background: var(--gold-soft); }
+  &[data-position="2"] { border-color: var(--silver); background: var(--silver-soft); }
+  &[data-position="3"] { border-color: var(--bronze); background: var(--bronze-soft); }
+}
+
+.chip-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.chip-position {
+  position: absolute;
+  top: -0.375rem;
+  left: -0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding-inline: 0.25rem;
+  border-radius: 99px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 0 2px var(--bg-card);
+
+  .player-chip[data-position="1"] & { background: var(--gold); }
+  .player-chip[data-position="2"] & { background: var(--silver); }
+  .player-chip[data-position="3"] & { background: var(--bronze); }
+}
+
+.picker-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.625rem;
+}
+
+.quick-add {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+
+  & input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-input);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.875rem;
+
+    &::placeholder { color: var(--text-3); }
+    &:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  }
+}
+
+/* ── Player editor ── */
+.player-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border-radius: var(--radius);
+  background: var(--bg-input);
+}
+
+.player-preview-name {
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+
+  & input {
+    flex-shrink: 0;
+    width: 3.25rem;
+    text-align: center;
+    padding: 0.5rem 0.25rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-input);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 1.125rem;
+
+    &:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+  }
+}
+
+.emoji-picks {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(2rem, 1fr));
+  gap: 0.25rem;
+}
+
+.emoji-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  background: var(--bg-input);
+  font-size: 1.0625rem;
+  cursor: pointer;
+
+  &:hover { background: var(--bg-hover); }
+  &[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.swatch {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--swatch);
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+
+  &:hover { box-shadow: 0 0 0 3px var(--accent-glow); }
+  &[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg-card), 0 0 0 4px var(--text-2); }
+}
+
+/* ── Settings ── */
+.settings-section {
+  margin-bottom: 1.25rem;
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.settings-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.settings-heading {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.settings-head-row .settings-heading { margin-bottom: 0; }
+
+.game-settings-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.choice-summary {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  margin: 0.75rem 0 0.5rem;
+}
+
+.player-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.5rem;
+}
+
+.player-name {
+  min-width: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-tag {
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 0.0625rem 0.375rem;
+}
+
+.muted-row {
+  color: var(--text-3);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  padding: 0.5rem 0.25rem;
+}
+
+.sync-status {
+  font-size: 0.8125rem;
+  color: var(--text-2);
+  padding: 0.375rem 0;
+  font-variant-numeric: tabular-nums;
+
+  &[data-state="error"] { color: var(--danger); }
+  &[data-state="syncing"] { color: var(--accent); }
+  &[data-state="idle"] { color: var(--green); }
+}
+
+.sync-hint {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  line-height: 1.35;
+  margin-top: 0.375rem;
+}
+
+.share-row {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-light);
+}
+
+.share-btn {
+  width: 100%;
+  margin-bottom: 0.375rem;
+}
+
+/* The narrowest supported viewport (325px): stop the dialog action rows and
+   the avatar picker from forcing horizontal overflow. */
+@media (max-width: 359px) {
+  .pop-body { padding: 1rem; }
+
+  .pop-actions .btn,
+  .picker-tools .btn {
+    flex: 1 1 100%;
+  }
+
+  .avatar-row { flex-wrap: wrap; }
+}

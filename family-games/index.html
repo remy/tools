@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description"
+      content="Track family game nights: record who finished where each time you play a game, then see standings and full history per game. Offline PouchDB storage with live CouchDB sync.">
+    <meta name="category" content="Productivity">
+    <title>Family Games</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="app">
+      <header class="header">
+        <button class="action-btn" id="btn-back" aria-label="All games" hidden>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12 4L6 10L12 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
+        <h1 class="header-title" id="header-title">Family Games</h1>
+        <button class="action-btn" id="btn-settings" aria-label="Settings">
+          <span class="icon-mask icon-settings" aria-hidden="true"></span>
+          <span class="sync-error-dot" id="sync-error-dot" hidden></span>
+        </button>
+      </header>
+
+      <!-- Home / landing: every game we play -->
+      <main class="home-view" id="home-view" hidden>
+        <!-- Status of a ?game= share link that is still waiting on sync. A
+             button so it can be tapped away (and reached by keyboard) once
+             it has been read. -->
+        <button class="share-notice" id="share-notice" type="button" title="Dismiss" aria-live="polite"
+          hidden></button>
+
+        <!-- Nothing recorded yet -->
+        <div class="empty-app" id="empty-app" hidden>
+          <div class="empty-illustration">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none">
+              <rect x="3.5" y="3.5" width="17" height="17" rx="4" stroke="currentColor" stroke-width="1.3" />
+              <circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" />
+              <circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" />
+              <circle cx="12" cy="12" r="1.4" fill="currentColor" />
+              <circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" />
+              <circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" />
+            </svg>
+          </div>
+          <h2>No games yet</h2>
+          <p>Record your first result — poker, Mario Kart, Mölkky, anything. Come back to the same game each time you
+            play and the standings build themselves.</p>
+        </div>
+
+        <ul class="pick-list" id="home-list" hidden></ul>
+      </main>
+
+      <!-- One game: standings and full history -->
+      <main class="game-view" id="game-view" hidden>
+        <section class="panel" id="standings-section" hidden>
+          <h2 class="section-heading">Standings</h2>
+          <ul class="standings-list" id="standings-list"></ul>
+        </section>
+
+        <section class="panel">
+          <h2 class="section-heading">History</h2>
+          <div class="session-list" id="session-list"></div>
+          <p class="empty-note" id="empty-history" hidden>No results for this game yet. Record one below.</p>
+        </section>
+      </main>
+
+      <div class="action-bar">
+        <button class="btn btn-primary record-btn" id="btn-record" type="button">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M9 3.75V14.25M3.75 9H14.25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+          </svg>
+          <span id="record-label">Record a result</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Record / edit a result -->
+    <dialog id="entry-dialog">
+      <div class="pop-header">
+        <h2 id="entry-title">Record a result</h2>
+        <button class="pop-close" data-close="entry-dialog" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <form class="pop-body" id="entry-form">
+        <input type="hidden" id="entry-id">
+        <label class="field" id="entry-game-field">
+          <span class="field-label">Game</span>
+          <select id="entry-game"></select>
+        </label>
+        <label class="field" id="entry-new-game-field" hidden>
+          <span class="field-label">New game title</span>
+          <input type="text" id="entry-new-game" autocomplete="off" placeholder="Poker, Mario Kart, Mölkky…">
+        </label>
+        <label class="field">
+          <span class="field-label">Date played</span>
+          <input type="date" id="entry-date">
+        </label>
+
+        <div class="field">
+          <span class="field-label">Finishing order</span>
+          <p class="field-hint-block">Tap players in the order they finished — the first tap is 1st place. Tap a ranked
+            player again to take them out. Anyone left unranked sat this one out.</p>
+          <div class="player-picker" id="entry-players"></div>
+          <p class="empty-note" id="entry-no-players" hidden>No players yet — add everyone who plays.</p>
+          <div class="picker-tools">
+            <button type="button" class="btn btn-ghost btn-sm" id="entry-clear">Clear order</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="entry-add-player">+ Add player</button>
+          </div>
+          <div class="quick-add" id="entry-quick-add" hidden>
+            <input type="text" id="entry-player-name" placeholder="Player name" autocomplete="off"
+              enterkeyhint="done">
+            <button type="button" class="btn btn-primary btn-sm" id="entry-player-save">Add</button>
+          </div>
+        </div>
+
+        <p class="form-error" id="entry-error" aria-live="polite" hidden></p>
+
+        <div class="pop-actions">
+          <button type="button" class="btn btn-ghost btn-danger" id="entry-delete" hidden>Delete</button>
+          <button type="submit" class="btn btn-primary" id="entry-save">Save result</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Player editor -->
+    <dialog id="player-dialog">
+      <div class="pop-header">
+        <h2 id="player-title">New player</h2>
+        <button class="pop-close" data-close="player-dialog" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <form class="pop-body" id="player-form">
+        <input type="hidden" id="player-edit-id">
+        <div class="player-preview">
+          <span class="avatar avatar-lg" id="player-preview-avatar" aria-hidden="true"></span>
+          <span class="player-preview-name" id="player-preview-name">New player</span>
+        </div>
+        <label class="field">
+          <span class="field-label">Name</span>
+          <input type="text" id="player-name" autocomplete="off" placeholder="Remy">
+        </label>
+        <div class="field">
+          <span class="field-label">Avatar <span class="field-hint">emoji, or leave blank for initials</span></span>
+          <div class="avatar-row">
+            <input type="text" id="player-emoji" maxlength="4" autocomplete="off" placeholder="🦊">
+            <div class="emoji-picks" id="emoji-picks"></div>
+          </div>
+        </div>
+        <div class="field">
+          <span class="field-label">Colour</span>
+          <div class="swatches" id="colour-picks"></div>
+        </div>
+        <div class="pop-actions">
+          <button type="submit" class="btn btn-primary" id="player-save">Save player</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Settings -->
+    <dialog id="settings-dialog">
+      <div class="pop-header">
+        <h2>Settings</h2>
+        <button class="pop-close" data-close="settings-dialog" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="pop-body">
+        <!-- Per-game settings — only shown while a game is open -->
+        <div class="settings-section" id="game-settings-section" hidden>
+          <h3 class="settings-heading">This game</h3>
+          <p class="game-settings-name" id="game-settings-name"></p>
+          <div class="pop-actions">
+            <button class="btn btn-ghost" id="game-rename" type="button">Rename…</button>
+            <button class="btn btn-ghost" id="game-share-open" type="button">Share…</button>
+            <button class="btn btn-ghost btn-danger" id="game-delete" type="button">Delete game</button>
+          </div>
+          <div class="import-choice" id="share-choice" hidden>
+            <p class="choice-summary">Copy a link that opens straight into this game:</p>
+            <div class="pop-actions">
+              <button class="btn btn-ghost" id="share-game-plain" type="button">Link to this game</button>
+              <button class="btn btn-ghost" id="share-game-sync" type="button" disabled>Link + sync access</button>
+            </div>
+            <p class="sync-hint">The plain link only opens the game on a device that already syncs this data.
+              "Link + sync access" also carries your CouchDB URL and token so a brand new device can download it —
+              only send that one to people you trust.</p>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-head-row">
+            <h3 class="settings-heading">Players</h3>
+            <button class="btn btn-ghost btn-sm" id="player-new" type="button">+ New</button>
+          </div>
+          <ul class="pick-list" id="players-list"></ul>
+          <p class="sync-hint">Everyone here shows up when you record a result. Removing a player who already has
+            results keeps their history and just hides them from new games.</p>
+        </div>
+
+        <div class="settings-section">
+          <h3 class="settings-heading">Sync</h3>
+          <label class="field">
+            <span class="field-label">CouchDB URL</span>
+            <input type="url" id="sync-url" placeholder="https://user:pass@couch.example.com/family-games"
+              autocomplete="off">
+          </label>
+          <label class="field">
+            <span class="field-label">Bearer token (optional)</span>
+            <input type="password" id="sync-token" autocomplete="off">
+          </label>
+          <p class="sync-status" id="sync-status" aria-live="polite">Sync disabled.</p>
+          <p class="sync-hint">Replicates live against a CouchDB-compatible endpoint. The server must send CORS
+            headers.</p>
+          <div class="pop-actions">
+            <button class="btn btn-ghost" id="sync-pull" type="button"
+              title="Overwrite local with server data; leaves the remote untouched">Pull from server</button>
+            <button class="btn btn-ghost" id="sync-now" type="button">Sync now</button>
+            <button class="btn btn-primary" id="sync-save" type="button">Save sync settings</button>
+          </div>
+          <div class="share-row">
+            <button class="btn btn-ghost share-btn" id="sync-share" type="button" disabled>Copy share link</button>
+            <p class="sync-hint">Opens the app on another device pre-configured for this server. The link contains your
+              URL and token, so only share it with people you trust.</p>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="/vendor/pouchdb/pouchdb.min.js"></script>
+    <script type="module" src="main.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
