@@ -23,7 +23,6 @@ const $ = (id) => document.getElementById(id);
 const els = {
   strengthUnit: $('strength-unit'),
   volumeUnit: $('volume-unit'),
-  baseName: $('base-name'),
   baseStrength: $('base-strength'),
   baseAmount: $('base-amount'),
   mixers: $('mixers'),
@@ -55,8 +54,7 @@ function fillDatalist(id, names) {
 }
 
 function buildStaticLists() {
-  fillDatalist('spirit-list', SPIRITS.map(([name]) => name));
-  fillDatalist('alcoholic-list', ALCOHOLIC_MIXERS.map(([name]) => name));
+  fillDatalist('alcoholic-list', [...SPIRITS, ...ALCOHOLIC_MIXERS].map(([name]) => name));
   fillDatalist('soft-list', SOFT_MIXERS);
 
   els.dilution.replaceChildren(
@@ -106,15 +104,17 @@ function syncRow(row) {
 
 const presetAbv = (name) => STRENGTH_BY_NAME.get(name.trim().toLowerCase());
 
-/** Picking a preset name fills in its typical strength. */
-function applyPreset(nameInput, strengthInput, boozyInput) {
-  const abv = presetAbv(nameInput.value);
+/** Picking a preset name fills in its typical strength and ticks the alcohol box. */
+function applyPreset(row) {
+  const abv = presetAbv(row.querySelector('[data-name]').value);
   if (abv === undefined) return;
-  if (boozyInput && !boozyInput.checked) {
-    boozyInput.checked = true;
-    syncRow(nameInput.closest('.mixer'));
+
+  const boozy = row.querySelector('[data-boozy]');
+  if (!boozy.checked) {
+    boozy.checked = true;
+    syncRow(row);
   }
-  strengthInput.value = tidy(abvToStrength(abv, strengthUnit));
+  row.querySelector('[data-abv]').value = tidy(abvToStrength(abv, strengthUnit));
 }
 
 function updateMixerChrome() {
@@ -132,7 +132,7 @@ const num = (input) => {
 
 function readDrink() {
   const base = {
-    name: els.baseName.value.trim() || 'Base spirit',
+    name: 'Base spirit',
     abv: strengthToAbv(num(els.baseStrength), strengthUnit),
     ml: toMl(num(els.baseAmount), volumeUnit),
   };
@@ -186,11 +186,11 @@ function render() {
 }
 
 function summarise(base, result) {
-  if (result.totalMl === 0) return 'Add a spirit and an amount to get started.';
+  if (result.totalMl === 0) return 'Add a strength and an amount to get started.';
   if (base.ml === 0) return 'No base spirit yet — this is the strength of the mixers alone.';
-  if (result.mixerRatio === 0) return `Neat ${base.name}, undiluted.`;
+  if (result.mixerRatio === 0) return 'Neat spirit, undiluted.';
 
-  const ratio = `1 part ${base.name} to ${round(result.mixerRatio, 1)} parts everything else`;
+  const ratio = `1 part spirit to ${round(result.mixerRatio, 1)} parts everything else`;
   const relative = base.abv > 0
     ? ` — ${Math.round(result.strengthOfBase * 100)}% the strength of the neat pour.`
     : '.';
@@ -292,7 +292,6 @@ function save() {
     strengthUnit,
     volumeUnit,
     base: {
-      name: els.baseName.value,
       strength: els.baseStrength.value,
       amount: els.baseAmount.value,
     },
@@ -329,7 +328,6 @@ function load() {
     volumeUnit = els.volumeUnit.value = state.volumeUnit;
   }
 
-  els.baseName.value = state.base?.name ?? '';
   els.baseStrength.value = state.base?.strength ?? '';
   els.baseAmount.value = state.base?.amount ?? '';
 
@@ -366,10 +364,7 @@ els.addMixer.addEventListener('click', () => {
 });
 
 els.mixers.addEventListener('input', (event) => {
-  const row = event.target.closest('.mixer');
-  if (event.target.matches('[data-name]')) {
-    applyPreset(event.target, row.querySelector('[data-abv]'), row.querySelector('[data-boozy]'));
-  }
+  if (event.target.matches('[data-name]')) applyPreset(event.target.closest('.mixer'));
   refresh();
 });
 
@@ -381,11 +376,6 @@ els.mixers.addEventListener('change', (event) => {
 els.mixers.addEventListener('click', (event) => {
   if (!event.target.closest('[data-remove]')) return;
   event.target.closest('.mixer').remove();
-  refresh();
-});
-
-els.baseName.addEventListener('input', () => {
-  applyPreset(els.baseName, els.baseStrength, null);
   refresh();
 });
 
@@ -415,14 +405,13 @@ els.resetDialog.addEventListener('click', (event) => {
 
 $('reset-confirm').addEventListener('click', () => {
   els.resetDialog.close();
-  els.baseName.value = 'Vodka';
   els.baseStrength.value = tidy(abvToStrength(40, strengthUnit));
   els.baseAmount.value = tidy(fromMl(50, volumeUnit));
   els.mixers.replaceChildren();
   els.dilution.value = '0';
   applyDefaults();
   refresh();
-  els.baseName.focus();
+  els.baseStrength.focus();
 });
 
 refresh();

@@ -23,8 +23,8 @@
             <label for="strength-unit">Strength as</label>
             <div class="select">
               <select id="strength-unit" name="strength-unit">
-                <option value="proof">Proof (US)</option>
                 <option value="abv">ABV %</option>
+                <option value="proof">Proof (US)</option>
               </select>
             </div>
           </div>
@@ -44,14 +44,10 @@
 
       <section class="panel">
         <h2 class="panel-title">Base spirit</h2>
-        <div class="field">
-          <label for="base-name">Spirit</label>
-          <input class="input" type="text" id="base-name" list="spirit-list" placeholder="e.g. Vodka" value="Vodka">
-        </div>
         <div class="field-row">
           <div class="field">
-            <label for="base-strength">Strength <span class="unit-tag" data-strength-tag>proof</span></label>
-            <input class="input" type="number" id="base-strength" min="0" max="200" step="0.1" inputmode="decimal" value="80" data-strength>
+            <label for="base-strength">Strength <span class="unit-tag" data-strength-tag>% ABV</span></label>
+            <input class="input" type="number" id="base-strength" min="0" max="100" step="0.1" inputmode="decimal" value="40" data-strength>
           </div>
           <div class="field">
             <label for="base-amount">Amount <span class="unit-tag" data-volume-tag>ml</span></label>
@@ -92,7 +88,7 @@
       <div class="headline">
         <div class="headline-figure">
           <span class="big" id="out-primary">0</span>
-          <span class="big-unit" id="out-primary-unit">proof</span>
+          <span class="big-unit" id="out-primary-unit">% ABV</span>
         </div>
         <div class="headline-alt" id="out-secondary">0% ABV</div>
       </div>
@@ -153,7 +149,6 @@
     </footer>
   </div>
 
-  <datalist id="spirit-list"></datalist>
   <datalist id="alcoholic-list"></datalist>
   <datalist id="soft-list"></datalist>
 
@@ -172,8 +167,8 @@
           <input class="input" type="number" min="0" step="any" inputmode="decimal" data-volume data-amount>
         </div>
         <div class="field" data-strength-field hidden>
-          <label>Strength <span class="unit-tag" data-strength-tag>proof</span></label>
-          <input class="input" type="number" min="0" max="200" step="0.1" inputmode="decimal" data-strength data-abv>
+          <label>Strength <span class="unit-tag" data-strength-tag>% ABV</span></label>
+          <input class="input" type="number" min="0" max="100" step="0.1" inputmode="decimal" data-strength data-abv>
         </div>
       </div>
       <label class="checkbox">

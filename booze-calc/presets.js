@@ -24,6 +24,7 @@ export const SPIRITS = [
   ['Everclear', 95],
 ];
 
+/** Anything you might pour in on top — a second spirit counts, so SPIRITS is offered too. */
 export const ALCOHOLIC_MIXERS = [
   ['Triple sec / Cointreau', 40],
   ['Amaretto', 28],
