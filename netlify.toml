@@ -4,3 +4,14 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+# The todo tool builds virtual per-list links like /todo?list=<id>. There is no
+# such page — the id is read client-side — so rewrite (status 200, not a
+# redirect) the extensionless path straight to the tool's index.html. Netlify
+# passes the query string through untouched and never tries to resolve the id
+# as a path, and serving the page directly avoids the 301 to /todo/ that would
+# otherwise sit in front of every shared link.
+[[redirects]]
+  from = "/todo"
+  to = "/todo/index.html"
+  status = 200

@@ -1,16 +1,17 @@
 import { state } from './state.js';
 import { db } from './db.js';
-import { render, renderItems, refreshItemRow, beginEdit, relativeTime, fullTime } from './render.js';
+import { render, renderHome, renderItems, refreshItemRow, beginEdit, relativeTime, fullTime } from './render.js';
 import { findUrls, shortUrl, openUrl } from './links.js';
 import {
   goHome, openNewListDialog, onNewListTemplateChange,
-  createList, renameList, deleteList, selectList, refreshItems,
+  createList, renameList, deleteList, selectList, refreshItems, loadLists,
 } from './lists.js';
+import { setListOrder } from './order.js';
 import {
   openSettings, openTemplateEditor, saveTemplate, deleteTemplate,
   handleSyncSave, handleSyncNow, handleSyncPull, handleShareLink,
   handleImportFile, handleImportAppend, handleImportReplace, handleImportCancel,
-  handleCloneList, handlePrint,
+  handleCloneList, handlePrint, handleShareList, handleResetListOrder,
 } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
@@ -114,29 +115,43 @@ function wireTodoList() {
     }
   });
 
-  wireReorderDnD(ul);
+  wireReorderDnD(ul, {
+    rowSelector: '.todo-item, .todo-heading',
+    onDrop: async (ids) => {
+      if (!state.currentListId) return;
+      await db.reorderItems(state.currentListId, ids);
+      await refreshItems();
+      renderItems();
+    },
+  });
 }
 
-// The first row whose vertical midpoint sits below the pointer (drop target).
-function rowAfter(ul, y) {
-  const rows = [...ul.querySelectorAll('[data-id]:not(.dragging)')];
-  for (const row of rows) {
-    const box = row.getBoundingClientRect();
-    if (y < box.top + box.height / 2) return row;
-  }
-  return null;
-}
-
-// Pointer-based drag reordering. Uses Pointer Events (not native HTML5
-// drag-and-drop) so it works on touch as well as mouse — the drag handle has
-// touch-action:none so dragging it reorders rather than scrolling the page.
-function wireReorderDnD(ul) {
+// Pointer-based drag reordering, shared by the item list and the landing page's
+// list of lists. Uses Pointer Events (not native HTML5 drag-and-drop) so it
+// works on touch as well as mouse — the drag handle has touch-action:none so
+// dragging it reorders rather than scrolling the page. `rowSelector` matches
+// only the draggable rows: the buttons inside a row carry data-id attributes of
+// their own, so selecting on [data-id] alone would sweep them up too.
+// `onDrop` receives the row ids in their new order.
+function wireReorderDnD(ul, { rowSelector, onDrop }) {
   let dragging = null;
+
+  const rows = () => [...ul.querySelectorAll(rowSelector)];
+
+  // The first row whose vertical midpoint sits below the pointer (drop target).
+  const rowAfter = (y) => {
+    for (const row of rows()) {
+      if (row === dragging) continue;
+      const box = row.getBoundingClientRect();
+      if (y < box.top + box.height / 2) return row;
+    }
+    return null;
+  };
 
   const onMove = (e) => {
     if (!dragging) return;
     e.preventDefault();
-    const after = rowAfter(ul, e.clientY);
+    const after = rowAfter(e.clientY);
     if (after == null) ul.appendChild(dragging);
     else if (after !== dragging.nextSibling) ul.insertBefore(dragging, after);
   };
@@ -149,17 +164,13 @@ function wireReorderDnD(ul) {
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onEnd);
     window.removeEventListener('pointercancel', onEnd);
-    if (!state.currentListId) return;
-    const ids = [...ul.querySelectorAll('[data-id]')].map((li) => li.dataset.id);
-    await db.reorderItems(state.currentListId, ids);
-    await refreshItems();
-    renderItems();
+    await onDrop(rows().map((row) => row.dataset.id));
   };
 
   ul.addEventListener('pointerdown', (e) => {
-    const handle = e.target.closest('.todo-drag');
+    const handle = e.target.closest('[data-action="drag"]');
     if (!handle) return;
-    const li = handle.closest('[data-id]');
+    const li = handle.closest(rowSelector);
     if (!li) return;
     e.preventDefault();
     dragging = li;
@@ -259,6 +270,17 @@ function wireHomeList() {
     else if (action === 'delete') await deleteList(id);
   });
   $('home-new-list').addEventListener('click', openNewListDialog);
+
+  // Reordering the landing page is a per-device preference, so it's saved to
+  // localStorage rather than written back to the synced list docs.
+  wireReorderDnD($('home-list'), {
+    rowSelector: '.pick-row',
+    onDrop: async (ids) => {
+      setListOrder(ids);
+      await loadLists();
+      renderHome();
+    },
+  });
 }
 
 // ── Templates section in settings ──
@@ -276,8 +298,11 @@ function wireTemplates() {
 export function bindEvents() {
   // Header
   $('btn-back').addEventListener('click', goHome);
+  // One toggle, two meanings: edit items inside a list, reorder the lists
+  // themselves on the landing page.
   $('btn-edit-mode').addEventListener('click', () => {
-    state.editMode = !state.editMode;
+    if (state.view === 'list' && state.currentListId) state.editMode = !state.editMode;
+    else state.reorderLists = !state.reorderLists;
     render();
   });
   $('btn-settings').addEventListener('click', openSettings);
@@ -295,6 +320,14 @@ export function bindEvents() {
   $('print-open').addEventListener('click', () => { $('print-choice').hidden = false; });
   $('print-unchecked').addEventListener('click', () => handlePrint(true));
   $('print-current').addEventListener('click', () => handlePrint(false));
+
+  // Settings: per-list share link (per-list section)
+  $('share-open').addEventListener('click', () => { $('share-choice').hidden = false; });
+  $('share-list-plain').addEventListener('click', () => handleShareList(false));
+  $('share-list-sync').addEventListener('click', () => handleShareList(true));
+
+  // Settings: landing-page order (this device only)
+  $('list-order-reset').addEventListener('click', handleResetListOrder);
 
   // New list dialog — the submit button is type="submit", so the form's submit
   // event is the single source of truth (a separate click handler would fire

@@ -18,4 +18,5 @@ export const state = {
   currentListId: null,
   view: 'home',       // 'home' (all lists) | 'list' (a single list)
   editMode: false,    // when true the open list shows drag / edit / delete controls
+  reorderLists: false, // when true the landing page shows drag handles for the lists
 };

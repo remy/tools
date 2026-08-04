@@ -28,6 +28,10 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(event.request))
+      // Offline: fall back to the cache. Retry ignoring the query string so
+      // links that carry state in it (e.g. /todo/?list=<id>) still resolve to
+      // the cached page rather than failing on an exact-URL miss.
+      .catch(() => caches.match(event.request)
+        .then((hit) => hit || caches.match(event.request, { ignoreSearch: true })))
   );
 });
