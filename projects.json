@@ -14,6 +14,11 @@
     "description": "Mobile-first beat sequencer with predefined instruments and genre style presets. Synthesises kicks, snares, hi-hats, toms, claps and bass using the Web Audio API.",
     "title": "Beat Loop Generator"
   },
+  "booze-calc": {
+    "category": "Calculators",
+    "description": "Work out the final proof and ABV of a mixed drink. Enter a base spirit and as many mixers as you like \u2014 alcoholic or not \u2014 and see the strength, volume and alcohol units of the finished glass.",
+    "title": "Booze Calc"
+  },
   "buzzer": {
     "category": "Game",
     "description": "A simple game timer with 15s restart and 30s single modes, featuring a wake lock option to keep the screen awake during use.",
