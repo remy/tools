@@ -8,15 +8,15 @@ import {
   tidy,
   round,
 } from './units.js';
-import {
-  SPIRITS,
-  ALCOHOLIC_MIXERS,
-  SOFT_MIXERS,
-  STRENGTH_BY_NAME,
-  DILUTIONS,
-} from './presets.js';
-
 const STORAGE_KEY = 'booze-calc';
+
+/** Roughly what each technique melts into the glass, as a percentage of the pour. */
+const DILUTIONS = [
+  ['0', 'No dilution'],
+  ['25', 'Stirred (~25%)'],
+  ['30', 'Shaken (~30%)'],
+  ['40', 'Blended (~40%)'],
+];
 
 const $ = (id) => document.getElementById(id);
 
@@ -43,20 +43,7 @@ let rowId = 0;
 
 /* ---------- setup ---------- */
 
-function fillDatalist(id, names) {
-  $(id).replaceChildren(
-    ...names.map((name) => {
-      const option = document.createElement('option');
-      option.value = name;
-      return option;
-    }),
-  );
-}
-
-function buildStaticLists() {
-  fillDatalist('alcoholic-list', [...SPIRITS, ...ALCOHOLIC_MIXERS].map(([name]) => name));
-  fillDatalist('soft-list', SOFT_MIXERS);
-
+function buildDilutionOptions() {
   els.dilution.replaceChildren(
     ...DILUTIONS.map(([value, label]) => new Option(label, value)),
     new Option('Custom…', 'custom'),
@@ -65,7 +52,7 @@ function buildStaticLists() {
 
 /* ---------- mixer rows ---------- */
 
-function addMixer({ name = '', amount = '', boozy = false, strength = '' } = {}) {
+function addMixer({ amount = '', boozy = false, strength = '' } = {}) {
   const row = els.template.content.firstElementChild.cloneNode(true);
   const id = ++rowId;
 
@@ -77,7 +64,6 @@ function addMixer({ name = '', amount = '', boozy = false, strength = '' } = {})
     label.htmlFor = control.id;
   });
 
-  row.querySelector('[data-name]').value = name;
   row.querySelector('[data-amount]').value = amount;
   row.querySelector('[data-abv]').value = strength;
   row.querySelector('[data-boozy]').checked = boozy;
@@ -87,41 +73,24 @@ function addMixer({ name = '', amount = '', boozy = false, strength = '' } = {})
   return row;
 }
 
-/** Show or hide the strength field and point the name at the right preset list. */
+/** A mixer only needs a strength when it is actually boozy. */
 function syncRow(row) {
-  const boozy = row.querySelector('[data-boozy]').checked;
-  const strengthField = row.querySelector('[data-strength-field]');
-  const strengthInput = row.querySelector('[data-abv]');
-
-  strengthField.hidden = !boozy;
-  row.querySelector('[data-name]').setAttribute('list', boozy ? 'alcoholic-list' : 'soft-list');
-
-  const known = presetAbv(row.querySelector('[data-name]').value);
-  if (boozy && strengthInput.value === '' && known !== undefined) {
-    strengthInput.value = tidy(abvToStrength(known, strengthUnit));
-  }
+  row.querySelector('[data-strength-field]').hidden = !row.querySelector('[data-boozy]').checked;
 }
 
-const presetAbv = (name) => STRENGTH_BY_NAME.get(name.trim().toLowerCase());
-
-/** Picking a preset name fills in its typical strength and ticks the alcohol box. */
-function applyPreset(row) {
-  const abv = presetAbv(row.querySelector('[data-name]').value);
-  if (abv === undefined) return;
-
-  const boozy = row.querySelector('[data-boozy]');
-  if (!boozy.checked) {
-    boozy.checked = true;
-    syncRow(row);
-  }
-  row.querySelector('[data-abv]').value = tidy(abvToStrength(abv, strengthUnit));
-}
-
+/** Rows have no names, so they are identified by position — renumber after any change. */
 function updateMixerChrome() {
-  const count = els.mixers.children.length;
-  els.mixersEmpty.hidden = count > 0;
-  els.mixerCount.textContent = count ? `${count} added` : '';
+  const rows = [...els.mixers.children];
+  els.mixersEmpty.hidden = rows.length > 0;
+  els.mixerCount.textContent = rows.length ? `${rows.length} added` : '';
+
+  rows.forEach((row, index) => {
+    row.querySelector('[data-label]').textContent = mixerName(index);
+    row.querySelector('[data-remove]').setAttribute('aria-label', `Remove ${mixerName(index)}`);
+  });
 }
+
+const mixerName = (index) => `Mixer ${index + 1}`;
 
 /* ---------- reading the form ---------- */
 
@@ -140,7 +109,7 @@ function readDrink() {
   const mixers = [...els.mixers.children].map((row, index) => {
     const boozy = row.querySelector('[data-boozy]').checked;
     return {
-      name: row.querySelector('[data-name]').value.trim() || `Mixer ${index + 1}`,
+      name: mixerName(index),
       abv: boozy ? strengthToAbv(num(row.querySelector('[data-abv]')), strengthUnit) : 0,
       ml: toMl(num(row.querySelector('[data-amount]')), volumeUnit),
     };
@@ -296,7 +265,6 @@ function save() {
       amount: els.baseAmount.value,
     },
     mixers: [...els.mixers.children].map((row) => ({
-      name: row.querySelector('[data-name]').value,
       amount: row.querySelector('[data-amount]').value,
       strength: row.querySelector('[data-abv]').value,
       boozy: row.querySelector('[data-boozy]').checked,
@@ -341,7 +309,7 @@ function load() {
 }
 
 function applyDefaults() {
-  addMixer({ name: 'Tonic water', amount: tidy(fromMl(150, volumeUnit)) });
+  addMixer({ amount: tidy(fromMl(150, volumeUnit)) });
 }
 
 /* ---------- wiring ---------- */
@@ -354,19 +322,16 @@ function refresh() {
   save();
 }
 
-buildStaticLists();
+buildDilutionOptions();
 if (!load()) applyDefaults();
 
 els.addMixer.addEventListener('click', () => {
   const row = addMixer();
   refresh();
-  row.querySelector('[data-name]').focus();
+  row.querySelector('[data-amount]').focus();
 });
 
-els.mixers.addEventListener('input', (event) => {
-  if (event.target.matches('[data-name]')) applyPreset(event.target.closest('.mixer'));
-  refresh();
-});
+els.mixers.addEventListener('input', refresh);
 
 els.mixers.addEventListener('change', (event) => {
   if (event.target.matches('[data-boozy]')) syncRow(event.target.closest('.mixer'));

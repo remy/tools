@@ -173,9 +173,6 @@ form {
     color: var(--colour-text-secondary);
   }
 
-  &.grow {
-    flex: 1;
-  }
 }
 
 .field-row,
@@ -342,7 +339,6 @@ form {
   flex: none;
   width: 2.75rem;
   height: 2.75rem;
-  align-self: end;
   font-size: 1.5rem;
   line-height: 1;
   background: transparent;
@@ -381,8 +377,16 @@ form {
 
 .mixer-head {
   display: flex;
-  align-items: end;
+  align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
+}
+
+.mixer-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--colour-text-secondary);
 }
 
 /* ---------- result ---------- */
