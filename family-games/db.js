@@ -58,6 +58,9 @@ function playerToDoc(player) {
     name: player.name,
     emoji: player.emoji || '',
     colour: player.colour || '',
+    // A thumbnail-sized JPEG data URL (see photo.js) — small enough to ride
+    // along in the document rather than as an attachment.
+    photo: player.photo || '',
     // Archived players keep their history but disappear from the picker.
     archived: !!player.archived,
     order: player.order ?? 0,
@@ -71,6 +74,7 @@ function playerFromDoc(doc) {
     name: doc.name,
     emoji: doc.emoji || '',
     colour: doc.colour || '',
+    photo: doc.photo || '',
     archived: !!doc.archived,
     order: doc.order ?? 0,
     createdAt: doc.createdAt ?? 0,
@@ -109,9 +113,12 @@ function sessionToDoc(session) {
     // Local calendar date as YYYY-MM-DD — a game night belongs to the day it
     // was played, not to an instant, so no timezone travels with it.
     date: session.date,
+    // `score` is optional: plenty of games only have a finishing order, and a
+    // score of 0 is a real result, so "no score" has to be null rather than 0.
     results: (session.results || []).map((r) => ({
       playerId: r.playerId,
       position: r.position,
+      score: Number.isFinite(r.score) ? r.score : null,
     })),
     note: session.note || '',
     createdAt: session.createdAt ?? Date.now(),
@@ -124,7 +131,13 @@ function sessionFromDoc(doc) {
     id: doc.id,
     gameId: doc.gameId,
     date: doc.date,
-    results: Array.isArray(doc.results) ? doc.results : [],
+    // Results recorded before scores existed have no `score` field at all,
+    // so it's normalised here and nothing downstream has to care.
+    results: (Array.isArray(doc.results) ? doc.results : []).map((r) => ({
+      playerId: r.playerId,
+      position: r.position,
+      score: Number.isFinite(r.score) ? r.score : null,
+    })),
     note: doc.note || '',
     createdAt: doc.createdAt ?? 0,
     updatedAt: doc.updatedAt ?? 0,

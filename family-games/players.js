@@ -5,6 +5,7 @@ import {
   $, avatarEl, iconBtn, initials, autoAvatar, plural,
   AVATAR_EMOJI, AVATAR_COLOURS, EDIT_PATHS, DELETE_PATHS,
 } from './ui.js';
+import { fileToAvatar, isImageFile } from './photo.js';
 
 async function reloadPlayers() {
   state.players = await db.getPlayers();
@@ -80,6 +81,7 @@ export function openPlayerEditor(id) {
       name: '',
       emoji: fallback.emoji,
       colour: fallback.colour,
+      photo: '',
       archived: false,
       order: state.players.length,
       createdAt: Date.now(),
@@ -99,8 +101,12 @@ export function openPlayerEditor(id) {
 function updatePreview() {
   const avatar = $('player-preview-avatar');
   avatar.style.setProperty('--avatar-colour', draft.colour);
-  avatar.classList.toggle('avatar-initials', !draft.emoji);
-  avatar.textContent = draft.emoji || initials(draft.name);
+  // Same precedence as everywhere else: photo, then emoji, then initials.
+  avatar.classList.toggle('avatar-photo', !!draft.photo);
+  avatar.style.backgroundImage = draft.photo ? `url("${draft.photo}")` : '';
+  avatar.classList.toggle('avatar-initials', !draft.photo && !draft.emoji);
+  avatar.textContent = draft.photo ? '' : (draft.emoji || initials(draft.name));
+  $('photo-clear').hidden = !draft.photo;
   $('player-preview-name').textContent = draft.name.trim() || 'New player';
   for (const btn of $('colour-picks').children) {
     btn.setAttribute('aria-pressed', String(btn.dataset.colour === draft.colour));
@@ -121,8 +127,14 @@ function renderEmojiPicks() {
     btn.textContent = emoji;
     btn.setAttribute('aria-label', `Use ${emoji}`);
     btn.addEventListener('click', () => {
-      // Tapping the current emoji clears it, falling back to initials.
-      draft.emoji = draft.emoji === emoji ? '' : emoji;
+      if (draft.photo) {
+        // The photo is what's on show, so asking for an emoji means dropping it.
+        draft.photo = '';
+        draft.emoji = emoji;
+      } else {
+        // Tapping the current emoji clears it, falling back to initials.
+        draft.emoji = draft.emoji === emoji ? '' : emoji;
+      }
       $('player-emoji').value = draft.emoji;
       updatePreview();
     });
@@ -148,20 +160,61 @@ function renderColourPicks() {
   }
 }
 
-export function onPlayerFieldInput() {
+export function onNameInput() {
   if (!draft) return;
   draft.name = $('player-name').value;
+  updatePreview();
+}
+
+export function onEmojiInput() {
+  if (!draft) return;
   // Only the first character counts — an emoji can be several code units, so
   // the spread is what splits it correctly.
-  draft.emoji = [...$('player-emoji').value.trim()][0] || '';
+  const next = [...$('player-emoji').value.trim()][0] || '';
+  if (next === draft.emoji) return;
+  draft.emoji = next;
+  // Typing an emoji over a photo means the emoji is the one that's wanted.
+  if (next) draft.photo = '';
   updatePreview();
+}
+
+// ── Photos ──
+// Accepts a file from the picker, a drop or a paste, shrinks it (photo.js) and
+// hangs it on the draft. Dropping a photo with no editor open is taken as
+// "here's a new player", so the dialog opens around it.
+export async function handlePhotoFile(file) {
+  if (!file) return;
+  if (!isImageFile(file)) {
+    alert('That file isn’t an image.');
+    return;
+  }
+  if (!$('player-dialog').open) openPlayerEditor(null);
+  try {
+    draft.photo = await fileToAvatar(file);
+  } catch (err) {
+    alert(err?.message || 'Could not use that image.');
+    return;
+  }
+  updatePreview();
+}
+
+export function clearPhoto() {
+  if (!draft) return;
+  draft.photo = '';
+  updatePreview();
+}
+
+// Take over the drop/paste queue the inline script in index.html started, so a
+// photo dropped before the modules finished loading isn't lost.
+export function initPhotoDrop() {
+  globalThis.familyGamesOnPhoto?.(handlePhotoFile);
 }
 
 export async function savePlayer() {
   if (!draft) return;
   const name = $('player-name').value.trim();
   if (!name) { $('player-name').focus(); return; }
-  await db.putPlayer({ ...draft, name, emoji: draft.emoji });
+  await db.putPlayer({ ...draft, name });
   await reloadPlayers();
   $('player-dialog').close();
   renderPlayers();

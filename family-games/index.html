@@ -106,12 +106,13 @@
         </label>
 
         <div class="field">
-          <span class="field-label">Finishing order</span>
-          <p class="field-hint-block">Tap players in the order they finished — the first tap is 1st place. Tap a ranked
-            player again to take them out. Anyone left unranked sat this one out.</p>
+          <span class="field-label">Who played</span>
+          <p class="field-hint-block" id="entry-hint"></p>
           <div class="player-picker" id="entry-players"></div>
           <p class="empty-note" id="entry-no-players" hidden>No players yet — add everyone who plays.</p>
+          <ol class="rank-list" id="entry-ranking" hidden></ol>
           <div class="picker-tools">
+            <button type="button" class="btn btn-ghost btn-sm" id="entry-sort" disabled>Sort by score</button>
             <button type="button" class="btn btn-ghost btn-sm" id="entry-clear">Clear order</button>
             <button type="button" class="btn btn-ghost btn-sm" id="entry-add-player">+ Add player</button>
           </div>
@@ -152,7 +153,17 @@
           <input type="text" id="player-name" autocomplete="off" placeholder="Remy">
         </label>
         <div class="field">
-          <span class="field-label">Avatar <span class="field-hint">emoji, or leave blank for initials</span></span>
+          <span class="field-label">Photo</span>
+          <div class="photo-row">
+            <button type="button" class="btn btn-ghost btn-sm" id="photo-pick">Take or choose a photo…</button>
+            <button type="button" class="btn btn-ghost btn-sm btn-danger" id="photo-clear" hidden>Remove photo</button>
+          </div>
+          <p class="field-hint-block">Or drop an image anywhere on this page — you can even paste one. It’s cropped
+            square and shrunk to a thumbnail before it’s saved, so sync stays light.</p>
+          <input type="file" id="photo-file" accept="image/*" hidden>
+        </div>
+        <div class="field">
+          <span class="field-label">Emoji <span class="field-hint">used when there’s no photo</span></span>
           <div class="avatar-row">
             <input type="text" id="player-emoji" maxlength="4" autocomplete="off" placeholder="🦊">
             <div class="emoji-picks" id="emoji-picks"></div>
@@ -238,6 +249,62 @@
         </div>
       </div>
     </dialog>
+
+    <script>
+      // Tiny early script: catch a photo dropped or pasted anywhere on the page
+      // before the modules have finished loading, and hold it until the app
+      // registers a handler (see players.js). Dropping a photo is how you get
+      // an avatar, so the drop target is the whole window rather than some
+      // small box inside the player editor.
+      (function () {
+        let pending = null;
+        let handler = null;
+
+        window.familyGamesOnPhoto = function (fn) {
+          handler = fn;
+          if (pending) {
+            const file = pending;
+            pending = null;
+            fn(file);
+          }
+        };
+
+        function take(file) {
+          if (!file) return;
+          if (handler) handler(file);
+          else pending = file;
+        }
+
+        const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
+        let depth = 0;
+
+        window.addEventListener('dragenter', (e) => {
+          if (!hasFiles(e)) return;
+          e.preventDefault();
+          depth++;
+          document.body.classList.add('dragover');
+        });
+        window.addEventListener('dragover', (e) => {
+          if (hasFiles(e)) e.preventDefault();
+        });
+        window.addEventListener('dragleave', (e) => {
+          if (!hasFiles(e)) return;
+          depth = Math.max(0, depth - 1);
+          if (depth === 0) document.body.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          if (!hasFiles(e)) return;
+          e.preventDefault();
+          depth = 0;
+          document.body.classList.remove('dragover');
+          take(e.dataTransfer?.files?.[0]);
+        });
+        window.addEventListener('paste', (e) => {
+          const file = Array.from(e.clipboardData?.files || [])[0];
+          if (file) take(file);
+        });
+      })();
+    </script>
 
     <script src="/vendor/pouchdb/pouchdb.min.js"></script>
     <script type="module" src="main.js"></script>

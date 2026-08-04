@@ -2,11 +2,13 @@ import { state, gameById } from './state.js';
 import { $ } from './ui.js';
 import { goHome, selectGame, renameGame, deleteGame, deleteSession } from './games.js';
 import {
-  openEntry, saveEntry, deleteEntry, togglePlayer, clearOrder,
-  syncNewGameField, toggleQuickAdd, addPlayerFromEntry,
+  openEntry, saveEntry, deleteEntry, togglePlayer, clearOrder, sortByScore,
+  setScore, commitScore, syncNewGameField, toggleQuickAdd, addPlayerFromEntry,
+  refreshPicker,
 } from './entry.js';
 import {
-  openPlayerEditor, savePlayer, onPlayerFieldInput, removePlayer, restorePlayer,
+  openPlayerEditor, savePlayer, onNameInput, onEmojiInput, removePlayer,
+  restorePlayer, handlePhotoFile, clearPhoto, initPhotoDrop,
 } from './players.js';
 import {
   openSettings, handleSyncSave, handleSyncNow, handleSyncPull,
@@ -54,6 +56,29 @@ function wireEntry() {
   });
   $('entry-game').addEventListener('change', syncNewGameField);
   $('entry-clear').addEventListener('click', clearOrder);
+  $('entry-sort').addEventListener('click', () => sortByScore());
+
+  // The order list: scores are read as they're typed but only acted on once
+  // committed, so the rows don't shuffle mid-keystroke.
+  const ranking = $('entry-ranking');
+  ranking.addEventListener('input', (e) => {
+    const input = e.target.closest('.rank-score');
+    if (input) setScore(input.dataset.id, input.value);
+  });
+  ranking.addEventListener('change', (e) => {
+    if (e.target.closest('.rank-score')) commitScore();
+  });
+  ranking.addEventListener('keydown', (e) => {
+    // Enter moves on from a score rather than saving the whole result.
+    if (e.key === 'Enter' && e.target.closest('.rank-score')) {
+      e.preventDefault();
+      e.target.blur();
+    }
+  });
+  ranking.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action="unrank"]');
+    if (btn) togglePlayer(btn.dataset.id);
+  });
   $('entry-add-player').addEventListener('click', toggleQuickAdd);
   $('entry-player-save').addEventListener('click', addPlayerFromEntry);
   // Enter in the quick-add box adds the player rather than submitting the
@@ -78,9 +103,24 @@ function wirePlayers() {
     else if (action === 'restore-player') await restorePlayer(id);
   });
   $('player-new').addEventListener('click', () => openPlayerEditor(null));
-  $('player-name').addEventListener('input', onPlayerFieldInput);
-  $('player-emoji').addEventListener('input', onPlayerFieldInput);
+  $('player-name').addEventListener('input', onNameInput);
+  $('player-emoji').addEventListener('input', onEmojiInput);
+  // Editing a player while recording a result (a photo dropped mid-entry, say)
+  // leaves stale chips behind — repaint the picker once the editor closes.
+  $('player-dialog').addEventListener('close', () => {
+    if ($('entry-dialog').open) refreshPicker();
+  });
   $('player-form').addEventListener('submit', (e) => { e.preventDefault(); savePlayer(); });
+
+  // Avatar photos: the button opens the picker (the camera, on a phone), and
+  // initPhotoDrop takes over the drop/paste queue the inline script started.
+  $('photo-pick').addEventListener('click', () => $('photo-file').click());
+  $('photo-file').addEventListener('change', async (e) => {
+    await handlePhotoFile(e.target.files?.[0]);
+    e.target.value = '';
+  });
+  $('photo-clear').addEventListener('click', clearPhoto);
+  initPhotoDrop();
 }
 
 export function bindEvents() {

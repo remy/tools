@@ -3,7 +3,7 @@ import {
   $, avatarEl, playerName, iconBtn, svg, fmtDate, recentDay,
   ordinal, plural, EDIT_PATHS, DELETE_PATHS,
 } from './ui.js';
-import { sessionsFor, standings } from './stats.js';
+import { sessionsFor, standings, hasScores, fmtScore } from './stats.js';
 
 // Which history entries are expanded. Kept out of the synced state because it's
 // pure view state, and kept across re-renders so a background sync doesn't
@@ -12,22 +12,24 @@ const openSessions = new Set();
 
 export function renderGame(game) {
   const sessions = sessionsFor(game.id);
-  renderStandings(sessions);
-  renderSessions(sessions);
+  // Score columns only earn their place in a game where anyone keeps score.
+  const showScores = hasScores(sessions);
+  renderStandings(sessions, showScores);
+  renderSessions(sessions, showScores);
 }
 
 // ── Standings table ──
-function renderStandings(sessions) {
+function renderStandings(sessions, showScores) {
   const rows = standings(sessions);
   $('standings-section').hidden = rows.length === 0;
   if (!rows.length) return;
 
   const ul = $('standings-list');
   ul.replaceChildren();
-  rows.forEach((row, i) => ul.appendChild(standingRow(row, i + 1)));
+  rows.forEach((row, i) => ul.appendChild(standingRow(row, i + 1, showScores)));
 }
 
-function standingRow(row, rank) {
+function standingRow(row, rank, showScores) {
   const li = document.createElement('li');
   li.className = 'standing-row';
   if (rank <= 3) li.dataset.rank = String(rank);
@@ -47,7 +49,9 @@ function standingRow(row, rank) {
 
   const meta = document.createElement('span');
   meta.className = 'standing-meta';
-  meta.textContent = `${plural(row.plays, 'play')} · avg ${row.avg.toFixed(1)} · best ${ordinal(row.best)}`;
+  const parts = [plural(row.plays, 'play'), `avg ${row.avg.toFixed(1)}`, `best ${ordinal(row.best)}`];
+  if (showScores && row.bestScore != null) parts.push(`high ${fmtScore(row.bestScore)}`);
+  meta.textContent = parts.join(' · ');
   body.appendChild(meta);
 
   const wins = document.createElement('span');
@@ -64,14 +68,14 @@ function standingRow(row, rank) {
 }
 
 // ── History ──
-function renderSessions(sessions) {
+function renderSessions(sessions, showScores) {
   const wrap = $('session-list');
   wrap.replaceChildren();
   $('empty-history').hidden = sessions.length > 0;
-  for (const session of sessions) wrap.appendChild(sessionCard(session));
+  for (const session of sessions) wrap.appendChild(sessionCard(session, showScores));
 }
 
-function sessionCard(session) {
+function sessionCard(session, showScores) {
   const details = document.createElement('details');
   details.className = 'session';
   details.dataset.id = session.id;
@@ -105,7 +109,10 @@ function sessionCard(session) {
     winnerEl.append(avatarEl(winner, 'avatar-sm'));
     const label = document.createElement('span');
     label.className = 'session-winner-name';
-    label.textContent = playerName(winner);
+    // The winning score belongs next to the winner's name, collapsed or not.
+    label.textContent = winnerResult.score != null
+      ? `${playerName(winner)} · ${fmtScore(winnerResult.score)}`
+      : playerName(winner);
     winnerEl.appendChild(label);
   }
 
@@ -124,7 +131,7 @@ function sessionCard(session) {
   const ol = document.createElement('ol');
   ol.className = 'result-list';
   const ordered = [...session.results].sort((a, b) => a.position - b.position);
-  for (const r of ordered) ol.appendChild(resultRow(r));
+  for (const r of ordered) ol.appendChild(resultRow(r, showScores));
   body.appendChild(ol);
 
   if (session.note) {
@@ -146,7 +153,7 @@ function sessionCard(session) {
   return details;
 }
 
-function resultRow(result) {
+function resultRow(result, showScores) {
   const li = document.createElement('li');
   li.className = 'result-row';
   if (result.position <= 3) li.dataset.position = String(result.position);
@@ -161,5 +168,16 @@ function resultRow(result) {
   name.textContent = playerName(player);
 
   li.append(pos, avatarEl(player, 'avatar-sm'), name);
+
+  // A dash rather than a gap where someone in a scored game has no score, so
+  // the column still reads as a column.
+  if (showScores) {
+    const score = document.createElement('span');
+    score.className = 'result-score';
+    score.textContent = result.score != null ? fmtScore(result.score) : '–';
+    if (result.score == null) score.classList.add('result-score-none');
+    li.appendChild(score);
+  }
+
   return li;
 }

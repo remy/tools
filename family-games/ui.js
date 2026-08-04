@@ -59,7 +59,11 @@ export function avatarEl(player, extraClass = '') {
   const span = document.createElement('span');
   span.className = `avatar${extraClass ? ' ' + extraClass : ''}`;
   span.style.setProperty('--avatar-colour', player?.colour || AVATAR_COLOURS[0]);
-  if (player?.emoji) {
+  // A photo wins over the emoji, which wins over initials.
+  if (player?.photo) {
+    span.classList.add('avatar-photo');
+    span.style.backgroundImage = `url("${player.photo}")`;
+  } else if (player?.emoji) {
     span.textContent = player.emoji;
   } else {
     span.classList.add('avatar-initials');

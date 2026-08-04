@@ -1,6 +1,6 @@
 import { state, activePlayers, playerById, gameById } from './state.js';
 import { db } from './db.js';
-import { $, avatarEl, todayISO, ordinal } from './ui.js';
+import { $, avatarEl, iconBtn, playerName, todayISO, ordinal, DELETE_PATHS } from './ui.js';
 import { ensureGame, refreshAll, selectGame } from './games.js';
 import { quickAddPlayer } from './players.js';
 
@@ -10,7 +10,16 @@ const NEW_GAME = '__new__';
 // picker is a tap-in-order affair rather than a set of position dropdowns —
 // it's the fastest thing to do at the table with a phone in one hand.
 let ranked = [];
-// Ids of the session being edited, if any. Null while recording a fresh one.
+// playerId -> score, for the games that have one. Held separately from
+// `ranked` so clearing the order to re-rank by hand doesn't lose the numbers
+// anyone already typed in.
+let scores = new Map();
+// 'score': the order follows the scores, highest first, and re-sorts as they
+// are entered. 'manual': the order is whatever was tapped, which is how a
+// lowest-wins game (or a tie broken at the table) gets recorded. "Clear order"
+// drops into manual; "Sort by score" goes back.
+let orderMode = 'score';
+// The session being edited, if any. Null while recording a fresh one.
 let editing = null;
 
 // Everyone tappable: the current squad, plus anyone archived who already
@@ -28,9 +37,14 @@ function pickablePlayers() {
 
 export function openEntry({ gameId = null, sessionId = null } = {}) {
   editing = sessionId ? state.sessions.find((s) => s.id === sessionId) : null;
-  ranked = editing
-    ? [...editing.results].sort((a, b) => a.position - b.position).map((r) => r.playerId)
+  const previous = editing
+    ? [...editing.results].sort((a, b) => a.position - b.position)
     : [];
+  ranked = previous.map((r) => r.playerId);
+  scores = new Map(previous.filter((r) => r.score != null).map((r) => [r.playerId, r.score]));
+  // An edit opens in manual mode so nothing already saved re-shuffles itself;
+  // "Sort by score" is right there if that's what's wanted.
+  orderMode = editing ? 'manual' : 'score';
 
   $('entry-title').textContent = editing ? 'Edit result' : 'Record a result';
   $('entry-save').textContent = editing ? 'Save changes' : 'Save result';
@@ -77,11 +91,20 @@ export function syncNewGameField() {
 }
 
 // ── Player picker ──
+const HINTS = {
+  score: 'Tap everyone who played, then type their scores — highest score takes 1st. '
+    + 'Playing something where that’s upside down? Hit "Clear order" and tap them in the order they finished instead.',
+  manual: 'Tap players in the order they finished — the first tap is 1st place. '
+    + 'Tap a ranked player again to take them out, and scores are still yours to fill in.',
+};
+
 function renderPicker() {
   const wrap = $('entry-players');
   wrap.replaceChildren();
   const players = pickablePlayers();
   $('entry-no-players').hidden = players.length > 0;
+  $('entry-hint').textContent = HINTS[orderMode];
+  $('entry-sort').disabled = scores.size === 0;
 
   for (const player of players) {
     const position = ranked.indexOf(player.id) + 1;
@@ -107,6 +130,55 @@ function renderPicker() {
     btn.append(avatarEl(player, 'avatar-sm'), name);
     wrap.appendChild(btn);
   }
+
+  renderRanking();
+}
+
+// ── The order itself, with a score box per place ──
+function renderRanking() {
+  const list = $('entry-ranking');
+  list.hidden = ranked.length === 0;
+  list.replaceChildren();
+
+  ranked.forEach((id, i) => {
+    const player = playerById(id);
+    const li = document.createElement('li');
+    li.className = 'rank-row';
+    li.dataset.id = id;
+    const place = i + 1;
+    if (place <= 3) li.dataset.position = String(place);
+
+    const pos = document.createElement('span');
+    pos.className = 'rank-pos';
+    pos.textContent = ordinal(place);
+
+    const name = document.createElement('span');
+    name.className = 'rank-name';
+    name.textContent = playerName(player);
+
+    const score = document.createElement('input');
+    score.type = 'number';
+    score.className = 'rank-score';
+    score.step = 'any';
+    score.inputMode = 'numeric';
+    score.placeholder = 'Score';
+    score.dataset.id = id;
+    score.setAttribute('aria-label', `Score for ${playerName(player)}`);
+    const value = scores.get(id);
+    score.value = value == null ? '' : String(value);
+
+    const remove = iconBtn('unrank', `Take ${playerName(player)} out`, DELETE_PATHS, 'icon-danger');
+    remove.dataset.id = id;
+
+    li.append(pos, avatarEl(player, 'avatar-sm'), name, score, remove);
+    list.appendChild(li);
+  });
+}
+
+// Repaint the picker from outside — used when the player list changes while
+// the record dialog is open.
+export function refreshPicker() {
+  renderPicker();
 }
 
 // Tapping an unranked player puts them next; tapping a ranked one pulls them
@@ -119,8 +191,47 @@ export function togglePlayer(id) {
   renderPicker();
 }
 
+// Record a typed score. Deliberately does not re-render: re-sorting under a
+// half-typed number would pull the box out from under the keyboard. The
+// re-sort happens on commit (blur or Enter) instead.
+export function setScore(id, raw) {
+  const value = raw.trim() === '' ? null : Number(raw);
+  if (value == null || !Number.isFinite(value)) scores.delete(id);
+  else scores.set(id, value);
+  $('entry-sort').disabled = scores.size === 0;
+}
+
+export function commitScore() {
+  if (orderMode !== 'score') return;
+  sortByScore({ keepMode: true });
+}
+
+// Order by score, highest first. Anyone without a score keeps their relative
+// place at the back — they're usually the ones still being counted up.
+export function sortByScore({ keepMode = false } = {}) {
+  const focused = document.activeElement;
+  const focusedId = focused?.classList?.contains('rank-score') ? focused.dataset.id : null;
+
+  const scored = ranked.filter((id) => scores.has(id));
+  const unscored = ranked.filter((id) => !scores.has(id));
+  scored.sort((a, b) => scores.get(b) - scores.get(a));
+  ranked = [...scored, ...unscored];
+  if (!keepMode) orderMode = 'score';
+  renderPicker();
+
+  // Re-rendering replaced the input that had focus — put the caret back where
+  // the player left it so tabbing through the scores keeps working.
+  if (focusedId) {
+    const next = $('entry-ranking').querySelector(`.rank-score[data-id="${focusedId}"]`);
+    next?.focus();
+  }
+}
+
+// Wipe the order but keep the scores, so the finishing order can be tapped out
+// by hand for the games where the biggest number doesn't win.
 export function clearOrder() {
   ranked = [];
+  orderMode = 'manual';
   renderPicker();
 }
 
@@ -174,7 +285,11 @@ export async function saveEntry() {
     return;
   }
 
-  const results = ranked.map((playerId, i) => ({ playerId, position: i + 1 }));
+  const results = ranked.map((playerId, i) => ({
+    playerId,
+    position: i + 1,
+    score: scores.has(playerId) ? scores.get(playerId) : null,
+  }));
   await db.putSession({
     id: editing ? editing.id : crypto.randomUUID(),
     gameId,

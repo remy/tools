@@ -28,6 +28,9 @@ export function standings(sessions) {
           best: Infinity,
           last: r.position,
           lastDate: session.date,
+          scored: 0,
+          scoreTotal: 0,
+          bestScore: null,
         };
         byPlayer.set(r.playerId, row);
       }
@@ -37,6 +40,13 @@ export function standings(sessions) {
       // A podium only means something once there are more than three playing.
       if (r.position <= 3 && field > 3) row.podiums += 1;
       row.best = Math.min(row.best, r.position);
+      // Scores are optional, so they're averaged over the games that had one
+      // rather than over every play.
+      if (r.score != null) {
+        row.scored += 1;
+        row.scoreTotal += r.score;
+        row.bestScore = row.bestScore == null ? r.score : Math.max(row.bestScore, r.score);
+      }
     }
   }
 
@@ -44,9 +54,23 @@ export function standings(sessions) {
     ...row,
     avg: row.total / row.plays,
     winRate: row.wins / row.plays,
+    avgScore: row.scored ? row.scoreTotal / row.scored : null,
   }));
   rows.sort((a, b) => (b.wins - a.wins) || (a.avg - b.avg) || (b.plays - a.plays));
   return rows;
+}
+
+// Whether this game is one we keep score in — drives whether the score
+// columns are worth the space.
+export function hasScores(sessions) {
+  return sessions.some((s) => s.results.some((r) => r.score != null));
+}
+
+// Scores can be anything from 7 to 12.5 to -3, so they're formatted for
+// display rather than printed raw.
+export function fmtScore(value) {
+  if (value == null) return '';
+  return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 // Headline numbers for a game's row on the landing page.
