@@ -1,4 +1,5 @@
 import { calculate } from './calc.js';
+import { decode, encode } from './share.js';
 import {
   VOLUME_UNITS,
   toMl,
@@ -254,10 +255,11 @@ function syncTemplateUnits() {
   content.querySelector('[data-strength]').max = strengthUnit === 'proof' ? 200 : 100;
 }
 
-/* ---------- persistence ---------- */
+/* ---------- state in, state out ---------- */
 
-function save() {
-  const state = {
+/** One shape, shared by localStorage and the URL. Dilution is a plain percentage. */
+function currentState() {
+  return {
     strengthUnit,
     volumeUnit,
     base: {
@@ -269,26 +271,11 @@ function save() {
       strength: row.querySelector('[data-abv]').value,
       boozy: row.querySelector('[data-boozy]').checked,
     })),
-    dilution: els.dilution.value,
-    dilutionCustom: els.dilutionCustom.value,
+    dilution: els.dilution.value === 'custom' ? els.dilutionCustom.value : els.dilution.value,
   };
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    /* private mode or a full quota — the calculator still works. */
-  }
 }
 
-function load() {
-  let state;
-  try {
-    state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-  } catch {
-    state = null;
-  }
-  if (!state) return false;
-
+function applyState(state) {
   if (state.strengthUnit === 'proof' || state.strengthUnit === 'abv') {
     strengthUnit = els.strengthUnit.value = state.strengthUnit;
   }
@@ -302,14 +289,61 @@ function load() {
   els.mixers.replaceChildren();
   for (const mixer of state.mixers ?? []) addMixer(mixer);
 
-  if (state.dilution) els.dilution.value = state.dilution;
-  if (state.dilutionCustom) els.dilutionCustom.value = state.dilutionCustom;
+  applyDilution(state.dilution);
+}
 
-  return true;
+/** A percentage that matches a technique selects it; anything else lands in Custom. */
+function applyDilution(percent) {
+  const value = Number.isFinite(parseFloat(percent)) ? String(parseFloat(percent)) : '0';
+  const preset = [...els.dilution.options].some((option) => option.value === value);
+
+  els.dilution.value = preset ? value : 'custom';
+  if (!preset) els.dilutionCustom.value = value;
 }
 
 function applyDefaults() {
   addMixer({ amount: tidy(fromMl(150, volumeUnit)) });
+}
+
+/* ---------- persistence and sharing ---------- */
+
+function save(state) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    /* private mode or a full quota — the calculator still works. */
+  }
+}
+
+function loadStored() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Keep the address bar holding the current drink, so sharing is only ever a
+ * copy away. Debounced because Safari rate-limits replaceState, and typing an
+ * amount would otherwise call it once per keystroke.
+ */
+let hashTimer;
+function syncHash(state) {
+  clearTimeout(hashTimer);
+  hashTimer = setTimeout(() => {
+    const hash = `#${encode(state)}`;
+    if (location.hash !== hash) history.replaceState(null, '', hash);
+  }, 250);
+}
+
+let statusTimer;
+function showShareStatus(message) {
+  clearTimeout(statusTimer);
+  $('share-status').textContent = message;
+  statusTimer = setTimeout(() => {
+    $('share-status').textContent = '';
+  }, 4000);
 }
 
 /* ---------- wiring ---------- */
@@ -319,11 +353,21 @@ function refresh() {
   updateMixerChrome();
   syncTemplateUnits();
   render();
-  save();
+
+  const state = currentState();
+  save(state);
+  /* Leave a first-visit URL clean; once edited, it always holds the drink. */
+  if (touched || location.hash.length > 1) syncHash(state);
 }
 
+let touched = false;
+
 buildDilutionOptions();
-if (!load()) applyDefaults();
+
+/* A shared link wins over whatever was last left in this browser. */
+const shared = decode(location.hash) ?? loadStored();
+if (shared) applyState(shared);
+else applyDefaults();
 
 els.addMixer.addEventListener('click', () => {
   const row = addMixer();
@@ -368,6 +412,28 @@ els.resetDialog.addEventListener('click', (event) => {
   }
 });
 
+$('share').addEventListener('click', async () => {
+  /* The hash is debounced, so publish it now rather than copying a stale one. */
+  const hash = `#${encode(currentState())}`;
+  clearTimeout(hashTimer);
+  history.replaceState(null, '', hash);
+
+  try {
+    await navigator.clipboard.writeText(location.href);
+    showShareStatus('Link copied — it rebuilds this drink exactly.');
+  } catch {
+    showShareStatus('Could not reach the clipboard — the link is in the address bar.');
+  }
+});
+
+/* Someone pasting a different link into the same tab only changes the hash. */
+window.addEventListener('hashchange', () => {
+  const state = decode(location.hash);
+  if (!state) return;
+  applyState(state);
+  refresh();
+});
+
 $('reset-confirm').addEventListener('click', () => {
   els.resetDialog.close();
   els.baseStrength.value = tidy(abvToStrength(40, strengthUnit));
@@ -380,3 +446,4 @@ $('reset-confirm').addEventListener('click', () => {
 });
 
 refresh();
+touched = true;

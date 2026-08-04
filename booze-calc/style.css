@@ -574,7 +574,23 @@ form {
 
 .result-actions {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+@media (min-width: 26rem) {
+  .result-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+.share-status {
+  margin-top: calc(var(--space-sm) * -1);
+  font-size: 0.8125rem;
+  color: var(--colour-text-secondary);
+  text-align: center;
+  min-height: 1.2em;
 }
 
 /* ---------- footer ---------- */
