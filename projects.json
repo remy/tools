@@ -79,6 +79,11 @@
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
     "title": "ESP32 Supermini Comparison"
   },
+  "family-games": {
+    "category": "Productivity",
+    "description": "Track family game nights: record who finished where each time you play a game, then see standings and full history per game. Offline PouchDB storage with live CouchDB sync.",
+    "title": "Family Games"
+  },
   "font-grid-generator": {
     "category": "Developer Tools",
     "description": "Drop a pixel font file and generate an 8x8 grid representation of each glyph. Supports TTF, OTF, WOFF, and WOFF2 formats.",
