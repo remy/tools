@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Work out the final proof and ABV of a mixed drink. Enter a base spirit and as many mixers as you like — alcoholic or not — and see the strength, volume and alcohol units of the finished glass.">
+  <meta name="category" content="Calculators">
+  <title>Booze Calc</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="page-head">
+      <h1>Booze Calc</h1>
+      <p class="tagline">Pour it in, find out how strong it ended up.</p>
+    </header>
+
+    <form id="drink" autocomplete="off">
+      <section class="panel units">
+        <h2 class="panel-title">Units</h2>
+        <div class="unit-row">
+          <div class="field">
+            <label for="strength-unit">Strength as</label>
+            <div class="select">
+              <select id="strength-unit" name="strength-unit">
+                <option value="proof">Proof (US)</option>
+                <option value="abv">ABV %</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="volume-unit">Volumes in</label>
+            <div class="select">
+              <select id="volume-unit" name="volume-unit">
+                <option value="ml">Millilitres (ml)</option>
+                <option value="cl">Centilitres (cl)</option>
+                <option value="oz">US fluid ounces</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <p class="hint">Switching a unit converts everything you have already typed.</p>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Base spirit</h2>
+        <div class="field">
+          <label for="base-name">Spirit</label>
+          <input class="input" type="text" id="base-name" list="spirit-list" placeholder="e.g. Vodka" value="Vodka">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="base-strength">Strength <span class="unit-tag" data-strength-tag>proof</span></label>
+            <input class="input" type="number" id="base-strength" min="0" max="200" step="0.1" inputmode="decimal" value="80" data-strength>
+          </div>
+          <div class="field">
+            <label for="base-amount">Amount <span class="unit-tag" data-volume-tag>ml</span></label>
+            <input class="input" type="number" id="base-amount" min="0" step="any" inputmode="decimal" value="50" data-volume>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Mixers</h2>
+          <span class="count" id="mixer-count" aria-live="polite"></span>
+        </div>
+        <ol class="mixers" id="mixers" role="list"></ol>
+        <p class="empty" id="mixers-empty">No mixers yet — it is a neat pour.</p>
+        <button class="btn btn-secondary btn-block" type="button" id="add-mixer">+ Add mixer</button>
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">Ice &amp; dilution</h2>
+        <div class="field-row">
+          <div class="field">
+            <label for="dilution">Technique</label>
+            <div class="select">
+              <select id="dilution"></select>
+            </div>
+          </div>
+          <div class="field" id="dilution-custom-field" hidden>
+            <label for="dilution-custom">Water added <span class="unit-tag">%</span></label>
+            <input class="input" type="number" id="dilution-custom" min="0" max="500" step="1" inputmode="decimal" value="25">
+          </div>
+        </div>
+        <p class="hint">Stirring and shaking melt ice into the drink, which waters it down. Leave this at zero if you only want the pour itself.</p>
+      </section>
+    </form>
+
+    <section class="result" id="result" aria-live="polite">
+      <div class="headline">
+        <div class="headline-figure">
+          <span class="big" id="out-primary">0</span>
+          <span class="big-unit" id="out-primary-unit">proof</span>
+        </div>
+        <div class="headline-alt" id="out-secondary">0% ABV</div>
+      </div>
+
+      <div class="strength-bar" role="img" id="strength-bar" aria-label="Strength of the finished drink">
+        <div class="strength-fill" id="strength-fill"></div>
+        <div class="strength-marker" id="strength-marker"><span>neat</span></div>
+      </div>
+
+      <dl class="stats">
+        <div class="stat">
+          <dt>Total volume</dt>
+          <dd id="out-volume">0 ml</dd>
+        </div>
+        <div class="stat">
+          <dt>Pure alcohol</dt>
+          <dd id="out-alcohol">0 ml</dd>
+        </div>
+        <div class="stat">
+          <dt>UK units</dt>
+          <dd id="out-units">0</dd>
+        </div>
+        <div class="stat">
+          <dt>US standard drinks</dt>
+          <dd id="out-drinks">0</dd>
+        </div>
+      </dl>
+
+      <p class="summary" id="out-summary"></p>
+
+      <details class="breakdown">
+        <summary>
+          <span>Where the alcohol comes from</span>
+          <span class="chevron" aria-hidden="true">▾</span>
+        </summary>
+        <div class="breakdown-body">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Ingredient</th>
+                <th scope="col" class="num">Volume</th>
+                <th scope="col" class="num">Alcohol</th>
+                <th scope="col" class="num">Share</th>
+              </tr>
+            </thead>
+            <tbody id="out-parts"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <div class="result-actions">
+        <button class="btn btn-ghost" type="button" id="reset">Start again</button>
+      </div>
+    </section>
+
+    <footer class="page-foot">
+      <p>Volumes are added straight up, so the reading is a hair under what a hydrometer would show. Preset strengths are typical bottlings — trust your label over this page.</p>
+    </footer>
+  </div>
+
+  <datalist id="spirit-list"></datalist>
+  <datalist id="alcoholic-list"></datalist>
+  <datalist id="soft-list"></datalist>
+
+  <template id="mixer-template">
+    <li class="mixer">
+      <div class="mixer-head">
+        <div class="field grow">
+          <label>Mixer</label>
+          <input class="input" type="text" data-name placeholder="e.g. Tonic water">
+        </div>
+        <button class="btn-remove" type="button" data-remove aria-label="Remove mixer">&times;</button>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Amount <span class="unit-tag" data-volume-tag>ml</span></label>
+          <input class="input" type="number" min="0" step="any" inputmode="decimal" data-volume data-amount>
+        </div>
+        <div class="field" data-strength-field hidden>
+          <label>Strength <span class="unit-tag" data-strength-tag>proof</span></label>
+          <input class="input" type="number" min="0" max="200" step="0.1" inputmode="decimal" data-strength data-abv>
+        </div>
+      </div>
+      <label class="checkbox">
+        <input type="checkbox" data-boozy>
+        <span>Contains alcohol</span>
+      </label>
+    </li>
+  </template>
+
+  <dialog id="reset-dialog">
+    <div class="dialog-inner">
+      <h2>Start again?</h2>
+      <p>This clears the base spirit and every mixer.</p>
+      <div class="dialog-actions">
+        <button class="btn btn-secondary" type="button" value="cancel" data-close>Cancel</button>
+        <button class="btn btn-primary" type="button" id="reset-confirm">Clear it</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="main.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
