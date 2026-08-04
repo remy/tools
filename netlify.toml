@@ -15,3 +15,10 @@
   from = "/todo"
   to = "/todo/index.html"
   status = 200
+
+# Same deal for the family games tracker, whose per-game links look like
+# /family-games?game=<id>.
+[[redirects]]
+  from = "/family-games"
+  to = "/family-games/index.html"
+  status = 200
