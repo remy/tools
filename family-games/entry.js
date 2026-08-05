@@ -98,81 +98,135 @@ const HINTS = {
     + 'Tap a ranked player again to take them out, and scores are still yours to fill in.',
 };
 
+// Repaint a keyed list without rebuilding it: each element is matched back to
+// the player it belongs to, updated in place, and only moved if it is actually
+// in the wrong spot. Re-creating (or needlessly shuffling) a node blurs
+// whatever is focused inside it, and on a phone a blur closes the keyboard —
+// which is exactly what must not happen while scores are being typed.
+function reconcile(parent, ids, build, update) {
+  const spare = new Map([...parent.children].map((el) => [el.dataset.id, el]));
+  ids.forEach((id, i) => {
+    const el = spare.get(id) || build(id);
+    spare.delete(id);
+    update(el, id, i);
+    if (parent.children[i] !== el) parent.insertBefore(el, parent.children[i] || null);
+  });
+  for (const el of spare.values()) el.remove();
+}
+
 function renderPicker() {
-  const wrap = $('entry-players');
-  wrap.replaceChildren();
   const players = pickablePlayers();
   $('entry-no-players').hidden = players.length > 0;
   $('entry-hint').textContent = HINTS[orderMode];
   $('entry-sort').disabled = scores.size === 0;
 
-  for (const player of players) {
-    const position = ranked.indexOf(player.id) + 1;
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'player-chip';
-    btn.dataset.id = player.id;
-    btn.setAttribute('aria-pressed', String(position > 0));
-    btn.setAttribute(
-      'aria-label',
-      position ? `${player.name}, ${ordinal(position)} — tap to unrank` : `${player.name} — tap to rank`,
-    );
-    if (position) {
-      btn.dataset.position = String(position);
-      const badge = document.createElement('span');
-      badge.className = 'chip-position';
-      badge.textContent = position;
-      btn.appendChild(badge);
-    }
-    const name = document.createElement('span');
-    name.className = 'chip-name';
-    name.textContent = player.name;
-    btn.append(avatarEl(player, 'avatar-sm'), name);
-    wrap.appendChild(btn);
-  }
-
+  reconcile($('entry-players'), players.map((p) => p.id), buildChip, updateChip);
   renderRanking();
+}
+
+function buildChip(id) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'player-chip';
+  btn.dataset.id = id;
+
+  const badge = document.createElement('span');
+  badge.className = 'chip-position';
+  const avatar = document.createElement('span');
+  avatar.className = 'avatar';
+  const name = document.createElement('span');
+  name.className = 'chip-name';
+
+  btn.append(badge, avatar, name);
+  return btn;
+}
+
+function updateChip(btn, id) {
+  const player = playerById(id);
+  const position = ranked.indexOf(id) + 1;
+
+  btn.setAttribute('aria-pressed', String(position > 0));
+  btn.setAttribute(
+    'aria-label',
+    position ? `${player.name}, ${ordinal(position)} — tap to unrank` : `${player.name} — tap to rank`,
+  );
+  if (position) btn.dataset.position = String(position);
+  else delete btn.dataset.position;
+
+  const badge = btn.querySelector('.chip-position');
+  badge.hidden = position === 0;
+  badge.textContent = position || '';
+  btn.querySelector('.avatar').replaceWith(avatarEl(player, 'avatar-sm'));
+  btn.querySelector('.chip-name').textContent = player.name;
 }
 
 // ── The order itself, with a score box per place ──
 function renderRanking() {
   const list = $('entry-ranking');
   list.hidden = ranked.length === 0;
-  list.replaceChildren();
+  reconcile(list, ranked, buildRankRow, updateRankRow);
+}
 
-  ranked.forEach((id, i) => {
-    const player = playerById(id);
-    const li = document.createElement('li');
-    li.className = 'rank-row';
-    li.dataset.id = id;
-    const place = i + 1;
-    if (place <= 3) li.dataset.position = String(place);
+function buildRankRow(id) {
+  const li = document.createElement('li');
+  li.className = 'rank-row';
+  li.dataset.id = id;
 
-    const pos = document.createElement('span');
-    pos.className = 'rank-pos';
-    pos.textContent = ordinal(place);
+  const pos = document.createElement('span');
+  pos.className = 'rank-pos';
+  const avatar = document.createElement('span');
+  avatar.className = 'avatar';
+  const name = document.createElement('span');
+  name.className = 'rank-name';
 
-    const name = document.createElement('span');
-    name.className = 'rank-name';
-    name.textContent = playerName(player);
+  const score = document.createElement('input');
+  score.type = 'number';
+  score.className = 'rank-score';
+  score.step = 'any';
+  score.inputMode = 'numeric';
+  score.placeholder = 'Score';
+  score.dataset.id = id;
 
-    const score = document.createElement('input');
-    score.type = 'number';
-    score.className = 'rank-score';
-    score.step = 'any';
-    score.inputMode = 'numeric';
-    score.placeholder = 'Score';
-    score.dataset.id = id;
-    score.setAttribute('aria-label', `Score for ${playerName(player)}`);
+  const remove = iconBtn('unrank', '', DELETE_PATHS, 'icon-danger');
+  remove.dataset.id = id;
+
+  li.append(pos, avatar, name, score, remove);
+  return li;
+}
+
+function updateRankRow(li, id, i) {
+  const player = playerById(id);
+  const place = i + 1;
+  if (place <= 3) li.dataset.position = String(place);
+  else delete li.dataset.position;
+
+  li.querySelector('.rank-pos').textContent = ordinal(place);
+  li.querySelector('.avatar').replaceWith(avatarEl(player, 'avatar-sm'));
+  li.querySelector('.rank-name').textContent = playerName(player);
+  li.querySelector('[data-action="unrank"]')
+    .setAttribute('aria-label', `Take ${playerName(player)} out`);
+
+  const score = li.querySelector('.rank-score');
+  score.setAttribute('aria-label', `Score for ${playerName(player)}`);
+  // Tell the phone keyboard what its action key does, so it reads "next" all
+  // the way down the order and "done" on the last score.
+  score.enterKeyHint = i === ranked.length - 1 ? 'done' : 'next';
+  // Never stomp on a half-typed number: the box someone is in owns its value
+  // until they leave it.
+  if (document.activeElement !== score) {
     const value = scores.get(id);
     score.value = value == null ? '' : String(value);
+  }
+}
 
-    const remove = iconBtn('unrank', `Take ${playerName(player)} out`, DELETE_PATHS, 'icon-danger');
-    remove.dataset.id = id;
-
-    li.append(pos, avatarEl(player, 'avatar-sm'), name, score, remove);
-    list.appendChild(li);
-  });
+// Step down the order to the next score box. Nothing re-sorts on the way, so
+// the boxes stay put under the keyboard and the next one is where the player
+// expects it; the last box gives up focus, which closes entry and commits.
+export function focusNextScore(input) {
+  const boxes = [...$('entry-ranking').querySelectorAll('.rank-score')];
+  const next = boxes[boxes.indexOf(input) + 1];
+  if (next) next.focus();
+  else input.blur();
 }
 
 // Repaint the picker from outside — used when the player list changes while
@@ -193,7 +247,8 @@ export function togglePlayer(id) {
 
 // Record a typed score. Deliberately does not re-render: re-sorting under a
 // half-typed number would pull the box out from under the keyboard. The
-// re-sort happens on commit (blur or Enter) instead.
+// re-sort waits until focus leaves the order list entirely (see commitScore),
+// so stepping from one score to the next never moves anything.
 export function setScore(id, raw) {
   const value = raw.trim() === '' ? null : Number(raw);
   if (value == null || !Number.isFinite(value)) scores.delete(id);
@@ -219,8 +274,9 @@ export function sortByScore({ keepMode = false } = {}) {
   if (!keepMode) orderMode = 'score';
   renderPicker();
 
-  // Re-rendering replaced the input that had focus — put the caret back where
-  // the player left it so tabbing through the scores keeps working.
+  // A row that has to move is unavoidably lifted out and reinserted, which
+  // blurs it — put focus back on the same player's box so a sort that lands
+  // mid-entry doesn't end it.
   if (focusedId) {
     const next = $('entry-ranking').querySelector(`.rank-score[data-id="${focusedId}"]`);
     next?.focus();

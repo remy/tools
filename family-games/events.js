@@ -3,8 +3,8 @@ import { $ } from './ui.js';
 import { goHome, selectGame, renameGame, deleteGame, deleteSession } from './games.js';
 import {
   openEntry, saveEntry, deleteEntry, togglePlayer, clearOrder, sortByScore,
-  setScore, commitScore, syncNewGameField, toggleQuickAdd, addPlayerFromEntry,
-  refreshPicker,
+  setScore, commitScore, focusNextScore, syncNewGameField, toggleQuickAdd,
+  addPlayerFromEntry, refreshPicker,
 } from './entry.js';
 import {
   openPlayerEditor, savePlayer, onNameInput, onEmojiInput, removePlayer,
@@ -59,21 +59,28 @@ function wireEntry() {
   $('entry-sort').addEventListener('click', () => sortByScore());
 
   // The order list: scores are read as they're typed but only acted on once
-  // committed, so the rows don't shuffle mid-keystroke.
+  // the player is finished with the list, so the rows don't shuffle mid-entry.
   const ranking = $('entry-ranking');
   ranking.addEventListener('input', (e) => {
     const input = e.target.closest('.rank-score');
     if (input) setScore(input.dataset.id, input.value);
   });
-  ranking.addEventListener('change', (e) => {
-    if (e.target.closest('.rank-score')) commitScore();
+  ranking.addEventListener('focusout', (e) => {
+    if (!e.target.closest('.rank-score')) return;
+    // Moving on within the list — the next score, or a row's remove button —
+    // is still mid-entry. Re-sorting there would yank the rows (and the phone
+    // keyboard) out from under the next tap, so it waits until focus has
+    // genuinely left.
+    if (ranking.contains(e.relatedTarget)) return;
+    commitScore();
   });
   ranking.addEventListener('keydown', (e) => {
-    // Enter moves on from a score rather than saving the whole result.
-    if (e.key === 'Enter' && e.target.closest('.rank-score')) {
-      e.preventDefault();
-      e.target.blur();
-    }
+    // Enter walks down to the next score rather than saving the whole result.
+    // Phone keyboards send the same key from their "next" action.
+    const input = e.target.closest('.rank-score');
+    if (e.key !== 'Enter' || !input) return;
+    e.preventDefault();
+    focusNextScore(input);
   });
   ranking.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-action="unrank"]');
