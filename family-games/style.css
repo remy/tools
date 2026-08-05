@@ -7,8 +7,8 @@
   --border: #e4e4e9;
   --border-light: #eeeeef;
   --text: #1a1a2e;
-  --text-2: #5a5a72;
-  --text-3: #8e8ea0;
+  --text-2: #4b4b60;
+  --text-3: #66667a;
   --accent: #6c5ce7;
   --accent-soft: #e8e4fd;
   --accent-glow: rgba(108, 92, 231, 0.12);
@@ -21,6 +21,23 @@
   --silver-soft: #eef1f5;
   --bronze: #b1702f;
   --bronze-soft: #f8ecdf;
+
+  /* The colours above are tuned to be seen — as a border, a badge, a filled
+     button. Set as *text* they are far too light to read, so each one has an
+     "ink" twin darkened until it clears WCAG AA (4.5:1) against every surface
+     it can land on. Use the plain token to paint something, the ink token to
+     write with. In dark mode the two coincide and the ink tokens alias back. */
+  --accent-ink: #604fe5;
+  --danger-ink: #c72919;
+  --green-ink: #00765f;
+  --gold-ink: #856200;
+  --silver-ink: #5e6977;
+  --bronze-ink: #915c27;
+
+  /* Text sitting *on* a filled accent or medal swatch, picked per theme
+     because a lavender button wants dark text and an indigo one wants white. */
+  --on-accent: #ffffff;
+  --on-medal: #101018;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
   --shadow-pop: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.03);
   --radius: 10px;
@@ -36,8 +53,8 @@
     --border: #2a2a3a;
     --border-light: #222230;
     --text: #ededf0;
-    --text-2: #9898aa;
-    --text-3: #5e5e70;
+    --text-2: #b0b0c2;
+    --text-3: #8c8c9e;
     --accent: #a29bfe;
     --accent-soft: #262040;
     --accent-glow: rgba(162, 155, 254, 0.1);
@@ -50,6 +67,20 @@
     --silver-soft: #23262d;
     --bronze: #d98b3f;
     --bronze-soft: #2c1f13;
+
+    /* Against a dark surface these are already well clear of 4.5:1, so the
+       ink twins are just the colours themselves. */
+    --accent-ink: var(--accent);
+    --danger-ink: var(--danger);
+    --green-ink: var(--green);
+    --gold-ink: var(--gold);
+    --silver-ink: var(--silver);
+    --bronze-ink: var(--bronze);
+
+    /* Inverted: the dark-mode accent and medals are pale, so what sits on
+       them has to be dark rather than white. */
+    --on-accent: #101018;
+
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
     --shadow-pop: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
@@ -179,10 +210,12 @@ body {
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--avatar-colour, var(--accent)) 55%, transparent);
 }
 
-/* Initials stand in when no emoji is set — they need the full colour to read. */
+/* Initials stand in when no emoji is set — they need the full colour to read.
+   White only survives on the darker half of the palette, so avatarEl works out
+   which of white or near-black wins against the disc and sets --avatar-ink. */
 .avatar-initials {
   background: var(--avatar-colour, var(--accent));
-  color: #fff;
+  color: var(--avatar-ink, var(--on-accent));
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -262,7 +295,7 @@ body {
   cursor: pointer;
 
   &[data-state="missing"] {
-    color: var(--danger);
+    color: var(--danger-ink);
     background: var(--danger-soft);
     border-color: var(--danger);
   }
@@ -320,7 +353,7 @@ body {
   border-radius: 8px;
   cursor: pointer;
 
-  &:hover .pick-name { color: var(--accent); }
+  &:hover .pick-name { color: var(--accent-ink); }
 }
 
 .pick-body {
@@ -381,9 +414,9 @@ body {
   font-variant-numeric: tabular-nums;
   color: var(--text-3);
 
-  .standing-row[data-rank="1"] & { color: var(--gold); }
-  .standing-row[data-rank="2"] & { color: var(--silver); }
-  .standing-row[data-rank="3"] & { color: var(--bronze); }
+  .standing-row[data-rank="1"] & { color: var(--gold-ink); }
+  .standing-row[data-rank="2"] & { color: var(--silver-ink); }
+  .standing-row[data-rank="3"] & { color: var(--bronze-ink); }
 }
 
 .standing-body {
@@ -418,7 +451,7 @@ body {
   font-weight: 800;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 
 .standing-wins-label {
@@ -486,7 +519,7 @@ body {
   padding: 0.1875rem 0.5rem 0.1875rem 0.1875rem;
   border-radius: 99px;
   background: var(--gold-soft);
-  color: var(--gold);
+  color: var(--gold-ink);
 }
 
 .session-winner-name {
@@ -541,9 +574,9 @@ body {
   font-variant-numeric: tabular-nums;
   color: var(--text-3);
 
-  .result-row[data-position="1"] & { color: var(--gold); }
-  .result-row[data-position="2"] & { color: var(--silver); }
-  .result-row[data-position="3"] & { color: var(--bronze); }
+  .result-row[data-position="1"] & { color: var(--gold-ink); }
+  .result-row[data-position="2"] & { color: var(--silver-ink); }
+  .result-row[data-position="3"] & { color: var(--bronze-ink); }
 }
 
 .result-name {
@@ -629,7 +662,7 @@ body {
 
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: 0 2px 8px rgba(108, 92, 231, 0.3);
 
   &:hover { filter: brightness(1.1); }
@@ -640,13 +673,13 @@ body {
   color: var(--text-2);
   border-color: var(--border);
 
-  &:hover { background: var(--bg-hover); border-color: var(--accent); color: var(--accent); }
+  &:hover { background: var(--bg-hover); border-color: var(--accent); color: var(--accent-ink); }
 }
 
 .btn-danger {
-  color: var(--danger);
+  color: var(--danger-ink);
 
-  &:hover { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
+  &:hover { background: var(--danger-soft); border-color: var(--danger); color: var(--danger-ink); }
 }
 
 .btn-sm {
@@ -673,7 +706,7 @@ body {
 
 .icon-danger:hover {
   background: var(--danger-soft);
-  color: var(--danger);
+  color: var(--danger-ink);
 }
 
 /* ── Dialogs ── */
@@ -774,7 +807,7 @@ dialog {
   margin-left: 0.5rem;
   transition: background 0.15s, color 0.15s;
 
-  &:hover { background: var(--danger-soft); color: var(--danger); }
+  &:hover { background: var(--danger-soft); color: var(--danger-ink); }
 }
 
 .pop-body { padding: 1.25rem; }
@@ -846,7 +879,7 @@ dialog {
 
 .form-error {
   font-size: 0.8125rem;
-  color: var(--danger);
+  color: var(--danger-ink);
   background: var(--danger-soft);
   border-radius: var(--radius);
   padding: 0.5rem 0.75rem;
@@ -905,15 +938,17 @@ dialog {
   padding-inline: 0.25rem;
   border-radius: 99px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 0.6875rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   box-shadow: 0 0 0 2px var(--bg-card);
 
-  .player-chip[data-position="1"] & { background: var(--gold); }
-  .player-chip[data-position="2"] & { background: var(--silver); }
-  .player-chip[data-position="3"] & { background: var(--bronze); }
+  /* The medal swatches are bright in both themes — a dark numeral reads on all
+     three, where white washed out completely against gold. */
+  .player-chip[data-position="1"] & { background: var(--gold); color: var(--on-medal); }
+  .player-chip[data-position="2"] & { background: var(--silver); color: var(--on-medal); }
+  .player-chip[data-position="3"] & { background: var(--bronze); color: var(--on-medal); }
 }
 
 /* ── The finishing order, with a score per place ── */
@@ -946,9 +981,9 @@ dialog {
   font-variant-numeric: tabular-nums;
   color: var(--text-3);
 
-  .rank-row[data-position="1"] & { color: var(--gold); }
-  .rank-row[data-position="2"] & { color: var(--silver); }
-  .rank-row[data-position="3"] & { color: var(--bronze); }
+  .rank-row[data-position="1"] & { color: var(--gold-ink); }
+  .rank-row[data-position="2"] & { color: var(--silver-ink); }
+  .rank-row[data-position="3"] & { color: var(--bronze-ink); }
 }
 
 .rank-name {
@@ -1058,7 +1093,7 @@ body.dragover::after {
   border: 3px dashed var(--accent);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--accent) 12%, var(--bg));
-  color: var(--accent);
+  color: var(--accent-ink);
   font-size: 1.0625rem;
   font-weight: 700;
   pointer-events: none;
@@ -1217,9 +1252,9 @@ body.dragover dialog[open] {
   padding: 0.375rem 0;
   font-variant-numeric: tabular-nums;
 
-  &[data-state="error"] { color: var(--danger); }
-  &[data-state="syncing"] { color: var(--accent); }
-  &[data-state="idle"] { color: var(--green); }
+  &[data-state="error"] { color: var(--danger-ink); }
+  &[data-state="syncing"] { color: var(--accent-ink); }
+  &[data-state="idle"] { color: var(--green-ink); }
 }
 
 .sync-hint {
