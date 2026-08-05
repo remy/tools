@@ -40,6 +40,34 @@ export const AVATAR_COLOURS = [
   '#e17055', '#e84393', '#00cec9', '#636e72',
 ];
 
+// The two candidates for initials drawn on an avatar disc. Which one reads
+// depends entirely on the disc: white clears 4.5:1 on the indigo and the slate
+// but manages only 1.5:1 on the yellow, so it cannot simply be hardcoded.
+const INK_LIGHT = '#ffffff';
+const INK_DARK = '#101018';
+
+// WCAG relative luminance, which is what a contrast ratio is built from.
+function luminance(hex) {
+  const channel = (i) => {
+    const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+}
+
+// Whichever of the two inks has the better contrast with `colour`. Across the
+// stock palette the winner always clears 4.5:1, and an unrecognised colour
+// falls back to the theme's default rather than guessing.
+export function avatarInk(colour) {
+  if (!/^#[0-9a-f]{6}$/i.test(colour || '')) return '';
+  const bg = luminance(colour);
+  const against = (ink) => {
+    const [hi, lo] = [bg, luminance(ink)].sort((a, b) => b - a);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+  return against(INK_LIGHT) >= against(INK_DARK) ? INK_LIGHT : INK_DARK;
+}
+
 // Deterministic pick so a quick-added player still gets a distinct look
 // without anyone choosing one.
 export function autoAvatar(index) {
@@ -58,7 +86,10 @@ export function initials(name) {
 export function avatarEl(player, extraClass = '') {
   const span = document.createElement('span');
   span.className = `avatar${extraClass ? ' ' + extraClass : ''}`;
-  span.style.setProperty('--avatar-colour', player?.colour || AVATAR_COLOURS[0]);
+  const colour = player?.colour || AVATAR_COLOURS[0];
+  span.style.setProperty('--avatar-colour', colour);
+  const ink = avatarInk(colour);
+  if (ink) span.style.setProperty('--avatar-ink', ink);
   // A photo wins over the emoji, which wins over initials.
   if (player?.photo) {
     span.classList.add('avatar-photo');
