@@ -453,8 +453,12 @@ body.reordering {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  /* Roomier than it looks: the hint below pulls itself up by 0.5rem */
-  margin-bottom: 1.25rem;
+  /* A rule underneath keeps the option from reading as part of the import
+     instructions that follow it. Roomier than it looks: the hint below pulls
+     itself up by 0.5rem. */
+  padding-bottom: 0.875rem;
+  margin-bottom: 1.375rem;
+  border-bottom: 1px solid var(--border);
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--text);
