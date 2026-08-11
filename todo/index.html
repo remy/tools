@@ -201,17 +201,9 @@
         <div class="settings-section" id="list-settings-section" hidden>
           <h3 class="settings-heading">This list</h3>
           <p class="list-settings-name" id="list-settings-name"></p>
-          <!-- aria-labelledby/describedby so the hint is announced as a
-               description rather than swallowed into the checkbox's name -->
           <label class="settings-toggle">
-            <input type="checkbox" id="list-sink-checked" aria-labelledby="list-sink-checked-label"
-              aria-describedby="list-sink-checked-hint">
-            <span class="settings-toggle-text">
-              <span class="settings-toggle-label" id="list-sink-checked-label">Move checked to the bottom</span>
-              <span class="settings-toggle-hint" id="list-sink-checked-hint">Completed items drop below the rest —
-                within their own section when the list has headings. Your hand-sorted order is kept, so turning this
-                off restores it.</span>
-            </span>
+            <input type="checkbox" id="list-sink-checked">
+            <span>Move checked to the bottom</span>
           </label>
           <p class="field-hint-block">Import a Markdown file to add its headings and checklist items to this list.
             Headings become sections, <code>- [x]</code> imports as done, and struck-through lines are skipped.</p>
