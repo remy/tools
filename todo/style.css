@@ -448,6 +448,52 @@ body.reordering {
   margin-bottom: 0.75rem;
 }
 
+/* A checkbox + label pair in the settings dialog */
+.settings-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+
+  & input[type="checkbox"] {
+    flex-shrink: 0;
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: 0.0625rem;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
+  &:has(input:focus-visible) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+}
+
+.settings-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.settings-toggle-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-toggle-hint {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-3);
+}
+
 .import-summary {
   font-size: 0.875rem;
   color: var(--text-2);

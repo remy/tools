@@ -82,7 +82,19 @@ function setupListSection() {
   if (onList) {
     const list = state.lists.find((l) => l.id === state.currentListId);
     $('list-settings-name').textContent = list ? list.name : '';
+    $('list-sink-checked').checked = !!list?.sinkChecked;
   }
+}
+
+// "Move checked to the bottom" — a display preference stored on the list doc,
+// so it travels with the list to every device syncing it.
+export async function handleSinkCheckedChange(e) {
+  const list = state.lists.find((l) => l.id === state.currentListId);
+  if (!list) return;
+  await db.putList({ ...list, sinkChecked: e.target.checked });
+  await loadLists();
+  await refreshItems();
+  renderItems();
 }
 
 function resetImportChoice() {

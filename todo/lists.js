@@ -2,8 +2,22 @@ import { state } from './state.js';
 import { db } from './db.js';
 import { render } from './render.js';
 import { applyListOrder } from './order.js';
+import { sinkCheckedItems } from './sink.js';
 
 const $ = (id) => document.getElementById(id);
+
+// True when the open list has "move checked to the bottom" turned on.
+export function sinksChecked() {
+  return !!state.lists.find((l) => l.id === state.currentListId)?.sinkChecked;
+}
+
+// Every read of a list's items goes through here so the per-list display order
+// is applied in one place — the stored order is never rewritten (see sink.js).
+async function loadItems(listId) {
+  const items = await db.getItems(listId);
+  const list = state.lists.find((l) => l.id === listId);
+  return list?.sinkChecked ? sinkCheckedItems(items) : items;
+}
 
 // Every read of the lists goes through here so the per-device ordering from
 // localStorage is applied consistently — see order.js for why it isn't synced.
@@ -25,7 +39,7 @@ export async function refreshAll() {
   if (state.currentListId && !ids.has(state.currentListId)) {
     state.currentListId = null;
   }
-  state.items = state.currentListId ? await db.getItems(state.currentListId) : [];
+  state.items = state.currentListId ? await loadItems(state.currentListId) : [];
   render();
 }
 
@@ -34,7 +48,7 @@ export async function selectList(id) {
   state.currentListId = id;
   state.view = 'list';
   await db.setSetting('currentListId', id);
-  state.items = await db.getItems(id);
+  state.items = await loadItems(id);
   render();
 }
 
@@ -48,7 +62,7 @@ export async function goHome() {
 
 export async function refreshItems() {
   if (!state.currentListId) { state.items = []; return; }
-  state.items = await db.getItems(state.currentListId);
+  state.items = await loadItems(state.currentListId);
 }
 
 // ── New list dialog (blank or from template) ──

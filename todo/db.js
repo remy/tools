@@ -58,6 +58,10 @@ function listToDoc(list) {
     id: list.id,
     name: list.name,
     order: list.order ?? 0,
+    // Per-list display preference: sink completed items (see sink.js). Stored
+    // on the list doc so it syncs with the list itself — unlike the landing
+    // page's own ordering, which is deliberately per-device (see order.js).
+    sinkChecked: !!list.sinkChecked,
     createdAt: list.createdAt ?? Date.now(),
   };
 }
@@ -67,6 +71,7 @@ function listFromDoc(doc) {
     id: doc.id ?? doc._id.slice(LIST_PREFIX.length),
     name: doc.name,
     order: doc.order ?? 0,
+    sinkChecked: !!doc.sinkChecked,
     createdAt: doc.createdAt ?? 0,
   };
 }
@@ -631,10 +636,17 @@ class TodoDB {
   // not — the clone starts with a clean timeline. Returns the new list's id.
   async cloneList(sourceId, name) {
     const db = await this.open();
+    const source = await db.get(LIST_PREFIX + sourceId);
     const items = await this.getItems(sourceId);
     const listId = crypto.randomUUID();
     const now = Date.now();
-    await this.putList({ id: listId, name, order: now, createdAt: now });
+    await this.putList({
+      id: listId,
+      name,
+      order: now,
+      sinkChecked: !!source.sinkChecked,
+      createdAt: now,
+    });
     const docs = items.map((item, i) => itemToDoc({
       ...item,
       id: crypto.randomUUID(),

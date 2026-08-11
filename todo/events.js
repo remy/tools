@@ -5,6 +5,7 @@ import { findUrls, shortUrl, openUrl } from './links.js';
 import {
   goHome, openNewListDialog, onNewListTemplateChange,
   createList, renameList, deleteList, selectList, refreshItems, loadLists,
+  sinksChecked,
 } from './lists.js';
 import { setListOrder } from './order.js';
 import {
@@ -12,6 +13,7 @@ import {
   handleSyncSave, handleSyncNow, handleSyncPull, handleShareLink,
   handleImportFile, handleImportAppend, handleImportReplace, handleImportCancel,
   handleCloneList, handlePrint, handleShareList, handleResetListOrder,
+  handleSinkCheckedChange,
 } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
@@ -33,8 +35,18 @@ function findItem(id) {
 async function toggleItem(item) {
   await db.setItemChecked(item.listId, item.id, !item.checked);
   await refreshItems();
-  // Update just this row so the page doesn't jump to the top.
-  refreshItemRow(item.id);
+  if (sinksChecked()) {
+    // The row has to move, so the whole list is rebuilt. Rebuilding empties the
+    // <ul> and momentarily collapses the page, which the browser answers by
+    // scrolling to the top — restore the offset, which is still valid because
+    // the number of rows hasn't changed.
+    const y = window.scrollY;
+    renderItems();
+    window.scrollTo({ top: y });
+  } else {
+    // Update just this row so the page doesn't jump to the top.
+    refreshItemRow(item.id);
+  }
 }
 
 // ── Link choice dialog ──
@@ -307,6 +319,9 @@ export function bindEvents() {
   });
   $('btn-settings').addEventListener('click', openSettings);
   $('empty-new-list').addEventListener('click', openNewListDialog);
+
+  // Settings: per-list display options
+  $('list-sink-checked').addEventListener('change', handleSinkCheckedChange);
 
   // Settings: Markdown import (per-list section)
   $('import-open').addEventListener('click', () => $('import-file').click());
