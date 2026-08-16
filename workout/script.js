@@ -218,7 +218,9 @@ function renderWorkouts(workouts) {
             <div class="focus-text">${workout.focus}</div>
           </div>
           <div class="bar-actions">
-            <a href="manage.html" class="manage-link" title="Manage workouts">⚙</a>
+            <a href="manage.html" class="manage-link" aria-label="Settings">
+              <span class="icon-mask icon-settings" aria-hidden="true"></span>
+            </a>
           </div>
         </div>
         <div class="circuit-panel" data-workout-index="${index}">
@@ -274,7 +276,9 @@ function renderWorkouts(workouts) {
             <div class="focus-text">${workout.focus}</div>
           </div>
           <div class="bar-actions">
-            <a href="manage.html" class="manage-link" title="Manage workouts">⚙</a>
+            <a href="manage.html" class="manage-link" aria-label="Settings">
+              <span class="icon-mask icon-settings" aria-hidden="true"></span>
+            </a>
           </div>
         </div>
         <div class="col-headers">
