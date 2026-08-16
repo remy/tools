@@ -178,28 +178,30 @@
 
   .status.success {
     display: block;
-    background: #0a2a0a;
-    border: 1px solid #1a4a1a;
-    color: #4a4;
+    background: #eaf5ea;
+    border: 1px solid #b0d4b0;
+    color: #2a6a2a;
   }
 
   .status.error {
     display: block;
-    background: #2a0a0a;
-    border: 1px solid #4a1a1a;
-    color: #c44;
-  }
-
-  body.light .status.success {
-    background: #eaf5ea;
-    border-color: #b0d4b0;
-    color: #2a6a2a;
-  }
-
-  body.light .status.error {
     background: #f5eaea;
-    border-color: #d4b0b0;
+    border: 1px solid #d4b0b0;
     color: #8a2a2a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .status.success {
+      background: #0a2a0a;
+      border-color: #1a4a1a;
+      color: #4a4;
+    }
+
+    .status.error {
+      background: #2a0a0a;
+      border-color: #4a1a1a;
+      color: #c44;
+    }
   }
 
   .preview {
@@ -432,14 +434,6 @@
     hideStatus();
     return true;
   }
-
-  // Restore theme
-  (() => {
-    const urlTheme = new URLSearchParams(location.search).get('theme');
-    let stored;
-    try { stored = localStorage.getItem('theme'); } catch (e) {}
-    if ((urlTheme || stored) === 'light') document.body.classList.add('light');
-  })();
 
   // Rest timer setting
   const restToggle = document.getElementById('rest-timer-toggle');

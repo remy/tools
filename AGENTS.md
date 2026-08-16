@@ -24,13 +24,18 @@ Do not use any UI frameworks or utility CSS libraries. Write plain HTML, CSS, an
 
 - Write styles for mobile first, then add `@media (min-width: ...)` overrides for larger screens.
 - Every project must support both dark and light colour schemes.
-- Use `prefers-color-scheme` media query and/or a `[data-theme]` attribute on `<html>` for manual toggling.
+- **Follow the system setting.** The theme comes from the OS/browser light–dark control via `prefers-color-scheme` — nothing else.
+- **Do not add a theme toggle.** A manual light/dark switch is not required and should not be built unless the author explicitly asks for one. Without an explicit request there is no toggle button, no `theme` value in `localStorage`, and no `?theme=` URL parameter — the system control is the only input.
+- If a toggle *is* explicitly requested, layer it on top with a `[data-theme]` attribute on `<html>`, keeping `prefers-color-scheme` as the default when the attribute is absent.
 - Define all colours as CSS custom properties in `:root` so themes can be swapped cleanly.
+- Set `color-scheme: light dark` on `:root` so native controls, form fields, and scrollbars follow along too.
 
 **Minimal theme pattern:**
 
 ```css
 :root {
+  color-scheme: light dark;
+
   --bg: #fafafa;
   --bg-secondary: #f4f4f5;
   --border: #d4d4d8;
@@ -49,11 +54,9 @@ Do not use any UI frameworks or utility CSS libraries. Write plain HTML, CSS, an
     --accent: #60a5fa;
   }
 }
-
-/* Manual toggle support */
-[data-theme="light"] { /* light values */ }
-[data-theme="dark"]  { /* dark values */  }
 ```
+
+Every colour that differs between the two schemes belongs in this block as a custom property. Avoid one-off `body.light .thing { color: ... }` overrides scattered through the stylesheet — add a variable instead and give it a value in each scheme.
 
 ### 3. Each Project Lives in Its Own Directory
 
@@ -130,6 +133,8 @@ Use this as the starting point for a new `index.html`:
 
 ```css
 :root {
+  color-scheme: light dark;
+
   --bg: #fafafa;
   --bg-secondary: #f4f4f5;
   --border: #d4d4d8;
@@ -307,7 +312,7 @@ Commit both the new tool directory and the updated `projects.json` / root `index
 - [ ] `script.js` present when JavaScript is needed
 - [ ] `<meta name="description">` present with a clear description
 - [ ] `<meta name="category">` present with a valid category
-- [ ] Dark **and** light mode implemented (via `prefers-color-scheme`)
+- [ ] Dark **and** light mode implemented, following the system setting via `prefers-color-scheme` (no theme toggle unless explicitly requested)
 - [ ] Mobile-first CSS (base styles for small screens, `@media (min-width:...)` for larger)
 - [ ] No React, Vue, Svelte, or other UI frameworks
 - [ ] No Tailwind, Bootstrap, or utility CSS libraries

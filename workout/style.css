@@ -1,21 +1,6 @@
 :root {
-  --bg: #0e0e0e;
-  --card: #1a1a1a;
-  --border: #2a2a2a;
-  --accent: #ff3c3c;
-  --text: #f0f0f0;
-  --muted: #888;
-  --row-a: #1a1a1a;
-  --row-b: #141414;
-  --tab-bg: #1a1a1a;
-  --tab-active-bg: #1f1010;
-  --focus-bg: linear-gradient(135deg, #1f1010, #1a1a1a);
-  --cardio-bg: #1a1500;
-  --cardio-border: #3a3000;
-  --cardio-text: #aaa;
-}
+  color-scheme: light dark;
 
-body.light {
   --bg: #f2f2f2;
   --card: #ffffff;
   --border: #ddd;
@@ -30,6 +15,27 @@ body.light {
   --cardio-bg: #fffbe6;
   --cardio-border: #f0d060;
   --cardio-text: #666;
+  --cardio-title: #997700;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e0e;
+    --card: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #ff3c3c;
+    --text: #f0f0f0;
+    --muted: #888;
+    --row-a: #1a1a1a;
+    --row-b: #141414;
+    --tab-bg: #1a1a1a;
+    --tab-active-bg: #1f1010;
+    --focus-bg: linear-gradient(135deg, #1f1010, #1a1a1a);
+    --cardio-bg: #1a1500;
+    --cardio-border: #3a3000;
+    --cardio-text: #aaa;
+    --cardio-title: #cc9900;
+  }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
@@ -53,27 +59,6 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-.theme-toggle {
-  background: transparent;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  border-radius: 20px;
-  padding: 5px 12px;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 500;
-  color: var(--muted);
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-body.light .theme-toggle {
-  border-color: rgba(0,0,0,0.15);
-}
-
-.theme-toggle:active { opacity: 0.7; }
 
 .bar-actions {
   display: flex;
@@ -273,12 +258,10 @@ body.light .theme-toggle {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 17px;
   letter-spacing: 1.5px;
-  color: #cc9900;
+  color: var(--cardio-title);
   line-height: 1;
   margin-bottom: 3px;
 }
-
-body.light .cardio-title { color: #997700; }
 
 .cardio-desc {
   font-size: 14px;

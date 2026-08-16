@@ -113,7 +113,6 @@ async function init() {
     if (!progressState.days) progressState.days = {};
     renderWorkouts(data.workouts);
     restoreTab();
-    restoreTheme();
   } catch (error) {
     console.error('Error loading workouts:', error);
   }
@@ -220,7 +219,6 @@ function renderWorkouts(workouts) {
           </div>
           <div class="bar-actions">
             <a href="manage.html" class="manage-link" title="Manage workouts">⚙</a>
-            <button class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
           </div>
         </div>
         <div class="circuit-panel" data-workout-index="${index}">
@@ -277,7 +275,6 @@ function renderWorkouts(workouts) {
           </div>
           <div class="bar-actions">
             <a href="manage.html" class="manage-link" title="Manage workouts">⚙</a>
-            <button class="theme-toggle" onclick="toggleTheme()">☀️ Light</button>
           </div>
         </div>
         <div class="col-headers">
@@ -584,34 +581,6 @@ function updateCircuitUI(remainingOverride) {
   document.body.classList.toggle('circuit-phase-active', s.phase === 'active');
   document.body.classList.toggle('circuit-phase-rest', s.phase === 'rest');
   document.body.classList.toggle('circuit-phase-longRest', s.phase === 'longRest');
-}
-
-/* ── Theme ── */
-function setTheme(light) {
-  document.body.classList.toggle('light', light);
-  const label = light ? '🌙 Dark' : '☀️ Light';
-  document.querySelectorAll('.theme-toggle').forEach(b => b.textContent = label);
-}
-
-function toggleTheme() {
-  const light = !document.body.classList.contains('light');
-  setTheme(light);
-  try {
-    localStorage.setItem('theme', light ? 'light' : 'dark');
-  } catch (e) {}
-  const url = new URL(location.href);
-  url.searchParams.set('theme', light ? 'light' : 'dark');
-  history.replaceState(null, '', url);
-}
-
-function restoreTheme() {
-  const urlTheme = new URLSearchParams(location.search).get('theme');
-  let stored;
-  try {
-    stored = localStorage.getItem('theme');
-  } catch (e) {}
-  const pref = urlTheme || stored;
-  if (pref === 'light') setTheme(true);
 }
 
 /* ── Tabs ── */
