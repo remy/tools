@@ -223,29 +223,7 @@
 
         <div class="settings-section">
           <h3 class="settings-heading">Sync</h3>
-          <label class="field">
-            <span class="field-label">CouchDB URL</span>
-            <input type="url" id="sync-url" placeholder="https://user:pass@couch.example.com/family-games"
-              autocomplete="off">
-          </label>
-          <label class="field">
-            <span class="field-label">Bearer token (optional)</span>
-            <input type="password" id="sync-token" autocomplete="off">
-          </label>
-          <p class="sync-status" id="sync-status" aria-live="polite">Sync disabled.</p>
-          <p class="sync-hint">Replicates live against a CouchDB-compatible endpoint. The server must send CORS
-            headers.</p>
-          <div class="pop-actions">
-            <button class="btn btn-ghost" id="sync-pull" type="button"
-              title="Overwrite local with server data; leaves the remote untouched">Pull from server</button>
-            <button class="btn btn-ghost" id="sync-now" type="button">Sync now</button>
-            <button class="btn btn-primary" id="sync-save" type="button">Save sync settings</button>
-          </div>
-          <div class="share-row">
-            <button class="btn btn-ghost share-btn" id="sync-share" type="button" disabled>Copy share link</button>
-            <p class="sync-hint">Opens the app on another device pre-configured for this server. The link contains your
-              URL and token, so only share it with people you trust.</p>
-          </div>
+          <sync-settings id="sync-settings"></sync-settings>
         </div>
       </div>
     </dialog>

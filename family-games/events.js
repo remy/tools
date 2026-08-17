@@ -10,10 +10,7 @@ import {
   openPlayerEditor, savePlayer, onNameInput, onEmojiInput, removePlayer,
   restorePlayer, handlePhotoFile, clearPhoto, initPhotoDrop,
 } from './players.js';
-import {
-  openSettings, handleSyncSave, handleSyncNow, handleSyncPull,
-  handleShareLink, handleShareGame,
-} from './settings.js';
+import { openSettings, handleShareGame } from './settings.js';
 
 // Native <dialog>: dismiss when the backdrop (the dialog element itself) is
 // clicked. Relies on the dialog having no padding so only backdrop clicks
@@ -151,10 +148,6 @@ export function bindEvents() {
   $('share-game-sync').addEventListener('click', () => handleShareGame(true));
 
   // Settings: sync
-  $('sync-save').addEventListener('click', handleSyncSave);
-  $('sync-now').addEventListener('click', handleSyncNow);
-  $('sync-pull').addEventListener('click', handleSyncPull);
-  $('sync-share').addEventListener('click', handleShareLink);
 
   // Close buttons (any element with data-close pointing at a dialog id)
   document.querySelectorAll('[data-close]').forEach((btn) => {
