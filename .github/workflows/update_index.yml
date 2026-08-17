@@ -34,7 +34,9 @@ jobs:
 
       - name: Stamp service worker version
         run: |
-          sed -i "s/__GIT_SHA__/${{ github.sha }}/" sw.js
+          # Match any current value, not just the placeholder: the stamped file is
+          # committed back, so a literal __GIT_SHA__ is only ever present once.
+          sed -i -E "s|const VERSION = '[^']*';|const VERSION = '${{ github.sha }}';|" sw.js
 
       - name: Commit and Push
         run: |
