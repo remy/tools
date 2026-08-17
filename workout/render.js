@@ -3,6 +3,7 @@ import { getCircuitSetting, getActiveTab, setActiveTab } from './prefs.js';
 import { formatTime } from './format.js';
 import { resetCircuit, resetRepTimer } from './timers.js';
 import { applyStoredProgress } from './progress.js';
+import { paintSyncStatus } from './sync-indicator.js';
 
 // Rows carry both the exercise's position (which drives the circuit timer's
 // ordering) and its stable id (which keys progress, so reordering or deleting
@@ -34,6 +35,7 @@ function focusBar(workout) {
       <div class="bar-actions">
         <a href="manage.html" class="manage-link" aria-label="Settings">
           <span class="icon-mask icon-settings" aria-hidden="true"></span>
+          <span class="sync-error-dot" hidden></span>
         </a>
       </div>
     </div>
@@ -145,6 +147,8 @@ export function renderWorkouts(workouts) {
   });
 
   applyStoredProgress();
+  // The cog — and its sync-failure dot — is rebuilt with every panel.
+  paintSyncStatus();
 }
 
 export function reRenderPreservingTab() {

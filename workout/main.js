@@ -9,6 +9,9 @@ import {
 } from './timers.js';
 import { bindDialogs } from './dialogs.js';
 import { bindGestures } from './gestures.js';
+import { initSync } from './sync.js';
+import { setSyncConfig } from './db.js';
+import { consumeLinkParams } from '/lib/deep-link.js';
 
 /* ── Event delegation ── */
 function bindEvents() {
@@ -99,6 +102,11 @@ async function init() {
   bindEvents();
   bindDialogs();
   bindGestures();
+  initSync();
 }
 
-init();
+// A ?sync= link has to be applied before anything boots, and reloads the page —
+// skip the normal init when one is on its way. There is no per-workout deep
+// link: the whole plan is three tabs on one screen, so there is nothing to link
+// to that the app doesn't already open.
+if (!consumeLinkParams({ setConfig: setSyncConfig })) init();
