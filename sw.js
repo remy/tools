@@ -1,4 +1,24 @@
-const VERSION = '306c09ace8b670d19c1683414bee8bc21be27e80';
+// Offline support for every tool in this collection.
+//
+// Strategy: stale-while-revalidate. A cached response is served immediately and
+// refreshed in the background, so the network is never on the critical path for
+// anything already seen. The previous network-first strategy meant every
+// request waited for the network before the cache was consulted — fine on a
+// clean connection, but a captive portal, a dead VPN or a cell signal that
+// never resolves leaves the socket open for tens of seconds, and the page hangs
+// with a perfectly good copy sitting in the cache.
+//
+// The trade-off is that a change is served one load late: the load that fetches
+// it still shows the old copy, and the one after is current. That is the right
+// way round for a set of tools that mostly want to open instantly.
+
+// Bump by hand to throw away every cached entry at once — a reset lever for the
+// rare change that makes old entries actively wrong, not a per-deploy stamp.
+// Individual entries keep themselves current by revalidating (see below), so
+// wiping the cache on every deploy would only guarantee that the first load
+// after one has nothing to fall back on, which is exactly when a bad network
+// hurts most.
+const VERSION = '1';
 const CACHE_NAME = `tools-${VERSION}`;
 
 self.addEventListener('install', () => {
@@ -13,25 +33,53 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+function cachePut(request, response) {
+  if (!response || !response.ok) return Promise.resolve();
+  const clone = response.clone();
+  return caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+}
 
-  const url = new URL(event.request.url);
-  if (url.origin !== location.origin) return;
+// Fetch and update the cached copy. Never rejects: a failed revalidation just
+// leaves the cached copy in place until the next attempt. `cache: 'no-cache'`
+// forces a conditional request rather than letting the browser's own HTTP cache
+// answer — without it a stale entry can be refreshed with an equally stale copy
+// and never actually update.
+function revalidate(request) {
+  return fetch(request, { cache: 'no-cache' })
+    .then((response) => cachePut(request, response).then(() => response))
+    .catch(() => null);
+}
+
+function cachedResponse(request) {
+  return caches.match(request).then((hit) => {
+    if (hit) return hit;
+    // A link that carries state in its query string (e.g. /todo/?list=<id>) is
+    // the same document as the cached page, so match it ignoring the query.
+    // Navigations only — for a subresource the query usually identifies a
+    // different thing entirely.
+    if (request.mode === 'navigate') {
+      return caches.match(request, { ignoreSearch: true });
+    }
+    return null;
+  });
+}
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (request.method !== 'GET') return;
+  if (new URL(request.url).origin !== location.origin) return;
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response.ok) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
-      })
-      // Offline: fall back to the cache. Retry ignoring the query string so
-      // links that carry state in it (e.g. /todo/?list=<id>) still resolve to
-      // the cached page rather than failing on an exact-URL miss.
-      .catch(() => caches.match(event.request)
-        .then((hit) => hit || caches.match(event.request, { ignoreSearch: true })))
+    cachedResponse(request).then((hit) => {
+      if (hit) {
+        // Serve now, refresh for next time. waitUntil keeps the worker alive
+        // for the background fetch without holding up the response.
+        event.waitUntil(revalidate(request));
+        return hit;
+      }
+      // Nothing cached, so the network is the only option — no timeout here,
+      // because failing fast on a miss just produces a broken page sooner.
+      return revalidate(request).then((response) => response || Response.error());
+    })
   );
 });
