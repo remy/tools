@@ -77,6 +77,26 @@ body {
   display: none !important;
 }
 
+/* Mask-based icons: load a shared SVG from /icons and paint it with
+   currentColor so it inherits text colour and adapts to the theme. */
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-settings {
+  width: 1.125rem;
+  height: 1.125rem;
+  -webkit-mask-image: url(/icons/settings.svg);
+  mask-image: url(/icons/settings.svg);
+}
+
 /* ── App Shell ── */
 .app {
   display: flex;
