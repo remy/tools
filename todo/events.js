@@ -10,7 +10,6 @@ import {
 import { setListOrder } from './order.js';
 import {
   openSettings, openTemplateEditor, saveTemplate, deleteTemplate,
-  handleSyncSave, handleSyncNow, handleSyncPull, handleShareLink,
   handleImportFile, handleImportAppend, handleImportReplace, handleImportCancel,
   handleCloneList, handlePrint, handleShareList, handleResetListOrder,
   handleSinkCheckedChange,
@@ -349,12 +348,6 @@ export function bindEvents() {
   // createList twice and create duplicate lists).
   $('new-list-template').addEventListener('change', onNewListTemplateChange);
   $('new-list-form').addEventListener('submit', (e) => { e.preventDefault(); createList(); });
-
-  // Settings: sync
-  $('sync-save').addEventListener('click', handleSyncSave);
-  $('sync-now').addEventListener('click', handleSyncNow);
-  $('sync-pull').addEventListener('click', handleSyncPull);
-  $('sync-share').addEventListener('click', handleShareLink);
 
   // Close buttons (any element with data-close pointing at a dialog id)
   document.querySelectorAll('[data-close]').forEach((btn) => {
