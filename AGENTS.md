@@ -70,7 +70,7 @@ repo-root/
     └── script.js       ← preferred when JS is used
 ```
 
-Keep the tool self-contained. Avoid referencing files outside the tool's directory.
+Keep the tool self-contained. Avoid referencing files outside the tool's directory, apart from the shared root directories listed under "Shared Code" below.
 Prefer smaller, focused files over one large file. Default to splitting HTML, CSS, and JS into separate files.
 Inline `<style>`/`<script>` blocks should be treated as exceptions for very small throwaway prototypes only.
 
@@ -100,6 +100,62 @@ Without these the tool will appear as "Uncategorized" and may have no descriptio
 **If you cannot confidently determine the category** from the tool's description and functionality during the agentic process, do not guess — ask the author:
 
 > "Which category should I use for this tool? The options are: Developer Tools, Calculators, Game, Home Assistant, Immich, Productivity, Web Demos."
+
+---
+
+## Shared Code
+
+Tools are self-contained by default. The exceptions are a small number of root
+directories that every tool may reference by absolute path:
+
+| Path      | Contents                                                          |
+| --------- | ----------------------------------------------------------------- |
+| `/vendor` | Third-party libraries, vendored rather than loaded from a CDN     |
+| `/icons`  | Shared SVG icons, rendered with the CSS mask technique             |
+| `/lib`    | Shared ES modules — code more than one tool genuinely needs        |
+
+### `/lib`
+
+Reach for `/lib` only when a second tool needs the same code, and prefer
+extracting from a working implementation over writing a shared module up front.
+The bar is deliberately high: a tool that imports nothing is easier to change
+than one that doesn't.
+
+Current modules, all serving the PouchDB-backed tools:
+
+| Module                     | Purpose                                                        |
+| -------------------------- | -------------------------------------------------------------- |
+| `sync-config.js`           | Where CouchDB connection details are stored, and share-link encoding |
+| `pouch-store.js`           | `PouchStore` — local PouchDB plus live CouchDB replication      |
+| `sync-status.js`           | Human-readable rendering of a sync status                      |
+| `deep-link.js`             | Virtual per-record links and boot-time link handling           |
+| `sync-settings.wc.js`      | `<sync-settings>` — the sync panel for a settings dialog        |
+
+Import them by absolute path so the same specifier works from any tool:
+
+```js
+import { PouchStore } from '/lib/pouch-store.js';
+```
+
+**Sync configuration is shared, CouchDB databases are not.** Every tool is
+served from one origin and so shares one `localStorage`. Connection details
+therefore live under a single structured key, namespaced by tool:
+
+```
+tools.sync = { "todo": { url, token }, "workout": { url, token }, … }
+```
+
+Each tool still points at its own database — only the storage location is
+shared. Tools that predate this key wrote their own flat pair (e.g.
+`todo-lists.sync.url`); `createSyncConfig` takes a `legacyPrefix` and falls back
+to reading those, so an existing install keeps working untouched. The legacy
+keys are deliberately never deleted, so rolling back to older code still finds a
+working config.
+
+A tool adopting `PouchStore` subclasses it and adds only its document mappers
+and domain queries — the connection lifecycle, status reporting, change
+subscriptions and manual sync operations all come from the base class. See
+`todo/db.js` for the reference implementation.
 
 ---
 

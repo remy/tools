@@ -1007,33 +1007,13 @@ dialog {
 
 .settings-head-row .settings-heading { margin-bottom: 0; }
 
-.sync-status {
-  font-size: 0.8125rem;
-  color: var(--text-2);
-  padding: 0.375rem 0;
-  font-variant-numeric: tabular-nums;
-
-  &[data-state="error"] { color: var(--danger); }
-  &[data-state="syncing"] { color: var(--accent); }
-  &[data-state="idle"] { color: var(--green); }
-}
-
+/* Small print under a share button. The Sync section's own hints live inside
+   <sync-settings>; this styles the per-list share hints that sit outside it. */
 .sync-hint {
   font-size: 0.75rem;
   color: var(--text-3);
   line-height: 1.35;
   margin-top: 0.125rem;
-}
-
-.share-row {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--border-light);
-}
-
-.share-btn {
-  width: 100%;
-  margin-bottom: 0.375rem;
 }
 
 /* ── Print sheet ── */
