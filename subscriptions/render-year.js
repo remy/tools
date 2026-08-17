@@ -85,17 +85,17 @@ export function toggleYearView() {
     state.viewMode = 'year';
     state.yearViewYear = state.currentYear;
     btn.classList.add('active');
-    calendarEl.classList.add('is-hidden');
-    monthChrome.classList.add('is-hidden');
-    yearViewEl.classList.remove('is-hidden');
+    calendarEl.hidden = true;
+    monthChrome.hidden = true;
+    yearViewEl.hidden = false;
     renderHeader();
     renderYearView();
   } else {
     state.viewMode = 'month';
     btn.classList.remove('active');
-    calendarEl.classList.remove('is-hidden');
-    monthChrome.classList.remove('is-hidden');
-    yearViewEl.classList.add('is-hidden');
+    calendarEl.hidden = false;
+    monthChrome.hidden = false;
+    yearViewEl.hidden = true;
     render();
   }
 }

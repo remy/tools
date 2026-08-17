@@ -72,8 +72,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* View visibility — class-based toggle instead of hidden attribute */
-.is-hidden {
+/* Firefox does not hide elements whose display is overridden (flex, grid),
+   so back the hidden attribute with an explicit rule. */
+[hidden] {
   display: none !important;
 }
 
