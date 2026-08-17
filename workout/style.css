@@ -16,6 +16,19 @@
   --cardio-border: #f0d060;
   --cardio-text: #666;
   --cardio-title: #997700;
+
+  /* Tokens the shared <sync-settings> component reads. Custom properties
+     inherit through the shadow boundary, so defining them here is what themes
+     the panel in this tool's palette rather than its neutral fallbacks. */
+  --text-2: #444;
+  --text-3: #888;
+  --bg-input: #f7f7f7;
+  --bg-hover: #ececec;
+  --border-light: #e6e6e6;
+  --accent-glow: rgba(217, 43, 43, 0.12);
+  --danger: #d92b2b;
+  --green: #1a9e5f;
+  --radius: 12px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -35,6 +48,15 @@
     --cardio-border: #3a3000;
     --cardio-text: #aaa;
     --cardio-title: #cc9900;
+
+    --text-2: #c4c4c4;
+    --text-3: #888;
+    --bg-input: #141414;
+    --bg-hover: #222;
+    --border-light: #222;
+    --accent-glow: rgba(255, 60, 60, 0.14);
+    --danger: #ff5c5c;
+    --green: #35d68a;
   }
 }
 
@@ -87,6 +109,7 @@ body {
 }
 
 .manage-link {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -101,6 +124,18 @@ body {
 }
 
 .manage-link:active { opacity: 0.7; }
+
+/* Red badge on the settings cog while sync is in an error state. */
+.sync-error-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--bg);
+}
 
 .content {
   padding: 10px 16px 16px;
