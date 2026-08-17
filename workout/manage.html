@@ -368,8 +368,12 @@
     <h2>IMPORT WORKOUTS</h2>
     <p>Import a JSON file to use your own custom workout plan. It will be saved locally in your browser.</p>
     <div class="file-input-wrap" id="file-input-wrap">
+      <!-- The label and the chosen filename are their own elements so the drop
+           zone can be relabelled without rewriting its innerHTML, which would
+           destroy the file input nested inside it. -->
       <div class="file-drop" id="file-drop">
-        Tap to choose file or drag &amp; drop
+        <span id="file-drop-label">Tap to choose file or drag &amp; drop</span>
+        <span class="file-name" id="file-name" hidden></span>
         <input type="file" id="file-input" accept=".json,application/json">
       </div>
       <div class="paste-divider">or paste</div>

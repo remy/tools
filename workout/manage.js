@@ -5,8 +5,6 @@ import '/lib/sync-settings.wc.js';
 
 const $ = (id) => document.getElementById(id);
 
-const DEFAULT_DROP_LABEL = 'Tap to choose file or drag &amp; drop';
-
 let pendingData = null;
 
 function showStatus(msg, type) {
@@ -38,10 +36,17 @@ function hidePreview() {
   $('preview').classList.remove('visible');
 }
 
+// Show the chosen filename under the drop zone's label, or clear it. The label
+// and filename are separate elements precisely so this never touches the file
+// input nested alongside them.
+function setChosenFile(name) {
+  const el = $('file-name');
+  el.textContent = name || '';
+  el.hidden = !name;
+}
+
 function resetFileDrop() {
-  const fileDrop = $('file-drop');
-  fileDrop.innerHTML = DEFAULT_DROP_LABEL;
-  fileDrop.appendChild($('file-input'));
+  setChosenFile(null);
   $('file-input').value = '';
 }
 
@@ -82,11 +87,7 @@ function handleFile(file) {
   reader.onload = () => {
     $('paste-input').value = '';
     const ok = processJsonText(reader.result, (msg) => showStatus(msg, 'error'));
-    if (ok) {
-      const fileDrop = $('file-drop');
-      fileDrop.innerHTML = DEFAULT_DROP_LABEL + '<span class="file-name">' + file.name + '</span>';
-      fileDrop.appendChild($('file-input'));
-    }
+    if (ok) setChosenFile(file.name);
   };
   reader.readAsText(file);
 }
