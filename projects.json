@@ -129,6 +129,11 @@
     "description": "Visual debugger for Home Assistant Assist intent recognition templates",
     "title": "HA Intent Parser Visualizer"
   },
+  "history-of-things": {
+    "category": "Learning",
+    "description": "Researched, readable histories of the everyday things around us \u2014 where they came from, who made them, and why they turned out the way they did.",
+    "title": "The History of Things"
+  },
   "immich-album": {
     "category": "Immich",
     "description": "Browser-based tool to bulk manage Immich albums - filter, delete, merge, and rename albums with regex and asset count filtering",
