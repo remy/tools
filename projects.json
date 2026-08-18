@@ -46,7 +46,7 @@
   },
   "cook-plan": {
     "category": "Productivity",
-    "description": "Schedule and coordinate cooking times for multiple dishes, with appliance conflict detection and a live step-by-step countdown timeline.",
+    "description": "Schedule and coordinate cooking times for multiple dishes, with appliance conflict detection, a live step-by-step countdown timeline, offline PouchDB storage and live CouchDB sync.",
     "title": "Cook Planner"
   },
   "cost-summary": {
