@@ -78,6 +78,19 @@
         : escapeHtml(entry.imageCredit.text)}</p>`
       : '';
 
+    // Both callouts must cite where they came from; a claim without a source
+    // is the one thing a history like this cannot afford.
+    const didYouKnow = typeof entry.didYouKnow === 'string'
+      ? { text: entry.didYouKnow, sources: [] }
+      : entry.didYouKnow;
+
+    const sources = (list) => {
+      if (!list || !list.length) return '';
+      const links = list.map((s) =>
+        `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener">${escapeHtml(s.title)}</a>`);
+      return `<p class="callout__source">${links.length > 1 ? 'Sources' : 'Source'}: ${links.join(' · ')}</p>`;
+    };
+
     const nav = (dir, item, fallback) => item
       ? `<a class="${dir}" href="${entryUrl(item.slug)}">
            <span class="mini">${dir === 'prev' ? '← Previous' : 'Next →'}</span>${escapeHtml(item.title)}
@@ -105,13 +118,15 @@
 
           <aside class="callout">
             <div class="callout__label">Did you know?</div>
-            <p>${escapeHtml(entry.didYouKnow)}</p>
+            <p>${escapeHtml(didYouKnow.text)}</p>
+            ${sources(didYouKnow.sources)}
           </aside>
 
           <aside class="callout callout--history">
             <div class="callout__label">A moment from history</div>
             <h3 class="callout__subtitle">${escapeHtml(entry.momentFromHistory.title)}</h3>
             <p>${escapeHtml(entry.momentFromHistory.text)}</p>
+            ${sources(entry.momentFromHistory.sources)}
           </aside>
 
           <section class="reading">

@@ -18,10 +18,28 @@
     "Chrome won. It passed Internet Explorer in 2012 and kept climbing; today around seven in every ten browsing sessions on Earth happen in Chrome, with Safari a distant second. More significantly, almost every remaining rival — Edge, Opera, Brave, Vivaldi — is now built on Chromium, the open-source engine underneath Chrome. Only Firefox and Safari still run engines of their own. After thirty years of ferocious competition, the number of genuinely independent ways to render a web page has fallen to three.",
     "That matters more than it sounds. A browser is not a neutral pane of glass; it is the thing that decides what the web is allowed to do. Whoever builds the browser chooses which features exist, which adverts get blocked, how much of your behaviour is tracked, and what counts as a standard. It is a piece of software that most people never chose, rarely think about, and use for several hours a day — which makes it, quietly, one of the most powerful things ever built."
   ],
-  "didYouKnow": "The very first browser could edit pages as well as read them. Tim Berners-Lee's WorldWideWeb was a full what-you-see-is-what-you-get editor, so writing a web page was as easy as visiting one. That feature was dropped in the mid-1990s, and the web spent the next twenty years reinventing it as blogs, wikis and social media.",
+  "didYouKnow": {
+    "text": "The very first browser could edit pages as well as read them. Tim Berners-Lee's WorldWideWeb was a full what-you-see-is-what-you-get editor, so writing a web page was as easy as visiting one. That feature was dropped in the mid-1990s, and the web spent the next twenty years reinventing it as blogs, wikis and social media.",
+    "sources": [
+      {
+        "title": "W3C — WorldWideWeb, the first Web client",
+        "url": "https://www.w3.org/People/Berners-Lee/WorldWideWeb.html"
+      }
+    ]
+  },
   "momentFromHistory": {
     "title": "The night Netscape toppled the giant 'e'",
-    "text": "On 22 September 1997, Microsoft threw a party for the launch of Internet Explorer 4 and, as a prank, hauled a three-metre-tall version of the Internet Explorer logo onto the lawn outside Netscape's headquarters in California. Netscape's staff arrived the next morning, pushed it over, and stood their giant Mozilla dinosaur mascot on top of it holding a hand-written sign: “Netscape 72, Microsoft 18” — the market share at the time. It was the last good joke Netscape got to make. Within four years those numbers had almost exactly reversed."
+    "text": "Late on the night of 30 September 1997, days after Internet Explorer 4 shipped, a group of Microsoft employees drove a large metal Internet Explorer logo onto the front lawn of Netscape's headquarters in Mountain View, California, and left it there. A Netscape spokesperson called it juvenile — “something you'd expect from a start-up, not the largest software company in the world”. Netscape's staff then did something better than complain: they toppled the logo onto its back, spray-painted “Netscape Now” along the side facing the street, hauled over their seven-foot statue of Mozilla, the company's grinning dinosaur mascot, and stood it on top holding a sign reading “Netscape 72, Microsoft 18” — the market share at the time. It was the last good joke Netscape got to make. Within four years those numbers had almost exactly reversed.",
+    "sources": [
+      {
+        "title": "Network World — Microsoft IE vs. Netscape Navigator",
+        "url": "https://www.networkworld.com/article/816861/software-microsoft-ie-vs-netscape-navigator.html"
+      },
+      {
+        "title": "Wikipedia — Browser wars",
+        "url": "https://en.wikipedia.org/wiki/Browser_wars"
+      }
+    ]
   },
   "furtherReading": [
     {

@@ -52,12 +52,35 @@ You are looking for:
 - **The now.** Where the thing stands today, and what is still unresolved.
 - **One genuinely surprising fact** for the Did You Know, and **one vivid scene**
   — a specific day, a room, a named person doing something — for the Moment From
-  History.
+  History. **Both must be citable.** Note the source URL as you find them; if you
+  cannot cite it, you cannot use it (see below).
 
 Pin down exact dates, full names and real numbers. If sources disagree, say so
 in the prose ("nobody agrees on…") rather than picking one and sounding certain.
 If you cannot verify a good story, cut it — a charming anecdote that turns out to
 be a myth is worse than no anecdote.
+
+### Citing the two callouts
+
+The Did You Know and the Moment From History are the two parts readers will
+repeat to somebody else, so they are the two parts that have to be traceable.
+Both carry a `sources` array, and it is **not optional** — the page renders a
+"Source:" line under each.
+
+- **Write the claim to fit the source, not the other way round.** If the source
+  says "late on the night of 30 September", do not round it to "in October"
+  because it scans better.
+- **Cite two sources when one does not cover the whole anecdote.** A common
+  case: a trade-press piece pins the date and the place, and a reference work
+  carries the detail that makes the story. Cite both rather than blending them
+  into a single unattributed telling.
+- **Prefer the most primary source you actually read.** The inventor's own page
+  beats an encyclopedia; a contemporaneous news report beats a modern listicle.
+  Do not cite something you only saw quoted somewhere else.
+- **Fetch every URL before you cite it.** A dead or wrong link is worse than no
+  citation, because it looks checked.
+- If the only support you can find for a great fact is a blog post repeating an
+  unsourced claim, **replace the fact**. There is always another one.
 
 ## Voice
 
@@ -101,10 +124,14 @@ knowledge, and never talk down. Concretely that means:
      "imageCredit": { "text": "Photographer, Source (Licence)", "url": "https://…" },
      "published": "YYYY-MM-DD",
      "summary": ["Lede paragraph…", "…", "…"],
-     "didYouKnow": "One surprising, verifiable fact. Two or three sentences.",
+     "didYouKnow": {
+       "text": "One surprising, verifiable fact. Two or three sentences.",
+       "sources": [{ "title": "Publication — Headline", "url": "https://…" }]
+     },
      "momentFromHistory": {
        "title": "A scene, not a topic",
-       "text": "One vivid, dated, specific incident. Three to five sentences."
+       "text": "One vivid, dated, specific incident. Three to five sentences.",
+       "sources": [{ "title": "Publication — Headline", "url": "https://…" }]
      },
      "furtherReading": [
        { "title": "Where to go next", "url": "https://…", "note": "Why this one is worth the click" }
@@ -114,6 +141,10 @@ knowledge, and never talk down. Concretely that means:
 
    Write it with a script (`python3` + `json.dump`) rather than by hand, so the
    escaping and encoding are right.
+
+   Both `sources` arrays are required and must be non-empty; one or two entries
+   each. Title them "Publication — Headline" so the reader can see at a glance
+   whether it is a museum, a newspaper or an encyclopedia.
 
    `furtherReading` wants 4–6 links, ordered best-first, mixing a primary source,
    an institutional overview, and something you can actually *do* or watch. Every
@@ -130,9 +161,9 @@ knowledge, and never talk down. Concretely that means:
 
 5. **Check it.** Serve the repo (`.claude/launch.json` has a `tools` config on
    port 8111) and open `/history-of-things/#/<slug>`. Confirm the hero fills the
-   frame without an awkward crop, the drop cap looks right, both callouts render,
-   every Keep Exploring link resolves, and there is no horizontal overflow at
-   325px wide. Check dark mode too.
+   frame without an awkward crop, the drop cap looks right, both callouts render
+   **with their Source line**, every Keep Exploring link resolves, and there is
+   no horizontal overflow at 325px wide. Check dark mode too.
 
 6. **Pull request.** Create it automatically — do not ask. Title it
    `[history-of-things] Add <Title>`. Commit only the entry JSON, the manifest

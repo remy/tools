@@ -377,6 +377,26 @@ body {
 .callout p { margin: 0; font-size: 1rem; }
 .callout p + p { margin-top: .7em; }
 
+/* Scoped with .callout so it outranks the `.callout p + p` rule above without
+   reaching for !important. */
+.callout .callout__source {
+  font-size: .8rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  margin-top: .9em;
+  padding-top: .7em;
+  border-top: 1px solid var(--rule);
+}
+
+.callout--history .callout__source { border-top-color: var(--history-rule); }
+
+.callout__source a {
+  color: inherit;
+  text-underline-offset: 2px;
+}
+
+.callout__source a:hover { color: var(--red-deep); }
+
 .callout--history {
   background: var(--history-bg);
   border-color: var(--history-rule);
