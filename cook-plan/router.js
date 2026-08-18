@@ -4,6 +4,8 @@
 // Both modules register their render functions here; main.js wires them up.
 // =============================================
 
+import { state, setView } from './state.js';
+
 let _renderInputView = null;
 let _renderScheduleView = null;
 
@@ -23,9 +25,16 @@ export function showScheduleView() {
   if (_renderScheduleView) _renderScheduleView();
 }
 
-// Render whichever view state.view says we should be on (used after item edits)
+// Paint whichever view `state.view` says we should be on. Used after an edit,
+// and after a change arrives from the server — so it has to stay on the
+// schedule when that is where the cook is, rather than dropping back to the
+// editor. An empty plan has no schedule to show, so it falls back to the
+// editor and records that, keeping the stored view honest.
 export function renderCurrentView() {
-  // Lazy import to avoid pulling state into the router at module-parse time
-  // Both render modules will have registered by the time this runs.
-  if (_renderInputView) _renderInputView();
+  if (state.view === 'schedule' && state.items.length > 0) {
+    showScheduleView();
+    return;
+  }
+  if (state.view !== 'input') setView('input');
+  showInputView();
 }
