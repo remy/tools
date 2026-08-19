@@ -18,9 +18,8 @@ at the repo root, is served as a static page, and solves exactly one problem:
 decoding a capacitor marking, adjusting subtitle timings, planning a cook,
 comparing ESP32 boards, tracking workouts, browsing an Immich library.
 
-There are currently 61 of them, spread across categories like Developer Tools,
-Productivity, Calculators, Web Demos, Immich, Home Assistant, Game, Learning,
-Audio and Maps.
+They are spread across categories like Developer Tools, Productivity,
+Calculators, Web Demos, Immich, Home Assistant, Game, Learning, Audio and Maps.
 
 The root [`index.html`](index.html) is the directory of everything, and it is
 generated rather than maintained by hand.
@@ -55,8 +54,8 @@ the theme follows the OS setting, and there is no toggle.
 viewport chrome.
 
 **Native platform elements over re-implementations.** Modal UI is always
-`<dialog>` opened with `.showModal()` (17 tools), which gives inert background
-content, focus trapping and Escape-to-dismiss for free; `popover="auto"` is
+`<dialog>` opened with `.showModal()`, which gives inert background content,
+focus trapping and Escape-to-dismiss for free; `popover="auto"` is
 reserved for non-modal menus. Expand/collapse UI is `<details>`/`<summary>`
 rather than a click handler toggling `hidden`.
 
@@ -64,9 +63,9 @@ rather than a click handler toggling `hidden`.
 ending `.wc.js` — a naming convention that [`_headers`](_headers) uses to serve
 them with permissive CORS, so they can be embedded from elsewhere.
 
-**Offline by default.** Tools register the root [`sw.js`](sw.js) — a
-network-first service worker with cache fallback — 59 of the 61 do today. On a
-cache miss it retries ignoring the query string, so state-carrying links like `/todo/?list=<id>` still
+**Offline by default.** Tools register the root [`sw.js`](sw.js), a
+network-first service worker with cache fallback. On a cache miss it retries
+ignoring the query string, so state-carrying links like `/todo/?list=<id>` still
 resolve offline. Its cache is versioned by git SHA, stamped in CI on every push
 to `main`.
 
