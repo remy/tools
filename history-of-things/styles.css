@@ -93,19 +93,16 @@ body {
 
 .topbar__title { line-height: 1; }
 
-/* A clock face, drawn the same way `this-is-england` draws its flag: layered
-   gradients, no image request. */
+/* The project mark — a book and quill. Masked rather than dropped in as an
+   <img> so it takes currentColor and follows the theme. */
 .mark {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   flex: none;
   display: inline-block;
-  border: 2px solid var(--red);
-  border-radius: 50%;
-  background:
-    linear-gradient(to bottom, var(--red) 0 45%, transparent 45%) 50% 5% / 2px 45% no-repeat,
-    linear-gradient(to right, var(--red) 0 35%, transparent 35%) 50% 50% / 35% 2px no-repeat,
-    var(--card);
+  background-color: var(--red);
+  -webkit-mask: url(icon.svg) center / contain no-repeat;
+  mask: url(icon.svg) center / contain no-repeat;
 }
 
 .topbar__back {
