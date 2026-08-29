@@ -134,6 +134,11 @@
     "description": "Researched, readable histories of the everyday things around us \u2014 where they came from, who made them, and why they turned out the way they did.",
     "title": "The History of Things"
   },
+  "image-lock-screen": {
+    "category": "Productivity",
+    "description": "Upload an image, render it full bleed, and keep it on display with a wake lock so the screen never sleeps.",
+    "title": "Image Lock Screen"
+  },
   "immich-album": {
     "category": "Immich",
     "description": "Browser-based tool to bulk manage Immich albums - filter, delete, merge, and rename albums with regex and asset count filtering",
