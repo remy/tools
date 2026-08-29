@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description"
+      content="Upload an image, render it full bleed, and keep it on display with a wake lock so the screen never sleeps.">
+    <meta name="category" content="Productivity">
+    <title>Image Lock Screen</title>
+    <link rel="icon" type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Epath%7Bfill:%2318181b%7D@media (prefers-color-scheme:dark)%7Bpath%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Cpath d='M5 2h14a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3m0 2a1 1 0 0 0-1 1v10.6l3.9-3.9 4 4 3.1-3.1 5 5V5a1 1 0 0 0-1-1zm4 2.5A1.75 1.75 0 1 1 7.25 8.25 1.75 1.75 0 0 1 9 6.5'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+
+    <!-- ─── Empty state / drop target ─────────────────────────────────── -->
+    <section class="empty" id="empty">
+      <button class="empty-card" id="empty-card" type="button">
+        <span class="empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3" />
+            <circle cx="8.5" cy="8.5" r="1.75" />
+            <path d="M21 15.5 16 10.5 8 18.5" />
+          </svg>
+        </span>
+        <span class="empty-title">Image Lock Screen</span>
+        <span class="empty-text">
+          Drop an image anywhere, paste one from the clipboard, or click to choose a file.
+        </span>
+        <span class="empty-hint">PNG · JPEG · WebP · GIF · AVIF · SVG</span>
+      </button>
+      <p class="empty-note">
+        Nothing is uploaded — the image stays in this browser tab.
+      </p>
+    </section>
+
+    <!-- ─── Viewer ────────────────────────────────────────────────────── -->
+    <section class="viewer" id="viewer" hidden>
+      <div class="stage" id="stage">
+        <div class="frame" id="frame">
+          <img id="image" alt="Uploaded image">
+        </div>
+
+        <div class="clock" id="clock" hidden>
+          <span class="clock-time" id="clock-time"></span>
+          <span class="clock-date" id="clock-date"></span>
+        </div>
+
+        <div class="dim" id="dim" aria-hidden="true"></div>
+      </div>
+
+      <div class="toolbar" id="toolbar">
+        <p class="file-name" id="file-name"></p>
+
+        <div class="actions">
+          <wake-lock id="wake">
+            <button class="action-btn" id="btn-wake" type="button" aria-pressed="false">
+              <span class="dot" aria-hidden="true"></span>
+              <span id="btn-wake-label">Keep awake</span>
+            </button>
+          </wake-lock>
+
+          <button class="action-btn" id="btn-rotate" type="button" aria-label="Rotate image">
+            <span aria-hidden="true">↻</span>
+            <span class="btn-text">Rotate</span>
+          </button>
+
+          <button class="action-btn" id="btn-replace" type="button">Change image</button>
+
+          <button class="action-btn action-btn-primary" id="btn-lock" type="button">Lock screen</button>
+
+          <button class="action-btn action-btn-icon" id="btn-settings" type="button" aria-label="Settings">
+            <span class="icon-mask icon-settings" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Shown only while locked -->
+      <div class="lock-chrome" id="lock-chrome">
+        <button class="action-btn" id="btn-unlock" type="button">Exit lock screen</button>
+      </div>
+    </section>
+
+    <p class="status" id="status" role="status" aria-live="polite" hidden></p>
+
+    <input type="file" id="file-input" accept="image/*" hidden>
+
+    <!-- ─── Settings ──────────────────────────────────────────────────── -->
+    <dialog id="settings-dialog">
+      <form method="dialog" class="dialog-inner">
+        <header class="dialog-header">
+          <h2>Settings</h2>
+          <button class="action-btn action-btn-icon" value="close" aria-label="Close settings">✕</button>
+        </header>
+
+        <div class="dialog-body">
+          <div class="field">
+            <label for="set-fit">Image fit</label>
+            <select id="set-fit">
+              <option value="contain">Contain — show the whole image</option>
+              <option value="cover">Cover — fill the screen, crop edges</option>
+              <option value="none">Actual size</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="set-bg">Background</label>
+            <select id="set-bg">
+              <option value="black">Black</option>
+              <option value="dark">Dark grey</option>
+              <option value="white">White</option>
+              <option value="blur">Blurred image</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="set-dim">Dim <span class="field-value" id="set-dim-value">0%</span></label>
+            <input type="range" id="set-dim" min="0" max="80" step="5">
+          </div>
+
+          <div class="field field-check">
+            <input type="checkbox" id="set-clock">
+            <label for="set-clock">Show a clock while locked</label>
+          </div>
+
+          <div class="field field-check">
+            <input type="checkbox" id="set-24h">
+            <label for="set-24h">24-hour clock</label>
+          </div>
+
+          <div class="field field-check">
+            <input type="checkbox" id="set-fullscreen">
+            <label for="set-fullscreen">Go fullscreen when locking</label>
+          </div>
+        </div>
+
+        <footer class="dialog-footer">
+          <p class="support-note" id="support-note" hidden>
+            This browser does not support the Screen Wake Lock API, so the screen may still dim.
+          </p>
+          <button class="action-btn action-btn-primary" value="close">Done</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script>
+      // Capture the file as early as possible so a drop or paste that lands
+      // before script.js has parsed is not lost. The main module registers a
+      // handler once it is ready and drains anything queued here.
+      (function () {
+        const emptyCard = document.getElementById('empty-card');
+        const fileInput = document.getElementById('file-input');
+
+        let pending = null;
+        let handler = null;
+
+        function dispatch(file) {
+          if (!file || !file.type.startsWith('image/')) return;
+          if (handler) handler(file);
+          else pending = file;
+        }
+
+        emptyCard.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => {
+          dispatch(fileInput.files[0]);
+          fileInput.value = '';
+        });
+
+        const hasFiles = (e) =>
+          Array.from(e.dataTransfer?.types || []).includes('Files');
+
+        let dragDepth = 0;
+        window.addEventListener('dragenter', (e) => {
+          if (!hasFiles(e)) return;
+          e.preventDefault();
+          dragDepth++;
+          document.body.classList.add('dragover');
+        });
+        window.addEventListener('dragover', (e) => {
+          if (hasFiles(e)) e.preventDefault();
+        });
+        window.addEventListener('dragleave', (e) => {
+          if (!hasFiles(e)) return;
+          dragDepth = Math.max(0, dragDepth - 1);
+          if (dragDepth === 0) document.body.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dragDepth = 0;
+          document.body.classList.remove('dragover');
+          dispatch(e.dataTransfer?.files?.[0]);
+        });
+
+        window.addEventListener('paste', (e) => {
+          const file = Array.from(e.clipboardData?.files || [])[0];
+          if (file) {
+            e.preventDefault();
+            dispatch(file);
+          }
+        });
+
+        window.__imageLockScreenEarly = {
+          register(fn) {
+            handler = fn;
+            if (pending) {
+              const file = pending;
+              pending = null;
+              fn(file);
+            }
+          },
+          openPicker() {
+            fileInput.click();
+          },
+        };
+      })();
+    </script>
+
+    <script src="/wake-lock/wake-lock.wc.js"></script>
+    <script type="module" src="script.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
