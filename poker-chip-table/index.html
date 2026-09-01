@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then tap chips into the pot on each turn and award the pot to the winner.">
   <meta name="category" content="Game">
-  <meta name="theme-color" content="#0b3d2c">
   <title>Poker Chip Table</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -62,32 +61,34 @@
     </div>
   </header>
 
-  <div id="table" class="table">
-    <div class="felt"></div>
+  <div class="pot-bar">
     <div id="pot" class="pot">
-      <div id="pot-chips" class="pot-chips" aria-hidden="true"></div>
-      <div class="pot-total"><span class="pot-label">Pot</span><strong id="pot-total">0</strong></div>
+      <span class="pot-label">Pot</span>
+      <strong id="pot-total">0</strong>
     </div>
-    <div id="seats" class="seats"></div>
+    <div id="pot-chips" class="pot-chips" aria-hidden="true"></div>
   </div>
+
+  <div id="seats" class="player-list"></div>
 
   <div id="turn-panel" class="turn-panel">
     <div class="turn-head">
-      <div>
-        <span class="turn-name" id="turn-name">—</span>
-        <span class="turn-stack">stack <strong id="turn-stack">0</strong></span>
-      </div>
-      <div class="turn-bet">
-        <span class="turn-bet-label">Betting</span>
-        <strong id="turn-bet">0</strong>
-      </div>
+      <span class="turn-name" id="turn-name">&mdash;</span>
+      <span class="turn-stack">stack <strong id="turn-stack">0</strong></span>
+    </div>
+
+    <div class="bet-row">
+      <label class="bet-amount">
+        <span class="bet-amount-label">Bet</span>
+        <input type="number" id="bet-input" min="0" step="10" inputmode="numeric" value="0" aria-label="Amount to bet">
+      </label>
+      <button type="button" id="btn-allin" class="ghost">All in</button>
     </div>
 
     <div id="chip-tray" class="chip-tray"></div>
 
     <div class="turn-actions">
       <button type="button" id="btn-undo-chip" class="ghost">Take back</button>
-      <button type="button" id="btn-allin" class="ghost">All in</button>
       <button type="button" id="btn-pass" class="ghost">Pass</button>
       <button type="button" id="btn-commit" class="primary">Bet</button>
     </div>

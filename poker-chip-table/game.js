@@ -1,7 +1,7 @@
 import {
-  state, subscribe, current, denom, pendingTotal, breakdown,
-  stage, unstage, allIn, commit, pass, award, undoBet, returnBets, resetStacks,
-  endGame, setTurn, setStack,
+  state, subscribe, current, denom, pendingTotal, breakdown, stakeChips, unit,
+  stage, unstage, allIn, setStake, commit, pass, award, undoBet, returnBets,
+  resetStacks, endGame, setTurn, setStack,
 } from './state.js';
 import { fly, renderPile, pulse, chipEl } from './chips.js';
 
@@ -13,6 +13,7 @@ const trayEl = document.getElementById('chip-tray');
 const panelEl = document.getElementById('turn-panel');
 const dlgAward = document.getElementById('dlg-award');
 const dlgSettings = document.getElementById('dlg-settings');
+const betInput = document.getElementById('bet-input');
 
 const fmt = new Intl.NumberFormat();
 let busy = false;
@@ -47,38 +48,35 @@ function render() {
 }
 
 function renderSeats() {
-  const n = state.players.length;
-  if (seatsEl.children.length !== n) {
+  if (seatsEl.children.length !== state.players.length) {
     seatsEl.textContent = '';
     state.players.forEach(() => {
-      const seat = document.createElement('button');
-      seat.type = 'button';
-      seat.className = 'seat';
-      seat.innerHTML = /* HTML */ `
-        <span class="seat-dealer" hidden>D</span>
-        <span class="seat-name"></span>
-        <span class="seat-stack"></span>
-        <span class="seat-bet" hidden></span>
+      const row = document.createElement('button');
+      row.type = 'button';
+      row.className = 'player-card';
+      row.innerHTML = /* HTML */ `
+        <span class="pc-pos"></span>
+        <span class="pc-name"></span>
+        <span class="pc-bet"></span>
+        <span class="pc-stack"></span>
       `;
-      seatsEl.append(seat);
+      seatsEl.append(row);
     });
   }
 
   state.players.forEach((player, i) => {
-    const seat = seatEl(i);
-    // Seat 0 sits at the bottom, nearest whoever is holding the phone.
-    const angle = Math.PI / 2 + (i / n) * Math.PI * 2;
-    seat.style.left = `${50 + Math.cos(angle) * 50}%`;
-    seat.style.top = `${50 + Math.sin(angle) * 50}%`;
-    seat.classList.toggle('active', i === state.turn);
-    seat.classList.toggle('out', player.stack === 0 && player.bet === 0);
-    seat.querySelector('.seat-name').textContent = player.name;
-    seat.querySelector('.seat-stack').textContent = fmt.format(player.stack);
-    seat.querySelector('.seat-dealer').hidden = i !== state.dealer;
-    const bet = seat.querySelector('.seat-bet');
+    const row = seatEl(i);
+    row.classList.toggle('active', i === state.turn);
+    row.classList.toggle('out', player.stack === 0 && player.bet === 0);
+    row.querySelector('.pc-pos').textContent = i === state.dealer ? 'D' : i + 1;
+    row.querySelector('.pc-pos').classList.toggle('dealer', i === state.dealer);
+    row.querySelector('.pc-name').textContent = player.name;
+    row.querySelector('.pc-stack').textContent = fmt.format(player.stack);
+    const bet = row.querySelector('.pc-bet');
     bet.hidden = player.bet === 0;
     bet.textContent = `bet ${fmt.format(player.bet)}`;
-    seat.onclick = () => !busy && setTurn(i);
+    row.onclick = () => !busy && setTurn(i);
+    if (i === state.turn) row.scrollIntoView({ block: 'nearest' });
   });
 }
 
@@ -130,7 +128,9 @@ function renderTurn() {
   const staged = pendingTotal();
   document.getElementById('turn-name').textContent = player ? player.name : '—';
   document.getElementById('turn-stack').textContent = player ? fmt.format(player.stack) : '0';
-  document.getElementById('turn-bet').textContent = fmt.format(staged);
+  if (document.activeElement !== betInput) betInput.value = staged;
+  betInput.max = player ? player.stack : 0;
+  betInput.step = unit();
   document.getElementById('btn-commit').disabled = staged <= 0;
   document.getElementById('btn-commit').textContent = staged ? `Bet ${fmt.format(staged)}` : 'Bet';
   const undo = document.getElementById('btn-undo-chip');
@@ -143,6 +143,14 @@ function renderTurn() {
 /* ---------- actions ---------- */
 
 function wire() {
+  betInput.addEventListener('input', () => {
+    if (betInput.value !== '') setStake(Number(betInput.value));
+  });
+  betInput.addEventListener('blur', () => {
+    setStake(Number(betInput.value), { snap: true });
+    betInput.value = pendingTotal();
+  });
+
   document.getElementById('btn-undo-chip').addEventListener('click', () => {
     if (busy) return;
     // One button, two jobs: drop the last staged chip, or pull back the last bet.
@@ -193,9 +201,9 @@ function wire() {
 }
 
 async function doCommit() {
-  const chips = state.pending.slice();
+  if (busy || pendingTotal() <= 0) return;
+  const chips = stakeChips();
   const from = seatEl(state.turn);
-  if (busy || !chips.length) return;
   setBusy(true);
   await fly(from, potEl, chips);
   commit();

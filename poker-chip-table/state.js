@@ -22,7 +22,8 @@ function blank() {
     turn: 0,
     pot: 0,
     potChips: {},
-    pending: [], // chip keys staged by the player to act, in tap order
+    stake: 0, // amount the player to act is putting in
+    pending: [], // chips they tapped, in tap order — typed amounts leave this empty
     undo: null, // snapshot of the last committed action
   };
 }
@@ -68,7 +69,20 @@ export function denom(key) {
 }
 
 export function pendingTotal() {
-  return state.pending.reduce((sum, key) => sum + denom(key).value, 0);
+  return state.stake;
+}
+
+/** The smallest chip value, which every bet is a multiple of. */
+export function unit() {
+  return Math.min(...state.denoms.map((d) => d.value));
+}
+
+/** The chips a bet is made of: the tapped ones, or a breakdown of a typed amount. */
+export function stakeChips(amount = state.stake) {
+  const tapped = state.pending.reduce((sum, key) => sum + denom(key).value, 0);
+  return tapped === amount
+    ? state.pending.slice()
+    : breakdown(amount).flatMap(({ key, count }) => Array(count).fill(key));
 }
 
 export function current() {
@@ -107,25 +121,40 @@ export function startGame({ startStack, denoms, names }) {
 export function stage(key) {
   const player = current();
   if (!player) return;
-  if (pendingTotal() + denom(key).value > player.stack) return;
+  const value = denom(key).value;
+  if (state.stake + value > player.stack) return;
   state.pending.push(key);
+  state.stake += value;
+  changed();
+}
+
+/**
+ * Typed amount, capped at the player's stack. `snap` rounds to whole chips —
+ * left off while the field is being typed into, applied when it is left.
+ */
+export function setStake(amount, { snap = false } = {}) {
+  const player = current();
+  if (!player) return;
+  let value = Math.max(0, Math.round(amount) || 0);
+  if (snap) value = Math.round(value / unit()) * unit();
+  state.stake = Math.min(value, player.stack);
+  state.pending = [];
   changed();
 }
 
 export function unstage() {
-  state.pending.pop();
+  if (state.pending.length) {
+    state.stake -= denom(state.pending.pop()).value;
+  } else {
+    state.stake = 0;
+  }
   changed();
 }
 
 export function allIn() {
   const player = current();
   if (!player) return;
-  state.pending = breakdown(player.stack).flatMap(({ key, count }) => Array(count).fill(key));
-  changed();
-}
-
-export function clearPending() {
-  if (!state.pending.length) return;
+  state.stake = player.stack;
   state.pending = [];
   changed();
 }
@@ -133,9 +162,11 @@ export function clearPending() {
 /** Moves the staged chips into the pot and passes play on. */
 export function commit() {
   const player = current();
-  const amount = pendingTotal();
-  if (!player || amount <= 0) return null;
-  const chips = state.pending.slice();
+  if (!player) return null;
+  // Bets are whole chips, but never more than the player actually has.
+  const amount = Math.min(Math.round(state.stake / unit()) * unit(), player.stack);
+  if (amount <= 0) return null;
+  const chips = stakeChips(amount);
 
   state.undo = { type: 'bet', turn: state.turn, chips, amount };
   player.stack -= amount;
@@ -144,14 +175,14 @@ export function commit() {
   chips.forEach((key) => {
     state.potChips[key] = (state.potChips[key] || 0) + 1;
   });
-  state.pending = [];
+  reset();
   advance();
   changed();
   return { player, chips, amount };
 }
 
 export function pass() {
-  state.pending = [];
+  reset();
   state.undo = null;
   advance();
   changed();
@@ -174,9 +205,14 @@ export function undoBet() {
 
 export function setTurn(index) {
   if (index < 0 || index >= state.players.length) return;
-  state.pending = [];
+  reset();
   state.turn = index;
   changed();
+}
+
+function reset() {
+  state.stake = 0;
+  state.pending = [];
 }
 
 function advance() {
@@ -196,8 +232,8 @@ export function award(ids) {
   const winners = state.players.filter((p) => ids.includes(p.id));
   if (!winners.length || state.pot <= 0) return null;
   // Split in whole chips of the smallest denomination; the odd chips go to the last winner.
-  const unit = Math.min(...state.denoms.map((d) => d.value));
-  const share = Math.floor(state.pot / winners.length / unit) * unit;
+  const step = unit();
+  const share = Math.floor(state.pot / winners.length / step) * step;
   let left = state.pot;
   winners.forEach((p, i) => {
     const amount = i === winners.length - 1 ? left : share;
@@ -218,7 +254,7 @@ export function returnBets() {
   });
   state.pot = 0;
   state.potChips = {};
-  state.pending = [];
+  reset();
   state.undo = null;
   changed();
 }
@@ -230,7 +266,7 @@ export function resetStacks() {
   });
   state.pot = 0;
   state.potChips = {};
-  state.pending = [];
+  reset();
   state.round = 1;
   state.dealer = 0;
   state.turn = 0;
@@ -247,7 +283,7 @@ function nextRound() {
   state.players.forEach((p) => (p.bet = 0));
   state.pot = 0;
   state.potChips = {};
-  state.pending = [];
+  reset();
   state.undo = null;
   state.round += 1;
   state.dealer = (state.dealer + 1) % state.players.length;
