@@ -46,7 +46,7 @@
   },
   "cook-plan": {
     "category": "Productivity",
-    "description": "Schedule and coordinate cooking times for multiple dishes, with appliance conflict detection and a live step-by-step countdown timeline.",
+    "description": "Schedule and coordinate cooking times for multiple dishes, with appliance conflict detection, a live step-by-step countdown timeline, offline PouchDB storage and live CouchDB sync.",
     "title": "Cook Planner"
   },
   "cost-summary": {
@@ -128,6 +128,16 @@
     "category": "Home Assistant",
     "description": "Visual debugger for Home Assistant Assist intent recognition templates",
     "title": "HA Intent Parser Visualizer"
+  },
+  "history-of-things": {
+    "category": "Learning",
+    "description": "Researched, readable histories of the everyday things around us \u2014 where they came from, who made them, and why they turned out the way they did.",
+    "title": "The History of Things"
+  },
+  "image-lock-screen": {
+    "category": "Productivity",
+    "description": "Upload an image, render it full bleed, and keep it on display with a wake lock so the screen never sleeps.",
+    "title": "Image Lock Screen"
   },
   "immich-album": {
     "category": "Immich",
@@ -219,6 +229,11 @@
     "description": "Find the elevation above sea level for any point on an interactive map. Drag the map under the centre pin or search for an address with OpenStreetMap; elevation data comes from the Open-Meteo API.",
     "title": "Point Elevation"
   },
+  "poker-chip-table": {
+    "category": "Game",
+    "description": "Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then tap chips into the pot on each turn and award the pot to the winner.",
+    "title": "Poker Chip Table"
+  },
   "priority-calls": {
     "category": "Productivity",
     "description": "An Android app that lets priority contacts break through silent, Do Not Disturb, and bedtime modes.",
@@ -233,6 +248,11 @@
     "category": "Developer Tools",
     "description": "Drop an RSS or Atom feed file to browse it. Titles collapse for skimming and expand to show the rendered article body.",
     "title": "RSS Reader"
+  },
+  "score-tracker": {
+    "category": "Game",
+    "description": "Keep score for a group of players from one screen. Tap a player to add or subtract any amount and see every change listed under their total. Names are saved locally; scores start at zero every session.",
+    "title": "Score Tracker"
   },
   "screen-light": {
     "category": "Web Demos",

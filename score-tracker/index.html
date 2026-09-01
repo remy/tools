@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Keep score for a group of players from one screen. Tap a player to add or subtract any amount and see every change listed under their total. Names are saved locally; scores start at zero every session.">
+  <meta name="category" content="Game">
+  <title>Score Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="bar">
+      <h1>Score Tracker</h1>
+      <button class="action-btn" id="btn-settings" aria-label="Settings">
+        <span class="icon-mask icon-settings" aria-hidden="true"></span>
+      </button>
+    </header>
+
+    <ul class="players" id="players"></ul>
+
+    <p class="empty" id="empty" hidden>No players yet. <button class="link" id="btn-empty-add">Add some</button>.</p>
+
+    <footer class="footer">
+      <button class="secondary" id="btn-reset">Reset scores</button>
+    </footer>
+  </div>
+
+  <dialog id="dlg-amount">
+    <div class="dialog-inner">
+      <h2 id="amount-title">Add points</h2>
+
+      <div class="add-row">
+        <label class="visually-hidden" for="amount">Amount</label>
+        <input type="number" id="amount" inputmode="numeric" step="1" placeholder="Amount" autocomplete="off" enterkeyhint="done">
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary" id="btn-amount-cancel">Cancel</button>
+        <span class="amount-ops">
+          <button type="button" class="secondary" id="btn-amount-subtract">Subtract</button>
+          <button type="button" id="btn-amount-add">Add</button>
+        </span>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-settings">
+    <form method="dialog" class="dialog-inner">
+      <h2>Players</h2>
+
+      <div class="add-row">
+        <label class="visually-hidden" for="new-name">Player name</label>
+        <input type="text" id="new-name" placeholder="Add a player" autocomplete="off" enterkeyhint="done">
+        <button type="button" id="btn-add">Add</button>
+      </div>
+
+      <ul class="edit-list" id="edit-list"></ul>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary" id="btn-clear">Remove all</button>
+        <button value="close">Done</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="script.js" type="module"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

@@ -1,10 +1,11 @@
 import { db, setSyncConfig } from './db.js';
 import { bindEvents } from './events.js';
-import { refreshAll, selectGame } from './games.js';
+import { refreshAll, selectGame, showGame } from './games.js';
 import { initSyncStatus } from './settings.js';
 import { state } from './state.js';
 import { $ } from './ui.js';
 import { gameLink, takePendingGame } from './share.js';
+import { initNav } from './nav.js';
 import { consumeLinkParams } from '/lib/deep-link.js';
 
 // ── Opening a shared game ──
@@ -64,6 +65,10 @@ function kickSync() {
 }
 
 async function init() {
+  // Before anything paints, so the first entry in the stack is this app's
+  // home rather than whatever page the app was opened from.
+  initNav(showGame);
+
   $('share-notice').addEventListener('click', () => showShareNotice(null));
 
   const pendingId = takePendingGame();

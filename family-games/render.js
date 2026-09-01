@@ -1,5 +1,5 @@
 import { state, gameById, playerById } from './state.js';
-import { $, avatarEl, plural, relativeDay, playerName } from './ui.js';
+import { $, avatarEl, plural, relativeDay, nameList } from './ui.js';
 import { renderGame } from './history.js';
 import { gameSummary } from './stats.js';
 
@@ -74,13 +74,16 @@ function homeRow(game, summary) {
   body.appendChild(meta);
   pick.appendChild(body);
 
-  // The most recent winner, as a nudge about who's on form.
-  if (summary.lastWinnerId) {
-    const winner = playerById(summary.lastWinnerId);
+  // Whoever won last time, as a nudge about who's on form — all of them when
+  // the last one was drawn.
+  if (summary.lastWinnerIds.length) {
+    const winners = summary.lastWinnerIds.map(playerById);
     const badge = document.createElement('span');
     badge.className = 'pick-winner';
-    badge.title = `${playerName(winner)} won the last one`;
-    badge.append(avatarEl(winner, 'avatar-sm'));
+    badge.title = winners.length > 1
+      ? `${nameList(winners)} shared the last one`
+      : `${nameList(winners)} won the last one`;
+    for (const winner of winners) badge.append(avatarEl(winner, 'avatar-sm'));
     pick.appendChild(badge);
   }
 

@@ -2,12 +2,13 @@
 // Cook Planner — render-input.js
 // =============================================
 
-import { state, saveState, resetState, _setState } from './state.js';
-import { COOK_TYPE_MAP, DEFAULT_STATE } from './constants.js';
-import { escHtml, formatDuration, toggleTheme } from './utils.js';
+import { state, savePlan, resetState, replaceAll, setView, deleteItem } from './state.js';
+import { COOK_TYPE_MAP } from './constants.js';
+import { escHtml, formatDuration } from './utils.js';
 import { openItemModal } from './item-modal.js';
-import { openApplianceDialog } from './appliance-popover.js';
-import { showScheduleView, showInputView } from './router.js';
+import { openSettings } from './settings.js';
+import { renderHeader, bindHeader } from './header.js';
+import { showScheduleView, renderCurrentView } from './router.js';
 import { computeSchedule } from './schedule.js';
 
 export function renderInputView() {
@@ -17,16 +18,13 @@ export function renderInputView() {
   app.innerHTML = `
     <div class="view" id="view-input">
       <div class="container">
-        <header class="app-header">
-          <h1>\ud83c\udf73 Cook Planner</h1>
-          <div class="header-actions">
-            <button class="btn btn-ghost btn-sm" id="btn-theme-toggle" aria-label="Toggle dark mode">\ud83c\udf13</button>
-          </div>
-        </header>
+        ${renderHeader()}
 
         <div class="setup-card">
           <button class="btn-icon setup-gear" id="btn-open-appl"
-            title="Configure appliances" aria-label="Configure appliances">\u2699</button>
+            title="Appliance settings" aria-label="Appliance settings">
+            <span class="icon-mask icon-settings" aria-hidden="true"></span>
+          </button>
           <div class="setup-row">
             <div class="setup-field">
               <label class="form-label">Target time</label>
@@ -104,16 +102,18 @@ export function renderItemCard(item) {
 }
 
 export function bindInputEvents() {
+  bindHeader();
+
   document.getElementById('inp-time').addEventListener('change', e => {
     state.targetTime = e.target.value;
-    saveState();
+    savePlan();
   });
 
   document.getElementById('mode-toggle').addEventListener('click', e => {
     const btn = e.target.closest('button[data-mode]');
     if (!btn) return;
     state.mode = btn.dataset.mode;
-    saveState();
+    savePlan();
     renderInputView();
   });
 
@@ -121,25 +121,22 @@ export function bindInputEvents() {
     openItemModal(null);
   });
 
-  document.getElementById('btn-open-appl')?.addEventListener('click', openApplianceDialog);
+  document.getElementById('btn-open-appl')?.addEventListener('click', openSettings);
 
   document.getElementById('btn-generate')?.addEventListener('click', () => {
-    state.view = 'schedule';
-    saveState();
+    setView('schedule');
     showScheduleView();
   });
 
-  document.getElementById('btn-new-cook')?.addEventListener('click', () => {
+  document.getElementById('btn-new-cook')?.addEventListener('click', async () => {
     if (confirm('Start a new cook? This will clear all current items and settings.')) {
-      resetState();
+      await resetState();
       renderInputView();
     }
   });
 
   document.getElementById('btn-export')?.addEventListener('click', exportJSON);
   document.getElementById('btn-import')?.addEventListener('click', importJSON);
-
-  document.getElementById('btn-theme-toggle')?.addEventListener('click', toggleTheme);
 
   document.getElementById('items-list').addEventListener('click', e => {
     const editBtn = e.target.closest('.btn-edit-item');
@@ -151,9 +148,8 @@ export function bindInputEvents() {
 
 export function removeItem(id) {
   state.items = state.items.filter(i => i.id !== id);
-  saveState();
-  if (state.view === 'schedule') showScheduleView();
-  else renderInputView();
+  deleteItem(id);
+  renderCurrentView();
 }
 
 export function exportJSON() {
@@ -182,10 +178,8 @@ export function importJSON() {
       if (!incoming || !Array.isArray(incoming.items)) {
         throw new Error('No items[] in JSON');
       }
-      _setState({ ...DEFAULT_STATE, ...incoming, items: incoming.items });
-      saveState();
-      if (state.view === 'schedule' && state.items.length > 0) showScheduleView();
-      else showInputView();
+      await replaceAll(incoming);
+      renderCurrentView();
     } catch (err) {
       alert('Could not import JSON: ' + err.message);
     }

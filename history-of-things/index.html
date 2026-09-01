@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#b22234">
+    <title>The History of Things</title>
+    <meta name="description"
+      content="Researched, readable histories of the everyday things around us — where they came from, who made them, and why they turned out the way they did.">
+    <meta name="category" content="Learning">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/vendor/fonts/fonts.css">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+
+  <body>
+    <header class="topbar">
+      <a href="#/" class="topbar__brand" aria-label="Home">
+        <span class="mark" aria-hidden="true"></span>
+        <span class="topbar__title">The History of Things</span>
+      </a>
+      <button id="backBtn" class="topbar__back" type="button" aria-label="Back to all histories" hidden>←
+        Histories</button>
+    </header>
+
+    <main id="view" class="view" aria-live="polite"></main>
+
+    <footer class="sitefoot">
+      <p>Every entry is researched from primary and reference sources, then written to be read for pleasure. Corrections
+        welcome.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>

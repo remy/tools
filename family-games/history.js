@@ -1,9 +1,11 @@
 import { playerById } from './state.js';
 import {
-  $, avatarEl, playerName, iconBtn, svg, fmtDate, recentDay,
-  ordinal, plural, EDIT_PATHS, DELETE_PATHS,
+  $, avatarEl, playerName, nameList, iconBtn, svg, fmtDate, recentDay,
+  ordinal, placeLabel, plural, EDIT_PATHS, DELETE_PATHS,
 } from './ui.js';
-import { sessionsFor, standings, hasScores, fmtScore } from './stats.js';
+import {
+  sessionsFor, standings, byStanding, hasScores, fmtScore, jointPositions, winnersOf,
+} from './stats.js';
 
 // Which history entries are expanded. Kept out of the synced state because it's
 // pure view state, and kept across re-renders so a background sync doesn't
@@ -26,17 +28,23 @@ function renderStandings(sessions, showScores) {
 
   const ul = $('standings-list');
   ul.replaceChildren();
-  rows.forEach((row, i) => ul.appendChild(standingRow(row, i + 1, showScores)));
+  // Two players with nothing to separate them are level, not 1st and 2nd.
+  let rank = 1;
+  rows.forEach((row, i) => {
+    if (i > 0 && byStanding(rows[i - 1], row) !== 0) rank = i + 1;
+    const joint = rows.some((other) => other !== row && byStanding(other, row) === 0);
+    ul.appendChild(standingRow(row, rank, joint, showScores));
+  });
 }
 
-function standingRow(row, rank, showScores) {
+function standingRow(row, rank, joint, showScores) {
   const li = document.createElement('li');
   li.className = 'standing-row';
   if (rank <= 3) li.dataset.rank = String(rank);
 
   const pos = document.createElement('span');
   pos.className = 'standing-rank';
-  pos.textContent = rank;
+  pos.textContent = joint ? `=${rank}` : rank;
 
   const player = playerById(row.playerId);
   const name = document.createElement('span');
@@ -101,18 +109,34 @@ function sessionCard(session, showScores) {
     .filter(Boolean).join(' · ');
   when.append(date, ago);
 
-  const winnerResult = session.results.find((r) => r.position === 1);
-  const winner = winnerResult ? playerById(winnerResult.playerId) : null;
+  // A draw at the top has more than one winner — every one of them is named.
+  const won = winnersOf(session);
+  const winners = won.map((r) => playerById(r.playerId));
   const winnerEl = document.createElement('span');
   winnerEl.className = 'session-winner';
-  if (winnerResult) {
-    winnerEl.append(avatarEl(winner, 'avatar-sm'));
+  if (won.length) {
+    const joint = won.length > 1;
+    for (const winner of winners) winnerEl.append(avatarEl(winner, 'avatar-sm'));
     const label = document.createElement('span');
     label.className = 'session-winner-name';
-    // The winning score belongs next to the winner's name, collapsed or not.
-    label.textContent = winnerResult.score != null
-      ? `${playerName(winner)} · ${fmtScore(winnerResult.score)}`
-      : playerName(winner);
+    // Two or more names never fit the pill on a phone, so a shared win leans
+    // on the avatars for who it was and the label just says it was shared.
+    label.textContent = joint ? 'Joint' : nameList(winners);
+    if (joint) {
+      winnerEl.title = `${nameList(winners)} — joint winners`;
+      // Avatars are decorative, so the names would otherwise be lost to a
+      // screen reader: "Joint winners: Remy & Julie".
+      const names = document.createElement('span');
+      names.className = 'visually-hidden';
+      names.textContent = ` winners: ${nameList(winners)}`;
+      label.appendChild(names);
+    }
+    // The winning score belongs next to the winner, collapsed or not — but
+    // only when it is one number they all share.
+    const score = won[0].score;
+    if (score != null && won.every((r) => r.score === score)) {
+      label.append(` · ${fmtScore(score)}`);
+    }
     winnerEl.appendChild(label);
   }
 
@@ -131,7 +155,8 @@ function sessionCard(session, showScores) {
   const ol = document.createElement('ol');
   ol.className = 'result-list';
   const ordered = [...session.results].sort((a, b) => a.position - b.position);
-  for (const r of ordered) ol.appendChild(resultRow(r, showScores));
+  const joint = jointPositions(session.results);
+  for (const r of ordered) ol.appendChild(resultRow(r, joint.has(r.position), showScores));
   body.appendChild(ol);
 
   if (session.note) {
@@ -153,14 +178,14 @@ function sessionCard(session, showScores) {
   return details;
 }
 
-function resultRow(result, showScores) {
+function resultRow(result, joint, showScores) {
   const li = document.createElement('li');
   li.className = 'result-row';
   if (result.position <= 3) li.dataset.position = String(result.position);
 
   const pos = document.createElement('span');
   pos.className = 'result-pos';
-  pos.textContent = ordinal(result.position);
+  pos.textContent = placeLabel(result.position, joint);
 
   const player = playerById(result.playerId);
   const name = document.createElement('span');
