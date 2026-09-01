@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then tap chips into the pot on each turn and award the pot to the winner.">
+  <meta name="category" content="Game">
+  <meta name="theme-color" content="#0b3d2c">
+  <title>Poker Chip Table</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Setup -->
+<section id="screen-setup" class="screen">
+  <div class="container">
+    <h1>Poker Chip Table</h1>
+    <p class="lede">Virtual chips for a real table. Set the seats, then pass the phone round.</p>
+
+    <form id="setup-form">
+      <fieldset>
+        <legend>Starting stack</legend>
+        <div class="stack-row">
+          <input type="number" id="start-stack" min="0" step="10" value="1000" inputmode="numeric">
+          <div class="preset-row">
+            <button type="button" class="chip-btn preset" data-stack="500">500</button>
+            <button type="button" class="chip-btn preset" data-stack="1000">1,000</button>
+            <button type="button" class="chip-btn preset" data-stack="2000">2,000</button>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Chip values</legend>
+        <div id="denom-rows" class="denom-rows"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Players &amp; order</legend>
+        <ol id="player-rows" class="player-rows"></ol>
+        <div class="row-actions">
+          <button type="button" id="btn-add-player">Add player</button>
+          <button type="button" id="btn-shuffle">Randomise order</button>
+        </div>
+        <p class="hint">Play runs clockwise from the top of the list.</p>
+      </fieldset>
+
+      <button type="submit" class="primary big">Start game</button>
+    </form>
+  </div>
+</section>
+
+<!-- Game -->
+<section id="screen-game" class="screen" hidden>
+  <header class="game-bar">
+    <span class="round-label">Round <span id="round-no">1</span></span>
+    <div class="bar-actions">
+      <button type="button" id="btn-award" class="primary">Award pot</button>
+      <button type="button" id="btn-settings" class="action-btn" aria-label="Settings">
+        <span class="icon-mask icon-settings" aria-hidden="true"></span>
+      </button>
+    </div>
+  </header>
+
+  <div id="table" class="table">
+    <div class="felt"></div>
+    <div id="pot" class="pot">
+      <div id="pot-chips" class="pot-chips" aria-hidden="true"></div>
+      <div class="pot-total"><span class="pot-label">Pot</span><strong id="pot-total">0</strong></div>
+    </div>
+    <div id="seats" class="seats"></div>
+  </div>
+
+  <div id="turn-panel" class="turn-panel">
+    <div class="turn-head">
+      <div>
+        <span class="turn-name" id="turn-name">—</span>
+        <span class="turn-stack">stack <strong id="turn-stack">0</strong></span>
+      </div>
+      <div class="turn-bet">
+        <span class="turn-bet-label">Betting</span>
+        <strong id="turn-bet">0</strong>
+      </div>
+    </div>
+
+    <div id="chip-tray" class="chip-tray"></div>
+
+    <div class="turn-actions">
+      <button type="button" id="btn-undo-chip" class="ghost">Take back</button>
+      <button type="button" id="btn-allin" class="ghost">All in</button>
+      <button type="button" id="btn-pass" class="ghost">Pass</button>
+      <button type="button" id="btn-commit" class="primary">Bet</button>
+    </div>
+  </div>
+</section>
+
+<div id="fly-layer" class="fly-layer" aria-hidden="true"></div>
+
+<!-- Award pot -->
+<dialog id="dlg-award">
+  <form method="dialog" class="dlg-body">
+    <h2>Who wins the pot?</h2>
+    <p class="dlg-sub">Pot of <strong id="award-total">0</strong> goes to…</p>
+    <div id="award-list" class="award-list"></div>
+    <div class="dlg-actions">
+      <button value="cancel" class="ghost">Cancel</button>
+      <button type="button" id="btn-split" class="ghost">Split evenly</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Settings -->
+<dialog id="dlg-settings">
+  <div class="dlg-body">
+    <h2>Settings</h2>
+    <p class="settings-label">Stacks</p>
+    <div id="settings-stacks" class="settings-stacks"></div>
+    <details class="values">
+      <summary>Chip values</summary>
+      <ul id="settings-denoms" class="denom-legend"></ul>
+    </details>
+    <div class="dlg-actions column">
+      <button type="button" id="btn-new-round" class="ghost">Return bets to players</button>
+      <button type="button" id="btn-rebuy" class="ghost">Reset all stacks</button>
+      <button type="button" id="btn-new-game" class="danger">New game</button>
+      <button type="button" id="btn-close-settings" class="primary">Done</button>
+    </div>
+  </div>
+</dialog>
+
+<script type="module" src="script.js"></script>
+<script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
