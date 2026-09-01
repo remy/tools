@@ -115,16 +115,28 @@ function sessionCard(session, showScores) {
   const winnerEl = document.createElement('span');
   winnerEl.className = 'session-winner';
   if (won.length) {
+    const joint = won.length > 1;
     for (const winner of winners) winnerEl.append(avatarEl(winner, 'avatar-sm'));
     const label = document.createElement('span');
     label.className = 'session-winner-name';
-    // The winning score belongs next to the winner's name, collapsed or not —
-    // but only when it is one number they all share.
+    // Two or more names never fit the pill on a phone, so a shared win leans
+    // on the avatars for who it was and the label just says it was shared.
+    label.textContent = joint ? 'Joint' : nameList(winners);
+    if (joint) {
+      winnerEl.title = `${nameList(winners)} — joint winners`;
+      // Avatars are decorative, so the names would otherwise be lost to a
+      // screen reader: "Joint winners: Remy & Julie".
+      const names = document.createElement('span');
+      names.className = 'visually-hidden';
+      names.textContent = ` winners: ${nameList(winners)}`;
+      label.appendChild(names);
+    }
+    // The winning score belongs next to the winner, collapsed or not — but
+    // only when it is one number they all share.
     const score = won[0].score;
-    const oneScore = score != null && won.every((r) => r.score === score);
-    label.textContent = oneScore
-      ? `${nameList(winners)} · ${fmtScore(score)}`
-      : nameList(winners);
+    if (score != null && won.every((r) => r.score === score)) {
+      label.append(` · ${fmtScore(score)}`);
+    }
     winnerEl.appendChild(label);
   }
 

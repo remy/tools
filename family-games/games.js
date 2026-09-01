@@ -2,6 +2,7 @@ import { state, gameById } from './state.js';
 import { db } from './db.js';
 import { render } from './render.js';
 import { fmtDate } from './ui.js';
+import { pushGame, popHome, replaceHome } from './nav.js';
 
 // Pull everything into state and paint. The active view ('home' vs 'game') is
 // preserved so a background sync never yanks anyone out of the game they're
@@ -11,23 +12,33 @@ export async function refreshAll() {
   state.games = await db.getGames();
   state.sessions = await db.getSessions();
 
+  // The open game may have gone (deleted here, or on another device mid-sync),
+  // in which case its history entry has nothing behind it either.
   if (state.currentGameId && !gameById(state.currentGameId)) {
-    state.currentGameId = null;
-    state.view = 'home';
+    replaceHome();
+    showGame(null);
+    return;
   }
   render();
 }
 
-export function selectGame(id) {
-  state.currentGameId = id;
-  state.view = 'game';
+// Swap the view and paint it. History is left alone — this is what a popped
+// entry applies, so it must not push one of its own.
+export function showGame(id) {
+  const game = id ? gameById(id) : null;
+  state.currentGameId = game ? game.id : null;
+  state.view = game ? 'game' : 'home';
   render();
 }
 
+export function selectGame(id) {
+  showGame(id);
+  if (state.view === 'game') pushGame(state.currentGameId);
+}
+
 export function goHome() {
-  state.view = 'home';
-  state.currentGameId = null;
-  render();
+  // Stepping back repaints via popstate; only the fallback paints here.
+  if (!popHome()) showGame(null);
 }
 
 // Create a game, or return the existing one when the title is already in use —
@@ -66,10 +77,7 @@ export async function deleteGame(id) {
     : '';
   if (!confirm(`Delete "${game.title}"${detail}? This cannot be undone.`)) return;
   await db.deleteGame(id);
-  if (state.currentGameId === id) {
-    state.currentGameId = null;
-    state.view = 'home';
-  }
+  // refreshAll drops the view (and its history entry) once the game is gone.
   await refreshAll();
 }
 
