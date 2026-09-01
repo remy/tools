@@ -34,6 +34,25 @@
     </footer>
   </div>
 
+  <dialog id="dlg-amount">
+    <div class="dialog-inner">
+      <h2 id="amount-title">Add points</h2>
+
+      <div class="add-row">
+        <label class="visually-hidden" for="amount">Amount</label>
+        <input type="number" id="amount" inputmode="numeric" step="1" placeholder="Amount" autocomplete="off" enterkeyhint="done">
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary" id="btn-amount-cancel">Cancel</button>
+        <span class="amount-ops">
+          <button type="button" class="secondary" id="btn-amount-subtract">Subtract</button>
+          <button type="button" id="btn-amount-add">Add</button>
+        </span>
+      </div>
+    </div>
+  </dialog>
+
   <dialog id="dlg-settings">
     <form method="dialog" class="dialog-inner">
       <h2>Players</h2>

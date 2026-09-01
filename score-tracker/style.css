@@ -200,10 +200,18 @@ button {
 
   & .score {
     grid-area: score;
+    justify-self: start;
     font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
+    background: none;
+    border: 0;
+    border-radius: 0.25rem;
+    color: inherit;
+    padding: 0;
+    text-decoration: underline dotted var(--border) 2px;
+    text-underline-offset: 0.15em;
   }
 
   & .adjust {
@@ -243,6 +251,8 @@ button {
 }
 
 dialog {
+  /* The global reset drops the UA's margin: auto, which centres a modal */
+  margin: auto;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   background: var(--bg);
@@ -327,6 +337,11 @@ dialog {
   flex-wrap: wrap;
 }
 
+.amount-ops {
+  display: flex;
+  gap: 0.5rem;
+}
+
 @media (max-width: 639px) {
   dialog {
     inset: 0;
@@ -340,7 +355,18 @@ dialog {
 
   .dialog-inner {
     height: 100%;
+  }
+
+  #dlg-settings .dialog-inner {
     grid-template-rows: auto auto 1fr auto;
+  }
+
+  #dlg-amount .dialog-inner {
+    grid-template-rows: auto auto 1fr;
+
+    & .dialog-actions {
+      align-self: end;
+    }
   }
 }
 
