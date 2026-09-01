@@ -307,12 +307,15 @@ dialog {
 
 @media (max-width: 639px) {
   dialog {
-    inset: 0;
+    /* --keyboard-* track the visual viewport, so the dialog fills only the
+       part of the screen the on-screen keyboard leaves visible. */
+    inset: auto auto auto 0;
+    top: var(--keyboard-top, 0px);
     margin: 0;
     width: 100vw;
-    height: 100dvh;
+    height: var(--keyboard-height, 100dvh);
     max-width: 100vw;
-    max-height: 100dvh;
+    max-height: var(--keyboard-height, 100dvh);
     border-radius: 0;
   }
 
