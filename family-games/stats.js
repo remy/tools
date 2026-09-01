@@ -96,6 +96,14 @@ export function fmtScore(value) {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+// A score read back as it was entered: "12 + 5 − 3". Signs are carried by the
+// separator so a subtraction reads as one, rather than as "+ -3".
+export function roundSteps(rounds) {
+  return (rounds || []).map((n, i) => (i === 0
+    ? fmtScore(n)
+    : `${n < 0 ? '−' : '+'} ${fmtScore(Math.abs(n))}`));
+}
+
 // Headline numbers for a game's row on the landing page.
 export function gameSummary(gameId) {
   const sessions = sessionsFor(gameId);

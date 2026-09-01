@@ -4,7 +4,8 @@ import {
   ordinal, placeLabel, plural, EDIT_PATHS, DELETE_PATHS,
 } from './ui.js';
 import {
-  sessionsFor, standings, byStanding, hasScores, fmtScore, jointPositions, winnersOf,
+  sessionsFor, standings, byStanding, hasScores, fmtScore, roundSteps,
+  jointPositions, winnersOf,
 } from './stats.js';
 
 // Which history entries are expanded. Kept out of the synced state because it's
@@ -176,11 +177,22 @@ function resultRow(result, joint, showScores) {
   pos.textContent = placeLabel(result.position, joint);
 
   const player = playerById(result.playerId);
+  const body = document.createElement('div');
+  body.className = 'result-body';
   const name = document.createElement('span');
   name.className = 'result-name';
   name.textContent = playerName(player);
+  body.appendChild(name);
 
-  li.append(pos, avatarEl(player, 'avatar-sm'), name);
+  // How the score was built up, where it took more than one entry to get there.
+  if (result.rounds.length > 1) {
+    const steps = document.createElement('span');
+    steps.className = 'result-steps';
+    steps.textContent = roundSteps(result.rounds).join(' ');
+    body.appendChild(steps);
+  }
+
+  li.append(pos, avatarEl(player, 'avatar-sm'), body);
 
   // A dash rather than a gap where someone in a scored game has no score, so
   // the column still reads as a column.

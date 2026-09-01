@@ -66,6 +66,14 @@ function gameFromDoc(doc) {
   };
 }
 
+// The rounds behind a result. A score saved before rounds existed is the one
+// round it was entered as, so an old result can still be added to.
+function roundsOf(result) {
+  const rounds = Array.isArray(result.rounds) ? result.rounds.filter(Number.isFinite) : [];
+  if (rounds.length) return rounds;
+  return Number.isFinite(result.score) ? [result.score] : [];
+}
+
 // Sessions are keyed by game so one game's history is a single range scan.
 function sessionDocId(session) {
   return `${SESSION_PREFIX}${session.gameId}:${session.id}`;
@@ -80,13 +88,20 @@ function sessionToDoc(session) {
     // Local calendar date as YYYY-MM-DD — a game night belongs to the day it
     // was played, not to an instant, so no timezone travels with it.
     date: session.date,
-    // `score` is optional: plenty of games only have a finishing order, and a
-    // score of 0 is a real result, so "no score" has to be null rather than 0.
-    results: (session.results || []).map((r) => ({
-      playerId: r.playerId,
-      position: r.position,
-      score: Number.isFinite(r.score) ? r.score : null,
-    })),
+    // `rounds` is how a score was built up — one number per hand, leg or leg
+    // of a night — and `score` is their sum, kept alongside because every
+    // reader wants the total. `score` is optional: plenty of games only have a
+    // finishing order, and a score of 0 is a real result, so "no score" has to
+    // be null rather than 0.
+    results: (session.results || []).map((r) => {
+      const rounds = roundsOf(r);
+      return {
+        playerId: r.playerId,
+        position: r.position,
+        rounds,
+        score: rounds.length ? rounds.reduce((a, b) => a + b, 0) : null,
+      };
+    }),
     note: session.note || '',
     createdAt: session.createdAt ?? Date.now(),
     updatedAt: Date.now(),
@@ -99,12 +114,17 @@ function sessionFromDoc(doc) {
     gameId: doc.gameId,
     date: doc.date,
     // Results recorded before scores existed have no `score` field at all,
-    // so it's normalised here and nothing downstream has to care.
-    results: (Array.isArray(doc.results) ? doc.results : []).map((r) => ({
-      playerId: r.playerId,
-      position: r.position,
-      score: Number.isFinite(r.score) ? r.score : null,
-    })),
+    // and results from before scores were totted up round by round have no
+    // `rounds`. Both are normalised here and nothing downstream has to care.
+    results: (Array.isArray(doc.results) ? doc.results : []).map((r) => {
+      const rounds = roundsOf(r);
+      return {
+        playerId: r.playerId,
+        position: r.position,
+        rounds,
+        score: rounds.length ? rounds.reduce((a, b) => a + b, 0) : null,
+      };
+    }),
     note: doc.note || '',
     createdAt: doc.createdAt ?? 0,
     updatedAt: doc.updatedAt ?? 0,

@@ -3,7 +3,7 @@ import { $ } from './ui.js';
 import { goHome, selectGame, renameGame, deleteGame, deleteSession } from './games.js';
 import {
   openEntry, saveEntry, deleteEntry, togglePlayer, toggleTie, clearOrder, sortByScore,
-  setScore, commitScore, focusNextScore, syncNewGameField, toggleQuickAdd,
+  commitRound, commitScore, undoRound, focusNextScore, syncNewGameField, toggleQuickAdd,
   addPlayerFromEntry, refreshPicker,
 } from './entry.js';
 import {
@@ -55,15 +55,14 @@ function wireEntry() {
   $('entry-clear').addEventListener('click', clearOrder);
   $('entry-sort').addEventListener('click', () => sortByScore());
 
-  // The order list: scores are read as they're typed but only acted on once
-  // the player is finished with the list, so the rows don't shuffle mid-entry.
+  // The order list: a number is banked into the player's total as soon as the
+  // box is left, but the re-sort it implies waits until the whole list is,
+  // so the rows don't shuffle mid-entry.
   const ranking = $('entry-ranking');
-  ranking.addEventListener('input', (e) => {
-    const input = e.target.closest('.rank-score');
-    if (input) setScore(input.dataset.id, input.value);
-  });
   ranking.addEventListener('focusout', (e) => {
-    if (!e.target.closest('.rank-score')) return;
+    const input = e.target.closest('.rank-score');
+    if (!input) return;
+    commitRound(input);
     // Moving on within the list — the next score, or a row's remove button —
     // is still mid-entry. Re-sorting there would yank the rows (and the phone
     // keyboard) out from under the next tap, so it waits until focus has
@@ -84,6 +83,9 @@ function wireEntry() {
     if (!btn) return;
     if (btn.dataset.action === 'unrank') togglePlayer(btn.dataset.id);
     else if (btn.dataset.action === 'tie') toggleTie(btn.dataset.id);
+    // Undo chips are keyed by their place in the run, so the player they
+    // belong to travels on its own attribute.
+    else if (btn.dataset.action === 'undo-round') undoRound(btn.dataset.player, Number(btn.dataset.id));
   });
   $('entry-add-player').addEventListener('click', toggleQuickAdd);
   $('entry-player-save').addEventListener('click', addPlayerFromEntry);

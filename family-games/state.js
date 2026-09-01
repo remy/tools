@@ -13,7 +13,7 @@ export const SESSION_PREFIX = 'session:';
 export const state = {
   players: [],        // [{ id, name, emoji, colour, archived, order, createdAt }]
   games: [],          // [{ id, title, createdAt }]
-  sessions: [],       // every recorded result, newest first: { id, gameId, date, results: [{ playerId, position }] }
+  sessions: [],       // every recorded result, newest first: { id, gameId, date, results: [{ playerId, position, rounds, score }] }
   currentGameId: null,
   view: 'home',       // 'home' (all games) | 'game' (one game's standings + history)
 };

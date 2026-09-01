@@ -3,6 +3,7 @@ import { db } from './db.js';
 import { $, avatarEl, iconBtn, playerName, todayISO, placeLabel, DELETE_PATHS } from './ui.js';
 import { ensureGame, refreshAll, selectGame } from './games.js';
 import { quickAddPlayer } from './players.js';
+import { fmtScore, roundSteps } from './stats.js';
 
 const NEW_GAME = '__new__';
 
@@ -10,10 +11,12 @@ const NEW_GAME = '__new__';
 // picker is a tap-in-order affair rather than a set of position dropdowns —
 // it's the fastest thing to do at the table with a phone in one hand.
 let ranked = [];
-// playerId -> score, for the games that have one. Held separately from
-// `ranked` so clearing the order to re-rank by hand doesn't lose the numbers
-// anyone already typed in.
-let scores = new Map();
+// playerId -> every number entered for them, in the order it was entered. A
+// score is totted up round by round (a hand of cards, a throw, a lap) rather
+// than typed once at the end, so what's kept is the run of entries and the
+// total is their sum. Held separately from `ranked` so clearing the order to
+// re-rank by hand doesn't lose the numbers anyone has already put in.
+let rounds = new Map();
 // Player ids that finished level with whoever is directly above them in
 // `ranked`. A tie is stored against the lower player so it survives someone
 // being pulled out of the middle of the order.
@@ -46,7 +49,9 @@ export function openEntry({ gameId = null, sessionId = null } = {}) {
     ? [...editing.results].sort((a, b) => a.position - b.position)
     : [];
   ranked = previous.map((r) => r.playerId);
-  scores = new Map(previous.filter((r) => r.score != null).map((r) => [r.playerId, r.score]));
+  // Reopening a result carries its rounds back in, so a game left half-scored
+  // can be picked up where it was put down.
+  rounds = new Map(previous.filter((r) => r.rounds.length).map((r) => [r.playerId, [...r.rounds]]));
   // Two saved results on the same position were joint — read that back so an
   // edit doesn't quietly split a draw.
   tied = new Set(
@@ -102,13 +107,30 @@ export function syncNewGameField() {
 
 // ── Player picker ──
 const HINTS = {
-  score: 'Tap everyone who played, then type their scores — highest score takes 1st, '
-    + 'and a matching score is a joint place. Playing something where that’s upside down? '
+  score: 'Tap everyone who played, then enter points as you go — each number adds to that '
+    + 'player’s total, so you can score every round as it happens. Highest total takes 1st, '
+    + 'and a matching total is a joint place. Playing something where that’s upside down? '
     + 'Hit "Clear order" and tap them in the order they finished instead.',
   manual: 'Tap players in the order they finished — the first tap is 1st place. '
     + 'Tap a ranked player again to take them out, use "=" to make them joint with the '
-    + 'player above, and scores are still yours to fill in.',
+    + 'player above, and points still add up as you enter them.',
 };
+
+// A player's score so far: the sum of everything entered for them, or null
+// while nothing has been.
+function totalFor(id) {
+  const list = rounds.get(id);
+  return list?.length ? list.reduce((a, b) => a + b, 0) : null;
+}
+
+// Add one entry to a player's running total. An empty box adds nothing, which
+// is how tabbing past a player who didn't score this round works.
+function addRound(id, raw) {
+  const value = raw.trim() === '' ? null : Number(raw);
+  if (value == null || !Number.isFinite(value)) return false;
+  rounds.set(id, [...(rounds.get(id) || []), value]);
+  return true;
+}
 
 // Two players on the same score drew, so the order the sort happened to put
 // them in means nothing — they share the place. Anyone still without a score
@@ -117,8 +139,8 @@ function tieOnEqualScores() {
   tied = new Set();
   ranked.forEach((id, i) => {
     if (i === 0) return;
-    const mine = scores.get(id);
-    const above = scores.get(ranked[i - 1]);
+    const mine = totalFor(id);
+    const above = totalFor(ranked[i - 1]);
     if (mine != null && above != null && mine === above) tied.add(id);
   });
 }
@@ -146,7 +168,7 @@ function renderPicker() {
   const players = pickablePlayers();
   $('entry-no-players').hidden = players.length > 0;
   $('entry-hint').textContent = HINTS[orderMode];
-  $('entry-sort').disabled = scores.size === 0;
+  $('entry-sort').disabled = rounds.size === 0;
 
   const place = places();
   reconcile($('entry-players'), players.map((p) => p.id), buildChip, (btn, id) => updateChip(btn, id, place));
@@ -211,7 +233,7 @@ function isJoint(place, position) {
   return position > 0 && [...place.values()].filter((p) => p === position).length > 1;
 }
 
-// ── The order itself, with a score box per place ──
+// ── The order itself, with a running total per place ──
 function renderRanking(place) {
   const list = $('entry-ranking');
   list.hidden = ranked.length === 0;
@@ -230,6 +252,11 @@ function buildRankRow(id) {
   const name = document.createElement('span');
   name.className = 'rank-name';
 
+  // The run of entries behind the total, on their own line under the row so a
+  // long night's scoring has the full width to wrap into.
+  const steps = document.createElement('div');
+  steps.className = 'rank-steps';
+
   // Joins this player to the one above on the same place. It sits before the
   // name because that is what it reads as: everything from here up is level.
   const tie = document.createElement('button');
@@ -239,19 +266,58 @@ function buildRankRow(id) {
   tie.dataset.id = id;
   tie.textContent = '=';
 
+  // Always empty: whatever goes in here is added to the total, so a box
+  // holding the last number entered would only invite typing it again.
   const score = document.createElement('input');
   score.type = 'number';
   score.className = 'rank-score';
   score.step = 'any';
   score.inputMode = 'numeric';
-  score.placeholder = 'Score';
+  score.placeholder = '+ pts';
   score.dataset.id = id;
+
+  const total = document.createElement('span');
+  total.className = 'rank-total';
 
   const remove = iconBtn('unrank', '', DELETE_PATHS, 'icon-danger');
   remove.dataset.id = id;
 
-  li.append(pos, tie, avatar, name, score, remove);
+  li.append(pos, tie, avatar, name, score, total, remove, steps);
   return li;
+}
+
+// The entries behind a total, each one a button that takes it back off again —
+// the only way to undo a mistyped number on a phone, where the keypad has no
+// minus sign. Reconciled rather than rebuilt: banking a number blurs the score
+// box, and a chip replaced between tap and release would swallow the tap that
+// was aimed at it.
+function renderSteps(li, id) {
+  const list = rounds.get(id) || [];
+  const steps = li.querySelector('.rank-steps');
+  steps.hidden = list.length === 0;
+  const labels = roundSteps(list);
+  reconcile(
+    steps,
+    list.map((_, i) => String(i)),
+    (i) => buildStep(i, id),
+    (btn, i) => updateStep(btn, id, list[Number(i)], labels[Number(i)]),
+  );
+}
+
+function buildStep(index, id) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'rank-step';
+  btn.dataset.action = 'undo-round';
+  // Keyed by index for the reconcile above; the player rides along separately.
+  btn.dataset.id = index;
+  btn.dataset.player = id;
+  return btn;
+}
+
+function updateStep(btn, id, value, label) {
+  btn.textContent = label;
+  btn.setAttribute('aria-label', `Take ${fmtScore(value)} back off ${playerName(playerById(id))}`);
 }
 
 function updateRankRow(li, id, i, place) {
@@ -284,16 +350,25 @@ function updateRankRow(li, id, i, place) {
     .setAttribute('aria-label', `Take ${playerName(player)} out`);
 
   const score = li.querySelector('.rank-score');
-  score.setAttribute('aria-label', `Score for ${playerName(player)}`);
+  score.setAttribute('aria-label', `Add points for ${playerName(player)}`);
   // Tell the phone keyboard what its action key does, so it reads "next" all
   // the way down the order and "done" on the last score.
   score.enterKeyHint = i === ranked.length - 1 ? 'done' : 'next';
   // Never stomp on a half-typed number: the box someone is in owns its value
   // until they leave it.
-  if (document.activeElement !== score) {
-    const value = scores.get(id);
-    score.value = value == null ? '' : String(value);
-  }
+  if (document.activeElement !== score) score.value = '';
+
+  renderTotal(li, id);
+}
+
+// The running total and the entries behind it, repainted on their own so a
+// number can be banked without the rows moving under the keyboard.
+function renderTotal(li, id) {
+  const total = totalFor(id);
+  const el = li.querySelector('.rank-total');
+  el.textContent = total == null ? '' : fmtScore(total);
+  el.setAttribute('aria-label', total == null ? '' : `${playerName(playerById(id))} total ${fmtScore(total)}`);
+  renderSteps(li, id);
 }
 
 // Step down the order to the next score box. Nothing re-sorts on the way, so
@@ -337,15 +412,25 @@ export function toggleTie(id) {
   renderPicker();
 }
 
-// Record a typed score. Deliberately does not re-render: re-sorting under a
-// half-typed number would pull the box out from under the keyboard. The
-// re-sort waits until focus leaves the order list entirely (see commitScore),
-// so stepping from one score to the next never moves anything.
-export function setScore(id, raw) {
-  const value = raw.trim() === '' ? null : Number(raw);
-  if (value == null || !Number.isFinite(value)) scores.delete(id);
-  else scores.set(id, value);
-  $('entry-sort').disabled = scores.size === 0;
+// Bank whatever is in one score box: it is added to that player's total and
+// the box empties, ready for the next round. Only that row is repainted —
+// re-sorting under a hand that is still typing would pull the next box out
+// from under the keyboard, so it waits until focus leaves the order list
+// entirely (see commitScore).
+export function commitRound(input) {
+  const id = input.dataset.id;
+  const added = addRound(id, input.value);
+  input.value = '';
+  if (!added) return;
+  const row = input.closest('.rank-row');
+  if (row) renderTotal(row, id);
+  $('entry-sort').disabled = rounds.size === 0;
+}
+
+// Bank every box at once — for a save that lands before the last number has
+// been let go of.
+function commitAllRounds() {
+  for (const input of $('entry-ranking').querySelectorAll('.rank-score')) commitRound(input);
 }
 
 export function commitScore() {
@@ -353,15 +438,15 @@ export function commitScore() {
   sortByScore({ keepMode: true });
 }
 
-// Order by score, highest first. Anyone without a score keeps their relative
+// Order by total, highest first. Anyone without a score keeps their relative
 // place at the back — they're usually the ones still being counted up.
 export function sortByScore({ keepMode = false } = {}) {
   const focused = document.activeElement;
   const focusedId = focused?.classList?.contains('rank-score') ? focused.dataset.id : null;
 
-  const scored = ranked.filter((id) => scores.has(id));
-  const unscored = ranked.filter((id) => !scores.has(id));
-  scored.sort((a, b) => scores.get(b) - scores.get(a));
+  const scored = ranked.filter((id) => totalFor(id) != null);
+  const unscored = ranked.filter((id) => totalFor(id) == null);
+  scored.sort((a, b) => totalFor(b) - totalFor(a));
   ranked = [...scored, ...unscored];
   if (!keepMode) orderMode = 'score';
   renderPicker();
@@ -373,6 +458,20 @@ export function sortByScore({ keepMode = false } = {}) {
     const next = $('entry-ranking').querySelector(`.rank-score[data-id="${focusedId}"]`);
     next?.focus();
   }
+}
+
+// Take one entry back off a player's total — a mistyped number is otherwise
+// stuck there, since a phone keypad has no minus sign to undo it with.
+export function undoRound(id, index) {
+  const list = rounds.get(id);
+  if (!list || list[index] === undefined) return;
+  const next = list.filter((_, i) => i !== index);
+  if (next.length) rounds.set(id, next);
+  else rounds.delete(id);
+  // Nobody is mid-entry when a chip is tapped, so a score-led order can settle
+  // straight away rather than sitting on a total that no longer holds.
+  if (orderMode === 'score') sortByScore({ keepMode: true });
+  else renderPicker();
 }
 
 // Wipe the order but keep the scores, so the finishing order can be tapped out
@@ -434,14 +533,17 @@ export async function saveEntry() {
     return;
   }
 
-  // A save straight off the last score box may beat the focusout that commits
-  // it, so settle the order (and the ties it implies) before reading places.
+  // A save straight off the last score box may beat the focusout that banks
+  // it, so take in every box and settle the order (and the ties it implies)
+  // before reading places.
+  commitAllRounds();
   commitScore();
   const place = places();
   const results = ranked.map((playerId) => ({
     playerId,
     position: place.get(playerId),
-    score: scores.has(playerId) ? scores.get(playerId) : null,
+    rounds: rounds.get(playerId) || [],
+    score: totalFor(playerId),
   }));
   await db.putSession({
     id: editing ? editing.id : crypto.randomUUID(),
