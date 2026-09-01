@@ -11,7 +11,9 @@ const amountInput = $('amount');
 
 /** Persisted: [{ id, name }]. Scores are deliberately not stored. */
 let players = load();
-const scores = new Map();
+
+/** id -> array of adjustments, oldest first. The score is their sum. */
+const history = new Map();
 
 function load() {
   try {
@@ -29,57 +31,59 @@ function save() {
   localStorage.setItem(KEY, JSON.stringify(players));
 }
 
-const step = () => Number(document.querySelector('input[name="step"]:checked').value);
-const scoreOf = (id) => scores.get(id) ?? 0;
+const entriesOf = (id) => history.get(id) ?? [];
+const scoreOf = (id) => entriesOf(id).reduce((sum, n) => sum + n, 0);
+const signed = (n) => (n > 0 ? `+${n}` : `−${Math.abs(n)}`);
 
 function render() {
   const leader = Math.max(...players.map((p) => scoreOf(p.id)));
   const hasLead = players.some((p) => scoreOf(p.id) !== 0);
 
   listEl.replaceChildren(...players.map((p) => {
+    const score = scoreOf(p.id);
+
     const li = document.createElement('li');
     li.className = 'player';
     li.dataset.id = p.id;
-    if (hasLead && scoreOf(p.id) === leader) li.classList.add('is-leader');
+    if (hasLead && score === leader) li.classList.add('is-leader');
+
+    const row = document.createElement('button');
+    row.className = 'row';
+    row.setAttribute('aria-label', `${p.name}, ${score}. Add or subtract points`);
 
     const name = document.createElement('span');
     name.className = 'name';
     name.textContent = p.name;
 
-    const score = document.createElement('button');
-    score.className = 'score';
-    score.textContent = scoreOf(p.id);
-    score.setAttribute('aria-label', `Add or subtract an amount for ${p.name}`);
+    const total = document.createElement('span');
+    total.className = 'score';
+    total.textContent = score;
 
-    li.append(name, score, button('minus', '−', `Subtract from ${p.name}`), button('plus', '+', `Add to ${p.name}`));
+    const entries = document.createElement('span');
+    entries.className = 'history';
+    entries.append(...entriesOf(p.id).map((n) => {
+      const chip = document.createElement('span');
+      chip.className = `chip ${n < 0 ? 'down' : 'up'}`;
+      chip.textContent = signed(n);
+      return chip;
+    }));
+
+    row.append(name, total, entries);
+    li.append(row);
     return li;
   }));
 
   emptyEl.hidden = players.length > 0;
 }
 
-function button(kind, glyph, label) {
-  const btn = document.createElement('button');
-  btn.className = `adjust ${kind}`;
-  btn.dataset.dir = kind === 'plus' ? '1' : '-1';
-  btn.setAttribute('aria-label', label);
-  btn.textContent = glyph;
-  return btn;
-}
-
 function adjust(id, delta) {
-  scores.set(id, scoreOf(id) + delta);
+  history.set(id, [...entriesOf(id), delta]);
   render();
 }
 
 listEl.addEventListener('click', (e) => {
-  const btn = e.target.closest('.adjust');
-  if (btn) {
-    adjust(btn.closest('.player').dataset.id, Number(btn.dataset.dir) * step());
-    return;
-  }
-  const score = e.target.closest('.score');
-  if (score) openAmount(score.closest('.player').dataset.id);
+  const row = e.target.closest('.row');
+  if (row) openAmount(row.closest('.player').dataset.id);
 });
 
 /* Arbitrary amounts */
@@ -120,7 +124,7 @@ amountDialog.addEventListener('click', (e) => {
 amountDialog.addEventListener('close', () => { amountFor = null; });
 
 $('btn-reset').addEventListener('click', () => {
-  scores.clear();
+  history.clear();
   render();
 });
 
@@ -178,7 +182,7 @@ editListEl.addEventListener('click', (e) => {
   if (!e.target.closest('.remove')) return;
   const li = e.target.closest('li');
   players = players.filter((p) => p.id !== li.dataset.id);
-  scores.delete(li.dataset.id);
+  history.delete(li.dataset.id);
   save();
   renderEditList();
   render();
@@ -197,7 +201,7 @@ editListEl.addEventListener('input', (e) => {
 $('btn-clear').addEventListener('click', () => {
   if (!players.length || !confirm('Remove all players?')) return;
   players = [];
-  scores.clear();
+  history.clear();
   save();
   renderEditList();
   render();

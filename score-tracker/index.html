@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Keep score for a group of players from one screen. Player names are saved locally; scores start at zero every session.">
+  <meta name="description" content="Keep score for a group of players from one screen. Tap a player to add or subtract any amount and see every change listed under their total. Names are saved locally; scores start at zero every session.">
   <meta name="category" content="Game">
   <title>Score Tracker</title>
   <link rel="stylesheet" href="style.css">
@@ -12,17 +12,9 @@
   <div class="container">
     <header class="bar">
       <h1>Score Tracker</h1>
-      <div class="bar-actions">
-        <fieldset class="steps" id="steps">
-          <legend class="visually-hidden">Points per tap</legend>
-          <label><input type="radio" name="step" value="1" checked><span>1</span></label>
-          <label><input type="radio" name="step" value="5"><span>5</span></label>
-          <label><input type="radio" name="step" value="10"><span>10</span></label>
-        </fieldset>
-        <button class="action-btn" id="btn-settings" aria-label="Settings">
-          <span class="icon-mask icon-settings" aria-hidden="true"></span>
-        </button>
-      </div>
+      <button class="action-btn" id="btn-settings" aria-label="Settings">
+        <span class="icon-mask icon-settings" aria-hidden="true"></span>
+      </button>
     </header>
 
     <ul class="players" id="players"></ul>

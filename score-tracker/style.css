@@ -100,49 +100,6 @@ button {
   }
 }
 
-.bar-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.steps {
-  display: flex;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  overflow: hidden;
-  background: var(--bg-secondary);
-
-  & label {
-    display: block;
-  }
-
-  & input {
-    position: absolute;
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  & span {
-    display: block;
-    padding: 0.35rem 0.65rem;
-    font-size: 0.875rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--text-secondary);
-    cursor: pointer;
-  }
-
-  & input:checked + span {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  & input:focus-visible + span {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-  }
-}
-
 .action-btn {
   background: var(--bg-secondary);
   color: var(--text);
@@ -177,65 +134,71 @@ button {
 }
 
 .player {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  grid-template-areas: "name minus plus" "score minus plus";
-  align-items: center;
-  gap: 0 0.5rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-radius: 0.75rem;
-  padding: 0.6rem 0.6rem 0.6rem 0.85rem;
 
   &.is-leader {
     border-color: var(--leader);
   }
 
+  & .row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "name score" "history history";
+    align-items: baseline;
+    gap: 0 0.75rem;
+    padding: 0.6rem 0.85rem;
+    text-align: left;
+    background: none;
+    border: 0;
+    border-radius: inherit;
+    color: inherit;
+    touch-action: manipulation;
+
+    &:active {
+      background: var(--bg-tertiary);
+    }
+  }
+
   & .name {
     grid-area: name;
-    font-size: 1rem;
     color: var(--text-secondary);
     overflow-wrap: anywhere;
   }
 
   & .score {
     grid-area: score;
-    justify-self: start;
     font-size: 2rem;
     font-weight: 700;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
-    background: none;
-    border: 0;
-    border-radius: 0.25rem;
-    color: inherit;
-    padding: 0;
-    text-decoration: underline dotted var(--border) 2px;
-    text-underline-offset: 0.15em;
   }
 
-  & .adjust {
-    width: 3.25rem;
-    height: 3.25rem;
-    font-size: 1.75rem;
-    line-height: 1;
-    border-radius: 0.6rem;
-    display: grid;
-    place-items: center;
+  & .history {
+    grid-area: history;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.45rem;
+
+    &:empty {
+      display: none;
+    }
+  }
+
+  & .chip {
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.35rem;
     background: var(--bg-tertiary);
-    border-color: var(--border);
-    user-select: none;
-    -webkit-user-select: none;
-    touch-action: manipulation;
+    border: 1px solid var(--border);
   }
 
-  & .minus { grid-area: minus; color: var(--minus); }
-  & .plus  { grid-area: plus;  color: var(--plus); }
-
-  & .adjust:active {
-    background: var(--accent);
-    color: #fff;
-  }
+  & .up { color: var(--plus); }
+  & .down { color: var(--minus); }
 }
 
 .empty {
