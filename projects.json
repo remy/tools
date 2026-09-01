@@ -229,6 +229,11 @@
     "description": "Find the elevation above sea level for any point on an interactive map. Drag the map under the centre pin or search for an address with OpenStreetMap; elevation data comes from the Open-Meteo API.",
     "title": "Point Elevation"
   },
+  "poker-chip-table": {
+    "category": "Game",
+    "description": "Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then tap chips into the pot on each turn and award the pot to the winner.",
+    "title": "Poker Chip Table"
+  },
   "priority-calls": {
     "category": "Productivity",
     "description": "An Android app that lets priority contacts break through silent, Do Not Disturb, and bedtime modes.",
