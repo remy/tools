@@ -382,6 +382,14 @@ body {
   display: inline-flex;
   align-items: center;
   padding-right: 0.125rem;
+
+  /* Joint winners stack as a huddle rather than pushing the game title out. */
+  & .avatar + .avatar {
+    margin-left: -0.5rem;
+    box-shadow:
+      inset 0 0 0 1.5px color-mix(in srgb, var(--avatar-colour, var(--accent)) 55%, transparent),
+      0 0 0 2px var(--bg-card);
+  }
 }
 
 /* ── Standings ── */
@@ -407,7 +415,7 @@ body {
 
 .standing-rank {
   flex-shrink: 0;
-  width: 1.5rem;
+  width: 1.75rem;
   text-align: center;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -520,6 +528,13 @@ body {
   border-radius: 99px;
   background: var(--gold-soft);
   color: var(--gold-ink);
+
+  & .avatar + .avatar {
+    margin-left: -0.5rem;
+    box-shadow:
+      inset 0 0 0 1.5px color-mix(in srgb, var(--avatar-colour, var(--accent)) 55%, transparent),
+      0 0 0 2px var(--gold-soft);
+  }
 }
 
 .session-winner-name {
@@ -568,7 +583,9 @@ body {
 
 .result-pos {
   flex-shrink: 0;
-  width: 2.25rem;
+  /* Wide enough for a joint place ("=10th") without the names stepping in and
+     out as ties come and go. */
+  width: 2.75rem;
   font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -952,6 +969,42 @@ dialog {
 }
 
 /* ── The finishing order, with a score per place ── */
+/* Joins a row to the one above it on the same place. Kept narrow: on a 325px
+   phone the row already carries a place, an avatar, a name, a score box and a
+   remove button. */
+.rank-tie {
+  flex-shrink: 0;
+  width: 1.375rem;
+  height: 1.625rem;
+  padding: 0;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-3);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover { border-color: var(--accent); color: var(--accent-ink); }
+  &:active { scale: 0.9; }
+
+  &[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+
+  /* The top row has nothing above to be level with. It keeps its space so the
+     rows below stay in one column. */
+  &:disabled {
+    visibility: hidden;
+  }
+}
+
+
 .rank-list {
   list-style: none;
   display: flex;
@@ -968,6 +1021,20 @@ dialog {
   border-radius: 8px;
   background: var(--bg-input);
 
+  /* A tied row sits flush against the one above so a shared place reads as one
+     block rather than two rows that happen to agree. */
+  &:has(+ .is-tied) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  &.is-tied {
+    margin-top: -0.25rem;
+    border-top: 1px dashed var(--border);
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
   &[data-position="1"] { background: var(--gold-soft); }
   &[data-position="2"] { background: var(--silver-soft); }
   &[data-position="3"] { background: var(--bronze-soft); }
@@ -975,7 +1042,7 @@ dialog {
 
 .rank-pos {
   flex-shrink: 0;
-  width: 2rem;
+  width: 2.5rem;
   font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -1268,4 +1335,8 @@ body.dragover dialog[open] {
   }
 
   .avatar-row { flex-wrap: wrap; }
+
+  /* The tie toggle costs a row about 30px — take it back off the score box,
+     which only ever holds a handful of digits. */
+  .rank-score { width: 3.5rem; }
 }

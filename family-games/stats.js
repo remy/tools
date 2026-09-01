@@ -56,8 +56,31 @@ export function standings(sessions) {
     winRate: row.wins / row.plays,
     avgScore: row.scored ? row.scoreTotal / row.scored : null,
   }));
-  rows.sort((a, b) => (b.wins - a.wins) || (a.avg - b.avg) || (b.plays - a.plays));
+  rows.sort(byStanding);
   return rows;
+}
+
+// The order the standings table is built in — exported so the table can tell
+// two rows apart from two rows that are genuinely level.
+export function byStanding(a, b) {
+  return (b.wins - a.wins) || (a.avg - b.avg) || (b.plays - a.plays);
+}
+
+// The positions two or more players share in one result — a joint 1st reads
+// "=1st" rather than pretending someone edged it.
+export function jointPositions(results) {
+  const seen = new Set();
+  const joint = new Set();
+  for (const r of results) {
+    if (seen.has(r.position)) joint.add(r.position);
+    else seen.add(r.position);
+  }
+  return joint;
+}
+
+// Everyone who came 1st — more than one when the game was drawn.
+export function winnersOf(session) {
+  return session.results.filter((r) => r.position === 1);
 }
 
 // Whether this game is one we keep score in — drives whether the score
@@ -77,22 +100,18 @@ export function fmtScore(value) {
 export function gameSummary(gameId) {
   const sessions = sessionsFor(gameId);
   const latest = sessions[0] || null;
-  const winner = latest
-    ? (latest.results.find((r) => r.position === 1) || null)
-    : null;
   return {
     plays: sessions.length,
     lastDate: latest ? latest.date : null,
-    lastWinnerId: winner ? winner.playerId : null,
+    lastWinnerIds: latest ? winnersOf(latest).map((r) => r.playerId) : [],
   };
 }
 
-// The player with the most wins across a game, used for the "champion" badge.
-export function champion(gameId) {
+// Whoever has the most wins across a game, used for the "champion" badge.
+// A shared lead is a shared title, so this is a list rather than one player.
+export function champions(gameId) {
   const rows = standings(sessionsFor(gameId));
   const top = rows[0];
-  if (!top || !top.wins) return null;
-  // A shared lead isn't a champion — say nothing rather than pick a winner.
-  const tied = rows.filter((r) => r.wins === top.wins).length > 1;
-  return tied ? null : top;
+  if (!top || !top.wins) return [];
+  return rows.filter((r) => r.wins === top.wins);
 }

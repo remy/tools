@@ -163,6 +163,19 @@ export function ordinal(n) {
   return `${n}${suffix}`;
 }
 
+// A place in a result, marked "=" when it is shared — the convention every
+// league table and sports page already uses for a joint finish.
+export function placeLabel(position, joint = false) {
+  return `${joint ? '=' : ''}${ordinal(position)}`;
+}
+
+// The names of a joint group, read out as people say them: "Remy & Julie".
+export function nameList(players) {
+  const names = players.map(playerName);
+  if (names.length < 2) return names.join('');
+  return `${names.slice(0, -1).join(', ')} & ${names.at(-1)}`;
+}
+
 export function plural(n, word) {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
 }
