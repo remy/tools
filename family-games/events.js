@@ -2,7 +2,7 @@ import { state, gameById } from './state.js';
 import { $ } from './ui.js';
 import { goHome, selectGame, renameGame, deleteGame, deleteSession } from './games.js';
 import {
-  openEntry, saveEntry, deleteEntry, togglePlayer, clearOrder, sortByScore,
+  openEntry, saveEntry, deleteEntry, togglePlayer, toggleTie, clearOrder, sortByScore,
   setScore, commitScore, focusNextScore, syncNewGameField, toggleQuickAdd,
   addPlayerFromEntry, refreshPicker,
 } from './entry.js';
@@ -80,8 +80,10 @@ function wireEntry() {
     focusNextScore(input);
   });
   ranking.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-action="unrank"]');
-    if (btn) togglePlayer(btn.dataset.id);
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    if (btn.dataset.action === 'unrank') togglePlayer(btn.dataset.id);
+    else if (btn.dataset.action === 'tie') toggleTie(btn.dataset.id);
   });
   $('entry-add-player').addEventListener('click', toggleQuickAdd);
   $('entry-player-save').addEventListener('click', addPlayerFromEntry);

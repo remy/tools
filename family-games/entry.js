@@ -1,6 +1,6 @@
 import { state, activePlayers, playerById, gameById } from './state.js';
 import { db } from './db.js';
-import { $, avatarEl, iconBtn, playerName, todayISO, ordinal, DELETE_PATHS } from './ui.js';
+import { $, avatarEl, iconBtn, playerName, todayISO, placeLabel, DELETE_PATHS } from './ui.js';
 import { ensureGame, refreshAll, selectGame } from './games.js';
 import { quickAddPlayer } from './players.js';
 
@@ -14,10 +14,15 @@ let ranked = [];
 // `ranked` so clearing the order to re-rank by hand doesn't lose the numbers
 // anyone already typed in.
 let scores = new Map();
+// Player ids that finished level with whoever is directly above them in
+// `ranked`. A tie is stored against the lower player so it survives someone
+// being pulled out of the middle of the order.
+let tied = new Set();
 // 'score': the order follows the scores, highest first, and re-sorts as they
-// are entered. 'manual': the order is whatever was tapped, which is how a
-// lowest-wins game (or a tie broken at the table) gets recorded. "Clear order"
-// drops into manual; "Sort by score" goes back.
+// are entered — equal scores share a place. 'manual': the order is whatever
+// was tapped, which is how a lowest-wins game gets recorded, and where a draw
+// with no score to prove it is marked by hand. "Clear order" and marking a tie
+// both drop into manual; "Sort by score" goes back.
 let orderMode = 'score';
 // The session being edited, if any. Null while recording a fresh one.
 let editing = null;
@@ -42,6 +47,11 @@ export function openEntry({ gameId = null, sessionId = null } = {}) {
     : [];
   ranked = previous.map((r) => r.playerId);
   scores = new Map(previous.filter((r) => r.score != null).map((r) => [r.playerId, r.score]));
+  // Two saved results on the same position were joint — read that back so an
+  // edit doesn't quietly split a draw.
+  tied = new Set(
+    previous.filter((r, i) => i > 0 && r.position === previous[i - 1].position).map((r) => r.playerId),
+  );
   // An edit opens in manual mode so nothing already saved re-shuffles itself;
   // "Sort by score" is right there if that's what's wanted.
   orderMode = editing ? 'manual' : 'score';
@@ -92,11 +102,26 @@ export function syncNewGameField() {
 
 // ── Player picker ──
 const HINTS = {
-  score: 'Tap everyone who played, then type their scores — highest score takes 1st. '
-    + 'Playing something where that’s upside down? Hit "Clear order" and tap them in the order they finished instead.',
+  score: 'Tap everyone who played, then type their scores — highest score takes 1st, '
+    + 'and a matching score is a joint place. Playing something where that’s upside down? '
+    + 'Hit "Clear order" and tap them in the order they finished instead.',
   manual: 'Tap players in the order they finished — the first tap is 1st place. '
-    + 'Tap a ranked player again to take them out, and scores are still yours to fill in.',
+    + 'Tap a ranked player again to take them out, use "=" to make them joint with the '
+    + 'player above, and scores are still yours to fill in.',
 };
+
+// Two players on the same score drew, so the order the sort happened to put
+// them in means nothing — they share the place. Anyone still without a score
+// is left out of it.
+function tieOnEqualScores() {
+  tied = new Set();
+  ranked.forEach((id, i) => {
+    if (i === 0) return;
+    const mine = scores.get(id);
+    const above = scores.get(ranked[i - 1]);
+    if (mine != null && above != null && mine === above) tied.add(id);
+  });
+}
 
 // Repaint a keyed list without rebuilding it: each element is matched back to
 // the player it belongs to, updated in place, and only moved if it is actually
@@ -115,13 +140,17 @@ function reconcile(parent, ids, build, update) {
 }
 
 function renderPicker() {
+  // While the order belongs to the scores, so do the ties — re-derived on
+  // every repaint so pulling a player out can't leave a stale one behind.
+  if (orderMode === 'score') tieOnEqualScores();
   const players = pickablePlayers();
   $('entry-no-players').hidden = players.length > 0;
   $('entry-hint').textContent = HINTS[orderMode];
   $('entry-sort').disabled = scores.size === 0;
 
-  reconcile($('entry-players'), players.map((p) => p.id), buildChip, updateChip);
-  renderRanking();
+  const place = places();
+  reconcile($('entry-players'), players.map((p) => p.id), buildChip, (btn, id) => updateChip(btn, id, place));
+  renderRanking(place);
 }
 
 function buildChip(id) {
@@ -141,30 +170,52 @@ function buildChip(id) {
   return btn;
 }
 
-function updateChip(btn, id) {
+function updateChip(btn, id, place) {
   const player = playerById(id);
-  const position = ranked.indexOf(id) + 1;
+  const position = place.get(id) || 0;
+  const joint = isJoint(place, position);
 
   btn.setAttribute('aria-pressed', String(position > 0));
   btn.setAttribute(
     'aria-label',
-    position ? `${player.name}, ${ordinal(position)} — tap to unrank` : `${player.name} — tap to rank`,
+    position
+      ? `${player.name}, ${placeLabel(position, joint)} — tap to unrank`
+      : `${player.name} — tap to rank`,
   );
   if (position) btn.dataset.position = String(position);
   else delete btn.dataset.position;
 
   const badge = btn.querySelector('.chip-position');
   badge.hidden = position === 0;
-  badge.textContent = position || '';
+  badge.textContent = position ? `${joint ? '=' : ''}${position}` : '';
   btn.querySelector('.avatar').replaceWith(avatarEl(player, 'avatar-sm'));
   btn.querySelector('.chip-name').textContent = player.name;
 }
 
+// Standard competition ranking over the current order: a shared place is
+// taken by everyone in it and the next player down drops by the size of the
+// group, so a joint 1st is followed by 3rd.
+function places() {
+  const out = new Map();
+  let place = 1;
+  ranked.forEach((id, i) => {
+    if (i > 0 && !tied.has(id)) place = i + 1;
+    out.set(id, place);
+  });
+  return out;
+}
+
+// Whether a place is shared — either the row above is tied to this one, or
+// this one is tied to it.
+function isJoint(place, position) {
+  return position > 0 && [...place.values()].filter((p) => p === position).length > 1;
+}
+
 // ── The order itself, with a score box per place ──
-function renderRanking() {
+function renderRanking(place) {
   const list = $('entry-ranking');
   list.hidden = ranked.length === 0;
-  reconcile(list, ranked, buildRankRow, updateRankRow);
+  reconcile(list, ranked, buildRankRow, (li, id, i) => updateRankRow(li, id, i, place));
 }
 
 function buildRankRow(id) {
@@ -179,6 +230,15 @@ function buildRankRow(id) {
   const name = document.createElement('span');
   name.className = 'rank-name';
 
+  // Joins this player to the one above on the same place. It sits before the
+  // name because that is what it reads as: everything from here up is level.
+  const tie = document.createElement('button');
+  tie.type = 'button';
+  tie.className = 'rank-tie';
+  tie.dataset.action = 'tie';
+  tie.dataset.id = id;
+  tie.textContent = '=';
+
   const score = document.createElement('input');
   score.type = 'number';
   score.className = 'rank-score';
@@ -190,17 +250,34 @@ function buildRankRow(id) {
   const remove = iconBtn('unrank', '', DELETE_PATHS, 'icon-danger');
   remove.dataset.id = id;
 
-  li.append(pos, avatar, name, score, remove);
+  li.append(pos, tie, avatar, name, score, remove);
   return li;
 }
 
-function updateRankRow(li, id, i) {
+function updateRankRow(li, id, i, place) {
   const player = playerById(id);
-  const place = i + 1;
-  if (place <= 3) li.dataset.position = String(place);
+  const position = place.get(id);
+  const joint = isJoint(place, position);
+  if (position <= 3) li.dataset.position = String(position);
   else delete li.dataset.position;
+  li.classList.toggle('is-tied', tied.has(id) && i > 0);
 
-  li.querySelector('.rank-pos').textContent = ordinal(place);
+  li.querySelector('.rank-pos').textContent = placeLabel(position, joint);
+
+  const above = i > 0 ? playerById(ranked[i - 1]) : null;
+  const tie = li.querySelector('.rank-tie');
+  // The top row has nothing above to be level with, so its toggle is kept in
+  // the layout but taken out of play.
+  tie.disabled = i === 0;
+  tie.setAttribute('aria-pressed', String(tied.has(id) && i > 0));
+  tie.setAttribute(
+    'aria-label',
+    above
+      ? (tied.has(id)
+        ? `Split ${playerName(player)} from ${playerName(above)}`
+        : `Tie ${playerName(player)} with ${playerName(above)}`)
+      : 'Nobody above to tie with',
+  );
   li.querySelector('.avatar').replaceWith(avatarEl(player, 'avatar-sm'));
   li.querySelector('.rank-name').textContent = playerName(player);
   li.querySelector('[data-action="unrank"]')
@@ -241,7 +318,22 @@ export function togglePlayer(id) {
   const at = ranked.indexOf(id);
   if (at === -1) ranked.push(id);
   else ranked.splice(at, 1);
+  tied.delete(id);
+  // Whoever is left at the top can't be level with anyone above them.
+  if (ranked.length) tied.delete(ranked[0]);
   setError('');
+  renderPicker();
+}
+
+// Mark this player level with the one above, or split them again. Doing it by
+// hand means the order is no longer the scores' to decide, so it drops into
+// manual mode and the tie survives.
+export function toggleTie(id) {
+  const at = ranked.indexOf(id);
+  if (at < 1) return;
+  if (tied.has(id)) tied.delete(id);
+  else tied.add(id);
+  orderMode = 'manual';
   renderPicker();
 }
 
@@ -287,6 +379,7 @@ export function sortByScore({ keepMode = false } = {}) {
 // by hand for the games where the biggest number doesn't win.
 export function clearOrder() {
   ranked = [];
+  tied = new Set();
   orderMode = 'manual';
   renderPicker();
 }
@@ -341,9 +434,13 @@ export async function saveEntry() {
     return;
   }
 
-  const results = ranked.map((playerId, i) => ({
+  // A save straight off the last score box may beat the focusout that commits
+  // it, so settle the order (and the ties it implies) before reading places.
+  commitScore();
+  const place = places();
+  const results = ranked.map((playerId) => ({
     playerId,
-    position: i + 1,
+    position: place.get(playerId),
     score: scores.has(playerId) ? scores.get(playerId) : null,
   }));
   await db.putSession({
