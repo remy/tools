@@ -1,5 +1,8 @@
 // Puts the container reader, the table readers and the feature registry
 // together into the single object the UI renders.
+//
+// Not called analyse.js: EasyPrivacy blocks any URL containing "/analyse.js",
+// so uBlock and friends would stop the whole module graph from loading.
 
 import { readFont } from './sfnt.js';
 import {

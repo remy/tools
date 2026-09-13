@@ -181,9 +181,10 @@
       // runs, the buttons it owns are silently dead — say so instead.
       const watchdog = setTimeout(() => {
         const error = document.getElementById('error');
-        error.textContent = 'The page could not start: script.js did not load. '
-          + 'It is a module, so the page has to be served over http, not opened as a file. '
-          + 'The browser console will say more.';
+        error.textContent = location.protocol === 'file:'
+          ? 'The page could not start: script.js is a module, so the page has to be served over http, not opened as a file.'
+          : 'The page could not start: one of its scripts did not load. A content blocker may have stopped it — '
+            + 'the browser console will say which.';
         error.hidden = false;
       }, 5000);
 

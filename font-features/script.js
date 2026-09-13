@@ -1,7 +1,7 @@
 // Entry point: holds the state, wires the controls, and keeps the preview and
 // the CSS output in step with it.
 
-import { analyseFont } from './analyse.js';
+import { analyseFont } from './font-report.js';
 import { makeSampler, previewText } from './sample.js';
 import { renderSummary, renderAxes, renderFeatures } from './render.js';
 import { buildCss } from './css-output.js';
