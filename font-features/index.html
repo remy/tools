@@ -161,8 +161,36 @@
         if (file) dispatch(file);
       });
 
+      // The dialog is opened here rather than in the module, so the button
+      // answers on the first click even if the module is still arriving. The
+      // module fills the list in when it is ready.
+      const dialog = document.getElementById('google-dialog');
+      const search = document.getElementById('google-search');
+      for (const id of ['btn-google', 'btn-google-2']) {
+        document.getElementById(id).addEventListener('click', () => {
+          if (!dialog.open) dialog.showModal();
+          search.focus();
+          window.__fontPicker?.opened();
+        });
+      }
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) dialog.close();
+      });
+
+      // Everything but this script comes from a module. If that module never
+      // runs, the buttons it owns are silently dead — say so instead.
+      const watchdog = setTimeout(() => {
+        const error = document.getElementById('error');
+        error.textContent = 'The page could not start: script.js did not load. '
+          + 'It is a module, so the page has to be served over http, not opened as a file. '
+          + 'The browser console will say more.';
+        error.hidden = false;
+      }, 5000);
+
       window.__fontDrop = {
         register(fn) {
+          clearTimeout(watchdog);
+          document.getElementById('error').hidden = true;
           handler = fn;
           if (pending) {
             const file = pending;

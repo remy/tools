@@ -1,11 +1,14 @@
-// The Google Fonts family picker dialog.
+// The list inside the Google Fonts dialog. Opening and closing the dialog is
+// handled by the inline script in index.html, so the button still answers
+// while this module is loading; this only fills the list in.
 
 import { loadCatalogue } from './google.js';
 
 const MAX_ROWS = 120;
 
-export function setupPicker({ dialog, trigger, search, list, note, onPick }) {
+export function setupPicker({ dialog, search, list, note, onPick }) {
   let fonts = [];
+  let loading = null;
 
   function draw() {
     const query = search.value.trim().toLowerCase();
@@ -39,22 +42,22 @@ export function setupPicker({ dialog, trigger, search, list, note, onPick }) {
       : `${matches.length.toLocaleString()} ${matches.length === 1 ? 'family' : 'families'}`;
   }
 
-  async function open() {
-    dialog.showModal();
-    search.focus();
-    if (fonts.length) return;
-    try {
-      const catalogue = await loadCatalogue();
-      fonts = catalogue.fonts;
-      draw();
-    } catch (error) {
-      note.textContent = error.message;
-    }
+  function opened() {
+    if (fonts.length || loading) return;
+    loading = loadCatalogue()
+      .then((catalogue) => {
+        fonts = catalogue.fonts;
+        draw();
+      })
+      .catch((error) => {
+        note.textContent = error.message;
+      })
+      .finally(() => { loading = null; });
   }
 
-  for (const button of trigger) button.addEventListener('click', open);
   search.addEventListener('input', draw);
-  dialog.addEventListener('click', (event) => {
-    if (event.target === dialog) dialog.close();
-  });
+  window.__fontPicker = { opened };
+  // The dialog can already be open — the reader may have clicked before this
+  // module finished loading.
+  if (dialog.open) opened();
 }

@@ -313,7 +313,6 @@ dom.copyCss.addEventListener('click', () => copy(dom.copyCss, dom.cssOutput.text
 
 setupPicker({
   dialog: dom.dialog,
-  trigger: [document.getElementById('btn-google'), document.getElementById('btn-google-2')],
   search: document.getElementById('google-search'),
   list: document.getElementById('google-list'),
   note: document.getElementById('google-note'),
