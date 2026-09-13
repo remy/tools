@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Drop in a font file or pick one from Google Fonts to see which OpenType features and variable axes it has, try them out on your own text, and copy the CSS.">
+  <meta name="category" content="Developer Tools">
+  <title>Font Features</title>
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Etext%7Bfill:%2318181b%7D@media (prefers-color-scheme:dark)%7Btext%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Ctext x='12' y='19' font-family='Georgia,serif' font-size='22' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container">
+    <header class="app-header">
+      <h1>Font Features</h1>
+      <p class="tagline">
+        See which OpenType features and variable axes a font actually has baked in,
+        try them on your own text, and take the CSS away with you.
+      </p>
+    </header>
+
+    <section id="empty" class="dropzone">
+      <p class="dropzone-title">Drop a font here</p>
+      <p class="dropzone-hint">TTF, OTF, WOFF or WOFF2 — nothing is uploaded, it is all read in the browser.</p>
+      <div class="dropzone-actions">
+        <button type="button" class="btn primary" id="btn-file">Choose a file</button>
+        <button type="button" class="btn" id="btn-google">Pick from Google Fonts</button>
+      </div>
+    </section>
+
+    <p id="status" class="status" hidden></p>
+    <p id="error" class="error" role="alert" hidden></p>
+
+    <main id="report" hidden>
+      <section class="summary" id="summary"></section>
+
+      <section class="panel preview-panel">
+        <div class="panel-head">
+          <h2>Preview</h2>
+          <div class="preview-controls">
+            <label class="control">
+              <span>Size</span>
+              <input type="range" id="preview-size" min="12" max="140" step="1" value="52">
+              <output id="preview-size-value">52px</output>
+            </label>
+            <button type="button" class="btn small" id="btn-reset">Reset features</button>
+          </div>
+        </div>
+        <div class="preview" id="preview" contenteditable="plaintext-only" spellcheck="false"
+          role="textbox" aria-label="Preview text" aria-multiline="true"></div>
+      </section>
+
+      <section class="panel" id="axes-panel" hidden>
+        <div class="panel-head">
+          <h2>Variable axes</h2>
+          <label class="control" id="instances-control" hidden>
+            <span>Named instance</span>
+            <select id="instances"></select>
+          </label>
+        </div>
+        <div class="axes" id="axes"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Features <span class="count" id="feature-count"></span></h2>
+          <label class="control checkbox">
+            <input type="checkbox" id="show-shaping">
+            <span>Show script shaping features</span>
+          </label>
+        </div>
+        <div id="features" class="features"></div>
+        <p id="no-features" class="empty-note" hidden>
+          This font declares no GSUB or GPOS features at all.
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>CSS</h2>
+          <button type="button" class="btn small" id="btn-copy-css">Copy</button>
+        </div>
+        <pre class="code-hint"><code id="css-output"></code></pre>
+      </section>
+    </main>
+
+    <footer class="app-footer" id="footer" hidden>
+      <button type="button" class="btn small" id="btn-file-2">Open another font</button>
+      <button type="button" class="btn small" id="btn-google-2">Google Fonts</button>
+    </footer>
+  </div>
+
+  <input type="file" id="file-input" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
+
+  <dialog id="google-dialog">
+    <form method="dialog" class="dialog-head">
+      <h2>Google Fonts</h2>
+      <button class="btn small" value="cancel" aria-label="Close">Close</button>
+    </form>
+    <div class="dialog-body">
+      <label class="control search">
+        <span class="visually-hidden">Search families</span>
+        <input type="search" id="google-search" placeholder="Search 1,900+ families" autocomplete="off">
+      </label>
+      <p class="dialog-note" id="google-note">Loading the catalogue…</p>
+      <ul class="font-list" id="google-list"></ul>
+    </div>
+  </dialog>
+
+  <script>
+    // Capture a dropped or chosen font straight away — the parser is a module
+    // and may still be loading. Whatever arrives first is queued for it.
+    (function () {
+      const fileInput = document.getElementById('file-input');
+      const empty = document.getElementById('empty');
+      let pending = null;
+      let handler = null;
+
+      function dispatch(file) {
+        if (handler) handler(file);
+        else pending = file;
+      }
+
+      for (const id of ['btn-file', 'btn-file-2']) {
+        document.getElementById(id).addEventListener('click', () => fileInput.click());
+      }
+      empty.addEventListener('click', (event) => {
+        if (event.target.closest('button')) return;
+        fileInput.click();
+      });
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) dispatch(fileInput.files[0]);
+        fileInput.value = '';
+      });
+
+      let depth = 0;
+      const hasFiles = (event) => [...(event.dataTransfer?.types || [])].includes('Files');
+      window.addEventListener('dragenter', (event) => {
+        if (!hasFiles(event)) return;
+        event.preventDefault();
+        depth++;
+        document.body.classList.add('dragover');
+      });
+      window.addEventListener('dragover', (event) => {
+        if (hasFiles(event)) event.preventDefault();
+      });
+      window.addEventListener('dragleave', (event) => {
+        if (!hasFiles(event)) return;
+        depth = Math.max(0, depth - 1);
+        if (depth === 0) document.body.classList.remove('dragover');
+      });
+      window.addEventListener('drop', (event) => {
+        event.preventDefault();
+        depth = 0;
+        document.body.classList.remove('dragover');
+        const file = event.dataTransfer?.files?.[0];
+        if (file) dispatch(file);
+      });
+
+      window.__fontDrop = {
+        register(fn) {
+          handler = fn;
+          if (pending) {
+            const file = pending;
+            pending = null;
+            fn(file);
+          }
+        },
+      };
+    })();
+  </script>
+  <script type="module" src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+
+</html>
