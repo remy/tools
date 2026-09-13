@@ -5,6 +5,12 @@
       "slug": "the-web-browser",
       "title": "The Web Browser",
       "image": "the-web-browser.avif"
+    },
+    {
+      "number": 2,
+      "slug": "the-domestic-cat",
+      "title": "The Domestic Cat",
+      "image": "the-domestic-cat.avif"
     }
   ]
 }
