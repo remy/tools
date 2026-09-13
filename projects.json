@@ -84,6 +84,11 @@
     "description": "Track family game nights: record who finished where each time you play a game, then see standings and full history per game. Offline PouchDB storage with live CouchDB sync.",
     "title": "Family Games"
   },
+  "font-features": {
+    "category": "Developer Tools",
+    "description": "Drop in a font file or pick one from Google Fonts to see which OpenType features and variable axes it has, try them out on your own text, and copy the CSS.",
+    "title": "Font Features"
+  },
   "font-grid-generator": {
     "category": "Developer Tools",
     "description": "Drop a pixel font file and generate an 8x8 grid representation of each glyph. Supports TTF, OTF, WOFF, and WOFF2 formats.",
