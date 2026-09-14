@@ -211,4 +211,28 @@ dialog.addEventListener('click', (e) => {
   if (e.target === dialog) dialog.close();
 });
 
+/* Keyboard inset
+
+   The on-screen keyboard resizes the visual viewport, not the layout one, so
+   dvh does not shrink and a full-screen dialog's footer ends up behind the
+   keyboard. interactive-widget=resizes-content fixes that in Chromium; these
+   custom properties cover the browsers that ignore it, Firefox for Android
+   among them. Browsers that resize the layout viewport instead report the
+   same height here, so both behaviours land on the visible area. */
+
+const viewport = window.visualViewport;
+
+if (viewport) {
+  const trackViewport = () => {
+    const style = document.documentElement.style;
+    style.setProperty('--keyboard-height', `${viewport.height}px`);
+    style.setProperty('--keyboard-top', `${viewport.offsetTop}px`);
+  };
+
+  viewport.addEventListener('resize', trackViewport);
+  viewport.addEventListener('scroll', trackViewport);
+  window.addEventListener('resize', trackViewport);
+  trackViewport();
+}
+
 render();
