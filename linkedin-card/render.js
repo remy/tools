@@ -30,7 +30,7 @@ export function imageRect(bg, image, W, H) {
   };
 }
 
-const fontString = (layer) => `${layer.weight} ${layer.size}px "${layer.font}", system-ui, sans-serif`;
+const fontString = (layer) => `${layer.italic ? 'italic ' : ''}${layer.weight} ${layer.size}px "${layer.font}", system-ui, sans-serif`;
 
 function applyTextStyle(ctx, layer) {
   ctx.font = fontString(layer);

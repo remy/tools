@@ -28,6 +28,7 @@ function newLayer(overrides = {}) {
     text: 'Your headline goes here',
     font: DEFAULT_FONT,
     weight: 800,
+    italic: false,
     size: 96,
     color: '#ffffff',
     align: 'center',
@@ -113,7 +114,7 @@ const fontStatus = $('font-status');
 const loadedFonts = new Set();
 
 async function ensureFont(layer) {
-  const key = `${layer.font}:${layer.weight}`;
+  const key = `${layer.font}:${layer.weight}:${layer.italic}`;
   if (loadedFonts.has(key)) return true;
   const isSelected = layer.id === state.selected;
   if (isSelected) {
@@ -121,7 +122,7 @@ async function ensureFont(layer) {
     fontStatus.textContent = `Loading ${layer.font}…`;
   }
   try {
-    await loadFont(layer.font, layer.weight);
+    await loadFont(layer.font, layer.weight, layer.italic);
     loadedFonts.add(key);
     if (isSelected) fontStatus.textContent = '';
     draw();
@@ -211,6 +212,7 @@ function syncEditor() {
   $('custom-font-field').hidden = known;
   $('custom-font').value = known ? '' : layer.font;
   $('weight').value = String(layer.weight);
+  $('italic').checked = layer.italic;
   $('size').value = layer.size;
   $('color').value = layer.color;
   editor.querySelector(`input[name="align"][value="${layer.align}"]`).checked = true;
@@ -293,6 +295,14 @@ function wireControls() {
     const layer = selectedLayer();
     if (!layer) return;
     layer.weight = Number(e.target.value);
+    ensureFont(layer);
+    update();
+  });
+
+  $('italic').addEventListener('change', (e) => {
+    const layer = selectedLayer();
+    if (!layer) return;
+    layer.italic = e.target.checked;
     ensureFont(layer);
     update();
   });

@@ -36,19 +36,26 @@ function addStylesheet(href) {
 const familyParam = (family) => encodeURIComponent(family.trim()).replace(/%20/g, '+');
 
 /**
- * Loads a family at a weight so it's ready to draw on a canvas. Families that
- * don't ship the requested weight fall back to their default (the browser then
- * synthesises bold). Rejects if the family doesn't exist on Google Fonts.
+ * Loads a family at a weight and style so it's ready to draw on a canvas.
+ * Families that don't ship the requested weight or italic fall back to the
+ * closest thing they do have (the browser then synthesises bold or slant).
+ * Rejects if the family doesn't exist on Google Fonts.
  */
-export async function loadFont(family, weight) {
+export async function loadFont(family, weight, italic = false) {
   const fam = familyParam(family);
-  try {
-    await addStylesheet(`${CSS_API}?family=${fam}:wght@${weight}&display=block`);
-  } catch {
-    await addStylesheet(`${CSS_API}?family=${fam}&display=block`);
+  const axes = italic
+    ? [`:ital,wght@1,${weight}`, ':ital@1', `:wght@${weight}`, '']
+    : [`:wght@${weight}`, ''];
+  for (const [i, axis] of axes.entries()) {
+    try {
+      await addStylesheet(`${CSS_API}?family=${fam}${axis}&display=block`);
+      break;
+    } catch (err) {
+      if (i === axes.length - 1) throw err;
+    }
   }
   // A stylesheet only declares @font-face; the file itself loads on first use.
-  const faces = await document.fonts.load(`${weight} 64px "${family}"`);
+  const faces = await document.fonts.load(`${italic ? 'italic ' : ''}${weight} 64px "${family}"`);
   if (!faces.length) throw new Error(`${family} has no usable font files`);
 }
 
