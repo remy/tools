@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Make a single image for a LinkedIn post: drop in a background photo, choose how it fills the card, add text in any Google Font, then download it at LinkedIn's recommended sizes.">
+  <meta name="category" content="Productivity">
+  <title>LinkedIn Card</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Epath%7Bfill:%2318181b%7D@media (prefers-color-scheme:dark)%7Bpath%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Cpath d='M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2m0 2v12h16V6H4m2 2h8v2H6V8m0 4h12v1.5H6V12m0 3h9v1.5H6V15Z'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>LinkedIn Card</h1>
+    <div class="header-actions">
+      <button type="button" class="btn" id="btn-copy">Copy</button>
+      <button type="button" class="btn btn-primary" id="btn-download">Download</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="stage" aria-label="Preview">
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="canvas" width="1080" height="1350" tabindex="0" aria-label="Card preview. Drag text or the background to move it; arrow keys nudge the selected text."></canvas>
+        <div class="selection" id="selection" hidden></div>
+        <button type="button" class="empty-drop" id="empty-drop">
+          <strong>Drop an image</strong>
+          <span>or click to choose, or paste with <kbd>⌘</kbd>/<kbd>Ctrl</kbd>+<kbd>V</kbd></span>
+          <span class="empty-loading">Loading…</span>
+        </button>
+      </div>
+      <p class="stage-meta"><span id="size-label">1080 × 1350</span> · drag to move text or background</p>
+    </section>
+
+    <aside class="panel">
+      <details open>
+        <summary>Card size <span class="chevron" aria-hidden="true"></span></summary>
+        <div class="section-body">
+          <div class="preset-grid" id="presets" role="radiogroup" aria-label="Card size"></div>
+          <label class="field">
+            <span>Export format</span>
+            <select id="format">
+              <option value="image/png">PNG (lossless)</option>
+              <option value="image/jpeg">JPEG (smaller file)</option>
+            </select>
+          </label>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Background <span class="chevron" aria-hidden="true"></span></summary>
+        <div class="section-body">
+          <div class="row">
+            <button type="button" class="btn" id="btn-choose">Choose image…</button>
+            <button type="button" class="btn" id="btn-clear-image" hidden>Remove image</button>
+          </div>
+          <label class="field">
+            <span>Image sizing</span>
+            <div class="segmented" role="radiogroup" aria-label="Image sizing" id="fit">
+              <label><input type="radio" name="fit" value="cover" checked><span>Fill</span></label>
+              <label><input type="radio" name="fit" value="contain"><span>Fit</span></label>
+              <label><input type="radio" name="fit" value="stretch"><span>Stretch</span></label>
+              <label><input type="radio" name="fit" value="original"><span>Actual</span></label>
+            </div>
+          </label>
+          <label class="field">
+            <span>Zoom <output id="zoom-out">100%</output></span>
+            <input type="range" id="zoom" min="25" max="400" step="1" value="100">
+          </label>
+          <div class="row">
+            <button type="button" class="btn btn-small" id="btn-reset-bg">Re-centre image</button>
+          </div>
+          <div class="field-grid">
+            <label class="field">
+              <span>Background colour</span>
+              <input type="color" id="bg-color" value="#0f172a">
+            </label>
+            <label class="field">
+              <span>Tint colour</span>
+              <input type="color" id="tint-color" value="#000000">
+            </label>
+          </div>
+          <label class="field">
+            <span>Tint strength <output id="tint-out">0%</output></span>
+            <input type="range" id="tint" min="0" max="90" step="1" value="0">
+          </label>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Text <span class="chevron" aria-hidden="true"></span></summary>
+        <div class="section-body">
+          <div class="layers">
+            <div class="layer-list" id="layer-list" role="radiogroup" aria-label="Text layers"></div>
+            <div class="row">
+              <button type="button" class="btn btn-small" id="btn-add-text">Add text</button>
+              <button type="button" class="btn btn-small btn-danger" id="btn-delete-text">Delete</button>
+            </div>
+          </div>
+
+          <div id="text-editor">
+            <label class="field">
+              <span>Text</span>
+              <textarea id="text" rows="3"></textarea>
+            </label>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Font</span>
+                <select id="font"></select>
+              </label>
+              <label class="field">
+                <span>Weight</span>
+                <select id="weight">
+                  <option value="300">Light</option>
+                  <option value="400">Regular</option>
+                  <option value="500">Medium</option>
+                  <option value="600">Semibold</option>
+                  <option value="700">Bold</option>
+                  <option value="800">Extra bold</option>
+                  <option value="900">Black</option>
+                </select>
+              </label>
+            </div>
+            <label class="field" id="custom-font-field" hidden>
+              <span>Google Font name</span>
+              <input type="text" id="custom-font" placeholder="e.g. Instrument Serif" autocomplete="off" spellcheck="false">
+            </label>
+            <p class="font-status" id="font-status" aria-live="polite"></p>
+
+            <label class="field">
+              <span>Size <output id="size-out">96px</output></span>
+              <input type="range" id="size" min="16" max="320" step="1" value="96">
+            </label>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Colour</span>
+                <input type="color" id="color" value="#ffffff">
+              </label>
+              <div class="field">
+                <span>Align</span>
+                <div class="segmented" role="radiogroup" aria-label="Text alignment" id="align">
+                  <label><input type="radio" name="align" value="left"><span>Left</span></label>
+                  <label><input type="radio" name="align" value="center" checked><span>Centre</span></label>
+                  <label><input type="radio" name="align" value="right"><span>Right</span></label>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <span>Place</span>
+              <div class="place-grid" id="place" aria-label="Quick placement">
+                <button type="button" data-place="0,0" aria-label="Top left"></button>
+                <button type="button" data-place="1,0" aria-label="Top centre"></button>
+                <button type="button" data-place="2,0" aria-label="Top right"></button>
+                <button type="button" data-place="0,1" aria-label="Middle left"></button>
+                <button type="button" data-place="1,1" aria-label="Centre"></button>
+                <button type="button" data-place="2,1" aria-label="Middle right"></button>
+                <button type="button" data-place="0,2" aria-label="Bottom left"></button>
+                <button type="button" data-place="1,2" aria-label="Bottom centre"></button>
+                <button type="button" data-place="2,2" aria-label="Bottom right"></button>
+              </div>
+            </div>
+
+            <label class="field">
+              <span>Box width <output id="width-out">80%</output></span>
+              <input type="range" id="width" min="15" max="100" step="1" value="80">
+            </label>
+            <div class="field-grid">
+              <label class="field">
+                <span>Line height <output id="leading-out">1.15</output></span>
+                <input type="range" id="leading" min="0.8" max="2" step="0.05" value="1.15">
+              </label>
+              <label class="field">
+                <span>Letter spacing <output id="tracking-out">0</output></span>
+                <input type="range" id="tracking" min="-0.1" max="0.4" step="0.01" value="0">
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label class="check">
+                <input type="checkbox" id="shadow">
+                <span>Drop shadow</span>
+              </label>
+              <label class="check">
+                <input type="checkbox" id="box">
+                <span>Label box</span>
+              </label>
+            </div>
+            <label class="field" id="box-color-field" hidden>
+              <span>Label box colour</span>
+              <input type="color" id="box-color" value="#0a66c2">
+            </label>
+          </div>
+        </div>
+      </details>
+    </aside>
+  </main>
+
+  <input type="file" id="file-input" accept="image/*" hidden>
+
+  <script>
+    // Capture an image from drop / paste / file picker before the main module
+    // has loaded, and hand it over once it registers.
+    (function () {
+      const fileInput = document.getElementById('file-input');
+      const emptyDrop = document.getElementById('empty-drop');
+      let pending = null;
+      let handler = null;
+
+      function take(file) {
+        if (!file || !file.type.startsWith('image/')) return;
+        if (handler) handler(file);
+        else {
+          pending = file;
+          document.body.classList.add('loading');
+        }
+      }
+
+      emptyDrop.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        take(fileInput.files[0]);
+        fileInput.value = '';
+      });
+
+      const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
+      let depth = 0;
+      window.addEventListener('dragenter', (e) => {
+        if (!hasFiles(e)) return;
+        e.preventDefault();
+        depth++;
+        document.body.classList.add('dragover');
+      });
+      window.addEventListener('dragover', (e) => {
+        if (hasFiles(e)) e.preventDefault();
+      });
+      window.addEventListener('dragleave', (e) => {
+        if (!hasFiles(e)) return;
+        depth = Math.max(0, depth - 1);
+        if (depth === 0) document.body.classList.remove('dragover');
+      });
+      window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        depth = 0;
+        document.body.classList.remove('dragover');
+        take(Array.from(e.dataTransfer?.files || []).find((f) => f.type.startsWith('image/')));
+      });
+      window.addEventListener('paste', (e) => {
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        const file = Array.from(e.clipboardData?.files || []).find((f) => f.type.startsWith('image/'));
+        if (file) {
+          e.preventDefault();
+          take(file);
+        }
+      });
+
+      window.__cardEarly = {
+        register(fn) {
+          handler = fn;
+          document.body.classList.remove('loading');
+          if (pending) {
+            const f = pending;
+            pending = null;
+            fn(f);
+          }
+        },
+      };
+    })();
+  </script>
+  <script type="module" src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
