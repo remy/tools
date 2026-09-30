@@ -64,6 +64,11 @@
     "description": "Interactive playground for CSS Anchor Positioning \u2014 drag the anchor, try every position-area, fallback, and visibility combo.",
     "title": "CSS Anchor Positioning Playground"
   },
+  "csv-browser": {
+    "category": "Developer Tools",
+    "description": "Drop a CSV file to browse it as a table: search every column, sort, hide columns, build AND/OR filters, and share the view as a link. Nothing leaves your machine.",
+    "title": "CSV Browser"
+  },
   "distance-time-converter": {
     "category": "Calculators",
     "description": "Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed or running pace (min/km) to calculate how long a journey will take.",
