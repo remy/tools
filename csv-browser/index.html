@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Drop a CSV file to browse it as a table: search every column, sort, hide columns, build AND/OR filters, and share the view as a link. Nothing leaves your machine.">
+<meta name="category" content="Developer Tools">
+<title>CSV Browser</title>
+<style>
+  :root {
+    --bg: #f7f7f8; --panel: #fff; --text: #1d1d20; --muted: #6b6b76; --border: #e2e2e7;
+    --accent: #3b5bdb; --accent-soft: #e7ecff; --danger: #c92a2a; --row-hover: #f1f3ff;
+    --and: #2b8a3e; --or: #d9480f; --shadow: 0 8px 30px rgba(0,0,0,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141417; --panel: #1d1d22; --text: #e8e8ec; --muted: #9a9aa6; --border: #33333b;
+      --accent: #7b93ff; --accent-soft: #262d4d; --danger: #ff6b6b; --row-hover: #23263a;
+      --and: #69db7c; --or: #ffa94d; --shadow: 0 8px 30px rgba(0,0,0,.5);
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.link { border: 0; background: none; color: var(--accent); padding: 2px 4px; }
+  button.icon { border: 0; background: none; color: var(--muted); padding: 2px 6px; font-size: 16px; line-height: 1; }
+  button.icon:hover { color: var(--danger); }
+  input[type=text], input[type=search], select {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; }
+  input:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+  /* Drop screen */
+  #drop { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  #drop .box { max-width: 520px; width: 100%; text-align: center; padding: 48px 24px;
+    border: 2px dashed var(--border); border-radius: 16px; background: var(--panel); }
+  #drop h1 { margin: 0 0 8px; font-size: 22px; }
+  #drop p { color: var(--muted); margin: 0 0 20px; }
+  body.dragging #drop .box, body.dragging #app::after { border-color: var(--accent); }
+  body.dragging #app::after { content: "Drop to load CSV"; position: fixed; inset: 12px; display: flex;
+    align-items: center; justify-content: center; font-size: 20px; border: 3px dashed var(--accent);
+    border-radius: 16px; background: color-mix(in srgb, var(--bg) 85%, transparent); z-index: 50; }
+
+  /* App */
+  #app { display: none; height: 100%; flex-direction: column; }
+  body.loaded #app { display: flex; }
+  body.loaded #drop { display: none; }
+  header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 16px;
+    background: var(--panel); border-bottom: 1px solid var(--border); }
+  header .title { font-weight: 600; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40ch; }
+  header .count { color: var(--muted); }
+  header input[type=search] { width: 220px; }
+
+  #shared { text-align: left; background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; margin: 0 0 20px; }
+  #shared p { color: var(--text); margin: 0 0 6px; }
+  #shared p:last-child { margin: 0; }
+  #shared .muted { color: var(--muted); font-size: 13px; }
+  #notice { display: flex; gap: 8px; align-items: center; padding: 8px 16px; background: var(--accent-soft); border-bottom: 1px solid var(--border); }
+  #notice[hidden] { display: none; }
+  #notice span { flex: 1; }
+  #filters { padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--panel); max-height: 45vh; overflow: auto; }
+  .group { border-left: 3px solid var(--and); padding: 4px 0 4px 10px; margin: 4px 0; }
+  .group.or { border-left-color: var(--or); }
+  .group-head { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+  .group-head select.logic { font-weight: 600; }
+  .group.and > .group-head select.logic { color: var(--and); }
+  .group.or > .group-head select.logic { color: var(--or); }
+  .group-head .hint { color: var(--muted); }
+  .children > .joiner { font-size: 11px; font-weight: 700; letter-spacing: .05em; color: var(--and); margin: 2px 0 2px 4px; }
+  .group.or > .children > .joiner { color: var(--or); }
+  .cond { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding: 3px 0; }
+  .cond select.col { max-width: 260px; }
+  .cond input.val { width: 220px; }
+  .cond .pick { max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cond.inactive { opacity: .6; }
+  .empty-filters { color: var(--muted); }
+
+  /* Table */
+  #tablewrap { flex: 1; overflow: auto; position: relative; }
+  table { border-collapse: separate; border-spacing: 0; min-width: 100%; }
+  th, td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top;
+    max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--panel); z-index: 2; font-weight: 600; cursor: pointer;
+    user-select: none; border-bottom: 2px solid var(--border); }
+  th:hover { color: var(--accent); }
+  th .arrow { color: var(--accent); margin-left: 4px; }
+  td.rownum, th.rownum { color: var(--muted); text-align: right; position: sticky; left: 0; background: var(--panel); z-index: 1; }
+  th.rownum { z-index: 3; cursor: default; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover td { background: var(--row-hover); }
+  td.empty::after { content: "—"; color: var(--border); }
+  td a { color: var(--accent); }
+  mark { background: #ffe066; color: #000; border-radius: 2px; }
+  #more { display: block; margin: 12px auto 24px; }
+  #noresults { padding: 40px; text-align: center; color: var(--muted); }
+
+  /* Popovers */
+  .pop { position: fixed; z-index: 100; background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; box-shadow: var(--shadow); padding: 8px; width: 320px; max-width: calc(100vw - 32px); }
+  .pop .tools { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .pop .tools input { flex: 1; min-width: 0; }
+  .pop .list { max-height: 320px; overflow: auto; }
+  .pop label { display: flex; gap: 8px; align-items: center; padding: 3px 4px; border-radius: 4px; cursor: pointer; }
+  .pop label:hover { background: var(--row-hover); }
+  .pop label .v { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pop label .n { color: var(--muted); font-size: 12px; }
+  .pop .note { color: var(--muted); font-size: 12px; padding: 4px; }
+
+  /* Detail drawer */
+  #detail { position: fixed; top: 0; right: 0; bottom: 0; width: 460px; max-width: 100vw; background: var(--panel);
+    border-left: 1px solid var(--border); box-shadow: var(--shadow); transform: translateX(105%);
+    transition: transform .18s ease; z-index: 60; display: flex; flex-direction: column; }
+  #detail.open { transform: none; }
+  #detail .dhead { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  #detail .dhead strong { margin-right: auto; }
+  #detail dl { margin: 0; padding: 8px 16px 24px; overflow: auto; }
+  #detail dt { color: var(--muted); font-size: 12px; margin-top: 12px; display: flex; justify-content: space-between; gap: 8px; }
+  #detail dd { margin: 2px 0 0; white-space: pre-wrap; word-break: break-word; }
+  #detail dd.empty { color: var(--muted); font-style: italic; }
+  #detail dt button { font-size: 11px; padding: 0 6px; }
+
+  @media (max-width: 640px) {
+    header input[type=search] { width: 100%; order: 10; }
+    .cond input.val, .cond select.col { width: 100%; max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="drop">
+  <div class="box">
+    <h1>CSV Browser</h1>
+    <p>Drop a CSV file anywhere on this page (first row must be headers).<br>Nothing leaves your machine.</p>
+    <div id="shared" hidden></div>
+    <button class="primary" id="pickBtn">Choose a file…</button>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <span class="title" id="fileName"></span>
+    <span class="count" id="count"></span>
+    <input type="search" id="search" placeholder="Search all columns…">
+    <button id="colsBtn">Columns</button>
+    <button id="exportBtn" title="Download the filtered rows (visible columns) as CSV">Export</button>
+    <button id="shareBtn" title="Copy a link to this view (filters, columns, sort, search). The recipient needs the same CSV.">Copy link</button>
+    <button id="openBtn">Open…</button>
+  </header>
+  <div id="notice" hidden><span></span><button class="icon" title="Dismiss">✕</button></div>
+  <section id="filters"></section>
+  <div id="tablewrap">
+    <table><thead></thead><tbody></tbody></table>
+    <div id="noresults" hidden>No rows match.</div>
+    <button id="more" hidden></button>
+  </div>
+</div>
+
+<aside id="detail" aria-label="Row detail">
+  <div class="dhead">
+    <strong id="detailTitle"></strong>
+    <button id="prevRow" title="Previous (↑)">↑</button>
+    <button id="nextRow" title="Next (↓)">↓</button>
+    <button id="closeDetail" title="Close (Esc)">✕</button>
+  </div>
+  <dl id="detailBody"></dl>
+</aside>
+
+<input type="file" id="fileInput" accept=".csv,.tsv,.txt,text/csv" hidden>
+
+<script>
+'use strict';
+
+// ---------- CSV parsing ----------
+function detectDelimiter(text) {
+  const firstLine = [];
+  let inQ = false;
+  for (let i = 0; i < text.length && i < 20000; i++) {
+    const c = text[i];
+    if (c === '"') inQ = !inQ;
+    else if (!inQ && (c === '\n' || c === '\r')) break;
+    else if (!inQ) firstLine.push(c);
+  }
+  const counts = { ',': 0, ';': 0, '\t': 0, '|': 0 };
+  for (const c of firstLine) if (c in counts) counts[c]++;
+  const [best, n] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return n > 0 ? best : ',';
+}
+
+function parseCSV(text) {
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const d = detectDelimiter(text);
+  const rows = [];
+  let row = [], field = '', inQ = false, i = 0;
+  const n = text.length;
+  while (i < n) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQ = false;
+      } else field += c;
+    } else if (c === '"') {
+      inQ = true;
+    } else if (c === d) {
+      row.push(field); field = '';
+    } else if (c === '\n' || c === '\r') {
+      if (c === '\r' && text[i + 1] === '\n') i++;
+      row.push(field); field = '';
+      rows.push(row); row = [];
+    } else field += c;
+    i++;
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(v => v.trim() !== ''));
+}
+
+function toCSV(headers, rows) {
+  const esc = v => /[",\r\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  return [headers, ...rows].map(r => r.map(v => esc(v ?? '')).join(',')).join('\r\n');
+}
+
+// ---------- State ----------
+const S = {
+  fileName: '', headers: [], rows: [],        // rows: array of arrays
+  filter: null, search: '', hidden: new Set(),
+  sort: { col: -1, dir: 1 }, view: [], limit: 200, detailIdx: -1,
+  distinctCache: new Map(),
+};
+
+const OPS = [
+  { id: 'contains',    label: 'contains',        arg: 'text' },
+  { id: 'ncontains',   label: 'does not contain', arg: 'text' },
+  { id: 'eq',          label: 'equals',          arg: 'text' },
+  { id: 'neq',         label: 'does not equal',  arg: 'text' },
+  { id: 'starts',      label: 'starts with',     arg: 'text' },
+  { id: 'ends',        label: 'ends with',       arg: 'text' },
+  { id: 'empty',       label: 'is empty',        arg: 'none' },
+  { id: 'nempty',      label: 'is not empty',    arg: 'none' },
+  { id: 'in',          label: 'is in',           arg: 'list' },
+  { id: 'nin',         label: 'is not in',       arg: 'list' },
+  { id: 'gt',          label: '>',               arg: 'text' },
+  { id: 'gte',         label: '≥',               arg: 'text' },
+  { id: 'lt',          label: '<',               arg: 'text' },
+  { id: 'lte',         label: '≤',               arg: 'text' },
+  { id: 'regex',       label: 'matches regex',   arg: 'text' },
+];
+const OP = Object.fromEntries(OPS.map(o => [o.id, o]));
+
+const newGroup = (logic = 'and') => ({ type: 'group', logic, children: [] });
+const newCond = (col = 0, op = 'contains') => ({ type: 'cond', col, op, value: '', values: [] });
+
+// ---------- Filtering ----------
+const norm = v => (v ?? '').trim();
+const lower = v => norm(v).toLowerCase();
+
+function toComparable(v) {
+  const s = norm(v).replace(/[£$€,]/g, '');
+  if (s !== '' && !isNaN(s)) return { t: 'n', v: parseFloat(s) };
+  const dt = Date.parse(norm(v));
+  if (!isNaN(dt) && /\d/.test(v)) return { t: 'd', v: dt };
+  return { t: 's', v: lower(v) };
+}
+function compare(a, b) {
+  const x = toComparable(a), y = toComparable(b);
+  if (x.t === y.t && x.t !== 's') return x.v - y.v;
+  return lower(a).localeCompare(lower(b), undefined, { numeric: true });
+}
+
+function condActive(c) {
+  if (c.col < 0 || c.col >= S.headers.length) return false;
+  const a = OP[c.op].arg;
+  if (a === 'none') return true;
+  if (a === 'list') return true; // empty "in" list matches nothing, empty "not in" matches all
+  return c.value !== '';
+}
+
+function compileCond(c) {
+  const col = c.col, raw = c.value, q = raw.trim().toLowerCase();
+  switch (c.op) {
+    case 'contains':  return r => lower(r[col]).includes(q);
+    case 'ncontains': return r => !lower(r[col]).includes(q);
+    case 'eq':        return r => lower(r[col]) === q;
+    case 'neq':       return r => lower(r[col]) !== q;
+    case 'starts':    return r => lower(r[col]).startsWith(q);
+    case 'ends':      return r => lower(r[col]).endsWith(q);
+    case 'empty':     return r => norm(r[col]) === '';
+    case 'nempty':    return r => norm(r[col]) !== '';
+    case 'in':  { const set = new Set(c.values); return r => set.has(norm(r[col])); }
+    case 'nin': { const set = new Set(c.values); return r => !set.has(norm(r[col])); }
+    case 'gt':  return r => norm(r[col]) !== '' && compare(r[col], raw) > 0;
+    case 'gte': return r => norm(r[col]) !== '' && compare(r[col], raw) >= 0;
+    case 'lt':  return r => norm(r[col]) !== '' && compare(r[col], raw) < 0;
+    case 'lte': return r => norm(r[col]) !== '' && compare(r[col], raw) <= 0;
+    case 'regex': {
+      let re; try { re = new RegExp(raw, 'i'); } catch { return null; }
+      return r => re.test(r[col] ?? '');
+    }
+  }
+  return null;
+}
+
+// Returns a predicate, or null if the node has no active conditions (i.e. doesn't constrain).
+function compile(node) {
+  if (node.type === 'cond') return condActive(node) ? compileCond(node) : null;
+  const preds = node.children.map(compile).filter(Boolean);
+  if (!preds.length) return null;
+  return node.logic === 'and'
+    ? r => preds.every(p => p(r))
+    : r => preds.some(p => p(r));
+}
+
+function recompute() {
+  const pred = compile(S.filter);
+  const q = S.search.trim().toLowerCase();
+  const visibleCols = S.headers.map((_, i) => i).filter(i => !S.hidden.has(i));
+  let view = [];
+  for (let i = 0; i < S.rows.length; i++) {
+    const r = S.rows[i];
+    if (pred && !pred(r)) continue;
+    if (q && !visibleCols.some(c => (r[c] ?? '').toLowerCase().includes(q))) continue;
+    view.push(i);
+  }
+  if (S.sort.col >= 0) {
+    const c = S.sort.col, dir = S.sort.dir;
+    view.sort((a, b) => {
+      const va = S.rows[a][c], vb = S.rows[b][c];
+      const ea = norm(va) === '', eb = norm(vb) === '';
+      if (ea !== eb) return ea ? 1 : -1; // empties always last
+      return compare(va, vb) * dir || a - b;
+    });
+  }
+  S.view = view;
+  renderTable();
+  save();
+}
+
+let recomputeTimer;
+function recomputeSoon() { clearTimeout(recomputeTimer); recomputeTimer = setTimeout(recompute, 120); }
+
+function distinct(col) {
+  if (S.distinctCache.has(col)) return S.distinctCache.get(col);
+  const m = new Map();
+  for (const r of S.rows) { const v = norm(r[col]); m.set(v, (m.get(v) || 0) + 1); }
+  const list = [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], undefined, { numeric: true }));
+  S.distinctCache.set(col, list);
+  return list;
+}
+
+// ---------- Filter UI ----------
+const $ = s => document.querySelector(s);
+function el(tag, props = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'class') e.className = v;
+    else if (v !== undefined && v !== null && v !== false) e[k] = v;
+  }
+  for (const k of kids.flat()) if (k != null) e.append(k);
+  return e;
+}
+
+function renderFilters() {
+  const root = $('#filters');
+  root.replaceChildren(renderGroup(S.filter, null));
+  save();
+}
+
+function renderGroup(g, parent) {
+  const children = el('div', { class: 'children' });
+  g.children.forEach((child, i) => {
+    if (i > 0) children.append(el('div', { class: 'joiner' }, g.logic.toUpperCase()));
+    children.append(child.type === 'group' ? renderGroup(child, g) : renderCond(child, g));
+  });
+  if (!g.children.length && !parent) {
+    children.append(el('div', { class: 'empty-filters' }, 'No filters — showing all rows.'));
+  }
+  const logic = el('select', { class: 'logic', onchange: e => { g.logic = e.target.value; renderFilters(); recompute(); } },
+    el('option', { value: 'and', selected: g.logic === 'and' }, 'AND — match all'),
+    el('option', { value: 'or', selected: g.logic === 'or' }, 'OR — match any'));
+  const head = el('div', { class: 'group-head' },
+    parent ? el('span', { class: 'hint' }, 'Group:') : el('strong', {}, 'Filters'),
+    logic,
+    el('button', { onclick: () => { g.children.push(newCond(firstVisibleCol())); renderFilters(); focusLast(); } }, '+ Condition'),
+    el('button', { onclick: () => { const ng = newGroup(g.logic === 'and' ? 'or' : 'and'); ng.children.push(newCond(firstVisibleCol())); g.children.push(ng); renderFilters(); focusLast(); } }, '+ Group'),
+    parent
+      ? el('button', { class: 'icon', title: 'Remove group', onclick: () => { parent.children.splice(parent.children.indexOf(g), 1); renderFilters(); recompute(); } }, '✕')
+      : (g.children.length ? el('button', { class: 'link', onclick: () => { g.children = []; renderFilters(); recompute(); } }, 'Clear all') : null),
+  );
+  return el('div', { class: 'group ' + g.logic }, head, children);
+}
+
+function firstVisibleCol() {
+  for (let i = 0; i < S.headers.length; i++) if (!S.hidden.has(i)) return i;
+  return 0;
+}
+function focusLast() {
+  const sels = document.querySelectorAll('#filters select.col');
+  sels[sels.length - 1]?.focus();
+}
+
+function renderCond(c, parent) {
+  const row = el('div', { class: 'cond' + (condActive(c) ? '' : ' inactive') });
+  const colSel = el('select', { class: 'col', onchange: e => {
+      c.col = +e.target.value; c.values = []; renderFilters(); recompute(); } },
+    S.headers.map((h, i) => el('option', { value: i, selected: i === c.col }, h)));
+  const opSel = el('select', { onchange: e => {
+      const prev = OP[c.op].arg; c.op = e.target.value;
+      // carry a typed value into a list op as a starting selection
+      if (prev === 'text' && OP[c.op].arg === 'list' && c.value && !c.values.length) {
+        const hit = distinct(c.col).find(([v]) => v.toLowerCase() === c.value.trim().toLowerCase());
+        if (hit) c.values = [hit[0]];
+      }
+      renderFilters(); recompute(); } },
+    OPS.map(o => el('option', { value: o.id, selected: o.id === c.op }, o.label)));
+  row.append(colSel, opSel);
+
+  const arg = OP[c.op].arg;
+  if (arg === 'text') {
+    const listId = 'dl-' + c.col;
+    const input = el('input', { type: 'text', class: 'val', value: c.value, placeholder: 'value…',
+      oninput: e => { c.value = e.target.value; row.classList.toggle('inactive', !condActive(c)); recomputeSoon(); save(); } });
+    input.setAttribute('list', listId);
+    if (!document.getElementById(listId)) {
+      const dl = el('datalist', { id: listId }, distinct(c.col).slice(0, 500).filter(([v]) => v).map(([v]) => el('option', { value: v })));
+      document.body.append(dl);
+    }
+    row.append(input);
+  } else if (arg === 'list') {
+    const btn = el('button', { class: 'pick', onclick: () => openPicker(btn, c) });
+    updatePickLabel(btn, c);
+    row.append(btn);
+  }
+  row.append(el('button', { class: 'icon', title: 'Remove condition', onclick: () => {
+    parent.children.splice(parent.children.indexOf(c), 1); renderFilters(); recompute(); } }, '✕'));
+  return row;
+}
+
+function updatePickLabel(btn, c) {
+  const n = c.values.length;
+  const show = v => v === '' ? '(empty)' : v;
+  btn.textContent = n === 0 ? 'choose values…' : n <= 2 ? c.values.map(show).join(', ') : `${show(c.values[0])} +${n - 1} more`;
+  btn.title = c.values.map(show).join('\n');
+}
+
+// ---------- Popovers ----------
+let openPop = null;
+function closePop() { openPop?.remove(); openPop = null; }
+document.addEventListener('mousedown', e => {
+  if (openPop && !openPop.contains(e.target) && !e.target.closest('.pick, #colsBtn')) closePop();
+});
+
+function placePop(pop, anchor) {
+  document.body.append(pop);
+  const r = anchor.getBoundingClientRect();
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  let left = Math.min(r.left, window.innerWidth - w - 16);
+  let top = r.bottom + 4;
+  if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 4);
+  pop.style.left = Math.max(16, left) + 'px';
+  pop.style.top = top + 'px';
+  openPop = pop;
+}
+
+function checklistPopover(anchor, items, isChecked, onToggle, onAll, placeholder) {
+  // items: [{key, label, count?}]
+  const list = el('div', { class: 'list' });
+  const search = el('input', { type: 'search', placeholder });
+  const MAX = 1000;
+  const draw = () => {
+    const q = search.value.trim().toLowerCase();
+    const shown = items.filter(it => !q || it.label.toLowerCase().includes(q));
+    list.replaceChildren(...[
+      ...shown.slice(0, MAX).map(it => {
+        const cb = el('input', { type: 'checkbox', checked: isChecked(it.key), onchange: e => onToggle(it.key, e.target.checked) });
+        return el('label', {}, cb, el('span', { class: 'v', title: it.label }, it.label), it.count != null ? el('span', { class: 'n' }, it.count) : null);
+      }),
+      shown.length > MAX ? el('div', { class: 'note' }, `Showing first ${MAX} of ${shown.length} — refine the search.`) : null,
+      !shown.length ? el('div', { class: 'note' }, 'No matches.') : null,
+    ].filter(Boolean));
+    return shown;
+  };
+  search.addEventListener('input', draw);
+  const pop = el('div', { class: 'pop' },
+    el('div', { class: 'tools' }, search,
+      el('button', { class: 'link', onclick: () => { onAll(draw().map(i => i.key), true); draw(); } }, 'All'),
+      el('button', { class: 'link', onclick: () => { onAll(draw().map(i => i.key), false); draw(); } }, 'None')),
+    list);
+  draw();
+  placePop(pop, anchor);
+  search.focus();
+}
+
+function openPicker(btn, c) {
+  if (openPop) { closePop(); return; }
+  const items = distinct(c.col).map(([v, n]) => ({ key: v, label: v === '' ? '(empty)' : v, count: n }));
+  const set = new Set(c.values);
+  const commit = () => { c.values = [...set]; updatePickLabel(btn, c); recomputeSoon(); save(); };
+  checklistPopover(btn, items, k => set.has(k),
+    (k, on) => { on ? set.add(k) : set.delete(k); commit(); },
+    (keys, on) => { keys.forEach(k => on ? set.add(k) : set.delete(k)); commit(); },
+    `Search ${items.length} distinct values…`);
+}
+
+function openColumns(btn) {
+  if (openPop) { closePop(); return; }
+  const items = S.headers.map((h, i) => ({ key: i, label: h, count: distinct(i).filter(([v]) => v).length ? null : 'all empty' }));
+  const apply = () => { renderTable(); save(); if (S.search) recompute(); };
+  checklistPopover(btn, items, k => !S.hidden.has(k),
+    (k, on) => { on ? S.hidden.delete(k) : S.hidden.add(k); apply(); },
+    (keys, on) => { keys.forEach(k => on ? S.hidden.delete(k) : S.hidden.add(k)); apply(); },
+    'Search columns…');
+}
+
+// ---------- Table ----------
+function escHTML(s) { return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function cellHTML(v, q) {
+  let h = escHTML(v);
+  if (q) {
+    const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+    h = h.replace(re, m => `<mark>${m}</mark>`);
+  }
+  if (/^https?:\/\/\S+$/.test(v)) h = `<a href="${escHTML(v)}" target="_blank" rel="noopener">${h}</a>`;
+  return h;
+}
+
+function renderTable() {
+  const cols = S.headers.map((_, i) => i).filter(i => !S.hidden.has(i));
+  const thead = $('thead'), tbody = $('tbody');
+  thead.replaceChildren(el('tr', {},
+    el('th', { class: 'rownum' }, '#'),
+    cols.map(i => {
+      const th = el('th', { title: S.headers[i] + ' — click to sort', onclick: () => {
+        if (S.sort.col !== i) S.sort = { col: i, dir: 1 };
+        else if (S.sort.dir === 1) S.sort.dir = -1;
+        else S.sort = { col: -1, dir: 1 };
+        recompute();
+      } }, S.headers[i]);
+      if (S.sort.col === i) th.append(el('span', { class: 'arrow' }, S.sort.dir === 1 ? '▲' : '▼'));
+      return th;
+    })));
+
+  const q = S.search.trim();
+  const shown = S.view.slice(0, S.limit);
+  tbody.innerHTML = shown.map(ri => {
+    const r = S.rows[ri];
+    return `<tr data-i="${ri}"><td class="rownum">${ri + 1}</td>` + cols.map(c => {
+      const v = r[c] ?? '';
+      return v.trim() === '' ? '<td class="empty"></td>' : `<td title="${escHTML(v)}">${cellHTML(v, q)}</td>`;
+    }).join('') + '</tr>';
+  }).join('');
+
+  $('#noresults').hidden = S.view.length > 0;
+  const more = $('#more');
+  more.hidden = S.view.length <= S.limit;
+  more.textContent = `Show more (${(S.view.length - S.limit).toLocaleString()} remaining)`;
+  $('#count').textContent = S.view.length === S.rows.length
+    ? `${S.rows.length.toLocaleString()} rows`
+    : `${S.view.length.toLocaleString()} of ${S.rows.length.toLocaleString()} rows`;
+  if (S.detailIdx >= 0) renderDetail();
+}
+
+$('#more').addEventListener('click', () => { S.limit += 500; renderTable(); });
+$('tbody').addEventListener('click', e => {
+  if (e.target.closest('a')) return;
+  const tr = e.target.closest('tr'); if (!tr) return;
+  S.detailIdx = +tr.dataset.i; renderDetail();
+});
+
+// ---------- Detail drawer ----------
+function renderDetail() {
+  const ri = S.detailIdx, r = S.rows[ri];
+  if (!r) return closeDetail();
+  $('#detailTitle').textContent = `Row ${ri + 1}`;
+  const body = $('#detailBody');
+  body.replaceChildren(...S.headers.flatMap((h, c) => {
+    const v = r[c] ?? '';
+    const empty = v.trim() === '';
+    const addFilter = el('button', { title: 'Add a filter for this value', onclick: () => {
+      S.filter.children.push(empty ? { ...newCond(c, 'empty') } : { ...newCond(c, 'in'), values: [v.trim()] });
+      renderFilters(); recompute();
+    } }, '+ filter');
+    return [el('dt', {}, el('span', {}, h), addFilter),
+            el('dd', { class: empty ? 'empty' : '' }, empty ? 'empty' : v)];
+  }));
+  $('#detail').classList.add('open');
+}
+function closeDetail() { S.detailIdx = -1; $('#detail').classList.remove('open'); }
+function stepDetail(d) {
+  const pos = S.view.indexOf(S.detailIdx);
+  const next = S.view[pos + d];
+  if (next != null) { S.detailIdx = next; renderDetail(); }
+}
+$('#closeDetail').addEventListener('click', closeDetail);
+$('#prevRow').addEventListener('click', () => stepDetail(-1));
+$('#nextRow').addEventListener('click', () => stepDetail(1));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { if (openPop) closePop(); else closeDetail(); }
+  if (S.detailIdx >= 0 && !e.target.matches('input, select, textarea')) {
+    if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); stepDetail(1); }
+    if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); stepDetail(-1); }
+  }
+  if (e.key === '/' && !e.target.matches('input, select, textarea') && document.body.classList.contains('loaded')) {
+    e.preventDefault(); $('#search').focus();
+  }
+});
+
+// ---------- Persistence (per header signature) ----------
+const storeKey = () => 'csvb:' + S.headers.join('\u0001');
+function save() {
+  if (!S.headers.length) return;
+  try {
+    localStorage.setItem(storeKey(), JSON.stringify({
+      filter: S.filter, hidden: [...S.hidden], sort: S.sort,
+    }));
+  } catch {}
+  writeHash();
+}
+
+// ---------- Shareable URL state ----------
+// Columns are referenced by header name (not index) so links survive column reordering.
+function b64urlEncode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlDecode(str) {
+  const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+
+function filterToShare(node) {
+  if (node.type === 'group') return { l: node.logic, k: node.children.map(filterToShare) };
+  const o = { c: S.headers[node.col], o: node.op };
+  if (OP[node.op].arg === 'text') o.v = node.value;
+  if (OP[node.op].arg === 'list') o.vs = node.values;
+  return o;
+}
+function filterFromShare(node, missing) {
+  if (node.k) {
+    const g = newGroup(node.l === 'or' ? 'or' : 'and');
+    g.children = node.k.map(n => filterFromShare(n, missing)).filter(Boolean);
+    return g;
+  }
+  const col = S.headers.indexOf(node.c);
+  if (col < 0 || !OP[node.o]) { missing.add(node.c); return null; }
+  return { ...newCond(col, node.o), value: node.v ?? '', values: node.vs ?? [] };
+}
+
+function shareState() {
+  return {
+    n: S.fileName,
+    f: filterToShare(S.filter),
+    h: [...S.hidden].map(i => S.headers[i]),
+    s: S.sort.col >= 0 ? [S.headers[S.sort.col], S.sort.dir] : null,
+    q: S.search || undefined,
+  };
+}
+function writeHash() {
+  const hash = '#v=' + b64urlEncode(JSON.stringify(shareState()));
+  if (location.hash !== hash) history.replaceState(null, '', hash);
+}
+function readHash() {
+  const m = location.hash.match(/^#v=([\w-]+)$/);
+  if (!m) return null;
+  try { return JSON.parse(b64urlDecode(m[1])); } catch { return null; }
+}
+
+// Applies a shared state to the loaded data; returns the column names it couldn't find.
+function applyShared(st) {
+  const missing = new Set();
+  const f = st.f ? filterFromShare(st.f, missing) : null;
+  S.filter = f?.type === 'group' ? f : newGroup('and');
+  if (Array.isArray(st.h)) {
+    S.hidden = new Set(st.h.map(n => S.headers.indexOf(n)).filter(i => i >= 0));
+  }
+  S.sort = { col: -1, dir: 1 };
+  if (st.s) {
+    const col = S.headers.indexOf(st.s[0]);
+    if (col >= 0) S.sort = { col, dir: st.s[1] === -1 ? -1 : 1 };
+    else missing.add(st.s[0]);
+  }
+  S.search = st.q || '';
+  return [...missing];
+}
+
+function showNotice(msg) {
+  const n = $('#notice');
+  n.querySelector('span').textContent = msg;
+  n.hidden = !msg;
+}
+$('#notice button').addEventListener('click', () => showNotice(''));
+
+let pendingShare = readHash();
+if (pendingShare) {
+  const box = $('#shared');
+  const cols = new Set();
+  (function walk(n) { if (n.k) n.k.forEach(walk); else cols.add(n.c); })(pendingShare.f || { k: [] });
+  box.replaceChildren(
+    el('p', {}, 'You were sent a filtered view' + (pendingShare.n ? ' of ' : '.'), pendingShare.n ? el('strong', {}, pendingShare.n) : null),
+    el('p', {}, 'Drop the matching CSV to see it. The data isn’t in the link — only the filters.'),
+    cols.size ? el('p', { class: 'muted' }, 'Filters use: ' + [...cols].join(', ')) : null,
+  );
+  box.hidden = false;
+}
+
+window.addEventListener('hashchange', () => {
+  const st = readHash();
+  if (!st) return;
+  if (!S.headers.length) { location.reload(); return; }
+  const missing = applyShared(st);
+  $('#search').value = S.search;
+  showNotice(missing.length ? `Some of the shared filters don't match this file's columns and were dropped: ${missing.join(', ')}` : '');
+  renderFilters(); recompute();
+});
+
+$('#shareBtn').addEventListener('click', async e => {
+  const btn = e.currentTarget;
+  writeHash();
+  try { await navigator.clipboard.writeText(location.href); btn.textContent = 'Copied!'; }
+  catch { prompt('Copy this link:', location.href); }
+  setTimeout(() => btn.textContent = 'Copy link', 1500);
+});
+function restore() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storeKey()) || 'null');
+    if (!saved) return;
+    if (saved.filter?.type === 'group') S.filter = saved.filter;
+    if (Array.isArray(saved.hidden)) S.hidden = new Set(saved.hidden.filter(i => i < S.headers.length));
+    if (saved.sort && saved.sort.col < S.headers.length) S.sort = saved.sort;
+  } catch {}
+}
+
+// ---------- Loading ----------
+function load(name, text) {
+  const all = parseCSV(text);
+  if (!all.length) { alert('That file looks empty.'); return; }
+  const seen = new Map();
+  const headers = all[0].map((h, i) => {
+    let name = h.trim() || `Column ${i + 1}`;
+    const n = seen.get(name) || 0; seen.set(name, n + 1);
+    return n ? `${name} (${n + 1})` : name;
+  });
+  const width = Math.max(headers.length, ...all.slice(1).map(r => r.length));
+  for (let i = headers.length; i < width; i++) headers.push(`Column ${i + 1}`);
+
+  document.querySelectorAll('datalist').forEach(d => d.remove());
+  Object.assign(S, {
+    fileName: name, headers, rows: all.slice(1), filter: newGroup('and'), search: '',
+    hidden: new Set(), sort: { col: -1, dir: 1 }, limit: 200, detailIdx: -1, distinctCache: new Map(),
+  });
+  // Columns with no values at all are hidden by default
+  S.hidden = new Set(headers.map((_, i) => i).filter(i => S.rows.every(r => norm(r[i]) === '')));
+  let notice = '';
+  if (pendingShare) {
+    const missing = applyShared(pendingShare);
+    if (missing.length) notice = `This file doesn't have some columns used by the shared link, so those filters were dropped: ${missing.join(', ')}`;
+    else if (pendingShare.n && pendingShare.n !== name) notice = `Shared filters applied (the link was made with “${pendingShare.n}”).`;
+    pendingShare = null;
+  } else {
+    restore();
+  }
+  showNotice(notice);
+  $('#search').value = S.search;
+  $('#fileName').textContent = name;
+  $('#fileName').title = name;
+  document.title = name + ' — CSV Browser';
+  document.body.classList.add('loaded');
+  closeDetail();
+  renderFilters();
+  recompute();
+}
+
+function readFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => load(file.name, reader.result);
+  reader.readAsText(file);
+}
+
+$('#pickBtn').addEventListener('click', () => $('#fileInput').click());
+$('#openBtn').addEventListener('click', () => $('#fileInput').click());
+$('#fileInput').addEventListener('change', e => { readFile(e.target.files[0]); e.target.value = ''; });
+$('#colsBtn').addEventListener('click', e => openColumns(e.currentTarget));
+$('#search').addEventListener('input', e => { S.search = e.target.value; S.limit = 200; recomputeSoon(); });
+$('#exportBtn').addEventListener('click', () => {
+  const cols = S.headers.map((_, i) => i).filter(i => !S.hidden.has(i));
+  const csv = toCSV(cols.map(i => S.headers[i]), S.view.map(ri => cols.map(c => S.rows[ri][c] ?? '')));
+  const a = el('a', { href: URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })),
+    download: S.fileName.replace(/\.\w+$/, '') + '-filtered.csv' });
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+let dragDepth = 0;
+window.addEventListener('dragenter', e => { e.preventDefault(); dragDepth++; document.body.classList.add('dragging'); });
+window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); } });
+window.addEventListener('dragover', e => e.preventDefault());
+window.addEventListener('drop', e => {
+  e.preventDefault(); dragDepth = 0; document.body.classList.remove('dragging');
+  readFile(e.dataTransfer.files[0]);
+});
+</script>
+<script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
