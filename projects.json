@@ -44,6 +44,11 @@
     "description": "Calculate contract rates and earnings based on working days and hourly rates",
     "title": "Contract Rate Calculator"
   },
+  "contract-rate-calendar": {
+    "category": "Calculators",
+    "description": "Pick the days you'll work on a contract across a date range and get the day rate ex VAT, with UK bank holidays marked. Selection is kept in the URL for sharing.",
+    "title": "Contract Rate Calendar"
+  },
   "cook-plan": {
     "category": "Productivity",
     "description": "Schedule and coordinate cooking times for multiple dishes, with appliance conflict detection, a live step-by-step countdown timeline, offline PouchDB storage and live CouchDB sync.",
