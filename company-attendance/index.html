@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Drop ticket order CSV exports to see which companies attended, how many people each sent, and who is new, returning or missing year on year.">
+  <meta name="category" content="Productivity">
+  <title>Company Attendance</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="lbl">Ticket orders</div>
+      <h1>Who came, and how many</h1>
+      <p>Companies on ticket orders, by year and by headcount. The year comes from each order date. Drop CSV exports anywhere on the page to add more years.</p>
+    </div>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="btnData" aria-expanded="false" aria-controls="dataPanel">Data sources</button>
+      <button class="btn" id="btnCopy">Copy table as CSV</button>
+    </div>
+  </header>
+
+  <section class="stub card" id="dataPanel" hidden>
+    <header><h2>Data sources</h2><span class="muted" id="srcSummary"></span></header>
+    <div class="sources" id="sources"></div>
+    <div class="drop" id="drop">
+      <div><b>Drop CSV exports here</b> or <label class="btn" for="file" style="display:inline-block">choose files</label>
+        <input type="file" id="file" accept=".csv,text/csv" multiple hidden></div>
+      <div class="muted" style="font-size:.88rem">Needs a column with “company” in its name. A column with “date” in its name sets the year; files without one use the year below.</div>
+      <div class="field"><label for="fallbackYear">Year for files without dates</label><input type="number" id="fallbackYear" min="2000" max="2100"></div>
+      <details><summary>Or paste CSV</summary>
+        <div style="display:grid;gap:8px;margin-top:8px">
+          <label for="paste" class="lbl">CSV text</label>
+          <textarea id="paste" placeholder="Order date,Company name&#10;12 Jun 2025 10:00 AM,Clearleft"></textarea>
+          <div><button class="btn primary" id="btnPaste">Add pasted data</button></div>
+        </div>
+      </details>
+    </div>
+    <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="btnReset">Clear all data</button>
+      <button class="btn" id="btnUnmerge">Clear manual merges</button>
+    </div>
+  </section>
+
+  <section class="stub filters" aria-label="Filters">
+    <div class="row">
+      <span class="lbl">Files</span>
+      <div class="sources" id="sourcesBar"></div>
+      <span class="hint">Drop CSVs anywhere to add</span>
+    </div>
+    <div class="row">
+      <span class="lbl">Years</span>
+      <div class="chips" id="yearChips"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label for="q" class="lbl">Search</label><input type="search" id="q" placeholder="Company name"></div>
+      <div class="field"><label for="minPeople" class="lbl">Min people</label><input type="number" id="minPeople" min="1" value="1"></div>
+      <div class="field"><label for="minYears" class="lbl">Min years attended</label><input type="number" id="minYears" min="1" value="1"></div>
+      <div class="field"><label for="sizeBand" class="lbl">Group size</label>
+        <select id="sizeBand"><option value="">Any</option><option value="1">Solo (1)</option><option value="2-3">Small (2–3)</option><option value="4">Team (4+)</option></select></div>
+      <label class="toggle"><input type="checkbox" id="merge" checked> Merge name variants</label>
+      <label class="toggle"><input type="checkbox" id="hideFree" checked> Hide freelance</label>
+      <label class="toggle"><input type="checkbox" id="showBlank"> Include “no company”</label>
+    </div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button role="tab" data-tab="overview">Overview</button>
+    <button role="tab" data-tab="leaderboard">Leaderboard</button>
+    <button role="tab" data-tab="matrix">Year matrix</button>
+    <button role="tab" data-tab="movers">New &amp; returning</button>
+    <button role="tab" data-tab="timeline">Booking timeline</button>
+  </nav>
+
+  <main id="view" class="view" aria-live="polite"></main>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+<div class="toast" id="toast" hidden></div>
+<div class="dropOverlay" id="dropOverlay" hidden><div><b>Drop CSV exports to add them</b><span>Each file’s years come from its order dates</span></div></div>
+
+<script src="script.js"></script>
+<script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
