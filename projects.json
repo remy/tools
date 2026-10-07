@@ -39,6 +39,11 @@
     "description": "A VS Code-style command palette web component with keyboard navigation, filtering, and custom event dispatching",
     "title": "Command Palette"
   },
+  "company-attendance": {
+    "category": "Productivity",
+    "description": "Drop ticket order CSV exports to see which companies attended, how many people each sent, and who is new, returning or missing year on year.",
+    "title": "Company Attendance"
+  },
   "contract-rate": {
     "category": "Calculators",
     "description": "Calculate contract rates and earnings based on working days and hourly rates",
