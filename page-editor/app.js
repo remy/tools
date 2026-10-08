@@ -353,6 +353,37 @@
   }
   document.getElementById('print').addEventListener('click', printPage);
 
+  // ---- Reset ----------------------------------------------------------------
+  const resetDialog = document.getElementById('reset-dialog');
+  document.getElementById('reset').addEventListener('click', () => {
+    resetDialog.returnValue = '';
+    resetDialog.showModal();
+  });
+  resetDialog.addEventListener('click', (e) => {
+    if (e.target === resetDialog) resetDialog.close();
+  });
+  resetDialog.addEventListener('close', async () => {
+    if (resetDialog.returnValue !== 'reset') return;
+    clearTimeout(saveTimer);
+    try {
+      await PageDB.clearAll();
+    } catch (err) {
+      console.error(err);
+      saveStatus.textContent = 'Reset failed';
+      return;
+    }
+    for (const a of assets.values()) URL.revokeObjectURL(a.url);
+    assets.clear();
+    state.html = DEFAULT_HTML;
+    state.css = DEFAULT_CSS;
+    htmlSource.value = state.html;
+    cssSource.value = state.css;
+    applyCanvasContent();
+    applyCss();
+    renderAssetList();
+    saveStatus.textContent = 'Reset';
+  });
+
   // ---- Window-wide drag & drop ---------------------------------------------
   function showDrop() { dropOverlay.hidden = false; }
   function hideDrop() { dropOverlay.hidden = true; }

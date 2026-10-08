@@ -58,8 +58,14 @@ const FREE=/^(freelance|freelancer|self[\s-]?employed|independent|contractor|n\/
 
 /* ---------- state ---------- */
 const store={get(k,d){try{const v=localStorage.getItem('coatt:'+k);return v==null?d:JSON.parse(v)}catch{return d}},set(k,v){try{localStorage.setItem('coatt:'+k,JSON.stringify(v))}catch{}}};
+// Config lives in localStorage; imported data lives in IndexedDB.
+const db={
+  open(){ return db.p??=new Promise((res,rej)=>{const r=indexedDB.open('company-attendance',1);r.onupgradeneeded=()=>r.result.createObjectStore('data');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}); },
+  async get(k){ const d=await db.open(); return new Promise((res,rej)=>{const r=d.transaction('data').objectStore('data').get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}); },
+  async set(k,v){ const d=await db.open(); return new Promise((res,rej)=>{const t=d.transaction('data','readwrite');t.objectStore('data').put(v,k);t.oncomplete=res;t.onerror=()=>rej(t.error)}); }
+};
 const S={
-  sources: store.get('sources',null),
+  sources: [],
   years: new Set(store.get('years',[])),
   tab: ['overview','leaderboard','matrix','movers','timeline'].includes(location.hash.slice(1))?location.hash.slice(1):store.get('tab','overview'),
   q:'', minPeople:1, minYears:1, size:'',
@@ -69,8 +75,17 @@ const S={
   topN: store.get('topN',25),
   cmpA:null, cmpB:null, tlYear:null
 };
-if(!Array.isArray(S.sources)) S.sources=[];
-const saveSources=()=>store.set('sources',S.sources);
+const saveSources=()=>db.set('sources',S.sources).catch(err=>toast(`Save failed: ${err.message}`));
+async function loadSources(){
+  try{
+    let src=await db.get('sources');
+    const legacy=store.get('sources',null);
+    if(src==null && Array.isArray(legacy)){ src=legacy; await db.set('sources',src); }
+    if(legacy!=null) localStorage.removeItem('coatt:sources');
+    // keep anything dropped while loading
+    if(Array.isArray(src)){ const early=S.sources; S.sources=[...src,...early]; if(early.length) saveSources(); }
+  }catch(err){ toast(`Could not load saved data: ${err.message}`); }
+}
 
 /* ---------- aggregation ---------- */
 function keyOf(raw){
@@ -381,4 +396,4 @@ $('#btnCopy').onclick=async()=>{
   catch{ $('#paste').value=csv; $('#dataPanel').hidden=false; $('#paste').closest('details').open=true; $('#paste').select(); toast('Clipboard blocked; CSV is selected in the paste box') }
 };
 window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(VIEWS[h]){S.tab=h;render()}});
-render();
+loadSources().then(render);
