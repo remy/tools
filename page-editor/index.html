@@ -32,6 +32,7 @@
       <button type="button" id="toggle-css" class="ghost" aria-pressed="false">CSS</button>
       <button type="button" id="toggle-assets" class="ghost" aria-pressed="false">Files</button>
       <button type="button" id="print" class="ghost" title="Print the rendered page">Print</button>
+      <button type="button" id="reset" class="ghost" title="Delete the page, CSS and all files">Reset</button>
       <span id="save-status" class="save-status" aria-live="polite"></span>
     </div>
   </header>
@@ -70,6 +71,17 @@
   <div id="drop-overlay" class="drop-overlay" hidden>
     <div class="drop-card">Drop files to add them</div>
   </div>
+
+  <dialog id="reset-dialog" class="confirm">
+    <form method="dialog">
+      <h2>Reset everything?</h2>
+      <p>Deletes the page, CSS and all files. This cannot be undone.</p>
+      <div class="confirm-actions">
+        <button value="cancel" autofocus>Cancel</button>
+        <button value="reset" class="danger">Reset</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="db.js"></script>
   <script src="app.js"></script>
