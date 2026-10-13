@@ -29,6 +29,7 @@ function toRecords(text, fallbackYear){
   if(ci<0) throw new Error('No column with “company” in its name was found in the header row.');
   const di=head.findIndex(h=>h.includes('date'));
   const yi=head.findIndex(h=>h==='year');
+  const {ei,ni,fi,li}=personCols(head);
   const out=[];
   for(const r of rows.slice(1)){
     const company=(r[ci]||'').trim();
@@ -36,9 +37,25 @@ function toRecords(text, fallbackYear){
     if(di>=0){ const d=parseDate(r[di]); if(d instanceof Date){date=d;year=d.getFullYear()} else if(d) year=d.yearOnly; }
     if(year==null && yi>=0){ const y=parseInt(r[yi],10); if(y) year=y; }
     if(year==null) year=fallbackYear;
-    out.push({company, year, t: date? date.getTime(): null});
+    const rec={company, year, t: date? date.getTime(): null};
+    const email=ei>=0?(r[ei]||'').trim():'';
+    const name=ni>=0?(r[ni]||'').trim():[fi,li].filter(i=>i>=0).map(i=>(r[i]||'').trim()).filter(Boolean).join(' ');
+    if(email) rec.email=email;
+    if(name) rec.name=name;
+    out.push(rec);
   }
   return out;
+}
+// Find email and name columns, preferring the ticket holder over the buyer
+function personCols(head){
+  const rank=h=>/ticket|attendee|delegate|guest/.test(h)?0:/order|buyer|purchaser|billing/.test(h)?2:1;
+  const pick=test=>head.map((h,i)=>({h,i})).filter(({h})=>test(h)).sort((a,b)=>rank(a.h)-rank(b.h)||a.i-b.i)[0]?.i??-1;
+  const isName=h=>/name/.test(h)&&!/company|organi[sz]ation|event|ticket type|release|file|user ?name/.test(h);
+  const ei=pick(h=>/e-?mail/.test(h));
+  const fi=pick(h=>isName(h)&&/first|given|fore/.test(h));
+  const li=pick(h=>isName(h)&&/last|sur|family/.test(h));
+  const ni=pick(h=>isName(h)&&!/first|given|fore|last|sur|family|middle/.test(h));
+  return {ei, ni: ni>=0&&(fi<0||/full/.test(head[ni])||rank(head[ni])<=rank(head[fi]))?ni:-1, fi, li};
 }
 
 /* ---------- name normalising ---------- */
@@ -108,7 +125,7 @@ function build(){
     if(!c){ c={key:k, by:{}, total:0, variants:new Map(), dates:[]}; cos.set(k,c); }
     c.by[r.year]=(c.by[r.year]||0)+1; c.total++;
     const v=raw||'(no company)'; c.variants.set(v,(c.variants.get(v)||0)+1);
-    if(r.t!=null) c.dates.push({t:r.t, year:r.year});
+    if(r.t!=null) c.dates.push({t:r.t, year:r.year, name:r.name, email:r.email});
   }
   for(const c of cos.values()){
     c.name=[...c.variants.entries()].sort((a,b)=>b[1]-a[1]||a[0].length-b[0].length)[0][0];
@@ -306,6 +323,10 @@ function vTimeline(D){
 
 /* ---------- detail dialog ---------- */
 let D=null;
+function orderPill(d){
+  if(!d.name&&!d.email) return `<code>${fmtDate(d.t)}</code>`;
+  return `<details class="order"><summary><code>${fmtDate(d.t)}</code></summary><span class="who">${d.name?`<span>${esc(d.name)}</span>`:''}${d.email?`<a href="mailto:${esc(d.email)}">${esc(d.email)}</a>`:''}</span></details>`;
+}
 function openDetail(key){
   const c=D.cos.find(c=>c.key===key); if(!c) return;
   const max=Math.max(1,...D.years.map(y=>c.by[y]||0));
@@ -315,7 +336,8 @@ function openDetail(key){
   <div class="kpis stub" style="border-radius:8px"><div class="kpi"><span class="lbl">Tickets</span><b class="num">${c.total}</b></div><div class="kpi"><span class="lbl">Years</span><b class="num">${c.yearsAttended.length}</b></div><div class="kpi"><span class="lbl">Peak</span><b class="num">${max}</b></div></div>
   ${chart}
   <div><div class="lbl">Names on orders</div><div class="variants">${[...c.variants].map(([v,n])=>`<code>${esc(v)} ×${n}</code>`).join('')}</div></div>
-  ${c.dates.length?`<div><div class="lbl">Order dates</div><div class="variants">${c.dates.map(d=>`<code>${fmtDate(d.t)}</code>`).join('')}</div></div>`:''}
+  ${c.dates.length?`<div><div class="lbl">Order dates</div><div class="variants">${c.dates.map(orderPill).join('')}</div>
+    ${c.dates.some(d=>d.name||d.email)?'':'<p class="hint" style="margin:6px 0 0">No name or email column was found in these files. Re-add the export to see who each ticket was for.</p>'}</div>`:''}
   <form id="mergeForm" class="field" style="flex-wrap:wrap"><label for="mergeInto" class="lbl">Merge into</label>
     <select id="mergeInto"><option value="">Choose a company…</option>${others.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}</option>`).join('')}</select>
     <button class="btn primary">Merge</button></form>`;
