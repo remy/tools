@@ -88,6 +88,7 @@ const S={
   q:'', minPeople:1, minYears:1, size:'',
   merge: store.get('merge',true), hideFree: store.get('hideFree',true), showBlank: store.get('showBlank',false),
   manual: store.get('manual',{}),
+  showPeople: store.get('showPeople',false),
   sort: store.get('sort',{col:'total',dir:-1}),
   topN: store.get('topN',25),
   cmpA:null, cmpB:null, tlYear:null
@@ -327,22 +328,28 @@ function orderPill(d){
   if(!d.name&&!d.email) return `<code>${fmtDate(d.t)}</code>`;
   return `<details class="order"><summary><code>${fmtDate(d.t)}</code></summary><span class="who">${d.name?`<span>${esc(d.name)}</span>`:''}${d.email?`<a href="mailto:${esc(d.email)}">${esc(d.email)}</a>`:''}</span></details>`;
 }
+function orderList(c){
+  if(!S.showPeople||!c.dates.some(d=>d.name||d.email)) return `<div class="variants">${c.dates.map(orderPill).join('')}</div>`;
+  return `<ul class="people">${c.dates.map(d=>`<li><code>${fmtDate(d.t)}</code><span>${esc(d.name||'')}</span>${d.email?`<a href="mailto:${esc(d.email)}">${esc(d.email)}</a>`:'<span></span>'}</li>`).join('')}</ul>`;
+}
 function openDetail(key){
   const c=D.cos.find(c=>c.key===key); if(!c) return;
   const max=Math.max(1,...D.years.map(y=>c.by[y]||0));
   const chart=columnChart(D.years.map(String),[{name:c.name,color:'var(--accent)',values:D.years.map(y=>c.by[y]||0)}],{label:'Headcount per year'});
+  const hasPeople=c.dates.some(d=>d.name||d.email);
   const others=D.cos.filter(o=>o.key!==key&&o.key!=='__blank').sort((a,b)=>a.name.localeCompare(b.name));
   $('#dlgBody').innerHTML=`<header><div><div class="lbl">Company</div><h2>${esc(c.name)}</h2></div><button class="btn" id="dlgClose">Close</button></header>
   <div class="kpis stub" style="border-radius:8px"><div class="kpi"><span class="lbl">Tickets</span><b class="num">${c.total}</b></div><div class="kpi"><span class="lbl">Years</span><b class="num">${c.yearsAttended.length}</b></div><div class="kpi"><span class="lbl">Peak</span><b class="num">${max}</b></div></div>
   ${chart}
   <div><div class="lbl">Names on orders</div><div class="variants">${[...c.variants].map(([v,n])=>`<code>${esc(v)} ×${n}</code>`).join('')}</div></div>
-  ${c.dates.length?`<div><div class="lbl">Order dates</div><div class="variants">${c.dates.map(orderPill).join('')}</div>
-    ${c.dates.some(d=>d.name||d.email)?'':'<p class="hint" style="margin:6px 0 0">No name or email column was found in these files. Re-add the export to see who each ticket was for.</p>'}</div>`:''}
+  ${c.dates.length?`<div><div class="orderHead"><div class="lbl">Order dates</div>${hasPeople?`<label class="toggle"><input type="checkbox" id="showPeople" ${S.showPeople?'checked':''}> Show people</label>`:''}</div><div id="orderList">${orderList(c)}</div>
+    ${hasPeople?'':'<p class="hint" style="margin:6px 0 0">No name or email column was found in these files. Re-add the export to see who each ticket was for.</p>'}</div>`:''}
   <form id="mergeForm" class="field" style="flex-wrap:wrap"><label for="mergeInto" class="lbl">Merge into</label>
     <select id="mergeInto"><option value="">Choose a company…</option>${others.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}</option>`).join('')}</select>
     <button class="btn primary">Merge</button></form>`;
   $('#dlg').showModal();
   $('#dlgClose').onclick=()=>$('#dlg').close();
+  const sp=$('#showPeople'); if(sp) sp.onchange=()=>{S.showPeople=sp.checked;store.set('showPeople',S.showPeople);$('#orderList').innerHTML=orderList(c)};
   $('#mergeForm').onsubmit=e=>{e.preventDefault();const to=$('#mergeInto').value;if(!to)return;S.manual[key]=to;store.set('manual',S.manual);$('#dlg').close();render();toast(`Merged ${c.name}`)};
 }
 $('#dlg').addEventListener('click',e=>{if(e.target===$('#dlg'))$('#dlg').close()});
