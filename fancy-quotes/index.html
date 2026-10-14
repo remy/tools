@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Turn a quote into a shareable image: add who said it, their role and avatar, pick from a range of styles and sizes, then download, copy or share the PNG.">
+  <meta name="category" content="Productivity">
+  <title>Fancy Quotes</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❝</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    // Capture dropped images as early as possible, before the module loads.
+    (() => {
+      let depth = 0;
+      const isFile = (e) => [...(e.dataTransfer?.types ?? [])].includes('Files');
+      addEventListener('dragenter', (e) => {
+        if (!isFile(e)) return;
+        depth++;
+        document.documentElement.classList.add('dragover');
+      });
+      addEventListener('dragleave', () => {
+        if (--depth <= 0) { depth = 0; document.documentElement.classList.remove('dragover'); }
+      });
+      addEventListener('dragover', (e) => { if (isFile(e)) e.preventDefault(); });
+      addEventListener('drop', (e) => {
+        if (!isFile(e)) return;
+        e.preventDefault();
+        depth = 0;
+        document.documentElement.classList.remove('dragover');
+        const file = [...e.dataTransfer.files].find((f) => f.type.startsWith('image/'));
+        if (!file) return;
+        window.pendingAvatar = file;
+        dispatchEvent(new CustomEvent('avatar-file', { detail: file }));
+      });
+    })();
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Fancy Quotes</h1>
+      <p class="subtitle">Write it, attribute it, style it, share it.</p>
+    </header>
+
+    <main class="layout">
+      <section class="preview-pane" aria-label="Preview">
+        <div class="preview-frame">
+          <canvas id="preview" role="img" aria-label="Quote preview"></canvas>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn primary" id="btn-download">Download PNG</button>
+          <button type="button" class="btn" id="btn-copy">Copy image</button>
+          <button type="button" class="btn" id="btn-share" hidden>Share</button>
+        </div>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <form class="controls" id="form" autocomplete="off">
+        <label class="field">
+          <span>Quote</span>
+          <textarea id="quote" name="quote" rows="4" aria-describedby="quote-help" placeholder="The best way to predict the future is to *invent* it."></textarea>
+          <small class="hint" id="quote-help">Markdown: <code>**bold**</code> <code>*italic*</code> <code>`code`</code> <code>~~strike~~</code> <code>==highlight==</code></small>
+        </label>
+
+        <div class="row">
+          <label class="field">
+            <span>Name</span>
+            <input type="text" id="name" name="name" placeholder="Alan Kay">
+          </label>
+          <label class="field">
+            <span>Attribution</span>
+            <input type="text" id="role" name="role" placeholder="Computer scientist">
+          </label>
+        </div>
+
+        <div class="field">
+          <span>Avatar</span>
+          <div class="avatar-row">
+            <label class="avatar-drop" id="avatar-drop">
+              <img id="avatar-thumb" alt="" hidden>
+              <span class="avatar-empty" id="avatar-empty">+</span>
+              <input type="file" id="avatar-file" accept="image/*" class="visually-hidden">
+            </label>
+            <div class="avatar-help">
+              <p>Click, drop an image anywhere, or paste one.</p>
+              <button type="button" class="btn small" id="avatar-remove" hidden>Remove avatar</button>
+            </div>
+          </div>
+        </div>
+
+        <fieldset class="field">
+          <legend>Style</legend>
+          <div class="styles" id="styles"></div>
+        </fieldset>
+
+        <div class="row">
+          <fieldset class="field">
+            <legend>Size</legend>
+            <div class="segmented" id="sizes"></div>
+          </fieldset>
+          <label class="field accent-field">
+            <span>Accent</span>
+            <input type="color" id="accent" name="accent" value="#e11d48">
+          </label>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <div class="drop-overlay" aria-hidden="true"><span>Drop image to use as avatar</span></div>
+
+  <script type="module" src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
