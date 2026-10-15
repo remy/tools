@@ -87,7 +87,6 @@ const S={
   tab: ['overview','leaderboard','matrix','movers','timeline'].includes(location.hash.slice(1))?location.hash.slice(1):store.get('tab','overview'),
   q:'', minPeople:1, minYears:1, size:'',
   merge: store.get('merge',true), hideFree: store.get('hideFree',true), showBlank: store.get('showBlank',false),
-  manual: store.get('manual',{}),
   showPeople: store.get('showPeople',false),
   sort: store.get('sort',{col:'total',dir:-1}),
   topN: store.get('topN',25),
@@ -108,9 +107,7 @@ async function loadSources(){
 /* ---------- aggregation ---------- */
 function keyOf(raw){
   if(!raw) return '__blank';
-  let k = S.merge? normKey(raw) : raw.trim();
-  let guard=0; while(S.manual[k] && guard++<10) k=S.manual[k];
-  return k;
+  return S.merge? normKey(raw) : raw.trim();
 }
 function build(){
   const all=S.sources.flatMap(s=>s.records);
@@ -337,20 +334,15 @@ function openDetail(key){
   const max=Math.max(1,...D.years.map(y=>c.by[y]||0));
   const chart=columnChart(D.years.map(String),[{name:c.name,color:'var(--accent)',values:D.years.map(y=>c.by[y]||0)}],{label:'Headcount per year'});
   const hasPeople=c.dates.some(d=>d.name||d.email);
-  const others=D.cos.filter(o=>o.key!==key&&o.key!=='__blank').sort((a,b)=>a.name.localeCompare(b.name));
   $('#dlgBody').innerHTML=`<header><div><div class="lbl">Company</div><h2>${esc(c.name)}</h2></div><button class="btn" id="dlgClose">Close</button></header>
   <div class="kpis stub" style="border-radius:8px"><div class="kpi"><span class="lbl">Tickets</span><b class="num">${c.total}</b></div><div class="kpi"><span class="lbl">Years</span><b class="num">${c.yearsAttended.length}</b></div><div class="kpi"><span class="lbl">Peak</span><b class="num">${max}</b></div></div>
   ${chart}
   <div><div class="lbl">Names on orders</div><div class="variants">${[...c.variants].map(([v,n])=>`<code>${esc(v)} ×${n}</code>`).join('')}</div></div>
   ${c.dates.length?`<div><div class="orderHead"><div class="lbl">Order dates</div>${hasPeople?`<label class="toggle"><input type="checkbox" id="showPeople" ${S.showPeople?'checked':''}> Show people</label>`:''}</div><div id="orderList">${orderList(c)}</div>
-    ${hasPeople?'':'<p class="hint" style="margin:6px 0 0">No name or email column was found in these files. Re-add the export to see who each ticket was for.</p>'}</div>`:''}
-  <form id="mergeForm" class="field" style="flex-wrap:wrap"><label for="mergeInto" class="lbl">Merge into</label>
-    <select id="mergeInto"><option value="">Choose a company…</option>${others.map(o=>`<option value="${esc(o.key)}">${esc(o.name)}</option>`).join('')}</select>
-    <button class="btn primary">Merge</button></form>`;
+    ${hasPeople?'':'<p class="hint" style="margin:6px 0 0">No name or email column was found in these files. Re-add the export to see who each ticket was for.</p>'}</div>`:''}`;
   $('#dlg').showModal();
   $('#dlgClose').onclick=()=>$('#dlg').close();
   const sp=$('#showPeople'); if(sp) sp.onchange=()=>{S.showPeople=sp.checked;store.set('showPeople',S.showPeople);$('#orderList').innerHTML=orderList(c)};
-  $('#mergeForm').onsubmit=e=>{e.preventDefault();const to=$('#mergeInto').value;if(!to)return;S.manual[key]=to;store.set('manual',S.manual);$('#dlg').close();render();toast(`Merged ${c.name}`)};
 }
 $('#dlg').addEventListener('click',e=>{if(e.target===$('#dlg'))$('#dlg').close()});
 
@@ -416,7 +408,6 @@ window.addEventListener('drop',e=>{if(!hasFiles(e))return;e.preventDefault();dra
   if(!fs.length){toast('Drop a .csv file');return} addFiles(fs)});
 $('#btnPaste').onclick=()=>{const t=$('#paste').value.trim();if(!t)return;addText('pasted data',t);$('#paste').value=''};
 $('#btnReset').onclick=()=>{S.sources=[];saveSources();render();toast('All data cleared')};
-$('#btnUnmerge').onclick=()=>{S.manual={};store.set('manual',{});render();toast('Manual merges cleared')};
 $('#btnCopy').onclick=async()=>{
   if(!LAST_TABLE){toast('Nothing to copy in this view');return}
   const q=v=>/[",\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v;
