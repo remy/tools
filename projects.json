@@ -99,6 +99,11 @@
     "description": "Track family game nights: record who finished where each time you play a game, then see standings and full history per game. Offline PouchDB storage with live CouchDB sync.",
     "title": "Family Games"
   },
+  "fancy-quotes": {
+    "category": "Productivity",
+    "description": "Turn a quote into a shareable image: add who said it, their role and avatar, pick from a range of styles and sizes, then download, copy or share the PNG.",
+    "title": "Fancy Quotes"
+  },
   "font-features": {
     "category": "Developer Tools",
     "description": "Drop in a font file or pick one from Google Fonts to see which OpenType features and variable axes it has, try them out on your own text, and copy the CSS.",
