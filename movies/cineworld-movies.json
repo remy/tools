@@ -1,9 +1,674 @@
 {
-  "source": "cineworld-film-events",
-  "generatedAt": "2026-10-22T11:13:39.614Z",
-  "requestedDates": [],
+  "source": "cineworld-boxofficeapi",
+  "generatedAt": "2026-10-22T11:22:54.043Z",
+  "theaterId": "X079B",
+  "requestedDates": [
+    "2026-10-22",
+    "2026-10-23",
+    "2026-10-24",
+    "2026-10-25",
+    "2026-10-26",
+    "2026-10-27",
+    "2026-10-28"
+  ],
   "body": {
-    "films": [],
-    "eventsDatesByFilmId": {}
+    "films": [
+      {
+        "id": "1000048763",
+        "name": "Ali G: Who Iz I?",
+        "length": 89,
+        "posterLink": "https://all.web.img.acsta.net/img/00/14/0014f8f23045931d650b80ddbd3f5f98.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/421581_uk_high.mp4",
+        "link": "",
+        "weight": 11,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-23",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "1000048555",
+        "name": "BTS WORLD TOUR 'ARIRANG' IN BUENOS AIRES: LIVE VIEWING",
+        "length": 195,
+        "posterLink": "https://all.web.img.acsta.net/img/6a/f0/6af0105640aa4aaf8f493dd204b8e80f.jpg",
+        "videoLink": "",
+        "link": "",
+        "weight": 52,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-25",
+        "attributeIds": [
+          "12a"
+        ]
+      },
+      {
+        "id": "1000016901",
+        "name": "Clayface",
+        "length": 109,
+        "posterLink": "https://all.web.img.acsta.net/img/58/2d/582df69cce8a6d9030836deb05054e94.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/382489_uk_high.mp4",
+        "link": "",
+        "weight": 4,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-23",
+        "attributeIds": [
+          "18"
+        ]
+      },
+      {
+        "id": "1000044064",
+        "name": "Disney Junior Cinema Club",
+        "length": 73,
+        "posterLink": "https://all.web.img.acsta.net/img/38/eb/38eb5bcc12e9fcd1cd56dbdb8d8e2e92.jpg",
+        "videoLink": "",
+        "link": "",
+        "weight": 17,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-24",
+        "attributeIds": []
+      },
+      {
+        "id": "296642",
+        "name": "Forgotten Island",
+        "length": 108,
+        "posterLink": "https://all.web.img.acsta.net/img/f0/6e/f06e5a549bf0e829787810dfb9cb7104.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/390767_uk_high.mp4",
+        "link": "",
+        "weight": 6,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-16",
+        "attributeIds": [
+          "pg"
+        ]
+      },
+      {
+        "id": "15002",
+        "name": "From Dusk Till Dawn",
+        "length": 107,
+        "posterLink": "https://all.web.img.acsta.net/img/12/0d/120d244fb931e2e653c58daf99d8cb79.webp",
+        "videoLink": "",
+        "link": "",
+        "weight": 30,
+        "releaseYear": "1996",
+        "releaseDate": "1996-05-09",
+        "attributeIds": [
+          "18"
+        ]
+      },
+      {
+        "id": "1000044641",
+        "name": "Ghosts: The Possession Of Button House",
+        "length": 97,
+        "posterLink": "https://all.web.img.acsta.net/img/d3/66/d36682f9e72db4ca3b618dff394831e4.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/416624_uk_high.mp4",
+        "link": "",
+        "weight": 3,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-23",
+        "attributeIds": [
+          "pg"
+        ]
+      },
+      {
+        "id": "1000000085",
+        "name": "Heart Of The Beast",
+        "length": 101,
+        "posterLink": "https://all.web.img.acsta.net/img/09/fc/09fcacd42822072069f28a45d5227c6a.jpeg",
+        "videoLink": "https://m.boxoffice.media/mp4/358931_uk_high.mp4",
+        "link": "",
+        "weight": 19,
+        "releaseYear": "2026",
+        "releaseDate": "2026-09-23",
+        "attributeIds": [
+          "12a"
+        ]
+      },
+      {
+        "id": "1000018264",
+        "name": "Jailer 2",
+        "length": 166,
+        "posterLink": "https://cms-assets.webediamovies.pro/production/238/3df98c2ff35eb5961708a825d360cc70.jpg",
+        "videoLink": "",
+        "link": "",
+        "weight": 8,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-15",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "315883",
+        "name": "Klara and the Sun",
+        "length": 116,
+        "posterLink": "https://all.web.img.acsta.net/img/78/99/789950257f54904e1c2a5b68e137af1f.png",
+        "videoLink": "https://m.boxoffice.media/mp4/372609_uk_high.mp4",
+        "link": "",
+        "weight": 13,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-23",
+        "attributeIds": [
+          "12a"
+        ]
+      },
+      {
+        "id": "315266",
+        "name": "Monster Mia",
+        "length": 82,
+        "posterLink": "https://cms-assets.webediamovies.pro/production/238/fccf981412082d1f3db8d787c8f8d485.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/405479_uk_high.mp4",
+        "link": "",
+        "weight": 42,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-23",
+        "attributeIds": [
+          "u"
+        ]
+      },
+      {
+        "id": "1000023068",
+        "name": "Other Mommy",
+        "length": 94,
+        "posterLink": "https://all.web.img.acsta.net/img/fd/a5/fda5866d2a255f75b26a2bb7e98dd8e0.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/390792_uk_high.mp4",
+        "link": "",
+        "weight": 12,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-09",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "1000027716",
+        "name": "Ozzy & Black Sabbath: Back To The Beginning",
+        "length": 147,
+        "posterLink": "https://all.web.img.acsta.net/img/ab/36/ab36266b864c3541bb56a0f9852c50af.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/396589_uk_high.mp4",
+        "link": "",
+        "weight": 54,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-28",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "320681",
+        "name": "PAW Patrol: The Dino Movie",
+        "length": 88,
+        "posterLink": "https://all.web.img.acsta.net/img/9a/a8/9aa8f97b0259b26c61f9c7abbdbcbba6.jpeg",
+        "videoLink": "https://m.boxoffice.media/mp4/357707_uk_high.mp4",
+        "link": "",
+        "weight": 43,
+        "releaseYear": "2026",
+        "releaseDate": "2026-08-05",
+        "attributeIds": [
+          "u"
+        ]
+      },
+      {
+        "id": "1000013908",
+        "name": "Primetime",
+        "length": 109,
+        "posterLink": "https://all.web.img.acsta.net/img/99/a9/99a9ab57f4e4b234b742a71f45aec670.webp",
+        "videoLink": "",
+        "link": "",
+        "weight": 15,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-28",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "1000018854",
+        "name": "Resident Evil",
+        "length": 97,
+        "posterLink": "https://all.web.img.acsta.net/img/1f/6b/1f6b5c222ab9712a766c0ef283332260.jpeg",
+        "videoLink": "https://m.boxoffice.media/mp4/385364_uk_high.mp4",
+        "link": "",
+        "weight": 18,
+        "releaseYear": "2026",
+        "releaseDate": "2026-09-18",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "11091",
+        "name": "Scream",
+        "length": 111,
+        "posterLink": "https://all.web.img.acsta.net/img/2b/41/2b410693aac205b381bcc946aa4ba419.png",
+        "videoLink": "",
+        "link": "",
+        "weight": 31,
+        "releaseYear": "1997",
+        "releaseDate": "1997-10-01",
+        "attributeIds": [
+          "18"
+        ]
+      },
+      {
+        "id": "1000024131",
+        "name": "Shaun The Sheep: The Beast Of Mossy Bottom",
+        "length": 80,
+        "posterLink": "https://all.web.img.acsta.net/img/66/8b/668b96fd03ab107d824ccf76a41438f0.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/392120_uk_high.mp4",
+        "link": "",
+        "weight": 16,
+        "releaseYear": "2026",
+        "releaseDate": "2026-09-12",
+        "attributeIds": [
+          "u"
+        ]
+      },
+      {
+        "id": "276608",
+        "name": "Spider-Man: Brand New Day",
+        "length": 145,
+        "posterLink": "https://all.web.img.acsta.net/img/7c/02/7c023a47a68cb4d75e48dcb245601cca.jpeg",
+        "videoLink": "https://m.boxoffice.media/mp4/374538_uk_high.mp4",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-07-29",
+        "attributeIds": [
+          "12a"
+        ]
+      },
+      {
+        "id": "314939",
+        "name": "Street Fighter",
+        "length": 120,
+        "posterLink": "https://all.web.img.acsta.net/img/fb/f1/fbf1baf8d294796d97881ed6ff8d1074.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/366913_uk_high.mp4",
+        "link": "",
+        "weight": 7,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-16",
+        "attributeIds": [
+          "12a"
+        ]
+      },
+      {
+        "id": "257425",
+        "name": "Tad And The Magic Lamp",
+        "length": 95,
+        "posterLink": "https://all.web.img.acsta.net/img/79/1c/791cda6ee8fb1ce4aeff48daa7a9eafd.jpeg",
+        "videoLink": "https://m.boxoffice.media/mp4/389124_uk_high.mp4",
+        "link": "",
+        "weight": 14,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-17",
+        "attributeIds": [
+          "u"
+        ]
+      },
+      {
+        "id": "1000026649",
+        "name": "The Social Reckoning",
+        "length": 112,
+        "posterLink": "https://all.web.img.acsta.net/img/0a/20/0a20a7fc1efe8dc47bb0c12e6e4f4050.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/395189_uk_high.mp4",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-09",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "304756",
+        "name": "The Uprising",
+        "length": 128,
+        "posterLink": "https://all.web.img.acsta.net/img/3b/5d/3b5d31d51accaec661684455aa0d49b5.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/386419_uk_high.mp4",
+        "link": "",
+        "weight": 0,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-09",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "1000015739",
+        "name": "Verity",
+        "length": 114,
+        "posterLink": "https://all.web.img.acsta.net/img/7a/ec/7aecd7f827147eda0caf4d62522cee01.png",
+        "videoLink": "https://m.boxoffice.media/mp4/380866_uk_high.mp4",
+        "link": "",
+        "weight": 9,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-02",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "318791",
+        "name": "Whalefall",
+        "length": 106,
+        "posterLink": "https://all.web.img.acsta.net/img/eb/c0/ebc00ebc4d065fe92b377dd3b307def3.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/388096_uk_high.mp4",
+        "link": "",
+        "weight": 10,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-16",
+        "attributeIds": [
+          "15"
+        ]
+      },
+      {
+        "id": "296439",
+        "name": "Wildwood",
+        "length": 132,
+        "posterLink": "https://cms-assets.webediamovies.pro/production/238/a17b0b883bd1ae518bebb83688f6abbc.jpg",
+        "videoLink": "https://m.boxoffice.media/mp4/371059_uk_high.mp4",
+        "link": "",
+        "weight": 5,
+        "releaseYear": "2026",
+        "releaseDate": "2026-10-23",
+        "attributeIds": [
+          "12a"
+        ]
+      }
+    ],
+    "eventsDatesByFilmId": {
+      "11091": [
+        "2026-10-26T19:45:00"
+      ],
+      "15002": [
+        "2026-10-24T19:45:00"
+      ],
+      "257425": [
+        "2026-10-23T16:10:00",
+        "2026-10-24T10:30:00",
+        "2026-10-24T12:50:00",
+        "2026-10-24T15:40:00",
+        "2026-10-25T11:00:00",
+        "2026-10-25T13:20:00",
+        "2026-10-25T15:40:00",
+        "2026-10-26T10:30:00",
+        "2026-10-26T12:50:00",
+        "2026-10-26T15:40:00",
+        "2026-10-27T10:30:00",
+        "2026-10-27T12:50:00",
+        "2026-10-27T16:00:00",
+        "2026-10-28T11:00:00",
+        "2026-10-28T13:20:00",
+        "2026-10-28T15:40:00"
+      ],
+      "276608": [
+        "2026-10-23T12:50:00",
+        "2026-10-24T10:30:00",
+        "2026-10-25T10:30:00",
+        "2026-10-26T10:30:00",
+        "2026-10-27T10:30:00",
+        "2026-10-28T10:20:00"
+      ],
+      "296439": [
+        "2026-10-23T13:30:00",
+        "2026-10-23T16:40:00",
+        "2026-10-23T19:50:00",
+        "2026-10-24T10:20:00",
+        "2026-10-24T13:30:00",
+        "2026-10-24T16:40:00",
+        "2026-10-24T19:50:00",
+        "2026-10-25T10:20:00",
+        "2026-10-25T13:30:00",
+        "2026-10-25T16:40:00",
+        "2026-10-25T19:50:00",
+        "2026-10-26T10:20:00",
+        "2026-10-26T13:30:00",
+        "2026-10-26T16:40:00",
+        "2026-10-26T19:50:00",
+        "2026-10-27T10:20:00",
+        "2026-10-27T13:30:00",
+        "2026-10-27T16:40:00",
+        "2026-10-27T19:50:00",
+        "2026-10-28T10:20:00",
+        "2026-10-28T13:30:00",
+        "2026-10-28T16:40:00",
+        "2026-10-28T19:50:00"
+      ],
+      "296642": [
+        "2026-10-22T12:40:00",
+        "2026-10-22T15:20:00",
+        "2026-10-22T18:00:00",
+        "2026-10-23T17:10:00",
+        "2026-10-24T11:50:00",
+        "2026-10-24T13:00:00",
+        "2026-10-24T14:30:00",
+        "2026-10-24T17:10:00",
+        "2026-10-25T11:50:00",
+        "2026-10-25T14:30:00",
+        "2026-10-25T17:10:00",
+        "2026-10-26T11:50:00",
+        "2026-10-26T13:00:00",
+        "2026-10-26T14:30:00",
+        "2026-10-26T17:10:00",
+        "2026-10-27T11:50:00",
+        "2026-10-27T14:30:00",
+        "2026-10-27T17:10:00",
+        "2026-10-28T11:40:00",
+        "2026-10-28T14:20:00",
+        "2026-10-28T17:00:00"
+      ],
+      "304756": [
+        "2026-10-22T13:50:00",
+        "2026-10-22T19:30:00"
+      ],
+      "314939": [
+        "2026-10-22T12:00:00",
+        "2026-10-22T13:30:00",
+        "2026-10-22T14:50:00",
+        "2026-10-22T16:20:00",
+        "2026-10-22T17:40:00",
+        "2026-10-22T19:10:00",
+        "2026-10-22T20:30:00",
+        "2026-10-23T11:40:00",
+        "2026-10-23T14:30:00",
+        "2026-10-23T17:20:00",
+        "2026-10-23T20:10:00",
+        "2026-10-24T11:40:00",
+        "2026-10-24T14:30:00",
+        "2026-10-24T17:20:00",
+        "2026-10-24T20:10:00",
+        "2026-10-25T11:40:00",
+        "2026-10-25T14:30:00",
+        "2026-10-25T17:20:00",
+        "2026-10-25T20:10:00",
+        "2026-10-26T11:40:00",
+        "2026-10-26T14:30:00",
+        "2026-10-26T17:20:00",
+        "2026-10-26T20:10:00",
+        "2026-10-27T11:40:00",
+        "2026-10-27T14:30:00",
+        "2026-10-27T17:20:00",
+        "2026-10-27T20:10:00",
+        "2026-10-28T11:40:00",
+        "2026-10-28T14:30:00",
+        "2026-10-28T17:20:00",
+        "2026-10-28T20:10:00"
+      ],
+      "315266": [
+        "2026-10-24T10:10:00",
+        "2026-10-25T10:10:00",
+        "2026-10-26T10:10:00",
+        "2026-10-27T10:10:00",
+        "2026-10-28T10:20:00"
+      ],
+      "315883": [
+        "2026-10-23T11:50:00",
+        "2026-10-23T13:50:00",
+        "2026-10-23T16:40:00",
+        "2026-10-23T19:30:00",
+        "2026-10-24T13:50:00",
+        "2026-10-24T16:40:00",
+        "2026-10-24T19:30:00",
+        "2026-10-25T13:50:00",
+        "2026-10-25T16:40:00",
+        "2026-10-25T19:45:00",
+        "2026-10-26T13:50:00",
+        "2026-10-26T16:40:00",
+        "2026-10-26T19:30:00",
+        "2026-10-27T13:50:00",
+        "2026-10-27T16:40:00",
+        "2026-10-27T19:30:00",
+        "2026-10-28T13:40:00",
+        "2026-10-28T16:30:00",
+        "2026-10-28T19:45:00"
+      ],
+      "318791": [
+        "2026-10-22T12:30:00",
+        "2026-10-22T15:10:00",
+        "2026-10-22T17:50:00",
+        "2026-10-22T20:30:00",
+        "2026-10-23T14:40:00",
+        "2026-10-23T18:10:00",
+        "2026-10-24T18:10:00",
+        "2026-10-25T18:10:00",
+        "2026-10-26T17:50:00",
+        "2026-10-27T18:20:00"
+      ],
+      "320681": [
+        "2026-10-24T10:20:00",
+        "2026-10-25T10:20:00",
+        "2026-10-26T10:20:00",
+        "2026-10-28T10:10:00"
+      ],
+      "1000000085": [
+        "2026-10-22T14:50:00",
+        "2026-10-22T19:40:00"
+      ],
+      "1000013908": [
+        "2026-10-28T12:00:00",
+        "2026-10-28T14:40:00",
+        "2026-10-28T17:20:00",
+        "2026-10-28T20:00:00"
+      ],
+      "1000015739": [
+        "2026-10-22T12:00:00",
+        "2026-10-22T14:20:00",
+        "2026-10-22T17:10:00",
+        "2026-10-22T20:00:00",
+        "2026-10-23T12:20:00",
+        "2026-10-23T15:10:00",
+        "2026-10-23T19:45:00",
+        "2026-10-24T15:10:00",
+        "2026-10-24T18:00:00",
+        "2026-10-25T20:20:00",
+        "2026-10-26T15:10:00",
+        "2026-10-26T20:20:00",
+        "2026-10-27T15:10:00",
+        "2026-10-27T19:45:00",
+        "2026-10-28T20:20:00"
+      ],
+      "1000016901": [
+        "2026-10-23T12:40:00",
+        "2026-10-23T15:20:00",
+        "2026-10-23T18:00:00",
+        "2026-10-23T20:40:00",
+        "2026-10-24T12:40:00",
+        "2026-10-24T15:20:00",
+        "2026-10-24T18:00:00",
+        "2026-10-24T20:40:00",
+        "2026-10-25T12:40:00",
+        "2026-10-25T15:20:00",
+        "2026-10-25T18:00:00",
+        "2026-10-25T20:40:00",
+        "2026-10-26T12:40:00",
+        "2026-10-26T15:20:00",
+        "2026-10-26T18:00:00",
+        "2026-10-26T20:40:00",
+        "2026-10-27T12:40:00",
+        "2026-10-27T15:20:00",
+        "2026-10-27T18:00:00",
+        "2026-10-27T20:40:00",
+        "2026-10-28T12:30:00",
+        "2026-10-28T15:10:00",
+        "2026-10-28T17:50:00",
+        "2026-10-28T20:30:00"
+      ],
+      "1000018264": [
+        "2026-10-25T19:30:00"
+      ],
+      "1000018854": [
+        "2026-10-22T17:20:00",
+        "2026-10-22T20:40:00",
+        "2026-10-27T20:50:00"
+      ],
+      "1000023068": [
+        "2026-10-22T12:00:00",
+        "2026-10-22T15:40:00",
+        "2026-10-22T18:00:00",
+        "2026-10-22T20:20:00",
+        "2026-10-23T20:50:00",
+        "2026-10-24T20:50:00",
+        "2026-10-25T18:00:00",
+        "2026-10-25T20:50:00",
+        "2026-10-26T20:50:00",
+        "2026-10-27T18:00:00",
+        "2026-10-27T20:20:00",
+        "2026-10-28T18:00:00"
+      ],
+      "1000024131": [
+        "2026-10-24T10:50:00",
+        "2026-10-25T11:30:00",
+        "2026-10-26T10:50:00",
+        "2026-10-27T11:10:00",
+        "2026-10-28T12:30:00"
+      ],
+      "1000026649": [
+        "2026-10-22T13:00:00",
+        "2026-10-22T16:45:00"
+      ],
+      "1000027716": [
+        "2026-10-28T19:15:00"
+      ],
+      "1000044064": [
+        "2026-10-24T10:00:00",
+        "2026-10-25T10:00:00",
+        "2026-10-26T10:00:00",
+        "2026-10-27T10:00:00",
+        "2026-10-28T10:00:00"
+      ],
+      "1000044641": [
+        "2026-10-23T12:30:00",
+        "2026-10-23T15:00:00",
+        "2026-10-23T17:30:00",
+        "2026-10-23T20:00:00",
+        "2026-10-24T12:30:00",
+        "2026-10-24T15:00:00",
+        "2026-10-24T17:30:00",
+        "2026-10-24T20:00:00",
+        "2026-10-25T12:30:00",
+        "2026-10-25T15:00:00",
+        "2026-10-25T17:30:00",
+        "2026-10-25T20:00:00",
+        "2026-10-26T12:30:00",
+        "2026-10-26T15:00:00",
+        "2026-10-26T17:30:00",
+        "2026-10-26T20:00:00",
+        "2026-10-27T12:30:00",
+        "2026-10-27T15:00:00",
+        "2026-10-27T17:30:00",
+        "2026-10-27T20:00:00",
+        "2026-10-28T14:40:00",
+        "2026-10-28T17:10:00",
+        "2026-10-28T19:40:00"
+      ],
+      "1000048555": [
+        "2026-10-25T13:45:00"
+      ],
+      "1000048763": [
+        "2026-10-23T18:40:00",
+        "2026-10-23T21:00:00",
+        "2026-10-24T20:45:00"
+      ]
+    }
   }
 }
