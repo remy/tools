@@ -1,8 +1,8 @@
 import {
-  state, subscribe, current, facingBet, toCall, topBet, validStake, settled, soleWinner, STREETS,
+  state, subscribe, current, facingBet, toCall, topBet, minRaiseTo, validStake, settled, soleWinner, pots, STREETS,
   denom, pendingTotal, breakdown, stakeChips, unit,
   stage, unstage, allIn, setStake, commit, pass, award, undo, returnBets, nextStreet,
-  resetStacks, endGame, setTurn, setStack,
+  resetStacks, endGame, setTurn, setStack, setBlinds,
 } from './state.js';
 import { fly, renderPile, pulse, chipEl } from './chips.js';
 
@@ -14,12 +14,14 @@ const trayEl = document.getElementById('chip-tray');
 const panelEl = document.getElementById('turn-panel');
 const dlgAward = document.getElementById('dlg-award');
 const dlgSettings = document.getElementById('dlg-settings');
+const dlgHistory = document.getElementById('dlg-history');
 const betInput = document.getElementById('bet-input');
 
 const fmt = new Intl.NumberFormat();
 let busy = false;
 let potShown = 0;
 let onExit = () => {};
+let awarding = null; // { pots, index, splits } while the award dialog steps through side pots
 
 export function initGame(exit) {
   onExit = exit;
@@ -44,7 +46,8 @@ function render() {
   document.getElementById('round-no').textContent = state.round;
   document.getElementById('street-name').textContent = STREETS[state.street];
   renderSeats();
-  renderPot();
+  // While chips are flying the pot shows what has landed so far.
+  renderPot(busy ? potShown : state.pot);
   renderTray();
   renderTurn();
 }
@@ -97,6 +100,8 @@ function status(player) {
     call: [`called ${amount}`, false],
     bet: [`bet ${amount}`, false],
     raise: [`raised to ${amount}`, false],
+    sb: [`small blind ${amount}`, false],
+    bb: [`big blind ${amount}`, false],
   }[player.action] ?? ['', false];
 }
 
@@ -173,8 +178,9 @@ function commitLabel(player, staged, owed) {
   // Nothing tapped while facing a bet: the button calls.
   if (!staged) return owed ? `Call ${fmt.format(owed)}` : 'Bet';
   if (staged === player.stack) return `All in ${fmt.format(staged)}`;
-  if (staged < owed) return `Call ${fmt.format(owed)}`;
-  if (staged === owed) return `Call ${fmt.format(staged)}`;
+  if (staged <= owed) return `Call ${fmt.format(owed)}`;
+  const min = minRaiseTo();
+  if (player.street + staged < min) return topBet() ? `Min raise to ${fmt.format(min)}` : `Min bet ${fmt.format(min)}`;
   return topBet() ? `Raise to ${fmt.format(player.street + staged)}` : `Bet ${fmt.format(staged)}`;
 }
 
@@ -208,24 +214,33 @@ function wire() {
   document.getElementById('btn-street').addEventListener('click', () => {
     if (busy) return;
     const winner = soleWinner();
-    if (winner) return doAward([winner.id]);
+    if (winner) return doAward([{ amount: state.pot, ids: [winner.id] }]);
     if (state.street < STREETS.length - 1) return nextStreet();
     openAward();
   });
   document.getElementById('btn-award').addEventListener('click', openAward);
   document.getElementById('btn-settings').addEventListener('click', openSettings);
   document.getElementById('btn-split').addEventListener('click', () => {
-    const inHand = state.players.filter((p) => p.bet > 0 && !p.folded);
-    doAward((inHand.length ? inHand : state.players).map((p) => p.id));
+    const pot = awarding.pots[awarding.index];
+    awarding.splits.push(pot);
+    awarding.index += 1;
+    showPot();
+  });
+  document.getElementById('btn-history').addEventListener('click', openHistory);
+  document.getElementById('btn-close-history').addEventListener('click', () => dlgHistory.close());
+  ['small', 'big'].forEach((size) => {
+    document.getElementById(`settings-${size}`).addEventListener('change', (e) => {
+      setBlinds({ ...state.blinds, [size]: Math.max(0, Math.round(Number(e.target.value)) || 0) });
+    });
   });
   document.getElementById('btn-close-settings').addEventListener('click', () => dlgSettings.close());
   document.getElementById('btn-new-round').addEventListener('click', () => {
     returnBets();
-    renderPot(0);
+    renderPot(state.pot);
   });
   document.getElementById('btn-rebuy').addEventListener('click', () => {
     resetStacks();
-    renderPot(0);
+    renderPot(state.pot);
   });
   // Two taps rather than a second dialog on top of the settings one.
   const newGame = document.getElementById('btn-new-game');
@@ -244,7 +259,7 @@ function wire() {
     newGame.textContent = 'New game';
   });
 
-  [dlgAward, dlgSettings].forEach((dlg) => {
+  [dlgAward, dlgSettings, dlgHistory].forEach((dlg) => {
     dlg.addEventListener('click', (e) => {
       if (e.target === dlg) dlg.close();
     });
@@ -267,11 +282,28 @@ async function doCommit() {
 }
 
 function openAward() {
+  awarding = { pots: pots(), index: 0, splits: [] };
+  showPot();
+}
+
+/** One step of the award dialog per pot; side pots only appear when someone is all in. */
+function showPot() {
+  const { pots: all, splits } = awarding;
+  // A pot only one player can win needs no choice — e.g. an uncalled bet.
+  while (awarding.index < all.length && all[awarding.index].ids.length === 1) {
+    splits.push(all[awarding.index]);
+    awarding.index += 1;
+  }
+  if (awarding.index >= all.length) return doAward(splits);
+
+  const pot = all[awarding.index];
+  const title = all.length === 1 ? 'Who wins the pot?' : awarding.index ? `Who wins side pot ${awarding.index}?` : 'Who wins the main pot?';
+  document.getElementById('award-title').textContent = title;
+  document.getElementById('award-total').textContent = fmt.format(pot.amount);
   const list = document.getElementById('award-list');
-  document.getElementById('award-total').textContent = fmt.format(state.pot);
   list.textContent = '';
-  state.players.forEach((player, i) => {
-    if (player.folded) return;
+  state.players.forEach((player) => {
+    if (!pot.ids.includes(player.id)) return;
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'award-row';
@@ -280,27 +312,60 @@ function openAward() {
       <span class="award-stack"></span>
     `;
     btn.querySelector('.award-name').textContent = player.name;
-    btn.querySelector('.award-stack').textContent = `${fmt.format(player.stack)} → ${fmt.format(player.stack + state.pot)}`;
-    btn.addEventListener('click', () => doAward([player.id], i));
+    btn.querySelector('.award-stack').textContent = `${fmt.format(player.stack)} → ${fmt.format(player.stack + pot.amount)}`;
+    btn.addEventListener('click', () => {
+      splits.push({ amount: pot.amount, ids: [player.id] });
+      awarding.index += 1;
+      showPot();
+    });
     list.append(btn);
   });
-  dlgAward.showModal();
+  if (!dlgAward.open) dlgAward.showModal();
 }
 
-async function doAward(ids, seatIndex) {
+async function doAward(splits) {
   dlgAward.close();
-  const index = seatIndex ?? state.players.findIndex((p) => p.id === ids[0]);
+  if (!splits.length) return;
+  // Chips fly to the winner of the main pot.
+  const index = state.players.findIndex((p) => p.id === splits[0].ids[0]);
   const chips = breakdown(state.pot).flatMap(({ key, count }) => Array(count).fill(key));
   setBusy(true);
   renderPile(potChipsEl, {});
   await fly(potEl, seatEl(index), chips, { spread: 40 });
-  award(ids);
-  renderPot(0);
+  award(splits);
+  renderPot(state.pot);
   pulse(seatEl(index));
   setBusy(false);
 }
 
+function openHistory() {
+  const wrap = document.getElementById('history-list');
+  wrap.textContent = '';
+  const hands = [{ round: state.round, lines: state.log, now: true }, ...state.history];
+  hands.forEach(({ round, lines, now }) => {
+    if (!lines.length) return;
+    const section = document.createElement('section');
+    section.className = 'history-hand';
+    const h = document.createElement('h3');
+    h.textContent = `Round ${round}${now ? ' (this hand)' : ''}`;
+    const ol = document.createElement('ol');
+    lines.forEach((line) => {
+      const li = document.createElement('li');
+      li.textContent = line;
+      // Street names are headings within the hand.
+      if (STREETS.includes(line)) li.className = 'history-street';
+      ol.append(li);
+    });
+    section.append(h, ol);
+    wrap.append(section);
+  });
+  if (!wrap.children.length) wrap.textContent = 'Nothing yet.';
+  dlgHistory.showModal();
+}
+
 function openSettings() {
+  document.getElementById('settings-small').value = state.blinds.small;
+  document.getElementById('settings-big').value = state.blinds.big;
   const wrap = document.getElementById('settings-stacks');
   wrap.textContent = '';
   state.players.forEach((player) => {

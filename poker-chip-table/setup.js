@@ -14,6 +14,8 @@ export function initSetup(onStart) {
     : ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
   denoms = (state.denoms.length ? state.denoms : DEFAULT_DENOMS).map((d) => ({ ...d }));
   stackInput.value = state.startStack || 1000;
+  document.getElementById('small-blind').value = state.blinds.small;
+  document.getElementById('big-blind').value = state.blinds.big;
 
   renderDenoms();
   renderPlayers();
@@ -47,8 +49,10 @@ export function initSetup(onStart) {
       ...d,
       value: Math.max(1, Number(denomRows.querySelectorAll('input')[i].value) || d.value),
     }));
+    const blind = (id) => Math.max(0, Math.round(Number(document.getElementById(id).value)) || 0);
     startGame({
       startStack: Math.max(0, Number(stackInput.value) || 0),
+      blinds: { small: blind('small-blind'), big: blind('big-blind') },
       denoms,
       names: names.map((n, i) => n.trim() || `Player ${i + 1}`),
     });
