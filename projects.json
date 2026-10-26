@@ -261,7 +261,7 @@
   },
   "poker-chip-table": {
     "category": "Game",
-    "description": "Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then tap chips into the pot on each turn and award the pot to the winner.",
+    "description": "Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then bet, call, raise or fold through each Texas Hold'em street and award the pot to the winner.",
     "title": "Poker Chip Table"
   },
   "priority-calls": {
