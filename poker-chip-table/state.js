@@ -30,6 +30,7 @@ function blank() {
     stake: 0, // amount the player to act is putting in
     pending: [], // chips they tapped, in tap order — typed amounts leave this empty
     undo: null, // snapshot taken before the last bet, pass or fold
+    due: [], // blinds still to be posted this hand: { seat, amount, kind }
     log: [], // what has happened this hand
     history: [], // earlier hands, newest first: { round, lines }
   };
@@ -258,7 +259,7 @@ export function validStake(amount = state.stake) {
 /** Moves the staged chips into the pot and passes play on. */
 export function commit() {
   const player = current();
-  if (!player) return null;
+  if (!player || blindDue()) return null;
   // Bets are whole chips, but never more than the player actually has.
   const amount = Math.min(Math.round(state.stake / unit()) * unit(), player.stack);
   if (!validStake(amount)) return null;
@@ -295,7 +296,7 @@ export function commit() {
 /** Check when nothing is owed, otherwise fold. */
 export function pass() {
   const player = current();
-  if (!player) return;
+  if (!player || blindDue()) return;
   snapshot();
   if (facingBet()) {
     player.folded = true;
@@ -311,8 +312,8 @@ export function pass() {
 }
 
 function snapshot() {
-  const { players, pot, potChips, turn, lastRaise, log } = state;
-  state.undo = structuredClone({ players, pot, potChips, turn, lastRaise, log });
+  const { players, pot, potChips, turn, lastRaise, log, due } = state;
+  state.undo = structuredClone({ players, pot, potChips, turn, lastRaise, log, due });
 }
 
 export function undo() {
@@ -326,7 +327,7 @@ export function undo() {
 /** Hand the turn to someone else, e.g. when play went out of order. */
 export function setTurn(index) {
   const player = state.players[index];
-  if (!player || !canAct(player)) return;
+  if (!player || !canAct(player) || blindDue()) return;
   reset();
   state.turn = index;
   changed();
@@ -374,10 +375,20 @@ function nextWithChips(index) {
   return index;
 }
 
-function postBlind(index, size, name) {
+/** The blind the player to act has to post, if any. */
+export function blindDue() {
+  return state.due[0] ?? null;
+}
+
+/** Posts the next blind in the pot; once the last is in, pre-flop betting opens after the big blind. */
+export function postBlind() {
+  const blind = blindDue();
+  if (!blind) return null;
+  snapshot();
+  const { seat: index, kind } = blind;
+  const name = kind === 'bb' ? 'big blind' : 'small blind';
   const player = state.players[index];
-  const amount = Math.min(size, player.stack);
-  if (amount <= 0) return;
+  const amount = Math.min(blind.amount, player.stack);
   player.stack -= amount;
   player.bet += amount;
   player.street += amount;
@@ -385,22 +396,28 @@ function postBlind(index, size, name) {
   breakdown(amount).forEach(({ key, count }) => {
     state.potChips[key] = (state.potChips[key] || 0) + count;
   });
-  player.action = player.stack ? (name === 'big blind' ? 'bb' : 'sb') : 'all in';
+  player.action = player.stack ? kind : 'all in';
   note(`${player.name} posts ${name} ${amount}${player.stack ? '' : ' (all in)'}`);
+  state.due.shift();
+  reset();
+  if (state.due.length) state.turn = state.due[0].seat;
+  else firstTurn(index);
+  changed();
+  return { player, amount, chips: breakdown(amount).flatMap(({ key, count }) => Array(count).fill(key)) };
 }
 
-/** Posts the blinds and returns the big blind's seat, so play starts after it. */
-function postBlinds() {
+/** Lines up the blinds for this hand; the turn goes to whoever posts first. */
+function queueBlinds() {
+  state.due = [];
   const { small, big } = state.blinds;
-  if (!big) return state.dealer;
   const seated = state.players.filter((p) => p.stack > 0).length;
-  if (seated < 2) return state.dealer;
+  if (!big || seated < 2) return firstTurn();
   // Heads up, the dealer is the small blind.
-  const sb = seated === 2 ? (state.players[state.dealer].stack ? state.dealer : nextWithChips(state.dealer)) : nextWithChips(state.dealer);
+  const sb = seated === 2 && state.players[state.dealer].stack ? state.dealer : nextWithChips(state.dealer);
   const bb = nextWithChips(sb);
-  if (small) postBlind(sb, small, 'small blind');
-  postBlind(bb, big, 'big blind');
-  return bb;
+  if (small) state.due.push({ seat: sb, amount: small, kind: 'sb' });
+  state.due.push({ seat: bb, amount: big, kind: 'bb' });
+  state.turn = state.due[0].seat;
 }
 
 function clearStreet() {
@@ -461,7 +478,7 @@ function newHand() {
   reset();
   state.undo = null;
   state.log = [STREETS[0]];
-  firstTurn(postBlinds());
+  queueBlinds();
 }
 
 /** Pulls every bet back out of the pot — for a misdeal or a wrong tap. */

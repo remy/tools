@@ -1,5 +1,6 @@
 import {
   state, subscribe, current, facingBet, toCall, topBet, minRaiseTo, validStake, settled, soleWinner, pots, STREETS,
+  blindDue, postBlind,
   denom, pendingTotal, breakdown, stakeChips, unit,
   stage, unstage, allIn, setStake, commit, pass, award, undo, returnBets, nextStreet,
   resetStacks, endGame, setTurn, setStack, setBlinds,
@@ -90,6 +91,8 @@ function renderSeats() {
 /** Pill text for a seat, and whether that player still has to act. */
 function status(player) {
   if (player.folded) return ['folded', false];
+  const due = state.due.find((b) => state.players[b.seat] === player);
+  if (due) return [`${due.kind === 'bb' ? 'big' : 'small'} blind ${fmt.format(Math.min(due.amount, player.stack))} due`, true];
   if (!player.stack && !player.bet) return ['', false];
   if (!player.stack) return [`all in ${fmt.format(player.bet)}`, false];
   const owed = topBet() - player.street;
@@ -152,7 +155,9 @@ function renderTurn() {
   const player = current();
   const staged = pendingTotal();
   const done = settled();
+  const blind = blindDue();
   panelEl.classList.toggle('settled', done);
+  panelEl.classList.toggle('blind', !!blind);
   document.getElementById('turn-name').textContent = player ? player.name : `${STREETS[state.street]} betting done`;
   document.getElementById('turn-stack').textContent = player ? fmt.format(player.stack) : '0';
   if (document.activeElement !== betInput) betInput.value = staged;
@@ -163,6 +168,10 @@ function renderTurn() {
   const commitBtn = document.getElementById('btn-commit');
   commitBtn.disabled = staged ? !validStake() : !owed;
   commitBtn.textContent = commitLabel(player, staged, owed);
+  if (blind) {
+    commitBtn.disabled = false;
+    commitBtn.textContent = `Post ${blind.kind === 'bb' ? 'big' : 'small'} blind ${fmt.format(Math.min(blind.amount, player.stack))}`;
+  }
 
   const undoBtn = document.getElementById('btn-undo-chip');
   undoBtn.disabled = !state.pending.length && !state.undo;
@@ -268,6 +277,7 @@ function wire() {
 
 async function doCommit() {
   if (busy) return;
+  if (blindDue()) return doBlind();
   // Nothing staged: the button is a call.
   if (!pendingTotal()) setStake(toCall());
   if (!validStake()) return;
@@ -276,6 +286,18 @@ async function doCommit() {
   setBusy(true);
   await fly(from, potEl, chips);
   commit();
+  renderPot(state.pot);
+  pulse(potEl);
+  setBusy(false);
+}
+
+async function doBlind() {
+  const { seat, amount } = blindDue();
+  const value = Math.min(amount, state.players[seat].stack);
+  const chips = breakdown(value).flatMap(({ key, count }) => Array(count).fill(key));
+  setBusy(true);
+  await fly(seatEl(seat), potEl, chips);
+  postBlind();
   renderPot(state.pot);
   pulse(potEl);
   setBusy(false);
