@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then tap chips into the pot on each turn and award the pot to the winner.">
+  <meta name="description" content="Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then bet, call, raise or fold through each Texas Hold'em street and award the pot to the winner.">
   <meta name="category" content="Game">
   <title>Poker Chip Table</title>
   <link rel="stylesheet" href="style.css">
@@ -30,6 +30,15 @@
       </fieldset>
 
       <fieldset>
+        <legend>Blinds</legend>
+        <div class="blind-rows">
+          <label>Small <input type="number" id="small-blind" min="0" step="1" value="10" inputmode="numeric"></label>
+          <label>Big <input type="number" id="big-blind" min="0" step="1" value="20" inputmode="numeric"></label>
+        </div>
+        <p class="hint">Posted each hand by the two players left of the dealer. Set big to 0 to play without blinds.</p>
+      </fieldset>
+
+      <fieldset>
         <legend>Chip values</legend>
         <div id="denom-rows" class="denom-rows"></div>
       </fieldset>
@@ -52,9 +61,12 @@
 <!-- Game -->
 <section id="screen-game" class="screen" hidden>
   <header class="game-bar">
-    <span class="round-label">Round <span id="round-no">1</span></span>
+    <span class="round-label"><span>Round <span id="round-no">1</span></span> <strong id="street-name">Pre-flop</strong></span>
     <div class="bar-actions">
       <button type="button" id="btn-award" class="primary">Award pot</button>
+      <button type="button" id="btn-history" class="action-btn" aria-label="Hand history">
+        <span class="icon-mask icon-history" aria-hidden="true"></span>
+      </button>
       <button type="button" id="btn-settings" class="action-btn" aria-label="Settings">
         <span class="icon-mask icon-settings" aria-hidden="true"></span>
       </button>
@@ -91,6 +103,7 @@
       <button type="button" id="btn-undo-chip" class="ghost">Take back</button>
       <button type="button" id="btn-pass" class="ghost">Pass</button>
       <button type="button" id="btn-commit" class="primary">Bet</button>
+      <button type="button" id="btn-street" class="primary">Deal the flop</button>
     </div>
   </div>
 </section>
@@ -100,7 +113,7 @@
 <!-- Award pot -->
 <dialog id="dlg-award">
   <form method="dialog" class="dlg-body">
-    <h2>Who wins the pot?</h2>
+    <h2 id="award-title">Who wins the pot?</h2>
     <p class="dlg-sub">Pot of <strong id="award-total">0</strong> goes to…</p>
     <div id="award-list" class="award-list"></div>
     <div class="dlg-actions">
@@ -110,10 +123,26 @@
   </form>
 </dialog>
 
+<!-- Hand history -->
+<dialog id="dlg-history">
+  <div class="dlg-body">
+    <h2>Hand history</h2>
+    <div id="history-list" class="history-list"></div>
+    <div class="dlg-actions">
+      <button type="button" id="btn-close-history" class="primary">Done</button>
+    </div>
+  </div>
+</dialog>
+
 <!-- Settings -->
 <dialog id="dlg-settings">
   <div class="dlg-body">
     <h2>Settings</h2>
+    <p class="settings-label">Blinds <span class="settings-note">from the next hand</span></p>
+    <div class="settings-stacks">
+      <label class="settings-row"><span class="settings-name">Small blind</span><input type="number" id="settings-small" min="0" step="1" inputmode="numeric"></label>
+      <label class="settings-row"><span class="settings-name">Big blind</span><input type="number" id="settings-big" min="0" step="1" inputmode="numeric"></label>
+    </div>
     <p class="settings-label">Stacks</p>
     <div id="settings-stacks" class="settings-stacks"></div>
     <details class="values">

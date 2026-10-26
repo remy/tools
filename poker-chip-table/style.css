@@ -185,6 +185,19 @@ fieldset {
   }
 }
 
+.blind-rows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+
+  & label {
+    display: grid;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+}
+
 .denom-rows {
   display: grid;
   gap: 0.5rem;
@@ -268,14 +281,25 @@ fieldset {
 }
 
 .round-label {
-  font-size: 0.9rem;
+  display: grid;
+  font-size: 0.8rem;
+  line-height: 1.25;
   color: var(--text-secondary);
+
+  & strong {
+    font-size: 0.95rem;
+    color: var(--text);
+  }
 }
 
 .bar-actions {
   display: flex;
   gap: 0.5rem;
   align-items: center;
+
+  & #btn-award {
+    white-space: nowrap;
+  }
 }
 
 .action-btn {
@@ -294,6 +318,13 @@ fieldset {
   mask-position: center;
   -webkit-mask-size: contain;
   mask-size: contain;
+}
+
+.icon-history {
+  width: 1.25rem;
+  height: 1.25rem;
+  -webkit-mask-image: url(/icons/history.svg);
+  mask-image: url(/icons/history.svg);
 }
 
 .icon-settings {
@@ -429,6 +460,11 @@ fieldset {
   border-radius: 999px;
   padding: 0.15rem 0.4rem;
   font-variant-numeric: tabular-nums;
+
+  &.owes {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 15%, transparent);
+  }
 }
 
 /* ---------- turn panel ---------- */
@@ -443,6 +479,30 @@ fieldset {
   &.busy {
     pointer-events: none;
     opacity: 0.6;
+  }
+
+  /* Betting round over: only undo and the deal button remain. */
+  &.settled {
+    & .turn-stack,
+    & .bet-row,
+    & .chip-tray,
+    & #btn-pass,
+    & #btn-commit {
+      display: none;
+    }
+  }
+
+  &:not(.settled) #btn-street {
+    display: none;
+  }
+
+  /* Blinds due: the only move is to post them. */
+  &.blind {
+    & .bet-row,
+    & .chip-tray,
+    & #btn-pass {
+      display: none;
+    }
   }
 }
 
@@ -541,7 +601,8 @@ fieldset {
     padding-inline: 0.35rem;
   }
 
-  & #btn-commit {
+  & #btn-commit,
+  & #btn-street {
     grid-column: span 2;
     min-height: 3rem;
     font-size: 1.05rem;
@@ -630,6 +691,38 @@ dialog {
 
   &.column {
     flex-direction: column;
+  }
+}
+
+.settings-note {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.history-list {
+  display: grid;
+  gap: 0.9rem;
+  font-size: 0.9rem;
+}
+
+.history-hand {
+  & h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    margin-bottom: 0.3rem;
+  }
+
+  & ol {
+    list-style: none;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  & .history-street {
+    font-weight: 700;
+    margin-top: 0.35rem;
   }
 }
 
