@@ -482,7 +482,9 @@ export function resetStacks() {
 }
 
 export function endGame() {
-  assign({ ...blank(), startStack: state.startStack, denoms: state.denoms, blinds: state.blinds, players: state.players });
+  // Keep only the table setup; every stack, bet and log goes.
+  const { startStack, denoms, blinds, players } = state;
+  assign({ ...blank(), startStack, denoms, blinds, players: players.map((p) => seat(p.name, startStack)) });
   changed();
 }
 

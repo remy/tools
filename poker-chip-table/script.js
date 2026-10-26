@@ -1,5 +1,5 @@
 import { load } from './state.js';
-import { initSetup } from './setup.js';
+import { initSetup, fillSetup } from './setup.js';
 import { initGame } from './game.js';
 
 const setupScreen = document.getElementById('screen-setup');
@@ -20,6 +20,7 @@ function showGame() {
 }
 
 function showSetup() {
+  fillSetup();
   gameScreen.hidden = true;
   setupScreen.hidden = false;
   document.body.classList.remove('playing');

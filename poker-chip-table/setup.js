@@ -8,7 +8,8 @@ const playerRows = document.getElementById('player-rows');
 let names = [];
 let denoms = [];
 
-export function initSetup(onStart) {
+/** Fills the form from the last game's table setup. */
+export function fillSetup() {
   names = state.players.length
     ? state.players.map((p) => p.name)
     : ['Player 1', 'Player 2', 'Player 3', 'Player 4'];
@@ -16,9 +17,12 @@ export function initSetup(onStart) {
   stackInput.value = state.startStack || 1000;
   document.getElementById('small-blind').value = state.blinds.small;
   document.getElementById('big-blind').value = state.blinds.big;
-
   renderDenoms();
   renderPlayers();
+}
+
+export function initSetup(onStart) {
+  fillSetup();
 
   document.getElementById('btn-add-player').addEventListener('click', () => {
     if (names.length >= 10) return;
