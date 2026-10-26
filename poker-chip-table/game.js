@@ -1,5 +1,5 @@
 import {
-  state, subscribe, current, denom, pendingTotal, breakdown, stakeChips, unit,
+  state, subscribe, current, facingBet, denom, pendingTotal, breakdown, stakeChips, unit,
   stage, unstage, allIn, setStake, commit, pass, award, undoBet, returnBets,
   resetStacks, endGame, setTurn, setStack,
 } from './state.js';
@@ -67,7 +67,7 @@ function renderSeats() {
   state.players.forEach((player, i) => {
     const row = seatEl(i);
     row.classList.toggle('active', i === state.turn);
-    row.classList.toggle('out', player.stack === 0 && player.bet === 0);
+    row.classList.toggle('out', (player.stack === 0 && player.bet === 0) || player.folded);
     row.querySelector('.pc-pos').textContent = i === state.dealer ? 'D' : i + 1;
     row.querySelector('.pc-pos').classList.toggle('dealer', i === state.dealer);
     row.querySelector('.pc-name').textContent = player.name;
@@ -137,6 +137,7 @@ function renderTurn() {
   undo.disabled = !state.pending.length && !state.undo;
   undo.textContent = state.pending.length ? 'Take back' : 'Undo bet';
   document.getElementById('btn-allin').disabled = !player || player.stack === 0;
+  document.getElementById('btn-pass').textContent = facingBet() ? 'Fold' : 'Pass';
   document.getElementById('btn-award').disabled = state.pot === 0;
 }
 
@@ -164,7 +165,7 @@ function wire() {
   document.getElementById('btn-award').addEventListener('click', openAward);
   document.getElementById('btn-settings').addEventListener('click', openSettings);
   document.getElementById('btn-split').addEventListener('click', () => {
-    const inHand = state.players.filter((p) => p.bet > 0);
+    const inHand = state.players.filter((p) => p.bet > 0 && !p.folded);
     doAward((inHand.length ? inHand : state.players).map((p) => p.id));
   });
   document.getElementById('btn-close-settings').addEventListener('click', () => dlgSettings.close());
@@ -217,6 +218,7 @@ function openAward() {
   document.getElementById('award-total').textContent = fmt.format(state.pot);
   list.textContent = '';
   state.players.forEach((player, i) => {
+    if (player.folded) return;
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'award-row';

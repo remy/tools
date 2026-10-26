@@ -89,6 +89,12 @@ export function current() {
   return state.players[state.turn];
 }
 
+/** Someone has bet more than the player to act, so passing means folding. */
+export function facingBet() {
+  const player = current();
+  return !!player && state.players.some((p) => p.bet > player.bet);
+}
+
 export function activePlayers() {
   return state.players.filter((p) => p.stack > 0 || p.bet > 0);
 }
@@ -113,7 +119,7 @@ export function startGame({ startStack, denoms, names }) {
     started: true,
     startStack,
     denoms,
-    players: names.map((name, i) => ({ id: `p${i}-${Date.now()}`, name, stack: startStack, bet: 0 })),
+    players: names.map((name, i) => ({ id: `p${i}-${Date.now()}`, name, stack: startStack, bet: 0, folded: false })),
   });
   firstTurn();
   changed();
@@ -183,6 +189,7 @@ export function commit() {
 }
 
 export function pass() {
+  if (facingBet()) current().folded = true;
   reset();
   state.undo = null;
   advance();
@@ -220,7 +227,7 @@ function advance() {
   const total = state.players.length;
   for (let step = 1; step <= total; step++) {
     const next = (state.turn + step) % total;
-    if (state.players[next].stack > 0) {
+    if (state.players[next].stack > 0 && !state.players[next].folded) {
       state.turn = next;
       return;
     }
@@ -252,6 +259,7 @@ export function returnBets() {
   state.players.forEach((p) => {
     p.stack += p.bet;
     p.bet = 0;
+    p.folded = false;
   });
   state.pot = 0;
   state.potChips = {};
@@ -264,6 +272,7 @@ export function resetStacks() {
   state.players.forEach((p) => {
     p.stack = state.startStack;
     p.bet = 0;
+    p.folded = false;
   });
   state.pot = 0;
   state.potChips = {};
@@ -281,7 +290,10 @@ export function endGame() {
 }
 
 function nextRound() {
-  state.players.forEach((p) => (p.bet = 0));
+  state.players.forEach((p) => {
+    p.bet = 0;
+    p.folded = false;
+  });
   state.pot = 0;
   state.potChips = {};
   reset();
