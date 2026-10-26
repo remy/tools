@@ -115,6 +115,7 @@ export function startGame({ startStack, denoms, names }) {
     denoms,
     players: names.map((name, i) => ({ id: `p${i}-${Date.now()}`, name, stack: startStack, bet: 0 })),
   });
+  firstTurn();
   changed();
 }
 
@@ -269,7 +270,7 @@ export function resetStacks() {
   reset();
   state.round = 1;
   state.dealer = 0;
-  state.turn = 0;
+  firstTurn();
   state.undo = null;
   changed();
 }
@@ -287,8 +288,13 @@ function nextRound() {
   state.undo = null;
   state.round += 1;
   state.dealer = (state.dealer + 1) % state.players.length;
+  firstTurn();
+}
+
+/** Play opens left of the dealer, so the dealer acts last. */
+function firstTurn() {
   state.turn = state.dealer;
-  if (!state.players[state.turn].stack) advance();
+  advance();
 }
 
 export function setStack(id, value) {
