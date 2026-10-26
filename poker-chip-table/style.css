@@ -429,6 +429,11 @@ fieldset {
   border-radius: 999px;
   padding: 0.15rem 0.4rem;
   font-variant-numeric: tabular-nums;
+
+  &.owes {
+    color: var(--danger);
+    background: color-mix(in srgb, var(--danger) 15%, transparent);
+  }
 }
 
 /* ---------- turn panel ---------- */
@@ -443,6 +448,21 @@ fieldset {
   &.busy {
     pointer-events: none;
     opacity: 0.6;
+  }
+
+  /* Betting round over: only undo and the deal button remain. */
+  &.settled {
+    & .turn-stack,
+    & .bet-row,
+    & .chip-tray,
+    & #btn-pass,
+    & #btn-commit {
+      display: none;
+    }
+  }
+
+  &:not(.settled) #btn-street {
+    display: none;
   }
 }
 
@@ -541,7 +561,8 @@ fieldset {
     padding-inline: 0.35rem;
   }
 
-  & #btn-commit {
+  & #btn-commit,
+  & #btn-street {
     grid-column: span 2;
     min-height: 3rem;
     font-size: 1.05rem;

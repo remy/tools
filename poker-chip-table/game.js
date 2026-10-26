@@ -1,6 +1,7 @@
 import {
-  state, subscribe, current, facingBet, denom, pendingTotal, breakdown, stakeChips, unit,
-  stage, unstage, allIn, setStake, commit, pass, award, undoBet, returnBets,
+  state, subscribe, current, facingBet, toCall, topBet, validStake, settled, soleWinner, STREETS,
+  denom, pendingTotal, breakdown, stakeChips, unit,
+  stage, unstage, allIn, setStake, commit, pass, award, undo, returnBets, nextStreet,
   resetStacks, endGame, setTurn, setStack,
 } from './state.js';
 import { fly, renderPile, pulse, chipEl } from './chips.js';
@@ -41,6 +42,7 @@ function setBusy(value) {
 
 function render() {
   document.getElementById('round-no').textContent = state.round;
+  document.getElementById('street-name').textContent = STREETS[state.street];
   renderSeats();
   renderPot();
   renderTray();
@@ -72,12 +74,30 @@ function renderSeats() {
     row.querySelector('.pc-pos').classList.toggle('dealer', i === state.dealer);
     row.querySelector('.pc-name').textContent = player.name;
     row.querySelector('.pc-stack').textContent = fmt.format(player.stack);
+    const [label, owes] = status(player);
     const bet = row.querySelector('.pc-bet');
-    bet.hidden = player.bet === 0;
-    bet.textContent = `bet ${fmt.format(player.bet)}`;
+    bet.hidden = !label;
+    bet.textContent = label;
+    bet.classList.toggle('owes', owes);
     row.onclick = () => !busy && setTurn(i);
     if (i === state.turn) row.scrollIntoView({ block: 'nearest' });
   });
+}
+
+/** Pill text for a seat, and whether that player still has to act. */
+function status(player) {
+  if (player.folded) return ['folded', false];
+  if (!player.stack && !player.bet) return ['', false];
+  if (!player.stack) return [`all in ${fmt.format(player.bet)}`, false];
+  const owed = topBet() - player.street;
+  if (!settled() && owed > 0) return [`to call ${fmt.format(Math.min(owed, player.stack))}`, true];
+  const amount = fmt.format(player.street);
+  return {
+    check: ['checked', false],
+    call: [`called ${amount}`, false],
+    bet: [`bet ${amount}`, false],
+    raise: [`raised to ${amount}`, false],
+  }[player.action] ?? ['', false];
 }
 
 function renderPot(total = potShown) {
@@ -126,19 +146,42 @@ function renderTray() {
 function renderTurn() {
   const player = current();
   const staged = pendingTotal();
-  document.getElementById('turn-name').textContent = player ? player.name : '—';
+  const done = settled();
+  panelEl.classList.toggle('settled', done);
+  document.getElementById('turn-name').textContent = player ? player.name : `${STREETS[state.street]} betting done`;
   document.getElementById('turn-stack').textContent = player ? fmt.format(player.stack) : '0';
   if (document.activeElement !== betInput) betInput.value = staged;
   betInput.max = player ? player.stack : 0;
   betInput.step = unit();
-  document.getElementById('btn-commit').disabled = staged <= 0;
-  document.getElementById('btn-commit').textContent = staged ? `Bet ${fmt.format(staged)}` : 'Bet';
-  const undo = document.getElementById('btn-undo-chip');
-  undo.disabled = !state.pending.length && !state.undo;
-  undo.textContent = state.pending.length ? 'Take back' : 'Undo bet';
+
+  const owed = toCall();
+  const commitBtn = document.getElementById('btn-commit');
+  commitBtn.disabled = staged ? !validStake() : !owed;
+  commitBtn.textContent = commitLabel(player, staged, owed);
+
+  const undoBtn = document.getElementById('btn-undo-chip');
+  undoBtn.disabled = !state.pending.length && !state.undo;
+  undoBtn.textContent = state.pending.length ? 'Take back' : 'Undo';
   document.getElementById('btn-allin').disabled = !player || player.stack === 0;
   document.getElementById('btn-pass').textContent = facingBet() ? 'Fold' : 'Pass';
   document.getElementById('btn-award').disabled = state.pot === 0;
+  document.getElementById('btn-street').textContent = streetLabel();
+}
+
+function commitLabel(player, staged, owed) {
+  if (!player) return 'Bet';
+  // Nothing tapped while facing a bet: the button calls.
+  if (!staged) return owed ? `Call ${fmt.format(owed)}` : 'Bet';
+  if (staged === player.stack) return `All in ${fmt.format(staged)}`;
+  if (staged < owed) return `Call ${fmt.format(owed)}`;
+  if (staged === owed) return `Call ${fmt.format(staged)}`;
+  return topBet() ? `Raise to ${fmt.format(player.street + staged)}` : `Bet ${fmt.format(staged)}`;
+}
+
+function streetLabel() {
+  const winner = soleWinner();
+  if (winner) return `${winner.name} wins ${fmt.format(state.pot)}`;
+  return state.street < STREETS.length - 1 ? `Deal the ${STREETS[state.street + 1].toLowerCase()}` : 'Showdown';
 }
 
 /* ---------- actions ---------- */
@@ -156,12 +199,19 @@ function wire() {
     if (busy) return;
     // One button, two jobs: drop the last staged chip, or pull back the last bet.
     if (state.pending.length) return unstage();
-    undoBet();
+    undo();
     renderPot(state.pot);
   });
   document.getElementById('btn-allin').addEventListener('click', () => !busy && allIn());
   document.getElementById('btn-pass').addEventListener('click', () => !busy && pass());
   document.getElementById('btn-commit').addEventListener('click', doCommit);
+  document.getElementById('btn-street').addEventListener('click', () => {
+    if (busy) return;
+    const winner = soleWinner();
+    if (winner) return doAward([winner.id]);
+    if (state.street < STREETS.length - 1) return nextStreet();
+    openAward();
+  });
   document.getElementById('btn-award').addEventListener('click', openAward);
   document.getElementById('btn-settings').addEventListener('click', openSettings);
   document.getElementById('btn-split').addEventListener('click', () => {
@@ -202,7 +252,10 @@ function wire() {
 }
 
 async function doCommit() {
-  if (busy || pendingTotal() <= 0) return;
+  if (busy) return;
+  // Nothing staged: the button is a call.
+  if (!pendingTotal()) setStake(toCall());
+  if (!validStake()) return;
   const chips = stakeChips();
   const from = seatEl(state.turn);
   setBusy(true);

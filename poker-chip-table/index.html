@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then tap chips into the pot on each turn and award the pot to the winner.">
+  <meta name="description" content="Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then bet, call, raise or fold through each Texas Hold'em street and award the pot to the winner.">
   <meta name="category" content="Game">
   <title>Poker Chip Table</title>
   <link rel="stylesheet" href="style.css">
@@ -52,7 +52,7 @@
 <!-- Game -->
 <section id="screen-game" class="screen" hidden>
   <header class="game-bar">
-    <span class="round-label">Round <span id="round-no">1</span></span>
+    <span class="round-label">Round <span id="round-no">1</span> · <span id="street-name">Pre-flop</span></span>
     <div class="bar-actions">
       <button type="button" id="btn-award" class="primary">Award pot</button>
       <button type="button" id="btn-settings" class="action-btn" aria-label="Settings">
@@ -91,6 +91,7 @@
       <button type="button" id="btn-undo-chip" class="ghost">Take back</button>
       <button type="button" id="btn-pass" class="ghost">Pass</button>
       <button type="button" id="btn-commit" class="primary">Bet</button>
+      <button type="button" id="btn-street" class="primary">Deal the flop</button>
     </div>
   </div>
 </section>

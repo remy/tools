@@ -7,6 +7,8 @@ export const DEFAULT_DENOMS = [
   { key: 'black', label: 'Black', value: 100 },
 ];
 
+export const STREETS = ['Pre-flop', 'Flop', 'Turn', 'River'];
+
 const listeners = new Set();
 
 export const state = blank();
@@ -19,12 +21,13 @@ function blank() {
     players: [],
     round: 1,
     dealer: 0,
-    turn: 0,
+    street: 0, // index into STREETS
+    turn: 0, // -1 once the betting round is settled
     pot: 0,
     potChips: {},
     stake: 0, // amount the player to act is putting in
     pending: [], // chips they tapped, in tap order — typed amounts leave this empty
-    undo: null, // snapshot of the last committed action
+    undo: null, // snapshot taken before the last bet, pass or fold
   };
 }
 
@@ -50,6 +53,7 @@ export function load() {
     const saved = JSON.parse(raw);
     if (!saved?.players?.length) return false;
     assign({ ...blank(), ...saved });
+    state.players = state.players.map((p) => ({ ...seat(p.name), ...p }));
     return state.started;
   } catch {
     return false;
@@ -86,17 +90,52 @@ export function stakeChips(amount = state.stake) {
 }
 
 export function current() {
-  return state.players[state.turn];
+  return state.players[state.turn] ?? null;
 }
 
-/** Someone has bet more than the player to act, so passing means folding. */
+function seat(name, stack = 0) {
+  // bet: total in the pot this hand; street: put in during this betting round
+  return { id: `p-${crypto.randomUUID()}`, name, stack, bet: 0, street: 0, acted: false, folded: false, action: '' };
+}
+
+/** Highest amount anyone has put in this betting round — the minimum to stay in. */
+export function topBet() {
+  return Math.max(0, ...state.players.map((p) => p.street));
+}
+
+export function toCall(player = current()) {
+  return player ? Math.min(topBet() - player.street, player.stack) : 0;
+}
+
 export function facingBet() {
-  const player = current();
-  return !!player && state.players.some((p) => p.bet > player.bet);
+  return toCall() > 0;
 }
 
-export function activePlayers() {
-  return state.players.filter((p) => p.stack > 0 || p.bet > 0);
+export function livePlayers() {
+  return state.players.filter((p) => !p.folded && (p.stack > 0 || p.bet > 0));
+}
+
+function canAct(p) {
+  return !p.folded && p.stack > 0;
+}
+
+function needsToAct(p) {
+  return canAct(p) && (!p.acted || p.street < topBet());
+}
+
+/** Everyone still in has matched the top bet (or is all in), or only one player is left. */
+export function settled() {
+  const live = livePlayers();
+  if (live.length <= 1) return true;
+  const actors = live.filter(canAct);
+  if (actors.length <= 1) return actors.every((p) => p.street >= topBet());
+  return !actors.some(needsToAct);
+}
+
+/** Only one player hasn't folded, so the pot is theirs without a showdown. */
+export function soleWinner() {
+  const live = livePlayers();
+  return live.length === 1 ? live[0] : null;
 }
 
 /** Smallest set of chips that adds up to `amount`, largest first. */
@@ -119,7 +158,7 @@ export function startGame({ startStack, denoms, names }) {
     started: true,
     startStack,
     denoms,
-    players: names.map((name, i) => ({ id: `p${i}-${Date.now()}`, name, stack: startStack, bet: 0, folded: false })),
+    players: names.map((name) => seat(name, startStack)),
   });
   firstTurn();
   changed();
@@ -166,53 +205,79 @@ export function allIn() {
   changed();
 }
 
+/** A bet must at least match the top bet, unless it puts the player all in. */
+export function validStake(amount = state.stake) {
+  const player = current();
+  return !!player && amount > 0 && (amount >= toCall(player) || amount === player.stack);
+}
+
 /** Moves the staged chips into the pot and passes play on. */
 export function commit() {
   const player = current();
   if (!player) return null;
   // Bets are whole chips, but never more than the player actually has.
   const amount = Math.min(Math.round(state.stake / unit()) * unit(), player.stack);
-  if (amount <= 0) return null;
+  if (!validStake(amount)) return null;
   const chips = stakeChips(amount);
+  const top = topBet();
 
-  state.undo = { type: 'bet', turn: state.turn, chips, amount };
+  snapshot();
   player.stack -= amount;
   player.bet += amount;
+  player.street += amount;
+  player.acted = true;
   state.pot += amount;
   chips.forEach((key) => {
     state.potChips[key] = (state.potChips[key] || 0) + 1;
   });
+  if (player.street > top) {
+    // A raise: everyone else has to meet it or fold.
+    state.players.forEach((p) => p !== player && (p.acted = false));
+    player.action = top ? 'raise' : 'bet';
+  } else {
+    player.action = 'call';
+  }
+  if (!player.stack) player.action = 'all in';
   reset();
   advance();
   changed();
   return { player, chips, amount };
 }
 
+/** Check when nothing is owed, otherwise fold. */
 export function pass() {
-  if (facingBet()) current().folded = true;
+  const player = current();
+  if (!player) return;
+  snapshot();
+  if (facingBet()) {
+    player.folded = true;
+    player.action = 'fold';
+  } else {
+    player.action = 'check';
+  }
+  player.acted = true;
   reset();
-  state.undo = null;
   advance();
   changed();
 }
 
-export function undoBet() {
-  const last = state.undo;
-  if (!last || last.type !== 'bet') return;
-  const player = state.players[last.turn];
-  player.stack += last.amount;
-  player.bet -= last.amount;
-  state.pot -= last.amount;
-  last.chips.forEach((key) => {
-    state.potChips[key] = Math.max(0, (state.potChips[key] || 0) - 1);
-  });
-  state.turn = last.turn;
+function snapshot() {
+  const { players, pot, potChips, turn } = state;
+  state.undo = structuredClone({ players, pot, potChips, turn });
+}
+
+export function undo() {
+  if (!state.undo) return;
+  Object.assign(state, state.undo);
   state.undo = null;
+  reset();
   changed();
 }
 
+/** Hand the turn to someone else, e.g. when play went out of order. */
 export function setTurn(index) {
-  if (index < 0 || index >= state.players.length) return;
+  const player = state.players[index];
+  if (!player || !canAct(player)) return;
   reset();
   state.turn = index;
   changed();
@@ -223,16 +288,46 @@ function reset() {
   state.pending = [];
 }
 
+/** Next player clockwise who still owes an action, or -1 once the round is settled. */
 function advance() {
+  if (settled()) {
+    state.turn = -1;
+    return;
+  }
   const total = state.players.length;
   for (let step = 1; step <= total; step++) {
-    const next = (state.turn + step) % total;
-    if (state.players[next].stack > 0 && !state.players[next].folded) {
+    const next = (state.turn + step + total) % total;
+    if (needsToAct(state.players[next])) {
       state.turn = next;
       return;
     }
   }
-  state.turn = (state.turn + 1) % total;
+  state.turn = -1;
+}
+
+/** Play opens left of the dealer, so the dealer acts last. */
+function firstTurn() {
+  state.turn = state.dealer;
+  advance();
+}
+
+function clearStreet() {
+  state.players.forEach((p) => {
+    p.street = 0;
+    p.acted = false;
+    if (!p.folded) p.action = '';
+  });
+}
+
+/** Deals the next street and reopens betting. */
+export function nextStreet() {
+  if (!settled() || soleWinner() || state.street >= STREETS.length - 1) return;
+  state.street += 1;
+  clearStreet();
+  reset();
+  state.undo = null;
+  firstTurn();
+  changed();
 }
 
 /** Hands the pot to one or more winners and deals the next round. */
@@ -254,33 +349,32 @@ export function award(ids) {
   return { winners, won };
 }
 
-/** Pulls every bet back out of the pot — for a misdeal or a wrong tap. */
-export function returnBets() {
+function newHand() {
   state.players.forEach((p) => {
-    p.stack += p.bet;
     p.bet = 0;
     p.folded = false;
   });
+  clearStreet();
   state.pot = 0;
   state.potChips = {};
+  state.street = 0;
   reset();
   state.undo = null;
+  firstTurn();
+}
+
+/** Pulls every bet back out of the pot — for a misdeal or a wrong tap. */
+export function returnBets() {
+  state.players.forEach((p) => (p.stack += p.bet));
+  newHand();
   changed();
 }
 
 export function resetStacks() {
-  state.players.forEach((p) => {
-    p.stack = state.startStack;
-    p.bet = 0;
-    p.folded = false;
-  });
-  state.pot = 0;
-  state.potChips = {};
-  reset();
+  state.players.forEach((p) => (p.stack = state.startStack));
   state.round = 1;
   state.dealer = 0;
-  firstTurn();
-  state.undo = null;
+  newHand();
   changed();
 }
 
@@ -290,23 +384,9 @@ export function endGame() {
 }
 
 function nextRound() {
-  state.players.forEach((p) => {
-    p.bet = 0;
-    p.folded = false;
-  });
-  state.pot = 0;
-  state.potChips = {};
-  reset();
-  state.undo = null;
   state.round += 1;
   state.dealer = (state.dealer + 1) % state.players.length;
-  firstTurn();
-}
-
-/** Play opens left of the dealer, so the dealer acts last. */
-function firstTurn() {
-  state.turn = state.dealer;
-  advance();
+  newHand();
 }
 
 export function setStack(id, value) {
