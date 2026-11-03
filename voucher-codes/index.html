@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Generate unique random voucher codes with a configurable count, prefix and length.">
+  <meta name="category" content="Productivity">
+  <title>Voucher Codes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Voucher Codes</h1>
+
+    <form id="form" class="options">
+      <label>
+        <span>Number of codes</span>
+        <input type="number" name="count" min="1" max="100000" value="10" required>
+      </label>
+      <label>
+        <span>Prefix</span>
+        <input type="text" name="prefix" placeholder="e.g. SALE-" autocomplete="off" spellcheck="false">
+      </label>
+      <label>
+        <span>Code length</span>
+        <input type="number" name="length" min="1" max="64" value="8" required>
+      </label>
+      <button type="submit" class="primary">Generate</button>
+    </form>
+
+    <p class="hint">Length excludes the prefix. Characters: A–Z and 2–9, omitting look-alikes (0, O, 1, I, L).</p>
+    <p id="error" class="error" role="alert" hidden></p>
+
+    <section id="output" hidden>
+      <div class="output-head">
+        <span id="summary"></span>
+        <div class="actions">
+          <button type="button" id="copy">Copy</button>
+          <button type="button" id="download">Download CSV</button>
+        </div>
+      </div>
+      <textarea id="codes" readonly rows="12" spellcheck="false"></textarea>
+    </section>
+  </main>
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
