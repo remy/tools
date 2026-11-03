@@ -29,6 +29,11 @@
     "description": "Decode capacitor codes and calculate values from ceramic capacitor markings",
     "title": "Capacitor Value Calculator"
   },
+  "code-generator": {
+    "category": "Productivity",
+    "description": "Generate unique random voucher codes with a configurable count, prefix and length.",
+    "title": "Code Generator"
+  },
   "colonialism": {
     "category": "Learning",
     "description": "What they didn't teach us in school \u2014 an honest, territory-by-territory look at the reach, methods, and lasting consequences of British colonisation.",
