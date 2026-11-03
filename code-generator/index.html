@@ -23,12 +23,12 @@
       </label>
       <label>
         <span>Code length</span>
-        <input type="number" name="length" min="1" max="64" value="8" required>
+        <input type="number" name="length" min="1" max="128" value="8" required>
       </label>
       <button type="submit" class="primary">Generate</button>
     </form>
 
-    <p class="hint">Length excludes the prefix. Characters: A–Z and 2–9, omitting look-alikes (0, O, 1, I, L).</p>
+    <p class="hint">Length includes the prefix. Characters: A–Z and 2–9, omitting look-alikes (0, O, 1, I, L).</p>
     <p id="error" class="error" role="alert" hidden></p>
 
     <section id="output" hidden>

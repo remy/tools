@@ -24,11 +24,15 @@ function randomCode(length) {
   return out;
 }
 
-function generate(count, prefix, length) {
+function generate(count, prefix, total) {
+  const length = total - prefix.length;
+  if (length < 1) {
+    throw new Error(`Code length must be greater than the prefix length (${prefix.length}).`);
+  }
   const possible = ALPHABET.length ** length;
   // Cap unique-code attempts well below the keyspace to avoid near-infinite loops
   if (count > possible / 2) {
-    throw new Error(`Length ${length} allows ${possible.toLocaleString()} combinations — too few for ${count.toLocaleString()} unique codes. Increase the length.`);
+    throw new Error(`${length} random characters allow ${possible.toLocaleString()} combinations — too few for ${count.toLocaleString()} unique codes. Increase the code length.`);
   }
   const set = new Set();
   while (set.size < count) set.add(prefix + randomCode(length));
