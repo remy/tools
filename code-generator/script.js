@@ -1,5 +1,5 @@
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-const KEY = 'voucher-codes.options';
+const KEY = 'code-generator.options';
 
 const form = document.getElementById('form');
 const error = document.getElementById('error');
@@ -75,7 +75,7 @@ document.getElementById('download').addEventListener('click', () => {
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = `voucher-codes-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `codes-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 });
