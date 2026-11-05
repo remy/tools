@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Drop any file and render its bytes as a JS array, C array, hex dump or custom format.">
+  <meta name="category" content="Developer Tools">
+  <title>Byte Formatter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Byte Formatter</h1>
+      <button type="button" id="open-btn" class="btn">Open file</button>
+    </header>
+
+    <p id="file-info" class="file-info">Drop a file anywhere, or open one.</p>
+
+    <form id="options" class="options">
+      <label>Preset
+        <select name="preset">
+          <option value="js">JS array</option>
+          <option value="uint8">Uint8Array</option>
+          <option value="c">C array</option>
+          <option value="hex">Hex string</option>
+          <option value="dump">Space-separated hex</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+      <label>Base
+        <select name="base">
+          <option value="16">Hex</option>
+          <option value="10">Decimal</option>
+          <option value="8">Octal</option>
+          <option value="2">Binary</option>
+        </select>
+      </label>
+      <label>Word size
+        <select name="width">
+          <option value="1">8 bit</option>
+          <option value="2">16 bit</option>
+          <option value="4">32 bit</option>
+        </select>
+      </label>
+      <label>Endian
+        <select name="endian">
+          <option value="le">Little</option>
+          <option value="be">Big</option>
+        </select>
+      </label>
+      <label>Prefix
+        <input name="prefix" type="text" spellcheck="false">
+      </label>
+      <label>Suffix
+        <input name="suffix" type="text" spellcheck="false">
+      </label>
+      <label>Separator
+        <input name="sep" type="text" spellcheck="false">
+      </label>
+      <label>Per line
+        <input name="perLine" type="number" min="0" step="1" title="0 = single line">
+      </label>
+      <label>Pad to
+        <input name="pad" type="number" min="0" step="1" title="Minimum digits; blank = full width">
+      </label>
+      <label>Before
+        <input name="before" type="text" spellcheck="false">
+      </label>
+      <label>After
+        <input name="after" type="text" spellcheck="false">
+      </label>
+      <label>Indent
+        <input name="indent" type="text" spellcheck="false">
+      </label>
+      <label>Offset
+        <input name="offset" type="number" min="0" step="1">
+      </label>
+      <label>Length
+        <input name="length" type="number" min="0" step="1" title="Blank = to end">
+      </label>
+      <label class="check"><input name="upper" type="checkbox"> Uppercase</label>
+      <label class="check"><input name="trailing" type="checkbox"> Trailing separator</label>
+    </form>
+
+    <div class="output-bar">
+      <span id="stats" class="stats"></span>
+      <button type="button" id="copy-btn" class="btn" disabled>Copy</button>
+      <button type="button" id="download-btn" class="btn" disabled>Download</button>
+    </div>
+    <textarea id="output" class="output" readonly spellcheck="false" placeholder="0x00, 0x01, 0x10, …"></textarea>
+  </div>
+
+  <input type="file" id="file-input" hidden>
+
+  <script>
+    // Capture the file as early as possible; script.js picks it up.
+    (function () {
+      const input = document.getElementById('file-input');
+      let handler = null;
+      let pending = null;
+      const isFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
+      const take = (file) => {
+        if (!file) return;
+        file.arrayBuffer().then((buf) => {
+          const item = { name: file.name, bytes: new Uint8Array(buf) };
+          handler ? handler(item) : (pending = item);
+        });
+      };
+      document.getElementById('open-btn').addEventListener('click', () => input.click());
+      input.addEventListener('change', () => { take(input.files[0]); input.value = ''; });
+      let depth = 0;
+      addEventListener('dragenter', (e) => { if (!isFiles(e)) return; e.preventDefault(); depth++; document.body.classList.add('dragover'); });
+      addEventListener('dragover', (e) => { if (isFiles(e)) e.preventDefault(); });
+      addEventListener('dragleave', (e) => { if (!isFiles(e)) return; depth = Math.max(0, depth - 1); if (!depth) document.body.classList.remove('dragover'); });
+      addEventListener('drop', (e) => { e.preventDefault(); depth = 0; document.body.classList.remove('dragover'); take(e.dataTransfer?.files?.[0]); });
+      addEventListener('paste', (e) => {
+        if (e.target.closest?.('input, textarea')) return;
+        const file = e.clipboardData?.files?.[0];
+        if (file) { e.preventDefault(); take(file); }
+      });
+      window.__bytesEarly = {
+        register(fn) { handler = fn; if (pending) { fn(pending); pending = null; } },
+      };
+    })();
+  </script>
+  <script src="script.js" defer></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
