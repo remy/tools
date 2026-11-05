@@ -24,6 +24,11 @@
     "description": "A simple game timer with 15s restart and 30s single modes, featuring a wake lock option to keep the screen awake during use.",
     "title": "15s countdown"
   },
+  "byte-formatter": {
+    "category": "Developer Tools",
+    "description": "Drop any file and render its bytes as a JS array, C array, hex dump or custom format.",
+    "title": "Byte Formatter"
+  },
   "capcalc": {
     "category": "Calculators",
     "description": "Decode capacitor codes and calculate values from ceramic capacitor markings",
