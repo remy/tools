@@ -18,7 +18,7 @@
 // Stamped with the deploy's commit SHA by .github/workflows/update_index.yml,
 // so every deploy gets its own cache and is fetched fresh rather than being
 // served from the previous deploy's entries.
-const VERSION = 'e3918c67d4bd23c5bb8147f3a25aef7dc1100e37';
+const VERSION = 'a9959e5ee5044f5293adb0c0f2da095080853781';
 const CACHE_NAME = `tools-${VERSION}`;
 
 // One generation of history, kept so the first load after a deploy — which has
