@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description"
+      content="Mobile-first notebook with a focused reading view, drag-to-reorder, offline PouchDB storage and live CouchDB sync.">
+    <meta name="category" content="Productivity">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Notes</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <!-- <notes-app> is inserted here by main.js once any ?sync= link is handled. -->
+
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+      <div class="pop-header">
+        <h2 id="settings-title">Settings</h2>
+        <button class="pop-close" id="settings-close" type="button" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="pop-body">
+        <section class="settings-section">
+          <h3 class="settings-heading">Backup</h3>
+          <p class="settings-hint">Export every note as JSON, or import a JSON file — you can also drop one anywhere
+            on the page.</p>
+          <div class="pop-actions">
+            <button class="btn" id="export-notes" type="button">Export notes</button>
+            <button class="btn" id="import-open" type="button">Import notes…</button>
+          </div>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+          <label class="settings-toggle">
+            <input type="checkbox" id="import-merge" checked>
+            <span>Merge imported notes with existing</span>
+          </label>
+        </section>
+
+        <section class="settings-section">
+          <h3 class="settings-heading">Sync</h3>
+          <sync-settings id="sync-settings"></sync-settings>
+        </section>
+      </div>
+    </dialog>
+
+    <div class="drop-overlay" aria-hidden="true">Drop a JSON file to import notes</div>
+
+    <script>
+      // Capture a dropped file before the module graph (PouchDB included) has
+      // loaded: read it straight away and queue the text until main.js calls
+      // register(). The whole window is the drop target.
+      (function () {
+        let pending = null;
+        let handler = null;
+        let depth = 0;
+        const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
+
+        function dispatch(text) {
+          if (handler) handler(text);
+          else pending = text;
+        }
+
+        window.addEventListener('dragenter', (e) => {
+          if (!hasFiles(e)) return;
+          e.preventDefault();
+          depth++;
+          document.body.classList.add('dragover');
+        });
+        window.addEventListener('dragover', (e) => {
+          if (hasFiles(e)) e.preventDefault();
+        });
+        window.addEventListener('dragleave', (e) => {
+          if (!hasFiles(e)) return;
+          depth = Math.max(0, depth - 1);
+          if (depth === 0) document.body.classList.remove('dragover');
+        });
+        window.addEventListener('drop', (e) => {
+          if (!hasFiles(e)) return;
+          e.preventDefault();
+          depth = 0;
+          document.body.classList.remove('dragover');
+          const file = e.dataTransfer.files[0];
+          if (file) file.text().then(dispatch);
+        });
+
+        window.__notesEarly = {
+          register(fn) {
+            handler = fn;
+            if (pending !== null) {
+              const text = pending;
+              pending = null;
+              fn(text);
+            }
+          },
+        };
+      })();
+    </script>
+    <script src="/vendor/pouchdb/pouchdb.min.js"></script>
+    <script type="module" src="main.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
