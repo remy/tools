@@ -194,6 +194,11 @@
     "description": "Search Immich assets using arbitrary metadata queries and download the results as a zip file.",
     "title": "Immich Metadata Search & Download"
   },
+  "is-it-bst": {
+    "category": "Productivity",
+    "description": "Tells you whether the UK is on British Summer Time (BST) or GMT right now, and when the clocks next change.",
+    "title": "Is it BST?"
+  },
   "jpg-metadata-reader": {
     "category": "Developer Tools",
     "description": "Drop a JPEG to inspect every embedded metadata block \u2014 EXIF, GPS, XMP, IPTC, ICC profile, JFIF, and the raw JPEG segment map.",
