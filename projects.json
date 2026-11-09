@@ -234,6 +234,11 @@
     "description": "Interactive demo of the native HTML Popover API \u2014 no libraries, no JavaScript required for basic use",
     "title": "Native Popover API Demo"
   },
+  "notes": {
+    "category": "Productivity",
+    "description": "Mobile-first notebook with a focused reading view, drag-to-reorder, offline PouchDB storage and live CouchDB sync.",
+    "title": "Notes"
+  },
   "openapi-filter": {
     "category": "Developer Tools",
     "description": "Paste an OpenAPI 3.x JSON schema, pick the endpoints you care about, and export a trimmed schema containing only those operations and the components they depend on.",
