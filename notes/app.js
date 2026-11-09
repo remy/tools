@@ -1,6 +1,10 @@
 import './text-reader.wc.js';
 import { db } from './db.js';
 import { dragMethods } from './drag.js';
+import { relativeLabel, fullLabel } from './relative-time.js';
+
+// How often the list's relative "updated" labels are refreshed in place.
+const LABEL_TICK = 60 * 1000;
 
 const createId = () =>
   typeof crypto !== 'undefined' && crypto.randomUUID
@@ -71,11 +75,13 @@ class NotesApp extends HTMLElement {
     document.addEventListener('visibilitychange', this.handleVisibilityChange);
     window.addEventListener('popstate', this.handlePopState);
     this.ensureInitialHistoryState();
+    this.labelTimer = setInterval(() => this.refreshTimeLabels(), LABEL_TICK);
   }
 
   disconnectedCallback() {
     document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     window.removeEventListener('popstate', this.handlePopState);
+    clearInterval(this.labelTimer);
     this.releaseWakeLock();
   }
 
@@ -168,7 +174,12 @@ class NotesApp extends HTMLElement {
     return /* HTML */ `
       <button class="note-card" data-note-id="${escapeHtml(note.id)}">
         <p class="note-card__preview">${escapeHtml(preview)}</p>
-        <span class="note-card__meta">${this.formatTimestamp(note.updatedAt)}</span>
+        <time
+          class="note-card__meta"
+          datetime="${new Date(note.updatedAt || 0).toISOString()}"
+          data-ts="${Number(note.updatedAt) || 0}"
+          title="Updated ${escapeHtml(fullLabel(note.updatedAt))}"
+        >${escapeHtml(relativeLabel(note.updatedAt))}</time>
       </button>
     `;
   }
@@ -654,12 +665,15 @@ class NotesApp extends HTMLElement {
     }
   }
 
-  formatTimestamp(timestamp) {
-    const formatter = new Intl.DateTimeFormat(undefined, {
-      hour: 'numeric',
-      minute: '2-digit',
+  // "5m ago" goes stale while the list sits open, so rewrite just the label
+  // text on a timer rather than re-rendering the whole component (which would
+  // disturb an open note or a drag in progress).
+  refreshTimeLabels() {
+    const now = Date.now();
+    this.querySelectorAll('.note-card__meta[data-ts]').forEach((el) => {
+      const label = relativeLabel(Number(el.dataset.ts), now);
+      if (el.textContent !== label) el.textContent = label;
     });
-    return formatter.format(new Date(timestamp));
   }
 
   supportsWakeLock() {
@@ -725,6 +739,7 @@ class NotesApp extends HTMLElement {
 
   handleVisibilityChange() {
     if (document.visibilityState !== 'visible') return;
+    this.refreshTimeLabels();
     if (this.wakeLockEnabled && !this.wakeLockSentinel) {
       this.requestWakeLock();
     }
