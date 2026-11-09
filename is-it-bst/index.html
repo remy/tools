@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tells you whether the UK is on British Summer Time (BST) or GMT right now, and when the clocks next change.">
+  <meta name="category" content="Productivity">
+  <title>Is it BST?</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <p class="question">Is it BST?</p>
+    <h1 class="answer" id="answer">…</h1>
+    <p class="now" id="now"></p>
+
+    <section class="card">
+      <p class="label" id="next-label">Next change</p>
+      <p class="relative" id="next-relative"></p>
+      <p class="date" id="next-date"></p>
+    </section>
+
+    <section class="card">
+      <h2 class="label">Upcoming changes</h2>
+      <table>
+        <thead>
+          <tr><th>Year</th><th>Clocks forward</th><th>Clocks back</th></tr>
+        </thead>
+        <tbody id="years"></tbody>
+      </table>
+      <p class="note">Clocks go forward 1 hour at 1am on the last Sunday in March, and back 1 hour at 2am on the last Sunday in October. Dates come from your browser's <code>Europe/London</code> time zone data. Source: <a href="https://www.gov.uk/when-do-the-clocks-change">gov.uk</a>.</p>
+    </section>
+  </main>
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
