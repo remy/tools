@@ -294,6 +294,11 @@
     "description": "Test your movie knowledge by matching famous quotes to AFI's 100 greatest films of all time",
     "title": "AFI Quote Master"
   },
+  "route-planner": {
+    "category": "Maps",
+    "description": "Plan a walking or running route from your location or a chosen destination with a distance or time budget. Generates loops, out-and-back, and point-to-point routes on an interactive map, downloadable as GPX.",
+    "title": "Route Planner"
+  },
   "rss-reader": {
     "category": "Developer Tools",
     "description": "Drop an RSS or Atom feed file to browse it. Titles collapse for skimming and expand to show the rendered article body.",

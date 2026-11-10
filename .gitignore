@@ -4,4 +4,6 @@ __pycache__/
 movies/cineworld-events/*
 .playwright-screenshots/
 .playwright-mcp/
+*.local.json
+route-planner/config.js
 *.local.jsonnode_modules/
