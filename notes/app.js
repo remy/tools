@@ -1,4 +1,4 @@
-import './text-reader.wc.js';
+import '/text-reader/text-reader.wc.js';
 import { db } from './db.js';
 import { dragMethods } from './drag.js';
 import { relativeLabel, fullLabel } from './relative-time.js';
