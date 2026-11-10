@@ -26,16 +26,19 @@ Then open:
 
 ## Refreshing Cineworld data
 
-Fetch 7 days of Cineworld events (today + next 6 days), save daily raw payloads, and write a merged frontend-ready file:
+Fetch 7 days of Cineworld showtimes (today + next 6 days), save the raw API payloads, and write a merged frontend-ready file:
 
 ```bash
+npm install
 node scripts/fetch-cineworld-showtimes.js --days 7 --out cineworld-movies.json --raw-dir cineworld-events
 ```
+
+Cineworld's API is behind Cloudflare bot protection, so the script drives a headless copy of your installed Google Chrome (via `playwright-core`) and calls the site's own `/api/gatsby-source-boxofficeapi` endpoints from inside the page. Google Chrome must be installed. If Cloudflare starts blocking the headless browser, try `--headed`.
 
 This produces:
 
 - `cineworld-movies.json` in the same structure the app already reads (`body.films` + `body.eventsDatesByFilmId`)
-- `cineworld-events/YYYY-MM-DD.json` raw daily responses (useful for debugging or audits)
+- `cineworld-events/schedule.json` and `cineworld-events/movies.json` raw API responses (useful for debugging or audits)
 
 ## TMDB key (optional)
 

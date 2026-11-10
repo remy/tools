@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Pick the days you'll work on a contract across a date range and get the day rate ex VAT, with UK bank holidays marked. Selection is kept in the URL for sharing.">
+  <meta name="category" content="Calculators">
+  <title>Contract Rate Calendar</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="top">
+        <h1>Contract days<span id="subtitle">Click a date to toggle</span></h1>
+        <div class="legend"><span><i class="l-sel"></i>Selected</span><span><i class="l-hol"></i>Bank holiday</span></div>
+      </div>
+      <div class="panel">
+        <div class="field">
+          <label for="start">From</label>
+          <input class="date" id="start" type="date" required>
+        </div>
+        <div class="field">
+          <label for="end">To</label>
+          <input class="date" id="end" type="date" required>
+        </div>
+        <div class="field">
+          <label for="contract">Contract value</label>
+          <div class="money"><span>£</span><input id="contract" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+        </div>
+        <label class="check"><input id="incvat" type="checkbox"> Includes VAT (20%)</label>
+      </div>
+      <div class="panel">
+        <div class="stat"><small>Days</small><output id="total">0</output></div>
+        <div class="stat"><small>Value ex VAT</small><output id="exvat">–</output></div>
+        <div class="stat key"><small>Day rate ex VAT</small><output id="rate">–</output></div>
+        <button class="btn" id="clear" type="button">Clear days</button>
+      </div>
+    </header>
+    <div class="months" id="months"></div>
+  </div>
+  <script src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>

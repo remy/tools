@@ -1,0 +1,644 @@
+:root {
+  color-scheme: light dark;
+
+  --bg: #fafafa;
+  --bg-secondary: #f4f4f5;
+  --surface: #ffffff;
+  --border: #d4d4d8;
+  --text: #18181b;
+  --text-secondary: #52525b;
+  --accent: #2563eb;
+  --accent-text: #ffffff;
+  --shadow: 0 8px 32px #00000014;
+  --radius: 12px;
+
+  /* Viewer chrome is always dark so it reads over any image */
+  --chrome-bg: #000000cc;
+  --chrome-border: #ffffff26;
+  --chrome-text: #f4f4f5;
+  --chrome-text-dim: #a1a1aa;
+
+  --stage-bg: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #09090b;
+    --bg-secondary: #18181b;
+    --surface: #131316;
+    --border: #3f3f46;
+    --text: #fafafa;
+    --text-secondary: #a1a1aa;
+    --accent: #60a5fa;
+    --accent-text: #09090b;
+    --shadow: 0 8px 32px #0009;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  line-height: 1.5;
+  overscroll-behavior: none;
+}
+
+/* ─── Empty state ─────────────────────────────────────────────────────── */
+
+.empty {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.empty-card {
+  width: 100%;
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 2.5rem 1.25rem;
+  background: var(--surface);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--accent);
+    background: var(--bg-secondary);
+  }
+
+  &:active {
+    transform: scale(0.995);
+  }
+}
+
+.empty-icon {
+  display: block;
+  width: 3rem;
+  height: 3rem;
+  color: var(--accent);
+
+  & svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.empty-title {
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.empty-text {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  max-width: 24rem;
+  text-wrap: balance;
+}
+
+.empty-hint {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.empty-note {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .empty-card {
+    padding: 3.5rem 2rem;
+  }
+}
+
+/* Drag feedback across the whole window */
+body.dragover .empty-card {
+  border-color: var(--accent);
+  background: var(--bg-secondary);
+}
+
+body.dragover::after {
+  content: "";
+  position: fixed;
+  inset: 0.5rem;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius);
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* ─── Viewer ──────────────────────────────────────────────────────────── */
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--stage-bg);
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--stage-bg);
+}
+
+/* Blurred backdrop, only for the "blur" background setting */
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: -5%;
+  background-image: var(--img-url);
+  background-size: cover;
+  background-position: center;
+  filter: blur(2.5rem) brightness(0.55);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.viewer[data-bg="blur"] .stage::before {
+  opacity: 1;
+}
+
+.frame {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%) rotate(0deg);
+  transition: transform 0.25s ease;
+}
+
+#image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.viewer[data-fit="cover"] #image {
+  object-fit: cover;
+}
+
+.viewer[data-fit="none"] #image {
+  object-fit: none;
+}
+
+.dim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: calc(var(--dim, 0) / 100);
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+/* ─── Clock overlay ───────────────────────────────────────────────────── */
+
+.clock {
+  position: absolute;
+  top: max(2.5rem, env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  color: #fff;
+  text-shadow: 0 2px 12px #000000b3;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-time {
+  font-size: clamp(2.75rem, 16vw, 6rem);
+  font-weight: 250;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.clock-date {
+  font-size: clamp(0.8rem, 3.5vw, 1.1rem);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
+
+/* ─── Toolbar ─────────────────────────────────────────────────────────── */
+
+.toolbar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
+  background: var(--chrome-bg);
+  border-top: 1px solid var(--chrome-border);
+  backdrop-filter: blur(12px);
+  color: var(--chrome-text);
+}
+
+.file-name {
+  flex: 1 1 100%;
+  min-width: 0;
+  font-size: 0.75rem;
+  color: var(--chrome-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .toolbar {
+    flex-wrap: nowrap;
+    padding: 0.75rem 1rem;
+  }
+
+  .file-name {
+    flex: 0 1 auto;
+    font-size: 0.8rem;
+  }
+
+  .actions {
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────── */
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  padding: 0.5em 0.85em;
+  min-height: 2.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--chrome-border);
+  background: #ffffff14;
+  color: var(--chrome-text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover {
+    background: #ffffff26;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.action-btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+
+  &:hover {
+    background: color-mix(in srgb, var(--accent) 85%, #fff);
+  }
+}
+
+.action-btn-icon {
+  padding: 0.5em;
+  width: 2.5rem;
+}
+
+/* Wake-lock host wraps its button; keep it inert as a layout box */
+wake-lock {
+  display: inline-flex;
+}
+
+/* Lit dot when the wake lock is held */
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.35;
+  transition: opacity 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+wake-lock[active] .action-btn {
+  border-color: #22c55e;
+  color: #86efac;
+}
+
+wake-lock[active] .dot {
+  background: #22c55e;
+  opacity: 1;
+  box-shadow: 0 0 0.5rem #22c55e;
+}
+
+.btn-text {
+  display: none;
+}
+
+@media (min-width: 420px) {
+  .btn-text {
+    display: inline;
+  }
+}
+
+/* ─── Shared icons ────────────────────────────────────────────────────── */
+
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-settings {
+  width: 1.25rem;
+  height: 1.25rem;
+  -webkit-mask-image: url(/icons/settings.svg);
+  mask-image: url(/icons/settings.svg);
+}
+
+/* ─── Locked mode ─────────────────────────────────────────────────────── */
+
+.lock-chrome {
+  position: fixed;
+  left: 50%;
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+  z-index: 10;
+}
+
+.lock-chrome .action-btn {
+  background: var(--chrome-bg);
+  backdrop-filter: blur(12px);
+}
+
+body.locked {
+  cursor: none;
+}
+
+body.locked .toolbar {
+  display: none;
+}
+
+body.locked .lock-chrome {
+  display: block;
+}
+
+body.locked.chrome-visible {
+  cursor: auto;
+}
+
+body.locked.chrome-visible .lock-chrome {
+  opacity: 1;
+}
+
+/* ─── Status toast ────────────────────────────────────────────────────── */
+
+.status {
+  position: fixed;
+  left: 50%;
+  top: max(1rem, env(safe-area-inset-top));
+  transform: translateX(-50%);
+  max-width: min(90vw, 30rem);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: var(--chrome-bg);
+  border: 1px solid var(--chrome-border);
+  backdrop-filter: blur(12px);
+  color: var(--chrome-text);
+  font-size: 0.85rem;
+  text-align: center;
+  z-index: 100;
+}
+
+/* ─── Settings dialog ─────────────────────────────────────────────────── */
+
+dialog {
+  padding: 0;
+  margin: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  width: min(28rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  box-shadow: var(--shadow);
+
+  &::backdrop {
+    background: #000000a6;
+    backdrop-filter: blur(2px);
+  }
+}
+
+.dialog-inner {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+
+  & h2 {
+    font-size: 1.05rem;
+    font-weight: 650;
+  }
+
+  & .action-btn {
+    border-color: var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+
+    &:hover {
+      background: var(--bg-secondary);
+      color: var(--text);
+    }
+  }
+}
+
+.dialog-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  & label {
+    font-size: 0.85rem;
+    font-weight: 550;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  & select,
+  & input[type="range"] {
+    width: 100%;
+    font: inherit;
+    font-size: 0.9rem;
+  }
+
+  & select {
+    padding: 0.55rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text);
+  }
+
+  & input[type="range"] {
+    accent-color: var(--accent);
+  }
+}
+
+.field-value {
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+
+  & input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  & label {
+    font-weight: 450;
+    display: block;
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+
+  & .action-btn {
+    border-color: var(--border);
+    background: var(--bg-secondary);
+    color: var(--text);
+
+    &:hover {
+      background: var(--border);
+    }
+  }
+
+  & .action-btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-text);
+
+    &:hover {
+      background: color-mix(in srgb, var(--accent) 85%, var(--text));
+    }
+  }
+}
+
+.support-note {
+  flex: 1 1 14rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 639px) {
+  dialog {
+    inset: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+
+  .dialog-inner {
+    height: 100%;
+  }
+
+  .dialog-footer {
+    & .action-btn {
+      flex: 1 1 auto;
+    }
+  }
+}

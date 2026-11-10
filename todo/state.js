@@ -13,8 +13,10 @@ export const SETTINGS_ID = 'settings';
 export const state = {
   lists: [],          // [{ id, name, createdAt, order }]
   templates: [],      // [{ id, name, items: [text], createdAt }]
-  items: [],          // items for the currently-selected list
+  items: [],          // items for the current list: { id, kind: 'item'|'heading', text, checked, order, ... }
   counts: {},         // listId -> { total, done } for the home view
   currentListId: null,
   view: 'home',       // 'home' (all lists) | 'list' (a single list)
+  editMode: false,    // when true the open list shows drag / edit / delete controls
+  reorderLists: false, // when true the landing page shows drag handles for the lists
 };

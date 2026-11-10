@@ -1,30 +1,21 @@
 import { state, DEFAULT_RATE } from './state.js';
 import { db, getSyncConfig, setSyncConfig } from './db.js';
 import { render } from './render-calendar.js';
+import '/lib/sync-settings.wc.js';
 
-function statusText(s) {
-  if (!s) return 'Sync disabled.';
-  if (s.state === 'disabled') return 'Sync disabled.';
-  const pending = s.pendingPush ? ` · ${s.pendingPush} pending` : '';
-  if (s.state === 'syncing') return `Syncing…${pending}`;
-  if (s.state === 'error') {
-    const msg = s.lastError?.message || 'Unknown error';
-    return `Error: ${msg}${pending}`;
-  }
-  const last = s.lastSyncedAt
-    ? ` · last synced ${new Date(s.lastSyncedAt).toLocaleTimeString()}`
-    : '';
-  return `Idle${pending}${last}`;
+// Settings that arrive by sync live in the database, so re-read them whenever a
+// sync operation completes rather than trusting the copy held in memory.
+async function reloadFromDb() {
+  state.subscriptions = await db.getAll();
+  const saved = await db.getAllSettings();
+  if (saved.displayCurrency) state.settings.displayCurrency = saved.displayCurrency;
+  if (saved.exchangeRate) state.settings.exchangeRate = saved.exchangeRate;
+  render();
 }
 
-function renderSyncStatus(s) {
-  const el = document.getElementById('sync-status');
-  if (!el) return;
-  el.textContent = statusText(s);
-  el.dataset.state = s?.state ?? 'disabled';
-}
-
-let unsubStatus = null;
+// The sync panel is the shared <sync-settings> component. Configured once, on
+// first open, because the settings dialog is the only place it appears.
+let syncConfigured = false;
 
 export function openSettings() {
   const ccy = state.settings.displayCurrency;
@@ -32,12 +23,24 @@ export function openSettings() {
   if (radio) radio.checked = true;
   document.getElementById('exchange-rate').value = state.settings.exchangeRate;
 
-  const cfg = getSyncConfig();
-  document.getElementById('sync-url').value = cfg.url;
-  document.getElementById('sync-token').value = cfg.token;
-
-  if (unsubStatus) unsubStatus();
-  unsubStatus = db.onSyncStatus(renderSyncStatus);
+  const panel = document.getElementById('sync-settings');
+  if (!syncConfigured) {
+    syncConfigured = true;
+    panel.configure({
+      store: db,
+      getConfig: getSyncConfig,
+      setConfig: setSyncConfig,
+      mergeWarning:
+        'Local subscriptions exist on this device. Saving will merge them with '
+        + "the server's data (last write wins per item).\n\n"
+        + 'To REPLACE local data with the server instead, cancel and use '
+        + '"Pull from server".\n\nContinue with merge?',
+      onRefresh: reloadFromDb,
+    });
+  } else {
+    // A sync may have landed (or another tab saved) since it was last open.
+    panel.refresh();
+  }
 
   document.getElementById('settings-popover').showModal();
 }
@@ -51,80 +54,4 @@ export async function handleSettingsSave() {
   await db.setSetting('exchangeRate', rate);
   render();
   document.getElementById('settings-popover').close();
-}
-
-export async function handleSyncSave() {
-  const url = document.getElementById('sync-url').value.trim();
-  const token = document.getElementById('sync-token').value.trim();
-
-  const btn = document.getElementById('sync-save');
-  btn.disabled = true;
-  try {
-    // Decide BEFORE writing the new config so the check reflects the current
-    // local DB, not anything pulled in by a freshly-started sync.
-    const hasLocal = url ? await db.hasSubscriptions() : false;
-
-    if (url && hasLocal) {
-      const ok = confirm(
-        'Local subscriptions exist on this device. Saving will merge them with '
-        + "the server's data (last write wins per item).\n\n"
-        + "If you'd rather REPLACE local data with what's on the server, cancel "
-        + "and use \"Pull from server\" instead.\n\nContinue with merge?",
-      );
-      if (!ok) {
-        btn.disabled = false;
-        return;
-      }
-    }
-
-    setSyncConfig({ url, token });
-    // pullFirst when the local DB has nothing to lose — protects fresh
-    // clients from racing an empty push against the initial pull.
-    await db.reopen({ pullFirst: !hasLocal });
-    state.subscriptions = await db.getAll();
-    const saved = await db.getAllSettings();
-    if (saved.displayCurrency) state.settings.displayCurrency = saved.displayCurrency;
-    if (saved.exchangeRate) state.settings.exchangeRate = saved.exchangeRate;
-    render();
-  } catch (err) {
-    renderSyncStatus({ state: 'error', lastError: err });
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-export async function handleSyncNow() {
-  const btn = document.getElementById('sync-now');
-  btn.disabled = true;
-  try {
-    await db.syncNow();
-    state.subscriptions = await db.getAll();
-    render();
-  } catch (err) {
-    renderSyncStatus({ state: 'error', lastError: err });
-  } finally {
-    btn.disabled = false;
-  }
-}
-
-export async function handleSyncPull() {
-  const ok = confirm(
-    'Pull from the server and overwrite local data? Any local changes that '
-    + "haven't been pushed will be discarded. The remote server is not modified.",
-  );
-  if (!ok) return;
-  const btn = document.getElementById('sync-pull');
-  btn.disabled = true;
-  try {
-    await db.pullFromRemote();
-    const saved = await db.getAllSettings();
-    if (saved.displayCurrency) state.settings.displayCurrency = saved.displayCurrency;
-    if (saved.exchangeRate) state.settings.exchangeRate = saved.exchangeRate;
-    state.subscriptions = await db.getAll();
-    render();
-  } catch (err) {
-    renderSyncStatus({ state: 'error', lastError: err });
-  } finally {
-    btn.disabled = false;
-  }
 }

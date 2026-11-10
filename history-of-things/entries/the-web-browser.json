@@ -1,0 +1,76 @@
+{
+  "slug": "the-web-browser",
+  "title": "The Web Browser",
+  "image": "the-web-browser.avif",
+  "imageAlt": "The NeXTcube computer that Tim Berners-Lee used as the world's first web server, on display at CERN, with a handwritten label reading “This machine is a server. DO NOT POWER IT DOWN!!”",
+  "imageCredit": {
+    "text": "Coolcaesar, Wikimedia Commons (CC BY-SA 3.0)",
+    "url": "https://commons.wikimedia.org/wiki/File:First_Web_Server.jpg"
+  },
+  "published": "2026-08-18",
+  "summary": [
+    "The web browser is the most-used piece of software ever written, and almost nobody thinks about it. It is the window you are looking through right now: a program whose entire job is to fetch a pile of text from a stranger's computer somewhere in the world and turn it, in a fraction of a second, into something you can read, watch, argue with or buy from. It began as a side project by one physicist who was fed up with losing track of documents, and within fifteen years it had become the battleground for one of the biggest corporate fights in the history of technology.",
+    "The story starts at CERN, the particle physics laboratory near Geneva, in 1989. Tim Berners-Lee worked there as a software engineer, and his complaint was mundane: thousands of scientists, thousands of documents, and no sensible way to connect any of it together. His proposal for a fix was famously annotated by his boss with the words “vague, but exciting”. Over the second half of 1990, on a sleek black NeXT computer, he built the whole thing — a server, a page format called HTML, an address format called a URL, and a program to read it all. He finished the first version some time before Christmas Day 1990 and called it WorldWideWeb.",
+    "That first browser was, in one important way, better than the one you are using now. It did not just display pages; it let you write and edit them in the same window, dragging links between documents as easily as moving a file. Berners-Lee always imagined the web as something everyone would write to, not just read from. When the software was renamed Nexus in 1994 — to stop people confusing the program with the web itself — that editing idea quietly got left behind, and it took roughly two decades and the arrival of blogs and social media for it to come back.",
+    "The web stayed a niche academic curiosity until 1993, and then two things happened. In April, CERN released the underlying code into the public domain, meaning anyone could build on it without paying or asking. And in September, a team at the University of Illinois led by a 22-year-old student called Marc Andreessen released Mosaic. Mosaic ran on ordinary computers, it was easy to install, and — crucially — it put pictures directly inside the page rather than opening them in a separate window. That one decision is why the web looks the way it does. Suddenly the web was not a filing cabinet. It was a magazine.",
+    "Andreessen left to found a company, and in October 1994 it shipped Netscape Navigator. Within a couple of years Netscape had something like 80 per cent of everyone on the internet using its browser, and it looked untouchable. Then Microsoft noticed. Internet Explorer 1.0 appeared on 24 August 1995, and Microsoft did something Netscape could not compete with: it gave the browser away free and installed it on every copy of Windows. The fight that followed is now called the first browser war, and it was genuinely nasty — a US government antitrust case in 1998 heard testimony that a Microsoft executive had talked about cutting off Netscape's “air supply”. By 2001, Internet Explorer had over 90 per cent of the market. Netscape had been sold and largely dismantled.",
+    "But losing companies can leave useful wreckage. In 1998, on its way down, Netscape released its browser's source code to the public and created a non-profit called Mozilla. Volunteers rebuilt it from the ground up, and in November 2004 they shipped Firefox: faster, more secure, with tabs and pop-up blocking, and no corporation behind it. It clawed back roughly a quarter of the market from a competitor that had stopped bothering to improve. Apple had launched Safari the year before, and in September 2008 Google released Chrome — designed so that each tab ran as a separate process, so one broken page could not crash the lot.",
+    "Chrome won. It passed Internet Explorer in 2012 and kept climbing; today around seven in every ten browsing sessions on Earth happen in Chrome, with Safari a distant second. More significantly, almost every remaining rival — Edge, Opera, Brave, Vivaldi — is now built on Chromium, the open-source engine underneath Chrome. Only Firefox and Safari still run engines of their own. After thirty years of ferocious competition, the number of genuinely independent ways to render a web page has fallen to three.",
+    "That matters more than it sounds. A browser is not a neutral pane of glass; it is the thing that decides what the web is allowed to do. Whoever builds the browser chooses which features exist, which adverts get blocked, how much of your behaviour is tracked, and what counts as a standard. It is a piece of software that most people never chose, rarely think about, and use for several hours a day — which makes it, quietly, one of the most powerful things ever built."
+  ],
+  "didYouKnow": {
+    "text": "The very first browser could edit pages as well as read them. Tim Berners-Lee's WorldWideWeb was a full what-you-see-is-what-you-get editor, so writing a web page was as easy as visiting one. That feature was dropped in the mid-1990s, and the web spent the next twenty years reinventing it as blogs, wikis and social media.",
+    "sources": [
+      {
+        "title": "W3C — WorldWideWeb, the first Web client",
+        "url": "https://www.w3.org/People/Berners-Lee/WorldWideWeb.html"
+      }
+    ]
+  },
+  "momentFromHistory": {
+    "title": "The night Netscape toppled the giant 'e'",
+    "text": "Late on the night of 30 September 1997, days after Internet Explorer 4 shipped, a group of Microsoft employees drove a large metal Internet Explorer logo onto the front lawn of Netscape's headquarters in Mountain View, California, and left it there. A Netscape spokesperson called it juvenile — “something you'd expect from a start-up, not the largest software company in the world”. Netscape's staff then did something better than complain: they toppled the logo onto its back, spray-painted “Netscape Now” along the side facing the street, hauled over their seven-foot statue of Mozilla, the company's grinning dinosaur mascot, and stood it on top holding a sign reading “Netscape 72, Microsoft 18” — the market share at the time. It was the last good joke Netscape got to make. Within four years those numbers had almost exactly reversed.",
+    "sources": [
+      {
+        "title": "Network World — Microsoft IE vs. Netscape Navigator",
+        "url": "https://www.networkworld.com/article/816861/software-microsoft-ie-vs-netscape-navigator.html"
+      },
+      {
+        "title": "Wikipedia — Browser wars",
+        "url": "https://en.wikipedia.org/wiki/Browser_wars"
+      }
+    ]
+  },
+  "furtherReading": [
+    {
+      "title": "The original proposal for the World Wide Web",
+      "url": "https://www.w3.org/History/1989/proposal.html",
+      "note": "Tim Berners-Lee's 1989 memo — the one his manager called “vague, but exciting”"
+    },
+    {
+      "title": "CERN — A short history of the Web",
+      "url": "https://home.cern/science/computing/birth-web/short-history-web",
+      "note": "Told by the laboratory where it was invented"
+    },
+    {
+      "title": "Wikipedia — History of the web browser",
+      "url": "https://en.wikipedia.org/wiki/History_of_the_web_browser",
+      "note": "The full timeline, browser by browser"
+    },
+    {
+      "title": "Wikipedia — Browser wars",
+      "url": "https://en.wikipedia.org/wiki/Browser_wars",
+      "note": "How Netscape lost, and how Chrome won the rematch"
+    },
+    {
+      "title": "Restored: the WorldWideWeb browser, in your browser",
+      "url": "https://worldwideweb.cern.ch/browser/",
+      "note": "CERN rebuilt the 1990 original — you can actually use it"
+    },
+    {
+      "title": "StatCounter — live browser market share",
+      "url": "https://gs.statcounter.com/browser-market-share",
+      "note": "Who is winning today"
+    }
+  ]
+}

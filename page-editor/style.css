@@ -313,6 +313,69 @@ body {
   box-shadow: 0 10px 40px rgba(0,0,0,0.15);
 }
 
+/* ---- Reset confirmation ---- */
+dialog {
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--chrome);
+  color: var(--text);
+  max-width: min(24rem, calc(100vw - 2rem));
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+dialog::backdrop {
+  background: rgba(15, 23, 42, 0.4);
+}
+
+dialog.confirm form {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+  height: 100%;
+  align-content: start;
+}
+
+dialog.confirm h2 { font-size: 1.05rem; }
+dialog.confirm p { color: var(--muted); font-size: 0.9rem; }
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.confirm-actions button {
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--chrome);
+  color: var(--text);
+  border-radius: 7px;
+  padding: 8px 14px;
+}
+
+.confirm-actions .danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+@media (max-width: 639px) {
+  dialog {
+    inset: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+
 @media (max-width: 640px) {
   .panel { width: 100%; position: absolute; inset: 0; z-index: 5; }
   .brand { display: none; }

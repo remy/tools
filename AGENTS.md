@@ -24,13 +24,18 @@ Do not use any UI frameworks or utility CSS libraries. Write plain HTML, CSS, an
 
 - Write styles for mobile first, then add `@media (min-width: ...)` overrides for larger screens.
 - Every project must support both dark and light colour schemes.
-- Use `prefers-color-scheme` media query and/or a `[data-theme]` attribute on `<html>` for manual toggling.
+- **Follow the system setting.** The theme comes from the OS/browser light–dark control via `prefers-color-scheme` — nothing else.
+- **Do not add a theme toggle.** A manual light/dark switch is not required and should not be built unless the author explicitly asks for one. Without an explicit request there is no toggle button, no `theme` value in `localStorage`, and no `?theme=` URL parameter — the system control is the only input.
+- If a toggle *is* explicitly requested, layer it on top with a `[data-theme]` attribute on `<html>`, keeping `prefers-color-scheme` as the default when the attribute is absent.
 - Define all colours as CSS custom properties in `:root` so themes can be swapped cleanly.
+- Set `color-scheme: light dark` on `:root` so native controls, form fields, and scrollbars follow along too.
 
 **Minimal theme pattern:**
 
 ```css
 :root {
+  color-scheme: light dark;
+
   --bg: #fafafa;
   --bg-secondary: #f4f4f5;
   --border: #d4d4d8;
@@ -49,11 +54,9 @@ Do not use any UI frameworks or utility CSS libraries. Write plain HTML, CSS, an
     --accent: #60a5fa;
   }
 }
-
-/* Manual toggle support */
-[data-theme="light"] { /* light values */ }
-[data-theme="dark"]  { /* dark values */  }
 ```
+
+Every colour that differs between the two schemes belongs in this block as a custom property. Avoid one-off `body.light .thing { color: ... }` overrides scattered through the stylesheet — add a variable instead and give it a value in each scheme.
 
 ### 3. Each Project Lives in Its Own Directory
 
@@ -67,7 +70,7 @@ repo-root/
     └── script.js       ← preferred when JS is used
 ```
 
-Keep the tool self-contained. Avoid referencing files outside the tool's directory.
+Keep the tool self-contained. Avoid referencing files outside the tool's directory, apart from the shared root directories listed under "Shared Code" below.
 Prefer smaller, focused files over one large file. Default to splitting HTML, CSS, and JS into separate files.
 Inline `<style>`/`<script>` blocks should be treated as exceptions for very small throwaway prototypes only.
 
@@ -84,19 +87,75 @@ Without these the tool will appear as "Uncategorized" and may have no descriptio
 
 **Valid categories** (match existing ones or add a new one consistently):
 
-| Category | Good fit when… |
-|---|---|
+| Category          | Good fit when…                                                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `Developer Tools` | The primary user is a developer; the tool helps with code, data formats, APIs, dependencies, diffs, or hardware specs (e.g. JSON validator, package browser, merge tool, ESP32 comparison) |
-| `Calculators` | The tool takes numeric inputs and produces a computed result — rates, values, durations, or unit conversions (e.g. capacitor decoder, tax calculator, time adder) |
-| `Game` | The tool is an interactive game with scoring, winning, or challenge mechanics (e.g. quiz, puzzle, countdown numbers) |
-| `Home Assistant` | The tool queries, debugs, or integrates with a Home Assistant instance or its config format |
-| `Immich` | The tool queries, manages, or integrates with an Immich photo library via its API |
-| `Productivity` | The tool helps organise personal tasks, track progress, or plan real-world activities — not primarily a calculator or developer aid (e.g. cinema planner, reading tracker) |
-| `Web Demos` | The tool's main purpose is demonstrating a browser API or web platform feature, rather than solving a user problem (e.g. Popover API demo, Wake Lock demo) |
+| `Calculators`     | The tool takes numeric inputs and produces a computed result — rates, values, durations, or unit conversions (e.g. capacitor decoder, tax calculator, time adder)                          |
+| `Game`            | The tool is an interactive game with scoring, winning, or challenge mechanics (e.g. quiz, puzzle, countdown numbers)                                                                       |
+| `Home Assistant`  | The tool queries, debugs, or integrates with a Home Assistant instance or its config format                                                                                                |
+| `Immich`          | The tool queries, manages, or integrates with an Immich photo library via its API                                                                                                          |
+| `Productivity`    | The tool helps organise personal tasks, track progress, or plan real-world activities — not primarily a calculator or developer aid (e.g. cinema planner, reading tracker)                 |
+| `Web Demos`       | The tool's main purpose is demonstrating a browser API or web platform feature, rather than solving a user problem (e.g. Popover API demo, Wake Lock demo)                                 |
 
 **If you cannot confidently determine the category** from the tool's description and functionality during the agentic process, do not guess — ask the author:
 
 > "Which category should I use for this tool? The options are: Developer Tools, Calculators, Game, Home Assistant, Immich, Productivity, Web Demos."
+
+---
+
+## Shared Code
+
+Tools are self-contained by default. The exceptions are a small number of root
+directories that every tool may reference by absolute path:
+
+| Path      | Contents                                                          |
+| --------- | ----------------------------------------------------------------- |
+| `/vendor` | Third-party libraries, vendored rather than loaded from a CDN     |
+| `/icons`  | Shared SVG icons, rendered with the CSS mask technique             |
+| `/lib`    | Shared ES modules — code more than one tool genuinely needs        |
+
+### `/lib`
+
+Reach for `/lib` only when a second tool needs the same code, and prefer
+extracting from a working implementation over writing a shared module up front.
+The bar is deliberately high: a tool that imports nothing is easier to change
+than one that doesn't.
+
+Current modules, all serving the PouchDB-backed tools:
+
+| Module                     | Purpose                                                        |
+| -------------------------- | -------------------------------------------------------------- |
+| `sync-config.js`           | Where CouchDB connection details are stored, and share-link encoding |
+| `pouch-store.js`           | `PouchStore` — local PouchDB plus live CouchDB replication      |
+| `sync-status.js`           | Human-readable rendering of a sync status                      |
+| `deep-link.js`             | Virtual per-record links and boot-time link handling           |
+| `sync-settings.wc.js`      | `<sync-settings>` — the sync panel for a settings dialog        |
+
+Import them by absolute path so the same specifier works from any tool:
+
+```js
+import { PouchStore } from '/lib/pouch-store.js';
+```
+
+**Sync configuration is shared, CouchDB databases are not.** Every tool is
+served from one origin and so shares one `localStorage`. Connection details
+therefore live under a single structured key, namespaced by tool:
+
+```
+tools.sync = { "todo": { url, token }, "workout": { url, token }, … }
+```
+
+Each tool still points at its own database — only the storage location is
+shared. Tools that predate this key wrote their own flat pair (e.g.
+`todo-lists.sync.url`); `createSyncConfig` takes a `legacyPrefix` and falls back
+to reading those, so an existing install keeps working untouched. The legacy
+keys are deliberately never deleted, so rolling back to older code still finds a
+working config.
+
+A tool adopting `PouchStore` subclasses it and adds only its document mappers
+and domain queries — the connection lifecycle, status reporting, change
+subscriptions and manual sync operations all come from the base class. See
+`todo/db.js` for the reference implementation.
 
 ---
 
@@ -130,6 +189,8 @@ Use this as the starting point for a new `index.html`:
 
 ```css
 :root {
+  color-scheme: light dark;
+
   --bg: #fafafa;
   --bg-secondary: #f4f4f5;
   --border: #d4d4d8;
@@ -294,7 +355,7 @@ Commit both the new tool directory and the updated `projects.json` / root `index
 - Keep tools small and focused.
 - Prefer many smaller files with clear responsibilities over one large file.
 - Default structure is `index.html` + `style.css` + `script.js`; split further (for example, `trace.js`, `ui.js`) when complexity grows.
-- As a guideline, keep individual files compact and readable (roughly up to ~20 KB where practical) rather than allowing one file to balloon.
+- As a guideline, keep individual files compact and readable (never over 1000 lines of code) rather than allowing one file to balloon.
 - External network requests from the tool itself (APIs, data fetches) are fine. External CSS/JS CDN dependencies are not.
 
 ---
@@ -307,11 +368,10 @@ Commit both the new tool directory and the updated `projects.json` / root `index
 - [ ] `script.js` present when JavaScript is needed
 - [ ] `<meta name="description">` present with a clear description
 - [ ] `<meta name="category">` present with a valid category
-- [ ] Dark **and** light mode implemented (via `prefers-color-scheme`)
+- [ ] Dark **and** light mode implemented, following the system setting via `prefers-color-scheme` (no theme toggle unless explicitly requested)
 - [ ] Mobile-first CSS (base styles for small screens, `@media (min-width:...)` for larger)
 - [ ] No React, Vue, Svelte, or other UI frameworks
 - [ ] No Tailwind, Bootstrap, or utility CSS libraries
 - [ ] No external font or icon CDN imports
 - [ ] Service worker registration added before `</body>`: `<script>navigator.serviceWorker?.register("/sw.js")</script>`
-- [ ] `python scripts/generate_index.py` run before committing
 - [ ] Root `index.html` and `projects.json` updated and committed

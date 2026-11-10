@@ -85,5 +85,16 @@ const PageDB = (() => {
     });
   }
 
-  return { loadDoc, saveDoc, listAssets, putAsset, deleteAsset, renameAsset };
+  async function clearAll() {
+    const db = await open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction([DOC_STORE, ASSET_STORE], 'readwrite');
+      tx.objectStore(DOC_STORE).clear();
+      tx.objectStore(ASSET_STORE).clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  return { loadDoc, saveDoc, listAssets, putAsset, deleteAsset, renameAsset, clearAll };
 })();

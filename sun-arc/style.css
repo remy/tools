@@ -55,11 +55,62 @@ body {
   padding: 1.75rem 1.75rem 2rem;
 }
 
+.head-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
 .card-head h1 {
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: var(--ink);
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.action-btn:hover {
+  background: var(--bg);
+  color: var(--sun);
+}
+
+.action-btn:active {
+  scale: 0.92;
+}
+
+/* Mask-based icons: a shared SVG painted with currentColor so it adapts to the
+   theme. */
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-settings {
+  width: 1.25rem;
+  height: 1.25rem;
+  -webkit-mask-image: url(/icons/settings.svg);
+  mask-image: url(/icons/settings.svg);
 }
 
 .subtitle {
@@ -274,6 +325,156 @@ button.ghost:hover {
   font-size: 0.8rem;
   color: var(--muted);
   margin-top: 0.5rem;
+}
+
+/* ---- cloud toggle ---- */
+.control-clouds {
+  justify-content: space-between;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.toggle input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--sun);
+  cursor: pointer;
+}
+
+.weather-msg {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.weather-msg.error {
+  color: #e0533d;
+}
+
+/* ---- settings dialog ---- */
+dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  border: none;
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+  padding: 0;
+  width: 100%;
+  max-width: min(28rem, calc(100vw - 2rem));
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.dialog-head h2 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dialog-body {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.field input {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  width: 100%;
+}
+
+.field-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.field-hint a {
+  color: var(--sun);
+}
+
+.settings-note {
+  font-size: 0.83rem;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--sun) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sun) 35%, transparent);
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+button.primary {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--sun);
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+button.primary:hover {
+  background: var(--sun-soft);
+}
+
+@media (max-width: 639px) {
+  dialog {
+    inset: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
 }
 
 /* On very narrow screens, let the card fill the viewport edge to edge. */

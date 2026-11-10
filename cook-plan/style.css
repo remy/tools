@@ -1,33 +1,38 @@
 /* =============================================
    Cook Planner — style.css
-   Warm orange theme, mobile-first, dark + light
+   Warm orange palette, mobile-first, light + dark
+   following the system setting (no manual toggle).
    ============================================= */
 
 :root {
-  --colour-primary: #ea580c;
-  --colour-primary-hover: #c2410c;
-  --colour-primary-light: #ffedd5;
-  --colour-accent: #f59e0b;
-  --colour-accent-hover: #d97706;
-  --colour-accent-light: #fef3c7;
+  color-scheme: light dark;
 
-  --colour-bg: #fafafa;
-  --colour-bg-secondary: #f4f4f5;
-  --colour-bg-tertiary: #e4e4e7;
-  --colour-border: #d4d4d8;
-  --colour-text: #18181b;
-  --colour-text-secondary: #52525b;
-  --colour-text-tertiary: #a1a1aa;
-  --colour-block-bg: #ffffff;
-  --colour-block-border: #e4e4e7;
-  --colour-shadow: rgba(0, 0, 0, 0.08);
+  /* Orange is the tool's own accent; amber marks whatever is happening now. */
+  --accent: #ea580c;
+  --accent-hover: #c2410c;
+  --accent-soft: #ffedd5;
+  --accent-glow: rgba(234, 88, 12, 0.2);
+  --amber: #f59e0b;
+  --amber-soft: #fef3c7;
 
-  --colour-success: #10b981;
-  --colour-success-light: #d1fae5;
-  --colour-warning: #f59e0b;
-  --colour-warning-light: #fef3c7;
-  --colour-error: #ef4444;
-  --colour-error-light: #fee2e2;
+  --bg: #fafafa;
+  --bg-card: #ffffff;
+  --bg-input: #f4f4f5;
+  --bg-hover: #e4e4e7;
+  --border: #d4d4d8;
+  --border-light: #e4e4e7;
+  --text: #18181b;
+  --text-2: #52525b;
+  --text-3: #a1a1aa;
+
+  --green: #10b981;
+  --green-soft: #d1fae5;
+  --danger: #ef4444;
+  --danger-soft: #fee2e2;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --radius: 0.5rem;
 
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
@@ -38,60 +43,30 @@
   --space-3xl: 3rem;
 }
 
+/* Only the values that differ are redefined — every token above keeps its
+   light value unless it appears here. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --colour-bg: #0a0a0a;
-    --colour-bg-secondary: #171717;
-    --colour-bg-tertiary: #262626;
-    --colour-border: #3f3f46;
-    --colour-text: #fafafa;
-    --colour-text-secondary: #a1a1aa;
-    --colour-text-tertiary: #71717a;
-    --colour-block-bg: #171717;
-    --colour-block-border: #262626;
-    --colour-shadow: rgba(0, 0, 0, 0.4);
-    --colour-primary-light: #431407;
-    --colour-accent-light: #451a03;
-    --colour-success-light: #022c22;
-    --colour-warning-light: #451a03;
-    --colour-error-light: #450a0a;
+    --accent-soft: #431407;
+    --accent-glow: rgba(234, 88, 12, 0.3);
+    --amber-soft: #451a03;
+
+    --bg: #0a0a0a;
+    --bg-card: #171717;
+    --bg-input: #171717;
+    --bg-hover: #262626;
+    --border: #3f3f46;
+    --border-light: #262626;
+    --text: #fafafa;
+    --text-2: #a1a1aa;
+    --text-3: #71717a;
+
+    --green-soft: #022c22;
+    --danger-soft: #450a0a;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.4);
   }
-}
-
-[data-theme='dark'] {
-  --colour-bg: #0a0a0a;
-  --colour-bg-secondary: #171717;
-  --colour-bg-tertiary: #262626;
-  --colour-border: #3f3f46;
-  --colour-text: #fafafa;
-  --colour-text-secondary: #a1a1aa;
-  --colour-text-tertiary: #71717a;
-  --colour-block-bg: #171717;
-  --colour-block-border: #262626;
-  --colour-shadow: rgba(0, 0, 0, 0.4);
-  --colour-primary-light: #431407;
-  --colour-accent-light: #451a03;
-  --colour-success-light: #022c22;
-  --colour-warning-light: #451a03;
-  --colour-error-light: #450a0a;
-}
-
-[data-theme='light'] {
-  --colour-bg: #fafafa;
-  --colour-bg-secondary: #f4f4f5;
-  --colour-bg-tertiary: #e4e4e7;
-  --colour-border: #d4d4d8;
-  --colour-text: #18181b;
-  --colour-text-secondary: #52525b;
-  --colour-text-tertiary: #a1a1aa;
-  --colour-block-bg: #ffffff;
-  --colour-block-border: #e4e4e7;
-  --colour-shadow: rgba(0, 0, 0, 0.08);
-  --colour-primary-light: #ffedd5;
-  --colour-accent-light: #fef3c7;
-  --colour-success-light: #d1fae5;
-  --colour-warning-light: #fef3c7;
-  --colour-error-light: #fee2e2;
 }
 
 /* ---- Reset ---- */
@@ -101,6 +76,12 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* Firefox does not hide an element whose display is overridden by flex/grid,
+   so the attribute needs an explicit rule to stay reliable. */
+[hidden] {
+  display: none !important;
 }
 
 html {
@@ -114,8 +95,8 @@ body {
     Arial, sans-serif;
   font-size: 1rem;
   line-height: 1.5;
-  color: var(--colour-text);
-  background: var(--colour-bg);
+  color: var(--text);
+  background: var(--bg);
   min-height: 100dvh;
 }
 
@@ -165,13 +146,13 @@ button {
   gap: var(--space-md);
   margin-bottom: var(--space-xl);
   padding-bottom: var(--space-lg);
-  border-bottom: 2px solid var(--colour-primary-light);
+  border-bottom: 2px solid var(--accent-soft);
 
   & h1 {
     font-family: Georgia, 'Times New Roman', Times, serif;
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--colour-primary);
+    color: var(--accent);
     letter-spacing: -0.01em;
   }
 
@@ -215,36 +196,36 @@ button {
 }
 
 .btn-primary {
-  background: var(--colour-primary);
+  background: var(--accent);
   color: #fff;
   &:hover:not(:disabled) {
-    background: var(--colour-primary-hover);
+    background: var(--accent-hover);
   }
 }
 
 .btn-secondary {
-  background: var(--colour-bg-secondary);
-  color: var(--colour-text);
-  border: 1px solid var(--colour-border);
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--border);
   &:hover:not(:disabled) {
-    background: var(--colour-bg-tertiary);
+    background: var(--bg-hover);
   }
 }
 
 .btn-ghost {
   background: transparent;
-  color: var(--colour-text-secondary);
+  color: var(--text-2);
   &:hover:not(:disabled) {
-    background: var(--colour-bg-secondary);
-    color: var(--colour-text);
+    background: var(--bg-input);
+    color: var(--text);
   }
 }
 
 .btn-danger {
-  background: var(--colour-error-light);
-  color: var(--colour-error);
+  background: var(--danger-soft);
+  color: var(--danger);
   &:hover:not(:disabled) {
-    background: var(--colour-error);
+    background: var(--danger);
     color: #fff;
   }
 }
@@ -266,7 +247,7 @@ button {
   cursor: pointer;
   padding: var(--space-xs);
   border-radius: 0.25rem;
-  color: var(--colour-text-secondary);
+  color: var(--text-2);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -276,8 +257,8 @@ button {
     background 0.15s,
     color 0.15s;
   &:hover {
-    background: var(--colour-bg-tertiary);
-    color: var(--colour-text);
+    background: var(--bg-hover);
+    color: var(--text);
   }
 }
 
@@ -291,14 +272,14 @@ button {
   margin-bottom: var(--space-xs);
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--colour-text);
+  color: var(--text);
 }
 
 .form-hint {
   display: block;
   margin-top: var(--space-xs);
   font-size: 0.8125rem;
-  color: var(--colour-text-tertiary);
+  color: var(--text-3);
 }
 
 .input {
@@ -306,9 +287,9 @@ button {
   padding: var(--space-sm) var(--space-md);
   font-size: 1rem;
   line-height: 1.5;
-  color: var(--colour-text);
-  background: var(--colour-bg);
-  border: 1px solid var(--colour-border);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 0.375rem;
   transition:
     border-color 0.15s ease,
@@ -316,13 +297,13 @@ button {
 
   &:focus {
     outline: none;
-    border-color: var(--colour-primary);
+    border-color: var(--accent);
     box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--colour-primary) 20%, transparent);
+      color-mix(in srgb, var(--accent) 20%, transparent);
   }
 
   &::placeholder {
-    color: var(--colour-text-tertiary);
+    color: var(--text-3);
   }
 }
 
@@ -348,7 +329,7 @@ button {
   }
   & .time-unit {
     font-size: 0.875rem;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     white-space: nowrap;
   }
 }
@@ -356,8 +337,8 @@ button {
 /* Segmented control (start/end toggle) */
 .seg-control {
   display: inline-flex;
-  background: var(--colour-bg-secondary);
-  border: 1px solid var(--colour-border);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
   border-radius: 0.375rem;
   padding: 2px;
   gap: 2px;
@@ -369,20 +350,20 @@ button {
     background: transparent;
     border: none;
     border-radius: 0.25rem;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     cursor: pointer;
     transition:
       background 0.15s,
       color 0.15s;
 
     &.active {
-      background: var(--colour-primary);
+      background: var(--accent);
       color: #fff;
     }
 
     &:not(.active):hover {
-      background: var(--colour-bg-tertiary);
-      color: var(--colour-text);
+      background: var(--bg-hover);
+      color: var(--text);
     }
   }
 }
@@ -390,12 +371,12 @@ button {
 /* ---- Setup section ---- */
 .setup-card {
   position: relative;
-  background: var(--colour-block-bg);
-  border: 1px solid var(--colour-block-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
   padding: var(--space-lg);
   margin-bottom: var(--space-xl);
-  box-shadow: 0 1px 3px var(--colour-shadow);
+  box-shadow: var(--shadow-md);
 
   & .setup-row {
     display: flex;
@@ -468,15 +449,15 @@ button {
 }
 
 .item-card {
-  background: var(--colour-block-bg);
-  border: 1px solid var(--colour-block-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
   padding: var(--space-md) var(--space-lg);
-  box-shadow: 0 1px 2px var(--colour-shadow);
+  box-shadow: var(--shadow-sm);
   transition: border-color 0.15s;
 
   &:hover {
-    border-color: var(--colour-primary);
+    border-color: var(--accent);
   }
 
   & .item-card-top {
@@ -508,7 +489,7 @@ button {
     flex-wrap: wrap;
     gap: var(--space-xs) var(--space-md);
     font-size: 0.8125rem;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
   }
 
   & .item-badge {
@@ -519,14 +500,14 @@ button {
     border-radius: 0.25rem;
     font-size: 0.75rem;
     font-weight: 500;
-    background: var(--colour-bg-secondary);
-    color: var(--colour-text-secondary);
-    border: 1px solid var(--colour-border);
+    background: var(--bg-input);
+    color: var(--text-2);
+    border: 1px solid var(--border);
   }
 
   & .item-badge-type {
-    background: var(--colour-primary-light);
-    color: var(--colour-primary);
+    background: var(--accent-soft);
+    color: var(--accent);
     border-color: transparent;
   }
 }
@@ -534,9 +515,9 @@ button {
 .empty-state {
   text-align: center;
   padding: var(--space-3xl) var(--space-lg);
-  color: var(--colour-text-tertiary);
-  background: var(--colour-bg-secondary);
-  border: 2px dashed var(--colour-border);
+  color: var(--text-3);
+  background: var(--bg-input);
+  border: 2px dashed var(--border);
   border-radius: 0.5rem;
   margin-bottom: var(--space-xl);
 
@@ -562,7 +543,7 @@ button {
 
 /* Clock bar */
 .clock-bar {
-  background: var(--colour-primary);
+  background: var(--accent);
   color: #fff;
   border-radius: 0.5rem;
   padding: var(--space-lg);
@@ -662,19 +643,19 @@ button {
   display: flex;
   gap: var(--space-md);
   align-items: center;
-  background: var(--colour-block-bg);
-  border: 1px solid var(--colour-border);
-  border-left: 4px solid var(--colour-text-tertiary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--text-3);
   border-radius: 0.375rem;
   padding: var(--space-sm) var(--space-md);
-  box-shadow: 0 1px 3px var(--colour-shadow);
+  box-shadow: var(--shadow-md);
   animation: notification-in 0.2s ease-out;
 
   & .notification-time {
     font-family: ui-monospace, monospace;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     flex-shrink: 0;
   }
 
@@ -691,7 +672,7 @@ button {
 
   & .notification-sub {
     font-size: 0.8125rem;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     margin-top: 0.125rem;
   }
 
@@ -699,36 +680,36 @@ button {
     background: transparent;
     border: none;
     cursor: pointer;
-    color: var(--colour-text-tertiary);
+    color: var(--text-3);
     font-size: 1rem;
     line-height: 1;
     padding: 0.375rem 0.5rem;
     border-radius: 0.25rem;
     flex-shrink: 0;
     &:hover {
-      background: var(--colour-bg-secondary);
-      color: var(--colour-text);
+      background: var(--bg-input);
+      color: var(--text);
     }
   }
 
   /* Per-type accent matches the timeline chip colours */
   &.notification-prep {
-    border-left-color: var(--colour-accent);
+    border-left-color: var(--amber);
   }
   &.notification-cook_start {
-    border-left-color: var(--colour-primary);
+    border-left-color: var(--accent);
   }
   &.notification-cook_end {
-    border-left-color: var(--colour-text-tertiary);
+    border-left-color: var(--text-3);
   }
   &.notification-set {
     border-left-color: #3b82f6;
   }
   &.notification-ready {
-    border-left-color: var(--colour-success);
+    border-left-color: var(--green);
   }
   &.notification-serve {
-    border-left-color: var(--colour-accent);
+    border-left-color: var(--amber);
   }
 }
 
@@ -745,8 +726,8 @@ button {
 
 /* Serve summary */
 .serve-summary {
-  background: var(--colour-block-bg);
-  border: 1px solid var(--colour-block-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
   padding: var(--space-lg);
   display: flex;
@@ -756,7 +737,7 @@ button {
   & .serve-stat {
     & .serve-stat-label {
       font-size: 0.8125rem;
-      color: var(--colour-text-secondary);
+      color: var(--text-2);
       margin-bottom: 0.125rem;
     }
     & .serve-stat-value {
@@ -774,12 +755,12 @@ button {
 }
 
 .conflict-card {
-  background: var(--colour-error-light);
-  border: 1px solid var(--colour-error);
+  background: var(--danger-soft);
+  border: 1px solid var(--danger);
   border-radius: 0.375rem;
   padding: var(--space-md) var(--space-lg);
   font-size: 0.875rem;
-  color: var(--colour-error);
+  color: var(--danger);
 
   & strong {
     font-weight: 600;
@@ -787,7 +768,7 @@ button {
 
   & .conflict-detail {
     margin-top: var(--space-xs);
-    color: var(--colour-text);
+    color: var(--text);
     font-size: 0.8125rem;
   }
 }
@@ -799,7 +780,7 @@ button {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     margin-bottom: var(--space-md);
     font-size: 0.8125rem;
   }
@@ -817,7 +798,7 @@ button {
     top: 0;
     bottom: 0;
     width: 2px;
-    background: var(--colour-border);
+    background: var(--border);
   }
 }
 
@@ -833,7 +814,7 @@ button {
     font-size: 0.8125rem;
     font-weight: 600;
     font-family: ui-monospace, monospace;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     text-align: right;
     padding-top: 0.125rem;
     line-height: 1.4;
@@ -851,8 +832,8 @@ button {
       width: 0.75rem;
       height: 0.75rem;
       border-radius: 50%;
-      background: var(--colour-border);
-      border: 2px solid var(--colour-bg);
+      background: var(--border);
+      border: 2px solid var(--bg);
       flex-shrink: 0;
     }
   }
@@ -860,30 +841,30 @@ button {
   & .tl-content {
     & .tl-sub-event {
       padding-left: var(--space-sm);
-      border-left: 3px solid var(--colour-border);
+      border-left: 3px solid var(--border);
     }
 
     & .tl-sub-event + .tl-sub-event {
       margin-top: var(--space-sm);
       padding-top: var(--space-sm);
-      border-top: 1px dashed var(--colour-border);
+      border-top: 1px dashed var(--border);
     }
 
     /* Per-type left border colours */
     & .tl-type-prep {
-      border-left-color: var(--colour-accent);
+      border-left-color: var(--amber);
     }
     & .tl-type-cook_start {
-      border-left-color: var(--colour-primary);
+      border-left-color: var(--accent);
     }
     & .tl-type-cook_end {
-      border-left-color: var(--colour-text-tertiary);
+      border-left-color: var(--text-3);
     }
     & .tl-type-set {
       border-left-color: #3b82f6;
     }
     & .tl-type-ready {
-      border-left-color: var(--colour-success);
+      border-left-color: var(--green);
     }
 
     & .tl-tracker {
@@ -894,17 +875,17 @@ button {
       display: inline-flex;
       align-items: center;
       background: transparent;
-      border: 1px solid var(--colour-border);
+      border: 1px solid var(--border);
       border-radius: 0.25rem;
       font-size: 0.75rem;
       padding: 0.0625rem 0.375rem;
       margin-left: 0.25rem;
       cursor: pointer;
-      color: var(--colour-text-tertiary);
+      color: var(--text-3);
       vertical-align: middle;
       &:hover {
-        color: var(--colour-text);
-        border-color: var(--colour-text-secondary);
+        color: var(--text);
+        border-color: var(--text-2);
       }
     }
 
@@ -921,20 +902,20 @@ button {
       padding: 0.0625rem 0.375rem;
       border-radius: 0.25rem;
       margin-bottom: 0.1875rem;
-      background: var(--colour-bg-secondary);
-      color: var(--colour-text-tertiary);
-      border: 1px solid var(--colour-border);
+      background: var(--bg-input);
+      color: var(--text-3);
+      border: 1px solid var(--border);
     }
 
     & .tl-type-prep .tl-chip {
-      background: var(--colour-accent-light);
-      color: var(--colour-accent);
-      border-color: var(--colour-accent);
+      background: var(--amber-soft);
+      color: var(--amber);
+      border-color: var(--amber);
     }
     & .tl-type-cook_start .tl-chip {
-      background: var(--colour-primary-light);
-      color: var(--colour-primary);
-      border-color: var(--colour-primary);
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
     }
     & .tl-type-set .tl-chip {
       background: #dbeafe;
@@ -942,9 +923,9 @@ button {
       border-color: #3b82f6;
     }
     & .tl-type-ready .tl-chip {
-      background: var(--colour-success-light);
-      color: var(--colour-success);
-      border-color: var(--colour-success);
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: var(--green);
     }
 
     & .tl-label {
@@ -954,7 +935,7 @@ button {
     }
     & .tl-sub {
       font-size: 0.8125rem;
-      color: var(--colour-text-secondary);
+      color: var(--text-2);
       margin-top: 0.125rem;
     }
     & .tl-override {
@@ -965,25 +946,25 @@ button {
 
       & label {
         font-size: 0.75rem;
-        color: var(--colour-text-tertiary);
+        color: var(--text-3);
       }
       & input[type='time'] {
         font-size: 0.8125rem;
         padding: 0.125rem 0.375rem;
-        border: 1px solid var(--colour-border);
+        border: 1px solid var(--border);
         border-radius: 0.25rem;
-        background: var(--colour-bg);
-        color: var(--colour-text);
+        background: var(--bg);
+        color: var(--text);
       }
       & .btn-clear-override {
         font-size: 0.75rem;
-        color: var(--colour-text-tertiary);
+        color: var(--text-3);
         background: none;
         border: none;
         cursor: pointer;
         padding: 0.125rem;
         &:hover {
-          color: var(--colour-error);
+          color: var(--danger);
         }
       }
     }
@@ -993,25 +974,25 @@ button {
   &.tl-past {
     opacity: 0.45;
     & .tl-dot span {
-      background: var(--colour-success);
+      background: var(--green);
     }
   }
 
   &.tl-active {
     & .tl-dot span {
-      background: var(--colour-primary);
+      background: var(--accent);
       box-shadow: 0 0 0 4px
-        color-mix(in srgb, var(--colour-primary) 25%, transparent);
+        color-mix(in srgb, var(--accent) 25%, transparent);
     }
     & .tl-label {
-      color: var(--colour-primary);
+      color: var(--accent);
       font-weight: 600;
     }
   }
 
   &.tl-serve {
     & .tl-dot span {
-      background: var(--colour-accent);
+      background: var(--amber);
       width: 1rem;
       height: 1rem;
     }
@@ -1023,10 +1004,10 @@ button {
 
   &.tl-conflict {
     & .tl-dot span {
-      background: var(--colour-error);
+      background: var(--danger);
     }
     & .tl-label {
-      color: var(--colour-error);
+      color: var(--danger);
     }
   }
 }
@@ -1038,7 +1019,7 @@ button {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     margin-bottom: var(--space-md);
   }
 
@@ -1054,8 +1035,8 @@ button {
 }
 
 .appliance-card {
-  background: var(--colour-block-bg);
-  border: 1px solid var(--colour-block-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
   border-radius: 0.375rem;
   padding: var(--space-md);
 
@@ -1064,13 +1045,13 @@ button {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     margin-bottom: var(--space-xs);
   }
 
   & .app-capacity {
     font-size: 0.8125rem;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     margin-bottom: var(--space-xs);
   }
 
@@ -1083,12 +1064,12 @@ button {
       width: 1.5rem;
       height: 0.625rem;
       border-radius: 0.125rem;
-      background: var(--colour-bg-tertiary);
-      border: 1px solid var(--colour-border);
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
 
       &.used {
-        background: var(--colour-primary);
-        border-color: var(--colour-primary-hover);
+        background: var(--accent);
+        border-color: var(--accent-hover);
       }
     }
   }
@@ -1096,7 +1077,7 @@ button {
   & .app-items {
     margin-top: var(--space-sm);
     font-size: 0.8125rem;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
     display: flex;
     flex-direction: column;
     gap: 1px;
@@ -1109,16 +1090,16 @@ button {
   flex-wrap: wrap;
   gap: var(--space-sm);
   padding-top: var(--space-lg);
-  border-top: 1px solid var(--colour-border);
+  border-top: 1px solid var(--border);
 }
 
 /* ---- Dialog (native <dialog>) ---- */
-.dialog {
+dialog {
   padding: 0;
-  border: 1px solid var(--colour-block-border);
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
-  background: var(--colour-bg);
-  color: var(--colour-text);
+  background: var(--bg);
+  color: var(--text);
   width: 32rem;
   max-width: calc(100% - 2rem);
   max-height: 90dvh;
@@ -1134,7 +1115,7 @@ button {
    keeps the dialog hidden when closed. Explicit transform-based centring avoids
    UA-stylesheet quirks where `inset: 0 + margin: auto` can pin the dialog to a
    corner once `display: flex` is in play. */
-.dialog[open] {
+dialog[open] {
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -1147,7 +1128,9 @@ button {
 
 /* Narrow viewport: dialog fills the screen */
 @media (max-width: 639px) {
-  .dialog {
+  dialog {
+    inset: 0;
+    margin: 0;
     width: 100vw;
     max-width: none;
     height: 100dvh;
@@ -1155,7 +1138,7 @@ button {
     border-radius: 0;
     border: none;
   }
-  .dialog[open] {
+  dialog[open] {
     top: 0;
     left: 0;
     translate: none;
@@ -1163,9 +1146,9 @@ button {
 }
 
 .dialog-header {
-  background: var(--colour-bg);
+  background: var(--bg);
   padding: var(--space-lg);
-  border-bottom: 1px solid var(--colour-border);
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1195,7 +1178,7 @@ button {
   gap: var(--space-sm);
   justify-content: flex-end;
   padding-top: var(--space-md);
-  border-top: 1px solid var(--colour-border);
+  border-top: 1px solid var(--border);
   margin-top: var(--space-lg);
 }
 
@@ -1216,8 +1199,8 @@ button {
   align-items: center;
   gap: var(--space-xs);
   padding: var(--space-md) var(--space-sm);
-  background: var(--colour-bg-secondary);
-  border: 2px solid var(--colour-border);
+  background: var(--bg-input);
+  border: 2px solid var(--border);
   border-radius: 0.5rem;
   cursor: pointer;
   transition:
@@ -1225,7 +1208,7 @@ button {
     background 0.15s;
   font-size: 0.8125rem;
   font-weight: 500;
-  color: var(--colour-text-secondary);
+  color: var(--text-2);
 
   & .cook-icon {
     font-size: 1.375rem;
@@ -1233,13 +1216,13 @@ button {
   }
 
   &:hover {
-    border-color: var(--colour-primary);
+    border-color: var(--accent);
   }
 
   &.selected {
-    border-color: var(--colour-primary);
-    background: var(--colour-primary-light);
-    color: var(--colour-primary);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
   }
 }
 
@@ -1257,33 +1240,95 @@ button {
       width: 1.75rem;
       height: 1.75rem;
       border-radius: 0.25rem;
-      background: var(--colour-bg-secondary);
-      border: 2px solid var(--colour-border);
+      background: var(--bg-input);
+      border: 2px solid var(--border);
       cursor: pointer;
       transition:
         background 0.1s,
         border-color 0.1s;
 
       &.filled {
-        background: var(--colour-primary);
-        border-color: var(--colour-primary-hover);
+        background: var(--accent);
+        border-color: var(--accent-hover);
       }
     }
   }
 
   & .slot-label {
     font-size: 0.875rem;
-    color: var(--colour-text-secondary);
+    color: var(--text-2);
   }
 }
 
 /* ---- Focus states ---- */
 *:focus-visible {
-  outline: 2px solid var(--colour-primary);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 /* ---- Print ---- */
+/* ---- Shared icons ---- */
+/* Masked rather than inlined so the icon takes `currentColor` and follows the
+   light/dark scheme like any other text. */
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-settings {
+  width: 1.25rem;
+  height: 1.25rem;
+  -webkit-mask-image: url(/icons/settings.svg);
+  mask-image: url(/icons/settings.svg);
+}
+
+/* ---- Settings dialog ---- */
+#btn-settings {
+  position: relative;
+}
+
+/* A failing sync is worth seeing without opening the dialog. */
+.sync-error-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--danger);
+  border: 1px solid var(--bg);
+}
+
+.settings-section {
+  & + & {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-xl);
+    border-top: 1px solid var(--border);
+  }
+}
+
+.settings-heading {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  margin-bottom: var(--space-md);
+}
+
+.settings-hint {
+  font-size: 0.8125rem;
+  color: var(--text-2);
+  line-height: 1.45;
+  margin-bottom: var(--space-md);
+}
+
 @media print {
   .clock-bar .wake-lock-btn,
   .schedule-footer,
@@ -1293,8 +1338,8 @@ button {
 
   .clock-bar {
     background: none;
-    color: var(--colour-text);
-    border: 1px solid var(--colour-border);
+    color: var(--text);
+    border: 1px solid var(--border);
   }
 
   .clock-bar .clock-next-countdown {

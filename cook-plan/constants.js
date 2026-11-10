@@ -41,3 +41,12 @@ export const DEFAULT_STATE = {
   appliances: { mainOvenShelves: 2, hasCombi: true, hobCount: 5 },
   snapMins: 0,
 };
+
+// ── PouchDB ──
+// There is only ever one cook on the go, so the plan itself is a single
+// document. Each food item gets its own, which is what lets two people editing
+// different dishes on different devices merge cleanly instead of the last save
+// clobbering the whole plan.
+export const DB_NAME = 'cook-plan';
+export const PLAN_ID = 'plan';
+export const ITEM_PREFIX = 'item:';

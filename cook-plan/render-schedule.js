@@ -2,15 +2,17 @@
 // Cook Planner — render-schedule.js
 // =============================================
 
-import { state, saveState, resetState } from './state.js';
+import { state, saveItem, resetState, setView } from './state.js';
 import { EV_TYPE_CHIP } from './constants.js';
-import { escHtml, formatTime, formatDuration, nowMins, toggleTheme } from './utils.js';
+import { escHtml, formatTime, formatDuration, nowMins } from './utils.js';
 import { applianceConfig } from './appliances.js';
 import { applianceLabel, mergedLabel, mergedSub } from './events.js';
 import { computeSchedule } from './schedule.js';
 import { startClock, stopClock, getNextDayOffset, dismissNotification, clearNotifications, renderNotifications } from './clock.js';
 import { toggleWakeLock, releaseWakeLock } from './wake-lock.js';
 import { showInputView } from './router.js';
+import { renderHeader, bindHeader } from './header.js';
+import { buildShareLink } from './share-link.js';
 import { exportJSON } from './render-input.js';
 
 export function renderScheduleView() {
@@ -21,13 +23,7 @@ export function renderScheduleView() {
   app.innerHTML = `
     <div class="view" id="view-schedule">
       <div class="container">
-        <header class="app-header">
-          <h1>\ud83c\udf73 Cook Planner</h1>
-          <div class="header-actions">
-            <button class="btn btn-ghost btn-sm" id="btn-theme-toggle" aria-label="Toggle dark mode">\ud83c\udf13</button>
-            <button class="btn btn-secondary btn-sm" id="btn-edit-plan">\u270f\ufe0f Edit</button>
-          </div>
-        </header>
+        ${renderHeader('<button class="btn btn-secondary btn-sm" id="btn-edit-plan">\u270f\ufe0f Edit</button>')}
 
         <div class="schedule-view">
           <!-- Clock bar -->
@@ -230,7 +226,7 @@ export function renderApplianceSummary(items) {
           <div class="app-capacity">${cfg.mainOvenShelves * 2} slots (${cfg.mainOvenShelves} shelf${cfg.mainOvenShelves > 1 ? ' \u00d7 2' : ''})</div>
           ${slotBar(mainUsed, cfg.mainOvenShelves * 2)}
           <div class="app-items">
-            ${ovenItems.length === 0 ? '<span style="color:var(--colour-text-tertiary)">Nothing scheduled</span>' :
+            ${ovenItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
               ovenItems.map(i => `<span>${escHtml(i.name)}: ${formatTime(i._s.cookStart)}\u2013${formatTime(i._s.cookEnd)}</span>`).join('')}
           </div>
         </div>
@@ -240,7 +236,7 @@ export function renderApplianceSummary(items) {
           <div class="app-capacity">2 slots (1 shelf), oven or MW</div>
           ${slotBar(combiUsed, 2)}
           <div class="app-items">
-            ${combiItems.length === 0 ? '<span style="color:var(--colour-text-tertiary)">Nothing scheduled</span>' :
+            ${combiItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
               combiItems.map(i => `<span>${escHtml(i.name)} (${i._appliance === 'combi' ? 'oven' : 'MW'}): ${formatTime(i._s.cookStart)}\u2013${formatTime(i._s.cookEnd)}</span>`).join('')}
           </div>
         </div>` : ''}
@@ -254,7 +250,7 @@ export function renderApplianceSummary(items) {
             }).join('')}
           </div>
           <div class="app-items">
-            ${hobItems.length === 0 ? '<span style="color:var(--colour-text-tertiary)">Nothing scheduled</span>' :
+            ${hobItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
               hobItems.map(i => `<span>${escHtml(i.name)} (${applianceLabel(i._appliance, null)}): ${formatTime(i._s.cookStart)}\u2013${formatTime(i._s.cookEnd)}</span>`).join('')}
           </div>
         </div>
@@ -264,20 +260,22 @@ export function renderApplianceSummary(items) {
 }
 
 export function bindScheduleEvents(items, events) {
+  bindHeader();
+
   document.getElementById('btn-edit-plan').addEventListener('click', () => {
     stopClock();
     releaseWakeLock();
-    state.view = 'input';
-    saveState();
+    setView('input');
     showInputView();
   });
 
-  document.getElementById('btn-new-cook')?.addEventListener('click', () => {
+  document.getElementById('btn-new-cook')?.addEventListener('click', async () => {
     if (confirm('Start a new cook? This will clear all items and settings.')) {
       stopClock();
       releaseWakeLock();
       clearNotifications();
-      resetState();
+      await resetState();
+      setView('input');
       showInputView();
     }
   });
@@ -290,18 +288,19 @@ export function bindScheduleEvents(items, events) {
   });
 
   document.getElementById('btn-share')?.addEventListener('click', async () => {
+    const link = buildShareLink(state);
     try {
-      await navigator.clipboard.writeText(location.href);
+      await navigator.clipboard.writeText(link);
       const btn = document.getElementById('btn-share');
       if (btn) { btn.textContent = '\u2705 Copied!'; setTimeout(() => { if (btn) btn.textContent = '\ud83d\udccb Copy link'; }, 2000); }
     } catch {
-      prompt('Copy this URL to share:', location.href);
+      // Clipboard blocked (e.g. insecure context) — surface the link to copy by hand.
+      prompt('Copy this URL to share:', link);
     }
   });
 
   document.getElementById('btn-export')?.addEventListener('click', exportJSON);
   document.getElementById('btn-print')?.addEventListener('click', () => window.print());
-  document.getElementById('btn-theme-toggle')?.addEventListener('click', toggleTheme);
 
   document.getElementById('wake-lock-btn')?.addEventListener('click', toggleWakeLock);
 
@@ -326,13 +325,11 @@ export function bindScheduleEvents(items, events) {
           const newVal = inp.value || null;
           if (item && (item.overrideCookStart || null) !== newVal) {
             item.overrideCookStart = newVal;
+            saveItem(item);
             changed = true;
           }
         });
-        if (changed) {
-          saveState();
-          renderScheduleView();
-        }
+        if (changed) renderScheduleView();
       }
       return;
     }
@@ -343,7 +340,7 @@ export function bindScheduleEvents(items, events) {
       const item = state.items.find(i => i.id === id);
       if (item) {
         item.overrideCookStart = null;
-        saveState();
+        saveItem(item);
         renderScheduleView();
       }
     }

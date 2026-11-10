@@ -12,7 +12,10 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
-    min-height: 100dvh;
+    /* svh, not dvh: Firefox does not shrink the dynamic viewport for the
+       toolbar, so 100dvh over-sizes the page there. */
+    min-height: 100vh;
+    min-height: 100svh;
   }
 
   .manage-header {
@@ -175,28 +178,30 @@
 
   .status.success {
     display: block;
-    background: #0a2a0a;
-    border: 1px solid #1a4a1a;
-    color: #4a4;
+    background: #eaf5ea;
+    border: 1px solid #b0d4b0;
+    color: #2a6a2a;
   }
 
   .status.error {
     display: block;
-    background: #2a0a0a;
-    border: 1px solid #4a1a1a;
-    color: #c44;
-  }
-
-  body.light .status.success {
-    background: #eaf5ea;
-    border-color: #b0d4b0;
-    color: #2a6a2a;
-  }
-
-  body.light .status.error {
     background: #f5eaea;
-    border-color: #d4b0b0;
+    border: 1px solid #d4b0b0;
     color: #8a2a2a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .status.success {
+      background: #0a2a0a;
+      border-color: #1a4a1a;
+      color: #4a4;
+    }
+
+    .status.error {
+      background: #2a0a0a;
+      border-color: #4a1a1a;
+      color: #c44;
+    }
   }
 
   .preview {
@@ -363,8 +368,12 @@
     <h2>IMPORT WORKOUTS</h2>
     <p>Import a JSON file to use your own custom workout plan. It will be saved locally in your browser.</p>
     <div class="file-input-wrap" id="file-input-wrap">
+      <!-- The label and the chosen filename are their own elements so the drop
+           zone can be relabelled without rewriting its innerHTML, which would
+           destroy the file input nested inside it. -->
       <div class="file-drop" id="file-drop">
-        Tap to choose file or drag &amp; drop
+        <span id="file-drop-label">Tap to choose file or drag &amp; drop</span>
+        <span class="file-name" id="file-name" hidden></span>
         <input type="file" id="file-input" accept=".json,application/json">
       </div>
       <div class="paste-divider">or paste</div>
@@ -375,6 +384,14 @@
     <div class="status" id="status"></div>
   </div>
 
+  <!-- Sync -->
+  <div class="section">
+    <h2>SYNC</h2>
+    <p>Replicate your plan and today's progress to a CouchDB server so the same
+      workout follows you between devices.</p>
+    <sync-settings id="sync-settings"></sync-settings>
+  </div>
+
   <!-- Reset -->
   <div class="section">
     <h2>RESET TO DEFAULT</h2>
@@ -383,198 +400,8 @@
   </div>
 </div>
 
-<script src="db.js"></script>
-<script>
-  const fileDrop = document.getElementById('file-drop');
-  const fileInput = document.getElementById('file-input');
-  const pasteInput = document.getElementById('paste-input');
-  const importBtn = document.getElementById('import-btn');
-  const downloadBtn = document.getElementById('download-btn');
-  const resetBtn = document.getElementById('reset-btn');
-  const statusEl = document.getElementById('status');
-  const sourceInfo = document.getElementById('source-info');
-  const DEFAULT_DROP_LABEL = 'Tap to choose file or drag &amp; drop';
-
-  let pendingData = null;
-
-  function resetFileDrop() {
-    fileDrop.innerHTML = DEFAULT_DROP_LABEL;
-    fileDrop.appendChild(fileInput);
-    fileInput.value = '';
-  }
-
-  function clearPending() {
-    pendingData = null;
-    importBtn.disabled = true;
-    hidePreview();
-  }
-
-  function processJsonText(text, onInvalid) {
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      if (onInvalid) onInvalid('Invalid JSON: ' + e.message);
-      clearPending();
-      return false;
-    }
-    if (!data || !data.workouts || !Array.isArray(data.workouts) || data.workouts.length === 0) {
-      if (onInvalid) onInvalid('Invalid format: JSON must have a "workouts" array with at least one entry.');
-      clearPending();
-      return false;
-    }
-    pendingData = data;
-    importBtn.disabled = false;
-    showPreview(data);
-    hideStatus();
-    return true;
-  }
-
-  // Restore theme
-  (() => {
-    const urlTheme = new URLSearchParams(location.search).get('theme');
-    let stored;
-    try { stored = localStorage.getItem('theme'); } catch (e) {}
-    if ((urlTheme || stored) === 'light') document.body.classList.add('light');
-  })();
-
-  // Rest timer setting
-  const restToggle = document.getElementById('rest-timer-toggle');
-  try { restToggle.checked = localStorage.getItem('rep-rest-timer') === '1'; } catch (e) {}
-  restToggle.addEventListener('change', () => {
-    try { localStorage.setItem('rep-rest-timer', restToggle.checked ? '1' : '0'); } catch (e) {}
-  });
-
-  // Show current source
-  async function updateSourceInfo() {
-    const custom = await WorkoutDB.load();
-    if (custom) {
-      sourceInfo.innerHTML = '<span class="source-badge custom">Custom</span>';
-    } else {
-      sourceInfo.innerHTML = '<span class="source-badge default">Default</span>';
-    }
-  }
-  updateSourceInfo();
-
-  // Download
-  downloadBtn.addEventListener('click', async () => {
-    let data = await WorkoutDB.load();
-    if (!data) {
-      const res = await fetch('workouts.json');
-      data = await res.json();
-    }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'workouts.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  // File selection
-  fileDrop.addEventListener('click', () => fileInput.click());
-
-  fileDrop.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    fileDrop.classList.add('dragover');
-  });
-
-  fileDrop.addEventListener('dragleave', () => {
-    fileDrop.classList.remove('dragover');
-  });
-
-  fileDrop.addEventListener('drop', (e) => {
-    e.preventDefault();
-    fileDrop.classList.remove('dragover');
-    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-  });
-
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files.length) handleFile(fileInput.files[0]);
-  });
-
-  function handleFile(file) {
-    if (!file.name.endsWith('.json') && file.type !== 'application/json') {
-      showStatus('Please select a JSON file.', 'error');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      pasteInput.value = '';
-      const ok = processJsonText(reader.result, (msg) => showStatus(msg, 'error'));
-      if (ok) {
-        fileDrop.innerHTML = DEFAULT_DROP_LABEL + '<span class="file-name">' + file.name + '</span>';
-        fileDrop.appendChild(fileInput);
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  pasteInput.addEventListener('input', () => {
-    const text = pasteInput.value.trim();
-    if (!text) {
-      clearPending();
-      hideStatus();
-      return;
-    }
-    resetFileDrop();
-    processJsonText(text, (msg) => showStatus(msg, 'error'));
-  });
-
-  // Import
-  importBtn.addEventListener('click', async () => {
-    if (!pendingData) return;
-    try {
-      await WorkoutDB.save(pendingData);
-      showStatus('Workouts imported successfully! Go back to see your custom plan.', 'success');
-      pendingData = null;
-      importBtn.disabled = true;
-      pasteInput.value = '';
-      resetFileDrop();
-      hidePreview();
-      updateSourceInfo();
-    } catch (e) {
-      showStatus('Failed to save: ' + e.message, 'error');
-    }
-  });
-
-  // Reset
-  resetBtn.addEventListener('click', async () => {
-    await WorkoutDB.clear();
-    showStatus('Reset to default workouts.', 'success');
-    updateSourceInfo();
-  });
-
-  function showPreview(data) {
-    const preview = document.getElementById('preview');
-    const workouts = data.workouts;
-    const totalExercises = workouts.reduce((sum, w) => sum + w.exercises.length, 0);
-    const chips = workouts.map(w => {
-      const typeLabel = w.type === 'circuit' ? ' · circuit' : '';
-      return `<div class="workout-chip"><strong>${w.id} — ${w.label}</strong>${w.focus}<br><span>${w.exercises.length} exercises${typeLabel}${w.cardio ? ' + cardio' : ''}</span></div>`;
-    }).join('');
-    preview.innerHTML = `
-      <div class="preview-title">PREVIEW — ${workouts.length} workout${workouts.length === 1 ? '' : 's'}, ${totalExercises} exercises total</div>
-      <div class="workout-summary">${chips}</div>
-    `;
-    preview.classList.add('visible');
-  }
-
-  function hidePreview() {
-    document.getElementById('preview').classList.remove('visible');
-  }
-
-  function showStatus(msg, type) {
-    statusEl.textContent = msg;
-    statusEl.className = 'status ' + type;
-  }
-
-  function hideStatus() {
-    statusEl.className = 'status';
-  }
-</script>
+<script src="/vendor/pouchdb/pouchdb.min.js"></script>
+<script type="module" src="manage.js"></script>
 <script>navigator.serviceWorker?.register("/sw.js")</script>
 </body>
 </html>

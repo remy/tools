@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location. Defaults to today at the current moment, with a slider to scrub through the day.">
+  <meta name="description" content="Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location, with UV levels across the day. Optionally factor in live cloud cover from OpenWeatherMap for your current location.">
   <meta name="category" content="Productivity">
   <title>Sun Arc</title>
   <link rel="stylesheet" href="style.css">
@@ -11,7 +11,12 @@
 <body>
   <main class="card">
     <header class="card-head">
-      <h1>SUN</h1>
+      <div class="head-top">
+        <h1>SUN</h1>
+        <button type="button" class="action-btn" id="btn-settings" aria-label="Settings">
+          <span class="icon-mask icon-settings" aria-hidden="true"></span>
+        </button>
+      </div>
       <p id="subtitle" class="subtitle">&nbsp;</p>
     </header>
 
@@ -62,6 +67,7 @@
       <div class="stat"><span class="stat-label">Day length</span><span id="s-len" class="stat-val">--</span></div>
       <div class="stat"><span class="stat-label">Altitude</span><span id="s-alt" class="stat-val">--</span></div>
       <div class="stat"><span class="stat-label">UV index</span><span id="s-uv" class="stat-val">--</span></div>
+      <div class="stat"><span class="stat-label">Cloud</span><span id="s-cloud" class="stat-val">--</span></div>
     </section>
 
     <section class="controls">
@@ -75,6 +81,13 @@
           <label for="time">Time</label>
           <input type="range" id="time" min="0" max="1439" step="1" value="720">
           <output id="time-out" class="time-out">12:00</output>
+        </div>
+        <div class="control-row control-clouds">
+          <label class="toggle" for="clouds">
+            <input type="checkbox" id="clouds">
+            <span>Factor in cloud cover</span>
+          </label>
+          <span id="weather-msg" class="weather-msg" hidden></span>
         </div>
       </div>
 
@@ -94,6 +107,33 @@
       </details>
     </section>
   </main>
+
+  <dialog id="settings-dialog" class="settings-dialog">
+    <div class="dialog-head">
+      <h2>Settings</h2>
+      <button type="button" class="action-btn" id="settings-close" aria-label="Close">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+    <div class="dialog-body">
+      <p id="settings-note" class="settings-note" hidden></p>
+      <label class="field" for="owm-key">
+        <span class="field-label">OpenWeatherMap API key</span>
+        <input type="password" id="owm-key" autocomplete="off" spellcheck="false" placeholder="Your API key">
+      </label>
+      <p class="field-hint">
+        Live cloud cover (and the location name) come from the free OpenWeatherMap
+        forecast API. Get a free key at
+        <a href="https://home.openweathermap.org/api_keys" target="_blank" rel="noopener">openweathermap.org</a>
+        — note a new key can take an hour or two to activate.
+      </p>
+      <div class="dialog-actions">
+        <button type="button" id="owm-save" class="primary">Save</button>
+      </div>
+    </div>
+  </dialog>
 
   <script src="app.js"></script>
   <script>navigator.serviceWorker?.register("/sw.js")</script>

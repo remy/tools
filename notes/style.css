@@ -1,0 +1,539 @@
+:root {
+  color-scheme: light dark;
+  --reader-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, sans-serif;
+  --surface: #f4f4f5;
+  --card: #ffffff;
+  --border: rgba(15, 23, 42, 0.08);
+  --text: #0f172a;
+  --muted: #475569;
+  --accent: #2563eb;
+  --danger: #b91c1c;
+  --backdrop: rgba(15, 23, 42, 0.35);
+  --soft: rgba(15, 23, 42, 0.04);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: var(--reader-font);
+  background: var(--surface);
+  color: var(--text);
+  min-height: 100%;
+  overscroll-behavior-y: none;
+}
+
+html {
+  overscroll-behavior-y: none;
+}
+
+notes-app {
+  display: block;
+  min-height: 100%;
+}
+
+button {
+  cursor: pointer;
+  text-align: center;
+}
+
+.app-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px clamp(16px, 5vw, 32px) 32px;
+  position: relative;
+  gap: 16px;
+}
+
+[data-view='list'] * {
+  user-select: none;
+}
+
+.app-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-bar__eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin: 0;
+}
+
+.wake-lock-toggle {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.wake-lock-toggle input,
+.settings-toggle input {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid var(--text);
+  appearance: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+
+.wake-lock-toggle input:checked,
+.settings-toggle input:checked {
+  background: var(--text);
+}
+
+.wake-lock-toggle input:focus-visible,
+.settings-toggle input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.note-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.note-list__empty {
+  color: var(--muted);
+  margin: 0;
+  padding: 0 4px;
+}
+
+.app-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  position: sticky;
+  bottom: 12px;
+}
+
+.settings-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text);
+  position: relative;
+}
+
+.note-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: var(--card);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: inherit;
+}
+
+.note-list[data-dragging='true'] {
+  touch-action: none;
+  cursor: grabbing;
+}
+
+.note-card--dragging {
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+  opacity: 0.95;
+  cursor: grabbing;
+}
+
+.note-card--placeholder {
+  border: 2px dashed var(--border);
+  background: transparent;
+  box-shadow: none;
+}
+
+.note-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.note-card:active {
+  transform: scale(0.99);
+}
+
+.note-card__preview {
+  flex: 1;
+  margin: 0;
+  font-size: 15px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.note-card__meta {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.new-note {
+  border: none;
+  border-radius: 999px;
+  padding: 14px 24px;
+  background: var(--text);
+  color: var(--card);
+  font-size: 16px;
+  font-weight: 600;
+  width: 100%;
+  align-self: center;
+  flex: 1;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.25);
+}
+
+.new-note:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.note-view {
+  position: fixed;
+  inset: 0;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+  z-index: 10;
+}
+
+.app-shell[data-view='detail'] .note-view {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.note-view__chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  gap: 8px;
+  background: var(--card);
+}
+
+.note-view__action {
+  border: none;
+  background: rgba(15, 23, 42, 0.06);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  min-width: 96px;
+}
+
+.note-view__action--danger {
+  background: rgba(185, 28, 28, 0.12);
+  color: #b91c1c;
+  /* color: rgba(15, 23, 42, 0.06); */
+  margin-right: auto;
+}
+
+.note-view__chrome .note-view__action:last-child {
+  margin-left: auto;
+}
+
+.note-view__content {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.note-view__reader,
+.note-view__editor {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.note-view__editor {
+  border: none;
+  resize: none;
+  outline: none;
+  font-family: var(--reader-font);
+  font-size: 18px;
+  line-height: 1.6;
+  background: transparent;
+  color: var(--text);
+  padding: 16px;
+}
+
+@media (min-width: 900px) {
+  .app-shell {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-top: 40px;
+  }
+
+  .note-view {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #020617;
+    --card: #0f172a;
+    --border: rgba(226, 232, 240, 0.12);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #60a5fa;
+    --danger: #f87171;
+    --backdrop: rgba(2, 6, 23, 0.7);
+    --soft: rgba(226, 232, 240, 0.06);
+  }
+
+  body {
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .note-card,
+  .settings-button,
+  .note-view,
+  .note-view__action {
+    background: var(--card);
+    color: var(--text);
+    border-color: var(--border);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+  }
+
+  .note-view__action {
+    background: rgba(226, 232, 240, 0.08);
+  }
+
+  .note-view__action--danger {
+    background: rgba(239, 68, 68, 0.25);
+    color: rgb(219, 145, 145);
+  }
+
+  .new-note {
+    background: var(--text);
+    color: #0f172a;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  }
+
+}
+
+/* ── Settings icon (shared /icons asset, painted with currentColor) ── */
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-settings {
+  width: 1.375rem;
+  height: 1.375rem;
+  -webkit-mask-image: url(/icons/settings.svg);
+  mask-image: url(/icons/settings.svg);
+}
+
+/* Red badge on the cog while sync is failing. */
+.sync-error-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--card);
+}
+
+/* ── Settings dialog ── */
+dialog {
+  border: none;
+  border-radius: 24px;
+  background: var(--card);
+  color: var(--text);
+  padding: 0;
+  width: 100%;
+  max-width: min(440px, calc(100vw - 2rem));
+  max-height: 90dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.3);
+
+  &::backdrop {
+    background: var(--backdrop);
+  }
+}
+
+@media (max-width: 639px) {
+  dialog {
+    inset: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100dvh;
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
+  }
+}
+
+.pop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  z-index: 1;
+
+  & h2 {
+    margin: 0;
+    font-size: 20px;
+  }
+}
+
+.pop-close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--muted);
+
+  &:hover {
+    color: var(--text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.pop-body {
+  padding: 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-heading {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.settings-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.pop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.btn {
+  flex: 1 1 140px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  background: var(--soft);
+  color: var(--text);
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.settings-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ── Drag a JSON file anywhere to import ── */
+.drop-overlay {
+  display: none;
+  position: fixed;
+  inset: 12px;
+  z-index: 50;
+  place-items: center;
+  padding: 24px;
+  border: 3px dashed var(--accent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+body.dragover .drop-overlay {
+  display: grid;
+}

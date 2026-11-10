@@ -126,6 +126,13 @@
         font-weight: 600;
       }
 
+      .cards {
+        display: grid;
+        gap: 1rem;
+        width: 100%;
+        max-width: 32rem;
+      }
+
       .next {
         background: #ffffff0a;
         border: 1px solid #ffffff1a;
@@ -200,10 +207,18 @@
       <p class="question">Is there a full moon?</p>
       <h1 class="answer" id="answer">…</h1>
 
-      <div class="next">
-        <div class="next-label">Next full moon</div>
-        <div class="next-relative" id="next-relative"></div>
-        <div class="next-date" id="next-date">…</div>
+      <div class="cards">
+        <div class="next">
+          <div class="next-label">Next full moon</div>
+          <div class="next-relative" id="next-relative"></div>
+          <div class="next-date" id="next-date">…</div>
+        </div>
+
+        <div class="next" id="last" hidden>
+          <div class="next-label">Last full moon</div>
+          <div class="next-relative" id="last-relative"></div>
+          <div class="next-date" id="last-date"></div>
+        </div>
       </div>
     </main>
 
@@ -386,6 +401,10 @@ Tue Dec 22 13:41:07 EST 2037`;
         return moons.find((m) => m.getTime() > now.getTime()) || null;
       }
 
+      function lastFullMoon(now, moons) {
+        return moons.findLast((m) => m.getTime() <= now.getTime()) || null;
+      }
+
       function relativeDays(from, to) {
         // Calendar-day difference in user's local timezone
         const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
@@ -405,6 +424,15 @@ Tue Dec 22 13:41:07 EST 2037`;
         const now = new Date();
         const isFull = isFullMoonNow(now, moons);
         const next = nextFullMoon(now, moons);
+        const last = lastFullMoon(now, moons);
+        const fmt = new Intl.DateTimeFormat(undefined, {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        });
 
         const answerEl = document.getElementById('answer');
         const moonEl = document.getElementById('moon');
@@ -419,20 +447,19 @@ Tue Dec 22 13:41:07 EST 2037`;
         const dateEl = document.getElementById('next-date');
         const relEl = document.getElementById('next-relative');
         if (next) {
-          const fmt = new Intl.DateTimeFormat(undefined, {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-          });
           dateEl.textContent = fmt.format(next);
           const days = relativeDays(now, next);
           relEl.textContent = formatRelative(days);
         } else {
           dateEl.textContent = 'No more full moons in the data set.';
           relEl.textContent = '';
+        }
+
+        const lastEl = document.getElementById('last');
+        lastEl.hidden = !last;
+        if (last) {
+          document.getElementById('last-date').textContent = fmt.format(last);
+          document.getElementById('last-relative').textContent = formatRelative(relativeDays(now, last));
         }
       }
 

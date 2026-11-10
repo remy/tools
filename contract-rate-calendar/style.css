@@ -1,0 +1,312 @@
+/* Layout: sticky summary bar (range, rate inputs + results) over a responsive grid of month blocks, weeks Mon–Sun */
+:root {
+  color-scheme: light dark;
+
+  --bg: #f6f7f8;
+  --surface: #ffffff;
+  --fg: #1c2127;
+  --muted: #6b7480;
+  --line: #dde1e6;
+  --accent: #2f5bd3;
+  --accent-fg: #ffffff;
+  --weekend: #eef0f3;
+  --holiday: #c2410c;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Monaco, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14171b;
+    --surface: #1c2025;
+    --fg: #e6e9ed;
+    --muted: #8b95a1;
+    --line: #2c323a;
+    --accent: #6b8ff0;
+    --accent-fg: #0d1117;
+    --weekend: #181b20;
+    --holiday: #fb923c;
+  }
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  margin: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  font: 14px/1.4 var(--font-body);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 16px 32px;
+}
+
+header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 12px;
+  padding-block: 16px;
+  margin-bottom: 24px;
+}
+
+/* the summary bar is too tall to pin on a phone */
+@media (min-width: 640px) {
+  header {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 2;
+  }
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px 24px;
+}
+
+h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+
+  & span {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--muted);
+  }
+}
+
+.legend {
+  display: flex;
+  gap: 16px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  align-items: center;
+
+  & i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 4px;
+    vertical-align: -1px;
+  }
+
+  & .l-sel { background: var(--accent); }
+  & .l-hol { border: 2px solid var(--holiday); }
+}
+
+.panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: flex-end;
+}
+
+.field {
+  display: grid;
+  gap: 4px;
+}
+
+.field label,
+.stat small {
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.date,
+.money {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.date {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 1rem; /* 16px+ stops iOS Safari zooming on focus */
+  padding: 5px 8px;
+
+  &:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+}
+
+.money {
+  display: flex;
+  align-items: center;
+
+  & span {
+    padding-left: 8px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+
+  & input {
+    font: inherit;
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    border: 0;
+    background: transparent;
+    color: var(--fg);
+    padding: 6px 8px;
+    width: 9rem;
+
+    &:focus { outline: none; }
+  }
+
+  &:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding-bottom: 6px;
+  cursor: pointer;
+
+  & input {
+    accent-color: var(--accent);
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
+  }
+}
+
+.stat {
+  display: grid;
+  gap: 2px;
+
+  & output {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &.key output {
+    font-size: 1.75rem;
+    color: var(--accent);
+  }
+}
+
+.btn {
+  font: inherit;
+  font-size: 0.8rem;
+  background: none;
+  color: var(--muted);
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 10px 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+
+  @media (hover: hover) {
+    &:hover { color: var(--fg); border-color: var(--muted); }
+  }
+
+  @media (min-width: 640px) {
+    padding: 4px 10px;
+  }
+}
+
+.months {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 24px;
+}
+
+.month {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 12px;
+
+  & h2 {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 0 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+
+    & span {
+      font-family: var(--font-mono);
+      color: var(--muted);
+      letter-spacing: 0;
+      text-transform: none;
+      font-weight: 400;
+    }
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.dow {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+  padding-bottom: 4px;
+}
+
+.day {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  aspect-ratio: 1;
+  max-width: 100%;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  padding: 0;
+  touch-action: manipulation; /* rapid taps toggle days rather than zoom */
+  -webkit-tap-highlight-color: transparent;
+
+  &.we { background: var(--weekend); color: var(--muted); }
+  &.hol { border: 2px solid var(--holiday); color: var(--holiday); font-weight: 600; }
+  @media (hover: hover) {
+    &:hover { border-color: var(--accent); }
+  }
+  &:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  &[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+  &.today { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+.hols {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.72rem;
+  color: var(--holiday);
+}

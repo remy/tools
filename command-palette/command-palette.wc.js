@@ -6,6 +6,7 @@ class CommandPalette extends HTMLElement {
     this._filtered = [];
     this._selectedIndex = 0;
     this._isDrillDown = false;
+    this._fallback = null;
     this._defaultPlaceholder = 'Type a command...';
     this._handleGlobalKeydown = this._handleGlobalKeydown.bind(this);
     this._handlePanelKeydown = this._handlePanelKeydown.bind(this);
@@ -165,6 +166,15 @@ class CommandPalette extends HTMLElement {
         text-underline-offset: 2px;
       }
 
+      command-palette .palette-fallback {
+        color: var(--text-dim, var(--cp-text-dim));
+        font-style: italic;
+      }
+
+      command-palette .palette-fallback[aria-selected="true"] {
+        color: #fff;
+      }
+
       command-palette .palette-empty {
         padding: 1.5rem 0.75rem;
         text-align: center;
@@ -267,6 +277,25 @@ class CommandPalette extends HTMLElement {
     this._filtered = this._matchCommands(this._input.value);
     if (this._selectedIndex >= this._filtered.length) this._selectedIndex = 0;
     this._render();
+  }
+
+  // Configure a fallback shown when the user's query matches nothing in the
+  // root list — useful for "404-like" searching (e.g. "Search the web for X").
+  // Pass a command object, or a function (query) => command | null for a
+  // dynamic description. Pass null to clear. The fallback does not apply while
+  // drilled down (setCommands); it's a property of the root list.
+  setFallback(fallback) {
+    this._fallback = fallback || null;
+    if (!this._input) return;
+    this._filtered = this._matchCommands(this._input.value);
+    if (this._selectedIndex >= this._filtered.length) this._selectedIndex = 0;
+    this._render();
+  }
+
+  _resolveFallback(query) {
+    if (!this._fallback) return null;
+    const fb = typeof this._fallback === 'function' ? this._fallback(query) : this._fallback;
+    return fb || null;
   }
 
   open() {
@@ -374,7 +403,7 @@ class CommandPalette extends HTMLElement {
     } else if (e.key === 'Enter') {
       e.preventDefault();
       const entry = this._filtered[this._selectedIndex];
-      if (entry) this._select(entry.cmd);
+      if (entry) this._select(entry.cmd, entry.isFallback);
     }
   }
 
@@ -389,7 +418,7 @@ class CommandPalette extends HTMLElement {
     if (!item) return;
     const index = parseInt(item.dataset.index, 10);
     const entry = this._filtered[index];
-    if (entry) this._select(entry.cmd);
+    if (entry) this._select(entry.cmd, entry.isFallback);
   }
 
   _matchCommands(rawQuery) {
@@ -403,6 +432,10 @@ class CommandPalette extends HTMLElement {
       if (m) results.push({ cmd, indices: m.indices, score: m.score });
     }
     results.sort((a, b) => b.score - a.score);
+    if (!results.length && !this._isDrillDown) {
+      const fallback = this._resolveFallback(query);
+      if (fallback) return [{ cmd: fallback, indices: [], score: 0, isFallback: true }];
+    }
     return results;
   }
 
@@ -437,24 +470,22 @@ class CommandPalette extends HTMLElement {
     return { score, indices };
   }
 
-  _select(command) {
+  _select(command, isFallback = false) {
+    const query = this._input.value.trim();
     if (command.keepOpen) {
       this._input.value = '';
-      this.dispatchEvent(
-        new CustomEvent(command.name, {
-          bubbles: true,
-          detail: { command },
-        })
-      );
     } else {
       this.close();
-      this.dispatchEvent(
-        new CustomEvent(command.name, {
-          bubbles: true,
-          detail: { command },
-        })
-      );
     }
+    const detail = { command, query };
+    if (isFallback) detail.isFallback = true;
+    // Per-command event — listen for a single command by its name.
+    if (command.name) {
+      this.dispatchEvent(new CustomEvent(command.name, { bubbles: true, detail }));
+    }
+    // System event — one listener fires for every selection. The "@" prefix
+    // marks it as a built-in event so it can never collide with a command name.
+    this.dispatchEvent(new CustomEvent('@select', { bubbles: true, detail }));
   }
 
   _render() {
@@ -472,6 +503,7 @@ class CommandPalette extends HTMLElement {
     this._filtered.forEach((entry, i) => {
       const el = document.createElement('div');
       el.className = 'palette-item';
+      if (entry.isFallback) el.classList.add('palette-fallback');
       el.setAttribute('role', 'option');
       el.dataset.index = i;
 

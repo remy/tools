@@ -1,0 +1,11 @@
+{
+  "name": "movies",
+  "private": true,
+  "description": "Local data-fetch scripts for the movies tool",
+  "scripts": {
+    "fetch:cineworld": "node scripts/fetch-cineworld-showtimes.js --days 7 --out cineworld-movies.json --raw-dir cineworld-events"
+  },
+  "dependencies": {
+    "playwright-core": "^1.64.1"
+  }
+}

@@ -1,4 +1,9 @@
 {
+  "atproto": {
+    "category": "Developer Tools",
+    "description": "A plain-English glossary of the AT Protocol (atproto): every key term \u2014 DID, PDS, Relay, AppView, Lexicon, firehose and more \u2014 explained simply with links to read more.",
+    "title": "AT Protocol Glossary"
+  },
   "audio-shape": {
     "category": "Audio",
     "description": "Sculpt a custom oscillator waveform by tapping to add control points. The Web Audio API renders the resulting PeriodicWave through an OscillatorNode you can connect to your speakers.",
@@ -9,15 +14,30 @@
     "description": "Mobile-first beat sequencer with predefined instruments and genre style presets. Synthesises kicks, snares, hi-hats, toms, claps and bass using the Web Audio API.",
     "title": "Beat Loop Generator"
   },
+  "booze-calc": {
+    "category": "Calculators",
+    "description": "Work out the final proof and ABV of a mixed drink. Enter a base spirit and as many mixers as you like \u2014 alcoholic or not \u2014 and see the strength, volume and alcohol units of the finished glass.",
+    "title": "Booze Calc"
+  },
   "buzzer": {
     "category": "Game",
     "description": "A simple game timer with 15s restart and 30s single modes, featuring a wake lock option to keep the screen awake during use.",
     "title": "15s countdown"
   },
+  "byte-formatter": {
+    "category": "Developer Tools",
+    "description": "Drop any file and render its bytes as a JS array, C array, hex dump or custom format.",
+    "title": "Byte Formatter"
+  },
   "capcalc": {
     "category": "Calculators",
     "description": "Decode capacitor codes and calculate values from ceramic capacitor markings",
     "title": "Capacitor Value Calculator"
+  },
+  "code-generator": {
+    "category": "Productivity",
+    "description": "Generate unique random voucher codes with a configurable count, prefix and length.",
+    "title": "Code Generator"
   },
   "colonialism": {
     "category": "Learning",
@@ -29,14 +49,24 @@
     "description": "A VS Code-style command palette web component with keyboard navigation, filtering, and custom event dispatching",
     "title": "Command Palette"
   },
+  "company-attendance": {
+    "category": "Productivity",
+    "description": "Drop ticket order CSV exports to see which companies attended, how many people each sent, and who is new, returning or missing year on year.",
+    "title": "Company Attendance"
+  },
   "contract-rate": {
     "category": "Calculators",
     "description": "Calculate contract rates and earnings based on working days and hourly rates",
     "title": "Contract Rate Calculator"
   },
+  "contract-rate-calendar": {
+    "category": "Calculators",
+    "description": "Pick the days you'll work on a contract across a date range and get the day rate ex VAT, with UK bank holidays marked. Selection is kept in the URL for sharing.",
+    "title": "Contract Rate Calendar"
+  },
   "cook-plan": {
     "category": "Productivity",
-    "description": "Schedule and coordinate cooking times for multiple dishes, with appliance conflict detection and a live step-by-step countdown timeline.",
+    "description": "Schedule and coordinate cooking times for multiple dishes, with appliance conflict detection, a live step-by-step countdown timeline, offline PouchDB storage and live CouchDB sync.",
     "title": "Cook Planner"
   },
   "cost-summary": {
@@ -54,9 +84,14 @@
     "description": "Interactive playground for CSS Anchor Positioning \u2014 drag the anchor, try every position-area, fallback, and visibility combo.",
     "title": "CSS Anchor Positioning Playground"
   },
+  "csv-browser": {
+    "category": "Developer Tools",
+    "description": "Drop a CSV file to browse it as a table: search every column, sort, hide columns, build AND/OR filters, and share the view as a link. Nothing leaves your machine.",
+    "title": "CSV Browser"
+  },
   "distance-time-converter": {
     "category": "Calculators",
-    "description": "Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed to calculate how long a journey will take.",
+    "description": "Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed or running pace (min/km) to calculate how long a journey will take.",
     "title": "Distance & Time Converter"
   },
   "emoji-accessibility": {
@@ -68,6 +103,21 @@
     "category": "Developer Tools",
     "description": "Side-by-side comparison of ESP32 Supermini boards and specifications",
     "title": "ESP32 Supermini Comparison"
+  },
+  "family-games": {
+    "category": "Productivity",
+    "description": "Track family game nights: record who finished where each time you play a game, then see standings and full history per game. Offline PouchDB storage with live CouchDB sync.",
+    "title": "Family Games"
+  },
+  "fancy-quotes": {
+    "category": "Productivity",
+    "description": "Turn a quote into a shareable image: add who said it, their role and avatar, pick from a range of styles and sizes, then download, copy or share the PNG.",
+    "title": "Fancy Quotes"
+  },
+  "font-features": {
+    "category": "Developer Tools",
+    "description": "Drop in a font file or pick one from Google Fonts to see which OpenType features and variable axes it has, try them out on your own text, and copy the CSS.",
+    "title": "Font Features"
   },
   "font-grid-generator": {
     "category": "Developer Tools",
@@ -114,6 +164,16 @@
     "description": "Visual debugger for Home Assistant Assist intent recognition templates",
     "title": "HA Intent Parser Visualizer"
   },
+  "history-of-things": {
+    "category": "Learning",
+    "description": "Researched, readable histories of the everyday things around us \u2014 where they came from, who made them, and why they turned out the way they did.",
+    "title": "The History of Things"
+  },
+  "image-lock-screen": {
+    "category": "Productivity",
+    "description": "Upload an image, render it full bleed, and keep it on display with a wake lock so the screen never sleeps.",
+    "title": "Image Lock Screen"
+  },
   "immich-album": {
     "category": "Immich",
     "description": "Browser-based tool to bulk manage Immich albums - filter, delete, merge, and rename albums with regex and asset count filtering",
@@ -134,6 +194,11 @@
     "description": "Search Immich assets using arbitrary metadata queries and download the results as a zip file.",
     "title": "Immich Metadata Search & Download"
   },
+  "is-it-bst": {
+    "category": "Productivity",
+    "description": "Tells you whether the UK is on British Summer Time (BST) or GMT right now, and when the clocks next change.",
+    "title": "Is it BST?"
+  },
   "jpg-metadata-reader": {
     "category": "Developer Tools",
     "description": "Drop a JPEG to inspect every embedded metadata block \u2014 EXIF, GPS, XMP, IPTC, ICC profile, JFIF, and the raw JPEG segment map.",
@@ -143,6 +208,11 @@
     "category": "Developer Tools",
     "description": "Validate JSON against a schema with real-time error reporting and syntax highlighting",
     "title": "VS Code JSON Validator"
+  },
+  "linkedin-card": {
+    "category": "Productivity",
+    "description": "Make a single image for a LinkedIn post: drop in a background photo, choose how it fills the card, add text in any Google Font, then download it at LinkedIn's recommended sizes.",
+    "title": "LinkedIn Card"
   },
   "markdown": {
     "category": "Developer Tools",
@@ -163,6 +233,11 @@
     "category": "Web Demos",
     "description": "Interactive demo of the native HTML Popover API \u2014 no libraries, no JavaScript required for basic use",
     "title": "Native Popover API Demo"
+  },
+  "notes": {
+    "category": "Productivity",
+    "description": "Mobile-first notebook with a focused reading view, drag-to-reorder, offline PouchDB storage and live CouchDB sync.",
+    "title": "Notes"
   },
   "openapi-filter": {
     "category": "Developer Tools",
@@ -189,10 +264,25 @@
     "description": "A live page editor: type directly into the page, toggle to raw HTML, edit minimal CSS in a side panel, and drag in files (images, fonts) that are cached in IndexedDB with nice names you can reference inside the page.",
     "title": "Page Editor"
   },
+  "pcb-tracer": {
+    "category": "Developer Tools",
+    "description": "Drop a KiCad board or a Gerber zip \u2014 or point it at one on GitHub \u2014 and click any trace, pad or via to highlight the whole net across both copper layers.",
+    "title": "PCB net tracer"
+  },
+  "pdf-reader": {
+    "category": "Productivity",
+    "description": "Upload a PDF and reflow it into a responsive, mobile-friendly article \u2014 carrying across images and as much formatting as possible \u2014 so you can read it without any horizontal scrolling. Optionally save and share converted documents via CouchDB.",
+    "title": "PDF Reader"
+  },
   "point-elevation": {
     "category": "Maps",
     "description": "Find the elevation above sea level for any point on an interactive map. Drag the map under the centre pin or search for an address with OpenStreetMap; elevation data comes from the Open-Meteo API.",
     "title": "Point Elevation"
+  },
+  "poker-chip-table": {
+    "category": "Game",
+    "description": "Track poker chips for a home game without the chips. Set up players, seat order and starting stacks, then bet, call, raise or fold through each Texas Hold'em street and award the pot to the winner.",
+    "title": "Poker Chip Table"
   },
   "priority-calls": {
     "category": "Productivity",
@@ -208,6 +298,16 @@
     "category": "Maps",
     "description": "Plan a walking or running route from your location or a chosen destination with a distance or time budget. Generates loops, out-and-back, and point-to-point routes on an interactive map, downloadable as GPX.",
     "title": "Route Planner"
+  },
+  "rss-reader": {
+    "category": "Developer Tools",
+    "description": "Drop an RSS or Atom feed file to browse it. Titles collapse for skimming and expand to show the rendered article body.",
+    "title": "RSS Reader"
+  },
+  "score-tracker": {
+    "category": "Game",
+    "description": "Keep score for a group of players from one screen. Tap a player to add or subtract any amount and see every change listed under their total. Names are saved locally; scores start at zero every session.",
+    "title": "Score Tracker"
   },
   "screen-light": {
     "category": "Web Demos",
@@ -231,7 +331,7 @@
   },
   "sun-arc": {
     "category": "Productivity",
-    "description": "Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location. Defaults to today at the current moment, with a slider to scrub through the day.",
+    "description": "Visualise the sunrise, solar-noon peak and sunset arc for any date, time and location, with UV levels across the day. Optionally factor in live cloud cover from OpenWeatherMap for your current location.",
     "title": "Sun Arc"
   },
   "tax": {

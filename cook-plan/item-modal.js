@@ -2,7 +2,7 @@
 // Cook Planner — item-modal.js
 // =============================================
 
-import { state, saveState } from './state.js';
+import { state, saveItem, nextOrder } from './state.js';
 import { COOK_TYPES, COOK_TYPE_MAP } from './constants.js';
 import { escHtml, slotsLabel, uid } from './utils.js';
 import { removeItem } from './render-input.js';
@@ -93,7 +93,7 @@ export function openItemModal(editId) {
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="if-set">Rest / set time <span style="font-weight:400;color:var(--colour-text-secondary)">(after cooking)</span></label>
+        <label class="form-label" for="if-set">Rest / set time <span style="font-weight:400;color:var(--text-2)">(after cooking)</span></label>
         <div class="input-time-group" style="max-width:12rem">
           <input class="input" id="if-set" type="number" min="0" max="999"
             value="${item?.setTime ?? 0}" placeholder="0">
@@ -169,12 +169,20 @@ export function openItemModal(editId) {
     const cookTime = parseInt(document.getElementById('if-cook').value) || 0;
     const setTime  = parseInt(document.getElementById('if-set').value)  || 0;
 
+    // Only the item that changed is written — the rest of the cook is left
+    // alone so a second device editing a different dish doesn't lose its edit.
+    let saved;
     if (item) {
-      Object.assign(item, { name, cookType, shelfSlots, appliancePref, prepTime, cookTime, setTime });
+      saved = Object.assign(item, { name, cookType, shelfSlots, appliancePref, prepTime, cookTime, setTime });
     } else {
-      state.items.push({ id: uid(), name, cookType, shelfSlots, appliancePref, prepTime, cookTime, setTime, overrideCookStart: null });
+      saved = {
+        id: uid(), name, cookType, shelfSlots, appliancePref,
+        prepTime, cookTime, setTime, overrideCookStart: null,
+        order: nextOrder(), createdAt: Date.now(),
+      };
+      state.items.push(saved);
     }
-    saveState();
+    saveItem(saved);
     closeModal();
     renderCurrentView();
   });

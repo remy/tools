@@ -1,13 +1,18 @@
 import { state } from './state.js';
 import { db } from './db.js';
-import { render, renderItems, beginEdit, relativeTime, fullTime } from './render.js';
+import { render, renderHome, renderItems, refreshItemRow, beginEdit, relativeTime, fullTime } from './render.js';
+import { findUrls, shortUrl, openUrl } from './links.js';
 import {
   goHome, openNewListDialog, onNewListTemplateChange,
-  createList, renameList, deleteList, selectList, refreshItems,
+  createList, renameList, deleteList, selectList, refreshItems, loadLists,
+  sinksChecked,
 } from './lists.js';
+import { setListOrder } from './order.js';
 import {
   openSettings, openTemplateEditor, saveTemplate, deleteTemplate,
-  handleSyncSave, handleSyncNow, handleSyncPull, handleShareLink,
+  handleImportFile, handleImportAppend, handleImportReplace, handleImportCancel,
+  handleCloneList, handlePrint, handleShareList, handleResetListOrder,
+  handleSinkCheckedChange,
 } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
@@ -26,22 +31,85 @@ function findItem(id) {
   return state.items.find((i) => i.id === id);
 }
 
+async function toggleItem(item) {
+  await db.setItemChecked(item.listId, item.id, !item.checked);
+  await refreshItems();
+  if (sinksChecked()) {
+    // The row has to move, so the whole list is rebuilt. Rebuilding empties the
+    // <ul> and momentarily collapses the page, which the browser answers by
+    // scrolling to the top — restore the offset, which is still valid because
+    // the number of rows hasn't changed.
+    const y = window.scrollY;
+    renderItems();
+    window.scrollTo({ top: y });
+  } else {
+    // Update just this row so the page doesn't jump to the top.
+    refreshItemRow(item.id);
+  }
+}
+
+// ── Link choice dialog ──
+// An item whose text contains a URL is ambiguous to tap: the tap might mean
+// "done" or "open that link". Rather than guess, offer both.
+function openLinkChoice(item, urls) {
+  const dlg = $('link-dialog');
+  $('link-title').textContent = item.text;
+
+  const wrap = $('link-choices');
+  wrap.replaceChildren();
+
+  const doneBtn = document.createElement('button');
+  doneBtn.type = 'button';
+  doneBtn.className = 'btn btn-primary';
+  doneBtn.textContent = item.checked ? 'Mark as not done' : 'Mark as done';
+  doneBtn.addEventListener('click', async () => {
+    dlg.close();
+    await toggleItem(item);
+  });
+  wrap.appendChild(doneBtn);
+
+  for (const { href } of urls) {
+    const openBtn = document.createElement('button');
+    openBtn.type = 'button';
+    openBtn.className = 'btn btn-ghost link-open-btn';
+    const label = document.createElement('span');
+    label.className = 'link-open-label';
+    label.textContent = urls.length > 1 ? 'Open link' : 'Open link in a new tab';
+    const url = document.createElement('span');
+    url.className = 'link-open-url';
+    url.textContent = shortUrl(href);
+    openBtn.append(label, url);
+    openBtn.addEventListener('click', () => {
+      dlg.close();
+      openUrl(href);
+    });
+    wrap.appendChild(openBtn);
+  }
+
+  dlg.showModal();
+  doneBtn.focus();
+}
+
 // ── Item interactions (event-delegated on the list) ──
 function wireTodoList() {
   const ul = $('todo-list');
   ul.addEventListener('click', async (e) => {
     const actionEl = e.target.closest('[data-action]');
     if (!actionEl) return;
-    const li = e.target.closest('.todo-item');
+    const li = e.target.closest('.todo-item, .todo-heading');
     if (!li) return;
     const item = findItem(li.dataset.id);
     if (!item) return;
     const action = actionEl.dataset.action;
 
-    if (action === 'toggle') {
-      await db.setItemChecked(item.listId, item.id, !item.checked);
-      await refreshItems();
-      renderItems();
+    if (action === 'open-link') {
+      openUrl(actionEl.dataset.href);
+    } else if (action === 'toggle') {
+      // Tapping the text of an item with a link asks first; the checkbox stays
+      // an unambiguous "mark done" so nothing gets slower for the common case.
+      const urls = actionEl.classList.contains('todo-text') ? findUrls(item.text) : [];
+      if (urls.length) openLinkChoice(item, urls);
+      else await toggleItem(item);
     } else if (action === 'delete') {
       if (!confirm(`Delete "${item.text}"? This cannot be undone.`)) return;
       await db.deleteItem(item.listId, item.id);
@@ -57,6 +125,72 @@ function wireTodoList() {
       openHistory(item);
     }
   });
+
+  wireReorderDnD(ul, {
+    rowSelector: '.todo-item, .todo-heading',
+    onDrop: async (ids) => {
+      if (!state.currentListId) return;
+      await db.reorderItems(state.currentListId, ids);
+      await refreshItems();
+      renderItems();
+    },
+  });
+}
+
+// Pointer-based drag reordering, shared by the item list and the landing page's
+// list of lists. Uses Pointer Events (not native HTML5 drag-and-drop) so it
+// works on touch as well as mouse — the drag handle has touch-action:none so
+// dragging it reorders rather than scrolling the page. `rowSelector` matches
+// only the draggable rows: the buttons inside a row carry data-id attributes of
+// their own, so selecting on [data-id] alone would sweep them up too.
+// `onDrop` receives the row ids in their new order.
+function wireReorderDnD(ul, { rowSelector, onDrop }) {
+  let dragging = null;
+
+  const rows = () => [...ul.querySelectorAll(rowSelector)];
+
+  // The first row whose vertical midpoint sits below the pointer (drop target).
+  const rowAfter = (y) => {
+    for (const row of rows()) {
+      if (row === dragging) continue;
+      const box = row.getBoundingClientRect();
+      if (y < box.top + box.height / 2) return row;
+    }
+    return null;
+  };
+
+  const onMove = (e) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const after = rowAfter(e.clientY);
+    if (after == null) ul.appendChild(dragging);
+    else if (after !== dragging.nextSibling) ul.insertBefore(dragging, after);
+  };
+
+  const onEnd = async () => {
+    if (!dragging) return;
+    dragging.classList.remove('dragging');
+    dragging = null;
+    document.body.classList.remove('reordering');
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onEnd);
+    window.removeEventListener('pointercancel', onEnd);
+    await onDrop(rows().map((row) => row.dataset.id));
+  };
+
+  ul.addEventListener('pointerdown', (e) => {
+    const handle = e.target.closest('[data-action="drag"]');
+    if (!handle) return;
+    const li = handle.closest(rowSelector);
+    if (!li) return;
+    e.preventDefault();
+    dragging = li;
+    li.classList.add('dragging');
+    document.body.classList.add('reordering');
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onEnd);
+    window.addEventListener('pointercancel', onEnd);
+  });
 }
 
 // ── Add item ──
@@ -65,12 +199,20 @@ function wireAddItem() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = $('add-item-input');
-    const text = input.value.trim();
-    if (!text || !state.currentListId) return;
+    const raw = input.value.trim();
+    if (!raw || !state.currentListId) return;
+    // A leading "#" (markdown heading syntax) adds a section heading instead of
+    // a checkable task. The hashes are stripped from the stored text; a line of
+    // hashes with no text is ignored.
+    const isHeading = raw.startsWith('#');
+    const text = isHeading ? raw.replace(/^#+\s*/, '').trim() : raw;
+    if (!text) return;
     const now = Date.now();
+    const newId = crypto.randomUUID();
     await db.putItem({
-      id: crypto.randomUUID(),
+      id: newId,
       listId: state.currentListId,
+      kind: isHeading ? 'heading' : 'item',
       text,
       checked: false,
       checkedAt: null,
@@ -81,6 +223,9 @@ function wireAddItem() {
     input.value = '';
     await refreshItems();
     renderItems();
+    // Bring the freshly added row into view — it's appended at the bottom, so
+    // in a long list it can land below the fold.
+    $('todo-list').querySelector(`[data-id="${newId}"]`)?.scrollIntoView({ block: 'nearest' });
     input.focus();
   });
 }
@@ -136,6 +281,17 @@ function wireHomeList() {
     else if (action === 'delete') await deleteList(id);
   });
   $('home-new-list').addEventListener('click', openNewListDialog);
+
+  // Reordering the landing page is a per-device preference, so it's saved to
+  // localStorage rather than written back to the synced list docs.
+  wireReorderDnD($('home-list'), {
+    rowSelector: '.pick-row',
+    onDrop: async (ids) => {
+      setListOrder(ids);
+      await loadLists();
+      renderHome();
+    },
+  });
 }
 
 // ── Templates section in settings ──
@@ -153,8 +309,39 @@ function wireTemplates() {
 export function bindEvents() {
   // Header
   $('btn-back').addEventListener('click', goHome);
+  // One toggle, two meanings: edit items inside a list, reorder the lists
+  // themselves on the landing page.
+  $('btn-edit-mode').addEventListener('click', () => {
+    if (state.view === 'list' && state.currentListId) state.editMode = !state.editMode;
+    else state.reorderLists = !state.reorderLists;
+    render();
+  });
   $('btn-settings').addEventListener('click', openSettings);
   $('empty-new-list').addEventListener('click', openNewListDialog);
+
+  // Settings: per-list display options
+  $('list-sink-checked').addEventListener('change', handleSinkCheckedChange);
+
+  // Settings: Markdown import (per-list section)
+  $('import-open').addEventListener('click', () => $('import-file').click());
+  $('import-file').addEventListener('change', handleImportFile);
+  $('import-append').addEventListener('click', handleImportAppend);
+  $('import-replace').addEventListener('click', handleImportReplace);
+  $('import-cancel').addEventListener('click', handleImportCancel);
+
+  // Settings: clone & print (per-list section)
+  $('clone-list').addEventListener('click', handleCloneList);
+  $('print-open').addEventListener('click', () => { $('print-choice').hidden = false; });
+  $('print-unchecked').addEventListener('click', () => handlePrint(true));
+  $('print-current').addEventListener('click', () => handlePrint(false));
+
+  // Settings: per-list share link (per-list section)
+  $('share-open').addEventListener('click', () => { $('share-choice').hidden = false; });
+  $('share-list-plain').addEventListener('click', () => handleShareList(false));
+  $('share-list-sync').addEventListener('click', () => handleShareList(true));
+
+  // Settings: landing-page order (this device only)
+  $('list-order-reset').addEventListener('click', handleResetListOrder);
 
   // New list dialog — the submit button is type="submit", so the form's submit
   // event is the single source of truth (a separate click handler would fire
@@ -162,18 +349,12 @@ export function bindEvents() {
   $('new-list-template').addEventListener('change', onNewListTemplateChange);
   $('new-list-form').addEventListener('submit', (e) => { e.preventDefault(); createList(); });
 
-  // Settings: sync
-  $('sync-save').addEventListener('click', handleSyncSave);
-  $('sync-now').addEventListener('click', handleSyncNow);
-  $('sync-pull').addEventListener('click', handleSyncPull);
-  $('sync-share').addEventListener('click', handleShareLink);
-
   // Close buttons (any element with data-close pointing at a dialog id)
   document.querySelectorAll('[data-close]').forEach((btn) => {
     btn.addEventListener('click', () => $(btn.dataset.close).close());
   });
 
-  ['new-list-dialog', 'history-dialog', 'settings-dialog', 'template-dialog']
+  ['new-list-dialog', 'history-dialog', 'settings-dialog', 'template-dialog', 'link-dialog']
     .forEach(wireBackdropDismiss);
 
   wireTodoList();

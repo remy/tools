@@ -22,13 +22,30 @@
           </svg>
         </button>
         <h1 class="header-title" id="header-title">Todo Lists</h1>
+        <button class="action-btn" id="btn-edit-mode" aria-label="Edit items" aria-pressed="false" hidden>
+          <svg id="icon-edit-items" width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M12.5 4.5L15.5 7.5M4 16H7L15 8L12 5L4 13V16Z" stroke="currentColor" stroke-width="1.6"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <svg id="icon-reorder-lists" width="20" height="20" viewBox="0 0 20 20" fill="none" hidden>
+            <path d="M7 7L10 4L13 7M7 13L10 16L13 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </button>
         <button class="action-btn" id="btn-settings" aria-label="Settings">
           <span class="icon-mask icon-settings" aria-hidden="true"></span>
+          <span class="sync-error-dot" id="sync-error-dot" hidden></span>
         </button>
       </header>
 
       <!-- Home / landing: all lists -->
       <main class="home-view" id="home-view" hidden>
+        <!-- Status of a ?list= share link that is still waiting on sync. A
+             button so it can be tapped away (and reached by keyboard) once
+             it has been read. -->
+        <button class="share-notice" id="share-notice" type="button" title="Dismiss" aria-live="polite"
+          hidden></button>
+
         <!-- No lists yet -->
         <div class="empty-app" id="empty-app" hidden>
           <div class="empty-illustration">
@@ -77,7 +94,7 @@
       </main>
 
       <form class="add-bar" id="add-item-form">
-        <input type="text" id="add-item-input" placeholder="Add an item…" autocomplete="off" enterkeyhint="done">
+        <input type="text" id="add-item-input" placeholder="Add an item, or # for a heading…" autocomplete="off" enterkeyhint="done">
         <button type="submit" class="add-btn" aria-label="Add item">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
@@ -128,6 +145,21 @@
       </div>
     </dialog>
 
+    <!-- Link choice — shown when tapping an item whose text contains a URL -->
+    <dialog id="link-dialog">
+      <div class="pop-header">
+        <h2 id="link-title">Item</h2>
+        <button class="pop-close" data-close="link-dialog" aria-label="Close">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="pop-body">
+        <div class="link-choices" id="link-choices"></div>
+      </div>
+    </dialog>
+
     <!-- Template editor -->
     <dialog id="template-dialog">
       <div class="pop-header">
@@ -165,6 +197,59 @@
         </button>
       </div>
       <div class="pop-body">
+        <!-- Per-list settings — only shown while a list is open -->
+        <div class="settings-section" id="list-settings-section" hidden>
+          <h3 class="settings-heading">This list</h3>
+          <p class="list-settings-name" id="list-settings-name"></p>
+          <label class="settings-toggle">
+            <input type="checkbox" id="list-sink-checked">
+            <span>Move checked to the bottom</span>
+          </label>
+          <p class="field-hint-block">Import a Markdown file to add its headings and checklist items to this list.
+            Headings become sections, <code>- [x]</code> imports as done, and struck-through lines are skipped.</p>
+          <input type="file" id="import-file" accept=".md,.markdown,text/markdown,text/plain" hidden>
+          <div class="pop-actions">
+            <button class="btn btn-primary" id="import-open" type="button">Import Markdown…</button>
+            <button class="btn btn-ghost" id="clone-list" type="button">Clone…</button>
+            <button class="btn btn-ghost" id="print-open" type="button">Print…</button>
+            <button class="btn btn-ghost" id="share-open" type="button">Share…</button>
+          </div>
+          <div class="import-choice" id="share-choice" hidden>
+            <p class="import-summary">Copy a link that opens straight into this list:</p>
+            <div class="pop-actions">
+              <button class="btn btn-ghost" id="share-list-plain" type="button">Link to this list</button>
+              <button class="btn btn-ghost" id="share-list-sync" type="button" disabled>Link + sync access</button>
+            </div>
+            <p class="sync-hint">The plain link only opens the list on a device that already syncs this data.
+              "Link + sync access" also carries your CouchDB URL and token so a brand new device can download it —
+              only send that one to people you trust.</p>
+          </div>
+          <div class="import-choice" id="print-choice" hidden>
+            <p class="import-summary">Print this list as:</p>
+            <div class="pop-actions">
+              <button class="btn btn-ghost" id="print-unchecked" type="button">Unchecked</button>
+              <button class="btn btn-ghost" id="print-current" type="button">In current state</button>
+            </div>
+          </div>
+          <div class="import-choice" id="import-choice" hidden>
+            <p class="import-summary" id="import-summary"></p>
+            <div class="pop-actions">
+              <button class="btn btn-primary" id="import-append" type="button">Append</button>
+              <button class="btn btn-ghost" id="import-replace" type="button">Replace</button>
+              <button class="btn btn-ghost" id="import-cancel" type="button">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section" id="list-order-section" hidden>
+          <h3 class="settings-heading">List order</h3>
+          <p class="field-hint-block">You've arranged the lists on the home screen by hand. That order is stored on
+            this device only — it never syncs, so everyone sharing these lists can arrange their own.</p>
+          <div class="pop-actions">
+            <button class="btn btn-ghost" id="list-order-reset" type="button">Reset to default order</button>
+          </div>
+        </div>
+
         <div class="settings-section">
           <div class="settings-head-row">
             <h3 class="settings-heading">Templates</h3>
@@ -175,32 +260,14 @@
 
         <div class="settings-section">
           <h3 class="settings-heading">Sync</h3>
-          <label class="field">
-            <span class="field-label">CouchDB URL</span>
-            <input type="url" id="sync-url" placeholder="https://user:pass@couch.example.com/todo-lists"
-              autocomplete="off">
-          </label>
-          <label class="field">
-            <span class="field-label">Bearer token (optional)</span>
-            <input type="password" id="sync-token" autocomplete="off">
-          </label>
-          <p class="sync-status" id="sync-status" aria-live="polite">Sync disabled.</p>
-          <p class="sync-hint">Replicates live against a CouchDB-compatible endpoint. The server must send CORS
-            headers.</p>
-          <div class="pop-actions">
-            <button class="btn btn-ghost" id="sync-pull" type="button"
-              title="Overwrite local with server data; leaves the remote untouched">Pull from server</button>
-            <button class="btn btn-ghost" id="sync-now" type="button">Sync now</button>
-            <button class="btn btn-primary" id="sync-save" type="button">Save sync settings</button>
-          </div>
-          <div class="share-row">
-            <button class="btn btn-ghost share-btn" id="sync-share" type="button" disabled>Copy share link</button>
-            <p class="sync-hint">Opens the app on another device pre-configured for this server. The link contains your
-              URL and token, so only share it with people you trust.</p>
-          </div>
+          <sync-settings id="sync-settings"></sync-settings>
         </div>
       </div>
     </dialog>
+
+    <!-- Printable rendering of the current list — hidden on screen, shown only
+         by the @media print stylesheet. Populated just before window.print(). -->
+    <div class="print-sheet" id="print-sheet" aria-hidden="true"></div>
 
     <script src="/vendor/pouchdb/pouchdb.min.js"></script>
     <script type="module" src="main.js"></script>

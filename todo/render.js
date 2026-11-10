@@ -1,4 +1,5 @@
 import { state } from './state.js';
+import { linkify, hasUrl } from './links.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -34,12 +35,32 @@ export function render() {
   // Only stay in the single-list view when a valid list is selected; otherwise
   // fall back to the home view (e.g. the open list was just deleted).
   const onList = state.view === 'list' && !!list;
+  // Edit mode is only meaningful while a list is open — leaving the list resets
+  // it so every list opens in the clean, controls-hidden state.
+  if (!onList) state.editMode = false;
+
+  // The landing page borrows the same header toggle to expose drag handles for
+  // reordering the lists — only worth offering once there are two to shuffle.
+  const canReorderLists = !onList && state.lists.length > 1;
+  if (!canReorderLists) state.reorderLists = false;
 
   $('header-title').textContent = onList ? list.name : 'Todo Lists';
   $('btn-back').hidden = !onList;
 
+  const modeBtn = $('btn-edit-mode');
+  modeBtn.hidden = !onList && !canReorderLists;
+  modeBtn.setAttribute('aria-pressed', String(onList ? state.editMode : state.reorderLists));
+  modeBtn.setAttribute('aria-label', onList ? 'Edit items' : 'Reorder lists');
+  // toggleAttribute, not .hidden: the IDL property is defined on HTMLElement
+  // only, so assigning it on an <svg> sets a dead expando instead of the
+  // attribute the [hidden] rule keys off.
+  $('icon-edit-items').toggleAttribute('hidden', !onList);
+  $('icon-reorder-lists').toggleAttribute('hidden', onList);
+
   $('home-view').hidden = onList;
+  $('home-view').classList.toggle('editing', state.reorderLists);
   $('list-view').hidden = !onList;
+  $('list-view').classList.toggle('editing', state.editMode);
   $('add-item-form').hidden = !onList;
 
   if (onList) renderItems();
@@ -63,6 +84,9 @@ export function renderHome() {
 function homeRow(list) {
   const li = document.createElement('li');
   li.className = 'pick-row';
+  li.dataset.id = list.id;
+
+  li.appendChild(dragHandle('pick-drag'));
 
   const pick = document.createElement('button');
   pick.type = 'button';
@@ -110,10 +134,25 @@ export function renderItems() {
   const ul = $('todo-list');
   ul.replaceChildren();
 
-  const done = items.filter((i) => i.checked).length;
-  const total = items.length;
+  renderProgress();
 
-  // Progress summary + reset affordance
+  const empty = $('empty-list');
+  empty.hidden = items.length !== 0;
+
+  for (const item of items) {
+    ul.appendChild(item.kind === 'heading' ? headingRow(item) : itemRow(item));
+  }
+}
+
+// Progress summary + reset affordance. Split out from renderItems so a single
+// toggle can update the meter without rebuilding the whole list.
+function renderProgress() {
+  const items = state.items;
+  // Progress counts checkable tasks only — headings are structural.
+  const tasks = items.filter((i) => i.kind !== 'heading');
+  const done = tasks.filter((i) => i.checked).length;
+  const total = tasks.length;
+
   const meter = $('progress-meter');
   const bar = $('progress-bar');
   const label = $('progress-label');
@@ -127,13 +166,18 @@ export function renderItems() {
     label.textContent = `${done} of ${total} done`;
   }
   $('reset-checks').hidden = done === 0;
+}
 
-  const empty = $('empty-list');
-  empty.hidden = total !== 0;
-
-  for (const item of items) {
-    ul.appendChild(itemRow(item));
-  }
+// Re-render one row in place instead of rebuilding the whole list. Rebuilding
+// empties the <ul>, which collapses the page height and makes the browser jump
+// the scroll position to the top — so toggling an item uses this instead.
+export function refreshItemRow(id) {
+  const ul = $('todo-list');
+  const old = ul.querySelector(`[data-id="${id}"]`);
+  const item = state.items.find((i) => i.id === id);
+  if (!old || !item) { renderItems(); return; }
+  old.replaceWith(item.kind === 'heading' ? headingRow(item) : itemRow(item));
+  renderProgress();
 }
 
 function svg(paths, size = 18) {
@@ -145,6 +189,29 @@ function svg(paths, size = 18) {
   s.innerHTML = paths;
   return s;
 }
+
+function iconBtn(action, label, paths, extraClass = '') {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = `icon-btn${extraClass ? ' ' + extraClass : ''}`;
+  btn.dataset.action = action;
+  btn.setAttribute('aria-label', label);
+  btn.appendChild(svg(paths, 16));
+  return btn;
+}
+
+// A drag handle — reorder via pointer drag (mouse or touch). Reordering is
+// wired up with Pointer Events in events.js so it works on touch too. The
+// class differs per view (items vs lists) because each has its own CSS rule
+// for when the handle is revealed.
+function dragHandle(cls = 'todo-drag') {
+  return iconBtn('drag', 'Drag to reorder',
+    '<path d="M6 4.5h.02M6 9h.02M6 13.5h.02M12 4.5h.02M12 9h.02M12 13.5h.02" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>',
+    cls);
+}
+
+const EDIT_PATHS = '<path d="M11.5 3.5L14.5 6.5M3 15H6L13.5 7.5L10.5 4.5L3 12V15Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>';
+const DELETE_PATHS = '<path d="M4 5H14M7 5V3.5H11V5M6 5V14H12V5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>';
 
 function itemRow(item) {
   const li = document.createElement('li');
@@ -168,8 +235,11 @@ function itemRow(item) {
 
   const text = document.createElement('span');
   text.className = 'todo-text';
-  text.textContent = item.text;
+  text.append(linkify(item.text));
+  // Tapping the text normally toggles the item; when it contains a link the
+  // click handler intercepts and asks what to do instead (see events.js).
   text.dataset.action = 'toggle';
+  if (hasUrl(item.text)) li.classList.add('has-link');
   body.appendChild(text);
 
   if (item.checkedAt) {
@@ -186,23 +256,37 @@ function itemRow(item) {
   // Row actions
   const actions = document.createElement('div');
   actions.className = 'todo-actions';
+  actions.append(
+    iconBtn('edit', 'Edit item', EDIT_PATHS),
+    iconBtn('delete', 'Delete item', DELETE_PATHS, 'icon-danger'));
 
-  const edit = document.createElement('button');
-  edit.className = 'icon-btn';
-  edit.type = 'button';
-  edit.dataset.action = 'edit';
-  edit.setAttribute('aria-label', 'Edit item');
-  edit.appendChild(svg('<path d="M11.5 3.5L14.5 6.5M3 15H6L13.5 7.5L10.5 4.5L3 12V15Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>', 16));
+  li.append(dragHandle(), toggle, body, actions);
+  return li;
+}
 
-  const del = document.createElement('button');
-  del.className = 'icon-btn icon-danger';
-  del.type = 'button';
-  del.dataset.action = 'delete';
-  del.setAttribute('aria-label', 'Delete item');
-  del.appendChild(svg('<path d="M4 5H14M7 5V3.5H11V5M6 5V14H12V5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>', 16));
+// A section heading — a flat list item without a checkbox, rendered as a
+// divider. Shares the drag / reorder / edit / delete controls with tasks.
+function headingRow(item) {
+  const li = document.createElement('li');
+  li.className = 'todo-heading';
+  li.dataset.id = item.id;
 
-  actions.append(edit, del);
-  li.append(toggle, body, actions);
+  const body = document.createElement('div');
+  body.className = 'todo-body';
+  const text = document.createElement('span');
+  text.className = 'todo-heading-text';
+  // A heading has nothing to check, so its links open straight away rather
+  // than going through the "done or open?" choice.
+  text.append(linkify(item.text, { action: 'open-link' }));
+  body.appendChild(text);
+
+  const actions = document.createElement('div');
+  actions.className = 'todo-actions';
+  actions.append(
+    iconBtn('edit', 'Edit heading', EDIT_PATHS),
+    iconBtn('delete', 'Delete heading', DELETE_PATHS, 'icon-danger'));
+
+  li.append(dragHandle(), body, actions);
   return li;
 }
 

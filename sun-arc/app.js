@@ -89,6 +89,16 @@ function uvIndex(altRad, date, lat) {
   return Math.max(0, uvi);
 }
 
+/* Cloud modification factor for UV.
+ * Clouds scatter and absorb UV, but far less than visible light, so even an
+ * overcast sky still passes a meaningful amount. This uses the widely-cited
+ * approximation CMF = 1 − 0.75·f^3.4 (f = cloud fraction 0–1): a thin/broken
+ * sky barely dents the UV, while full overcast cuts it to roughly a quarter. */
+function cloudFactor(cloudPct) {
+  const f = Math.max(0, Math.min(1, cloudPct / 100));
+  return 1 - 0.75 * Math.pow(f, 3.4);
+}
+
 // UV index category label (WHO bands).
 function uvCategory(uvi) {
   if (uvi < 3) return "Low";
@@ -239,6 +249,7 @@ const els = {
   sLen: $("s-len"),
   sAlt: $("s-alt"),
   sUv: $("s-uv"),
+  sCloud: $("s-cloud"),
   date: $("date"),
   time: $("time"),
   timeOut: $("time-out"),
@@ -248,6 +259,14 @@ const els = {
   geo: $("geo"),
   geoMsg: $("geo-msg"),
   locSummary: $("loc-summary"),
+  clouds: $("clouds"),
+  weatherMsg: $("weather-msg"),
+  btnSettings: $("btn-settings"),
+  settingsDialog: $("settings-dialog"),
+  settingsClose: $("settings-close"),
+  settingsNote: $("settings-note"),
+  owmKey: $("owm-key"),
+  owmSave: $("owm-save"),
 };
 
 const state = {
@@ -256,7 +275,51 @@ const state = {
   label: "London, UK",
   date: new Date(), // selected calendar day (local)
   minutes: 720, // minutes since local midnight (slider value)
+  located: false, // true once coords come from geolocation / manual entry
 };
+
+/* -------------------------------------------------------------------------
+ * Live cloud cover (OpenWeatherMap)
+ * The free forecast API returns cloud-cover percentages at 3-hourly steps for
+ * the next five days; the current-weather call anchors "now". We keep those as
+ * a sorted list of {t, clouds} samples and linearly interpolate between them,
+ * then attenuate the clear-sky UV with cloudFactor() — so both the live stats
+ * and the UV band under the arc reflect the real sky for this location.
+ * ---------------------------------------------------------------------- */
+const weather = {
+  apiKey: "",
+  enabled: false,
+  samples: [], // sorted [{ t: epoch ms, clouds: 0–100 }]
+  loading: false,
+  error: "",
+};
+
+// Interpolated cloud cover (%) for an absolute instant, or null when the time
+// falls outside the fetched forecast window (e.g. earlier today, or > 5 days
+// out) — callers then fall back to the clear-sky estimate.
+function cloudAt(ms) {
+  const s = weather.samples;
+  if (!s.length || ms < s[0].t || ms > s[s.length - 1].t) return null;
+  for (let i = 0; i < s.length - 1; i++) {
+    if (ms <= s[i + 1].t) {
+      const span = s[i + 1].t - s[i].t || 1;
+      const k = (ms - s[i].t) / span;
+      return s[i].clouds + (s[i + 1].clouds - s[i].clouds) * k;
+    }
+  }
+  return s[s.length - 1].clouds;
+}
+
+// Clear-sky UV for an instant, attenuated by live cloud cover when the toggle
+// is on and data is available. Returns the UV index plus the cloud % applied
+// (null when no cloud data was used).
+function effectiveUv(altRad, instant, lat) {
+  const clear = uvIndex(altRad, instant, lat);
+  if (!weather.enabled) return { uvi: clear, clouds: null };
+  const c = cloudAt(instant.getTime());
+  if (c === null) return { uvi: clear, clouds: null };
+  return { uvi: clear * cloudFactor(c), clouds: c };
+}
 
 // Build the 8-ray sun glyph once.
 (function buildRays() {
@@ -309,8 +372,12 @@ function render() {
   const altDeg = (altRad * 180) / PI;
   els.sAlt.textContent = altDeg.toFixed(1) + "°";
 
-  const uvi = uvIndex(altRad, now, state.lat);
+  const { uvi, clouds } = effectiveUv(altRad, now, state.lat);
   els.sUv.textContent = uvi <= 0 ? "0" : `${uvi.toFixed(1)} · ${uvCategory(uvi)}`;
+
+  // Cloud stat: live percentage when the toggle is on and we have data for the
+  // selected instant, otherwise a dash.
+  els.sCloud.textContent = clouds === null ? "—" : `${Math.round(clouds)}%`;
 
   // Endpoints + their labels.
   const pL = arcPoint(0);
@@ -410,7 +477,7 @@ function renderUvFill(riseMin, setMin, dayStart, t) {
     const instant = new Date(dayStart);
     instant.setMinutes(mins);
     const alt = sunAltitude(instant, state.lat, state.lng);
-    const uvi = uvIndex(alt, instant, state.lat);
+    const { uvi } = effectiveUv(alt, instant, state.lat);
     const offsetPct = (f * 100).toFixed(2);
     stops += `<stop offset="${offsetPct}%" stop-color="${uvColor(uvi)}"></stop>`;
   }
@@ -520,18 +587,24 @@ function updateCoord(key, input, lo, hi) {
   const v = parseFloat(input.value);
   if (!Number.isNaN(v) && v >= lo && v <= hi) {
     state[key] = v;
+    state.located = true;
     state.label = `${state.lat.toFixed(3)}, ${state.lng.toFixed(3)}`;
     els.locSummary.textContent = state.label;
     saveLoc();
     render();
+    if (weather.enabled) fetchWeather(); // clouds are location-specific
   }
 }
 els.lat.addEventListener("change", () => updateCoord("lat", els.lat, -90, 90));
 els.lng.addEventListener("change", () => updateCoord("lng", els.lng, -180, 180));
 
-els.geo.addEventListener("click", () => {
+// Request the device's location, then run an optional callback. Reused by the
+// "Use my location" button and by enabling cloud cover (which needs accurate
+// coordinates to be correct for where you actually are).
+function locate(onDone) {
   if (!navigator.geolocation) {
     showGeoMsg("Geolocation is not available in this browser.");
+    onDone?.();
     return;
   }
   showGeoMsg("Locating…");
@@ -539,21 +612,132 @@ els.geo.addEventListener("click", () => {
     (pos) => {
       state.lat = Number(pos.coords.latitude.toFixed(4));
       state.lng = Number(pos.coords.longitude.toFixed(4));
+      state.located = true;
       state.label = `${state.lat.toFixed(3)}, ${state.lng.toFixed(3)}`;
       showGeoMsg("");
       saveLoc();
       syncInputs();
       render();
+      onDone?.();
     },
-    (err) => showGeoMsg("Couldn't get your location: " + err.message),
+    (err) => {
+      showGeoMsg("Couldn't get your location: " + err.message);
+      onDone?.();
+    },
     { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
   );
-});
+}
+
+els.geo.addEventListener("click", () => locate());
 
 function showGeoMsg(msg) {
   els.geoMsg.textContent = msg;
   els.geoMsg.toggleAttribute("hidden", !msg);
 }
+
+/* -------------------------------------------------------------------------
+ * Weather wiring — fetch cloud cover, drive the toggle + settings dialog.
+ * ---------------------------------------------------------------------- */
+function showWeatherMsg(msg, isError = false) {
+  els.weatherMsg.textContent = msg || "";
+  els.weatherMsg.classList.toggle("error", isError);
+  els.weatherMsg.toggleAttribute("hidden", !msg);
+}
+
+// Pull current conditions + the 3-hourly forecast for the current location and
+// turn them into the sorted cloud-cover samples cloudAt() reads.
+async function fetchWeather() {
+  if (!weather.apiKey) {
+    showWeatherMsg("Add an API key in settings.", true);
+    return;
+  }
+  weather.loading = true;
+  showWeatherMsg("Fetching cloud cover…");
+  const { lat, lng } = state;
+  const base = "https://api.openweathermap.org/data/2.5/";
+  const q = `lat=${lat}&lon=${lng}&units=metric&appid=${encodeURIComponent(weather.apiKey)}`;
+  try {
+    const [curRes, fcRes] = await Promise.all([
+      fetch(`${base}weather?${q}`),
+      fetch(`${base}forecast?${q}`),
+    ]);
+    if (curRes.status === 401 || fcRes.status === 401) {
+      throw new Error("Invalid API key (new keys take a while to activate)");
+    }
+    if (!curRes.ok || !fcRes.ok) {
+      throw new Error(`OpenWeatherMap error (${curRes.ok ? fcRes.status : curRes.status})`);
+    }
+    const cur = await curRes.json();
+    const fc = await fcRes.json();
+
+    const samples = [];
+    if (cur?.clouds) samples.push({ t: (cur.dt || Date.now() / 1000) * 1000, clouds: cur.clouds.all ?? 0 });
+    for (const e of fc?.list || []) samples.push({ t: e.dt * 1000, clouds: e.clouds?.all ?? 0 });
+    samples.sort((a, b) => a.t - b.t);
+    weather.samples = samples;
+    weather.error = "";
+
+    // Name the location from the API so the summary reads nicely.
+    const name = cur?.name || fc?.city?.name;
+    const country = cur?.sys?.country || fc?.city?.country;
+    if (name) {
+      state.label = country ? `${name}, ${country}` : name;
+      els.locSummary.textContent = state.label;
+      saveLoc();
+    }
+    showWeatherMsg("");
+  } catch (err) {
+    weather.samples = [];
+    weather.error = err.message || "Couldn't fetch weather";
+    showWeatherMsg(weather.error, true);
+  } finally {
+    weather.loading = false;
+    render();
+  }
+}
+
+els.clouds.addEventListener("change", () => {
+  weather.enabled = els.clouds.checked;
+  saveCloudPref();
+  if (!weather.enabled) {
+    weather.samples = [];
+    showWeatherMsg("");
+    render();
+    return;
+  }
+  if (!weather.apiKey) {
+    openSettings("Add your OpenWeatherMap API key to use live cloud cover.");
+    render();
+    return;
+  }
+  // Clouds must match where you actually are — locate first if we never have.
+  if (!state.located && navigator.geolocation) locate(fetchWeather);
+  else fetchWeather();
+});
+
+/* settings dialog */
+function openSettings(note) {
+  els.owmKey.value = weather.apiKey;
+  els.settingsNote.textContent = note || "";
+  els.settingsNote.toggleAttribute("hidden", !note);
+  els.settingsDialog.showModal();
+}
+
+els.btnSettings.addEventListener("click", () => openSettings());
+els.settingsClose.addEventListener("click", () => els.settingsDialog.close());
+els.settingsDialog.addEventListener("click", (e) => {
+  if (e.target === els.settingsDialog) els.settingsDialog.close();
+});
+
+els.owmSave.addEventListener("click", () => {
+  weather.apiKey = els.owmKey.value.trim();
+  saveApiKey();
+  els.settingsDialog.close();
+  if (weather.apiKey && weather.enabled) {
+    if (!state.located && navigator.geolocation) locate(fetchWeather);
+    else fetchWeather();
+  }
+});
 
 /* persistence */
 function saveLoc() {
@@ -573,11 +757,34 @@ function loadLoc() {
         state.lat = o.lat;
         state.lng = o.lng;
         state.label = o.label || `${o.lat.toFixed(3)}, ${o.lng.toFixed(3)}`;
+        state.located = true;
       }
     }
   } catch {}
 }
 
+function saveApiKey() {
+  try {
+    localStorage.setItem("sun-arc-owm-key", weather.apiKey);
+  } catch {}
+}
+function saveCloudPref() {
+  try {
+    localStorage.setItem("sun-arc-clouds", weather.enabled ? "1" : "0");
+  } catch {}
+}
+function loadWeatherPrefs() {
+  try {
+    weather.apiKey = localStorage.getItem("sun-arc-owm-key") || "";
+    weather.enabled = localStorage.getItem("sun-arc-clouds") === "1";
+  } catch {}
+  els.clouds.checked = weather.enabled;
+}
+
 /* init: defaults to today + current time + live sun position */
 loadLoc();
+loadWeatherPrefs();
 setToNow();
+// If cloud cover was left on and we have a key, fetch for the saved location
+// (no geolocation prompt on load — that only happens on an explicit toggle).
+if (weather.enabled && weather.apiKey) fetchWeather();

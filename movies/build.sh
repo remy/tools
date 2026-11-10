@@ -5,4 +5,5 @@ cd "$(dirname "$0")"
 
 curl -s -X POST  https://www.picturehouses.com/api/scheduled-movies-ajax > scheduled-movies.json # all picturehouses movies
 curl -s -X POST https://www.picturehouses.com/api/get-movies-ajax -d "start_date=show_all_dates&cinema_id=008" > doy-movies.json
+[ -d node_modules/playwright-core ] || npm install --silent
 node scripts/fetch-cineworld-showtimes.js --days 7 --out cineworld-movies.json --raw-dir cineworld-events

@@ -1,21 +1,6 @@
 :root {
-  --bg: #0e0e0e;
-  --card: #1a1a1a;
-  --border: #2a2a2a;
-  --accent: #ff3c3c;
-  --text: #f0f0f0;
-  --muted: #888;
-  --row-a: #1a1a1a;
-  --row-b: #141414;
-  --tab-bg: #1a1a1a;
-  --tab-active-bg: #1f1010;
-  --focus-bg: linear-gradient(135deg, #1f1010, #1a1a1a);
-  --cardio-bg: #1a1500;
-  --cardio-border: #3a3000;
-  --cardio-text: #aaa;
-}
+  color-scheme: light dark;
 
-body.light {
   --bg: #f2f2f2;
   --card: #ffffff;
   --border: #ddd;
@@ -30,6 +15,49 @@ body.light {
   --cardio-bg: #fffbe6;
   --cardio-border: #f0d060;
   --cardio-text: #666;
+  --cardio-title: #997700;
+
+  /* Tokens the shared <sync-settings> component reads. Custom properties
+     inherit through the shadow boundary, so defining them here is what themes
+     the panel in this tool's palette rather than its neutral fallbacks. */
+  --text-2: #444;
+  --text-3: #888;
+  --bg-input: #f7f7f7;
+  --bg-hover: #ececec;
+  --border-light: #e6e6e6;
+  --accent-glow: rgba(217, 43, 43, 0.12);
+  --danger: #d92b2b;
+  --green: #1a9e5f;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e0e0e;
+    --card: #1a1a1a;
+    --border: #2a2a2a;
+    --accent: #ff3c3c;
+    --text: #f0f0f0;
+    --muted: #888;
+    --row-a: #1a1a1a;
+    --row-b: #141414;
+    --tab-bg: #1a1a1a;
+    --tab-active-bg: #1f1010;
+    --focus-bg: linear-gradient(135deg, #1f1010, #1a1a1a);
+    --cardio-bg: #1a1500;
+    --cardio-border: #3a3000;
+    --cardio-text: #aaa;
+    --cardio-title: #cc9900;
+
+    --text-2: #c4c4c4;
+    --text-3: #888;
+    --bg-input: #141414;
+    --bg-hover: #222;
+    --border-light: #222;
+    --accent-glow: rgba(255, 60, 60, 0.14);
+    --danger: #ff5c5c;
+    --green: #35d68a;
+  }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
@@ -42,31 +70,17 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: 'DM Sans', sans-serif;
-  min-height: 100dvh;
+  /* Use svh, not dvh: Firefox does not shrink the dynamic viewport for the
+     browser toolbar, so 100dvh here left the body taller than the visible
+     area and pushed the bottom of the tab buttons off-screen. svh is the
+     toolbar-visible (smallest) viewport, so the pinned tabs stay visible. */
+  min-height: 100vh;
+  min-height: 100svh;
   max-width: 600px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
-
-.theme-toggle {
-  background: transparent;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  border-radius: 20px;
-  padding: 5px 12px;
-  cursor: pointer;
-  font-size: 12px;
-  font-family: 'DM Sans', sans-serif;
-  font-weight: 500;
-  color: var(--muted);
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-body.light .theme-toggle {
-  border-color: rgba(0,0,0,0.15);
-}
-
-.theme-toggle:active { opacity: 0.7; }
 
 .bar-actions {
   display: flex;
@@ -74,23 +88,78 @@ body.light .theme-toggle {
   gap: 10px;
 }
 
+/* Mask-based icons: load a shared SVG from /icons and paint it with
+   currentColor so it inherits text colour and adapts to the theme. */
+.icon-mask {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.icon-settings {
+  width: 1.25rem;
+  height: 1.25rem;
+  -webkit-mask-image: url(/icons/settings.svg);
+  mask-image: url(/icons/settings.svg);
+}
+
 .manage-link {
-  font-size: 18px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Roomy enough to hit on a phone — the icon itself is only 1.25rem. */
+  width: 44px;
+  height: 44px;
+  margin: -10px;
   text-decoration: none;
   color: var(--muted);
   -webkit-tap-highlight-color: transparent;
   transition: color 0.15s;
-  line-height: 1;
 }
 
 .manage-link:active { opacity: 0.7; }
 
+/* Red badge on the settings cog while sync is in an error state. */
+.sync-error-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--danger);
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
 .content {
   padding: 10px 16px 16px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .day-panel { display: none; }
-.day-panel.active { display: block; }
+.day-panel.active {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Absorbs the leftover height on a short workout so the trailing controls
+   (elapsed timer, reset button) hug the bottom instead of floating up. When
+   the list is long enough to scroll, this collapses to nothing. */
+.panel-spacer {
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
 .focus-bar {
   display: flex;
@@ -249,12 +318,10 @@ body.light .theme-toggle {
   font-family: 'Bebas Neue', sans-serif;
   font-size: 17px;
   letter-spacing: 1.5px;
-  color: #cc9900;
+  color: var(--cardio-title);
   line-height: 1;
   margin-bottom: 3px;
 }
-
-body.light .cardio-title { color: #997700; }
 
 .cardio-desc {
   font-size: 14px;
@@ -377,6 +444,32 @@ body.light .cardio-title { color: #997700; }
 .rep-timer.done .rep-timer-time,
 .rep-timer.done .rep-timer-rest-time {
   color: #22c55e;
+}
+
+/* ── Reset / clear-day control ── */
+.day-reset {
+  align-self: center;
+  margin: 14px auto 4px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 9px 22px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s, color 0.2s, background 0.2s, opacity 0.15s;
+}
+
+.day-reset:active { opacity: 0.7; }
+
+.day-reset.complete {
+  border-color: #22c55e;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.10);
 }
 
 /* ── Circuit Training ── */
@@ -547,4 +640,173 @@ body.circuit-border.circuit-phase-longRest { --circuit-border-color: #f59e0b; --
   border: 1.5px solid var(--border);
   color: var(--muted);
   padding: 16px 20px;
+}
+
+/* ── Edit-exercise dialog ── */
+.exercise-row,
+.cardio-block {
+  -webkit-touch-callout: none;
+}
+
+.long-press-charging {
+  animation: long-press-fill var(--hold-duration, 1000ms) linear forwards;
+}
+
+@keyframes long-press-fill {
+  from { box-shadow: inset 0 0 0 0 var(--accent); }
+  to { box-shadow: inset 0 0 0 3px var(--accent); }
+}
+
+.long-press-ready {
+  animation: long-press-ready-pulse 0.35s ease-out;
+}
+
+@keyframes long-press-ready-pulse {
+  0% { box-shadow: inset 0 0 0 3px var(--accent); }
+  50% { box-shadow: inset 0 0 0 6px var(--accent); }
+  100% { box-shadow: inset 0 0 0 3px var(--accent); }
+}
+
+dialog {
+  padding: 0;
+  border: none;
+  border-radius: 16px;
+  background: var(--card);
+  color: var(--text);
+  width: min(90vw, 400px);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin: 0;
+  transform: translate(-50%, -50%);
+
+  &::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+@media (max-width: 639px) {
+  dialog {
+    inset: 0;
+    top: 0;
+    left: 0;
+    margin: 0;
+    transform: none;
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    max-width: 100vw;
+    max-height: 100vh;
+    max-height: 100svh;
+    border-radius: 0;
+  }
+}
+
+.edit-exercise-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  height: 100%;
+  user-select: text;
+
+  & h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 1.5px;
+  }
+
+  & label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+
+  & input[type="text"],
+  & select {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    user-select: text;
+  }
+}
+
+.edit-exercise-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  & label {
+    min-width: 0;
+  }
+
+  & input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .edit-exercise-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.edit-exercise-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.edit-exercise-actions-right {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-delete,
+.btn-secondary,
+.btn-primary {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-delete:active,
+.btn-secondary:active,
+.btn-primary:active {
+  opacity: 0.7;
+}
+
+.btn-delete {
+  background: transparent;
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
 }
