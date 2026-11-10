@@ -57,6 +57,45 @@ function initSettings(app) {
   });
 }
 
+// ── Reader font size ──
+// Per-device preference. Sets the custom property <text-reader> reads; the
+// editor keeps its own fixed size.
+const FONT_SIZE_KEY = 'notes:font-size';
+const DEFAULT_FONT_SIZE = 18;
+
+function readFontSize() {
+  try {
+    const n = parseInt(localStorage.getItem(FONT_SIZE_KEY), 10);
+    return Number.isFinite(n) ? n : null;
+  } catch {
+    return null;
+  }
+}
+
+function applyFontSize(size) {
+  const root = document.documentElement.style;
+  if (size) root.setProperty('--text-reader-font-size', `${size}px`);
+  else root.removeProperty('--text-reader-font-size');
+}
+
+function initFontSize() {
+  const input = $('font-size');
+  const output = $('font-size-value');
+  const saved = readFontSize();
+  applyFontSize(saved);
+  input.value = saved ?? DEFAULT_FONT_SIZE;
+  output.value = `${input.value}px`;
+
+  input.addEventListener('input', () => {
+    const size = Number(input.value);
+    output.value = `${size}px`;
+    applyFontSize(size);
+    try {
+      localStorage.setItem(FONT_SIZE_KEY, String(size));
+    } catch {}
+  });
+}
+
 // ── Dropped files ──
 // The inline script in index.html captures a dropped file before this module
 // has loaded; register() drains anything it queued, then handles later drops.
@@ -103,6 +142,7 @@ function init() {
   document.body.prepend(app);
 
   updateThemeColor();
+  initFontSize();
   initSettings(app);
   initDrop(app);
   db.onChange(() => scheduleRefresh(app));

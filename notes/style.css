@@ -551,6 +551,28 @@ dialog {
   font-weight: 600;
 }
 
+.settings-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+
+  & input {
+    flex: 1;
+    min-width: 0;
+    accent-color: var(--accent);
+  }
+
+  & output {
+    min-width: 3.5ch;
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+}
+
 /* ── Drag a JSON file anywhere to import ── */
 .drop-overlay {
   display: none;
