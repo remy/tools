@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+      content="A tap-to-advance text and Markdown reader web component that steps through paragraphs against a fixed reading line">
+    <meta name="category" content="Web Demos">
+    <title>Text Reader</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <div class="container">
+
+      <header class="page-header">
+        <div class="badge">Web Component</div>
+        <h1>Text <span>Reader</span></h1>
+        <p>A distraction-free reader for plain text and Markdown. Tap below the reading line to move to the next paragraph, above it
+          to go back.</p>
+      </header>
+
+      <div class="sections">
+
+        <!-- 1: Live demo -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Try It</h2>
+            <p>Click or tap anywhere on the page: below the faint reading line advances, above it goes back. The
+              current paragraph is highlighted.</p>
+          </div>
+
+          <div class="reader-frame">
+            <text-reader id="reader">## The reading line
+
+The faint blue line a third of the way down is the reading line. Each tap scrolls so that the end of the current paragraph sits on it.
+
+Tap anywhere below the line to move to the next paragraph. The paragraph you land on is highlighted so your eye can find its place again.
+
+Tap above the line to step back a paragraph.
+
+## Formatting
+
+Paragraphs are separated by a blank line.
+A single line break is kept as a line break
+inside the same paragraph.
+
+Markdown is styled but its syntax stays visible, so **strong**, *emphasis*, ~~strike~~, `code` and [links](https://example.com) all keep their markers.
+
+Each list item is its own stop:
+- First item
+- Second item, which is long enough to wrap so you can see the text hang under itself rather than under the marker
+- [x] A finished task
+
+> Quotes keep their marker too.
+
+```
+Fenced code blocks
+  keep their whitespace.
+```
+
+## Long blocks
+
+When a block is too tall to sit above the reading line, it is aligned to the top of the view instead, and taps page through it before moving on. This paragraph is deliberately long so you can see that happen in the small frame on this page. Keep tapping below the line and the view moves down by most of a screen at a time until the end of the paragraph is visible; only then does the next tap move on to the following block. Tapping above the line pages back up through it the same way, and once you are back at its top the next tap returns to the previous block. On a phone held in portrait this is what keeps a long paragraph readable without it shooting past the reading line in one go.
+
+## The end
+
+That's all there is to it. Paste your own text below to try it with something longer.</text-reader>
+          </div>
+
+          <label class="field">
+            <span>Your own text</span>
+            <textarea id="custom-text" rows="5"
+              placeholder="Paste some text, with paragraphs separated by blank lines..."></textarea>
+          </label>
+          <div class="demo-row">
+            <button class="btn btn-primary" id="btn-load">Load text</button>
+          </div>
+        </div>
+
+        <!-- 2: Usage -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Usage</h2>
+            <p>Put the text inside the element and give it a height — the reader fills its container.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="tag">&lt;div</span> <span class="attr">style</span>=<span class="val">"height: 100dvh"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;text-reader&gt;</span># A heading
+
+First paragraph, separated from the next by a blank line.
+
+Second paragraph.<span class="tag">&lt;/text-reader&gt;</span>
+<span class="tag">&lt;/div&gt;</span>
+
+<span class="tag">&lt;script</span> <span class="attr">src</span>=<span class="val">"/text-reader/text-reader.wc.js"</span><span class="tag">&gt;&lt;/script&gt;</span>
+
+<span class="cm">// or as a module import</span>
+<span class="kw">import</span> <span class="val">'/text-reader/text-reader.wc.js'</span>;</code></pre>
+        </div>
+
+        <!-- 3: Changing the text -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Changing the Text</h2>
+            <p>The text is read once, when the element connects. To show different text, replace the element. When
+              inserting it as markup, escape the text first.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="kw">const</span> reader = document.createElement(<span class="val">'text-reader'</span>);
+reader.textContent = text;
+container.replaceChildren(reader);</code></pre>
+        </div>
+
+        <!-- 4: API reference -->
+        <div class="card">
+          <div class="card-header">
+            <h2>API</h2>
+            <p>Methods and behaviour.</p>
+          </div>
+
+          <pre class="code-hint"><code><span class="cm">// Step through paragraphs programmatically</span>
+reader.<span class="attr">scrollToNextBlock</span>();          <span class="cm">// smooth by default</span>
+reader.<span class="attr">scrollToNextBlock</span>(<span class="val">'instant'</span>);
+reader.<span class="attr">scrollToPreviousBlock</span>();
+
+<span class="cm">// Recalculate the top/bottom padding that lets the first and last</span>
+<span class="cm">// paragraphs reach the reading line. Runs on window resize; call it</span>
+<span class="cm">// yourself if the reader's container changes size some other way.</span>
+reader.<span class="attr">updatePadding</span>();
+
+<span class="cm">// Behaviour notes</span>
+<span class="cm">// - Clicks are listened for on the whole document, not just the</span>
+<span class="cm">//   reader, so a tap anywhere advances or goes back. The listener</span>
+<span class="cm">//   is removed when the element is disconnected.</span>
+<span class="cm">// - Markdown is styled with its syntax left visible: headings,</span>
+<span class="cm">//   strong, em, strike, inline code, quotes, lists, task lists,</span>
+<span class="cm">//   fenced code and links (http/https/mailto only).</span>
+<span class="cm">// - Each list item is its own stop; blocks too tall to sit above</span>
+<span class="cm">//   the reading line are top-aligned and paged through.</span>
+<span class="cm">// - Links don't open on a tap (a tap steps the reader); use the</span>
+<span class="cm">//   context menu (right click / long press) to open them.</span>
+<span class="cm">// - Follows prefers-color-scheme for light and dark colours.</span>
+<span class="cm">// - Text selection is disabled inside the reader.</span></code></pre>
+        </div>
+
+      </div>
+    </div>
+
+    <script src="./text-reader.wc.js"></script>
+    <script src="./script.js"></script>
+    <script>navigator.serviceWorker?.register("/sw.js")</script>
+  </body>
+
+</html>
