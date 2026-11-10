@@ -244,6 +244,10 @@ class TextReader extends HTMLElement {
 
         strong { font-weight: 700; }
 
+        .seg {
+          display: block;
+        }
+
         .li {
           display: grid;
           grid-template-columns: auto 1fr;
@@ -349,15 +353,27 @@ class TextReader extends HTMLElement {
         p.classList.add('code-block');
         p.textContent = text;
       } else {
-        // List items are block-level, so they need no <br> either side.
-        let prevBlock = true;
+        // Runs of non-list lines go in a .seg; list items stand alone. Both
+        // are block-level so each can be a reading-line stop.
+        let seg = null;
         for (const line of text.split('\n')) {
-          const br = document.createElement('br');
-          p.append(br);
-          const isBlock = renderLine(line, p);
-          if (prevBlock || isBlock) br.remove();
-          prevBlock = isBlock;
+          const tmp = document.createElement('span');
+          if (renderLine(line, tmp)) {
+            p.append(...tmp.childNodes);
+            seg = null;
+          } else {
+            if (seg) seg.append(document.createElement('br'));
+            else p.append((seg = Object.assign(document.createElement('span'), { className: 'seg' })));
+            seg.append(...tmp.childNodes);
+          }
         }
+      }
+      // Reading-line stops: each list item and the text around it, or the
+      // whole paragraph when it has no list.
+      if (p.querySelector('.li')) {
+        for (const el of p.children) el.classList.add('stop');
+      } else {
+        p.classList.add('stop');
       }
       container.appendChild(p);
     }
@@ -412,7 +428,7 @@ class TextReader extends HTMLElement {
 
     if (!scrollContainer || !textContent) return;
 
-    const blocks = textContent.querySelectorAll('p');
+    const blocks = textContent.querySelectorAll('.stop');
     const containerHeight = scrollContainer.clientHeight;
     const scrollTop = scrollContainer.scrollTop;
     const readingLinePosition = containerHeight * this.readingLinePosition;
@@ -463,7 +479,7 @@ class TextReader extends HTMLElement {
 
     if (!scrollContainer || !textContent) return;
 
-    const blocks = Array.from(textContent.querySelectorAll('p'));
+    const blocks = Array.from(textContent.querySelectorAll('.stop'));
     const containerHeight = scrollContainer.clientHeight;
     const scrollTop = scrollContainer.scrollTop;
     const readingLinePosition = containerHeight * this.readingLinePosition;
