@@ -261,15 +261,47 @@ button {
   min-width: 96px;
 }
 
-.note-view__action--danger {
-  background: rgba(185, 28, 28, 0.12);
-  color: #b91c1c;
-  /* color: rgba(15, 23, 42, 0.06); */
-  margin-right: auto;
+.note-view__icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text);
+
+  &:disabled {
+    opacity: 0.35;
+  }
 }
 
-.note-view__chrome .note-view__action:last-child {
+.note-view__icon-btn--danger {
   margin-left: auto;
+  background: rgba(185, 28, 28, 0.12);
+  color: var(--danger);
+}
+
+.icon-trash,
+.icon-prev,
+.icon-next {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.icon-trash {
+  -webkit-mask-image: url(/icons/trash.svg);
+  mask-image: url(/icons/trash.svg);
+}
+
+.icon-prev {
+  -webkit-mask-image: url(/icons/chevron-left.svg);
+  mask-image: url(/icons/chevron-left.svg);
+}
+
+.icon-next {
+  -webkit-mask-image: url(/icons/chevron-right.svg);
+  mask-image: url(/icons/chevron-right.svg);
 }
 
 .note-view__content {
@@ -343,9 +375,12 @@ button {
     background: rgba(226, 232, 240, 0.08);
   }
 
-  .note-view__action--danger {
+  .note-view__icon-btn {
+    background: rgba(226, 232, 240, 0.08);
+  }
+
+  .note-view__icon-btn--danger {
     background: rgba(239, 68, 68, 0.25);
-    color: rgb(219, 145, 145);
   }
 
   .new-note {

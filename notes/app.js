@@ -186,6 +186,9 @@ class NotesApp extends HTMLElement {
 
   renderNoteDetail(note) {
     const body = escapeHtml(note.body);
+    const index = this.notes.indexOf(note);
+    const prev = !this.editing && this.notes[index - 1];
+    const next = !this.editing && this.notes[index + 1];
     return /* HTML */ `
       <section class="note-view" aria-label="Selected note">
         <div class="note-view__content">
@@ -195,10 +198,27 @@ class NotesApp extends HTMLElement {
         </div>
         <div class="note-view__chrome">
           <button
-            class="note-view__action note-view__action--danger"
-            data-action="delete-note"
+            class="note-view__icon-btn"
+            data-action="prev-note"
+            aria-label="Previous note"
+            ${prev ? '' : 'disabled'}
           >
-            Delete
+            <span class="icon-mask icon-prev" aria-hidden="true"></span>
+          </button>
+          <button
+            class="note-view__icon-btn"
+            data-action="next-note"
+            aria-label="Next note"
+            ${next ? '' : 'disabled'}
+          >
+            <span class="icon-mask icon-next" aria-hidden="true"></span>
+          </button>
+          <button
+            class="note-view__icon-btn note-view__icon-btn--danger"
+            data-action="delete-note"
+            aria-label="Delete note"
+          >
+            <span class="icon-mask icon-trash" aria-hidden="true"></span>
           </button>
           <button class="note-view__action" data-action="toggle-edit">
             ${this.editing ? 'Done' : 'Edit'}
@@ -412,6 +432,16 @@ class NotesApp extends HTMLElement {
       () => this.handleToggleEdit()
     );
 
+    this.querySelector('[data-action="prev-note"]')?.addEventListener(
+      'click',
+      () => this.handleStep(-1)
+    );
+
+    this.querySelector('[data-action="next-note"]')?.addEventListener(
+      'click',
+      () => this.handleStep(1)
+    );
+
     this.querySelector('[data-action="delete-note"]')?.addEventListener(
       'click',
       () => this.handleDelete()
@@ -441,6 +471,19 @@ class NotesApp extends HTMLElement {
     this.updateHistoryState({ noteId, editing: false });
     this.editHistoryPushed = false;
     this.skipNextPopSave = false;
+  }
+
+  // Step to the adjacent note. Replaces history so Back still returns to the list.
+  handleStep(offset) {
+    const index = this.notes.findIndex((note) => note.id === this.selectedId);
+    const target = this.notes[index + offset];
+    if (index < 0 || !target || this.editing) return;
+    this.selectedId = target.id;
+    this.render();
+    this.updateHistoryState(
+      { noteId: target.id, editing: false },
+      { replace: true }
+    );
   }
 
   async handleDelete() {
