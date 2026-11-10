@@ -1,5 +1,7 @@
 // CONFIGURATION
 const READING_LINE_POSITION = 1 / 3; // Position of reading line (0 = top, 0.5 = middle, 1 = bottom)
+const EDGE = 16; // Gap kept above a long block aligned to the top
+const PAGE = 0.8; // Fraction of the view scrolled when paging a long block
 
 // Markdown rendering that keeps the syntax visible: markers are wrapped in
 // .md spans so `**strong**` reads bold with its asterisks still shown.
@@ -422,107 +424,86 @@ class TextReader extends HTMLElement {
     }
   }
 
-  scrollToNextBlock(behavior = 'smooth') {
-    const scrollContainer = this.shadowRoot.querySelector('.scroll-container');
+  // Shared geometry for the scroll container and the reading line.
+  metrics() {
+    const scroller = this.shadowRoot.querySelector('.scroll-container');
     const textContent = this.shadowRoot.getElementById('textContent');
+    if (!scroller || !textContent) return null;
+    const height = scroller.clientHeight;
+    return {
+      scroller,
+      blocks: Array.from(textContent.querySelectorAll('.stop')),
+      current: textContent.querySelector('.highlight'),
+      box: scroller.getBoundingClientRect(),
+      height,
+      line: height * this.readingLinePosition,
+    };
+  }
 
-    if (!scrollContainer || !textContent) return;
+  // A block too tall to sit above the reading line is read from its top.
+  isLong(block, m) {
+    return block.getBoundingClientRect().height > m.line - EDGE;
+  }
 
-    const blocks = textContent.querySelectorAll('.stop');
-    const containerHeight = scrollContainer.clientHeight;
-    const scrollTop = scrollContainer.scrollTop;
-    const readingLinePosition = containerHeight * this.readingLinePosition;
+  // Scroll target: short blocks end on the reading line, long blocks start
+  // at the top of the view.
+  targetFor(block, m) {
+    const rect = block.getBoundingClientRect();
+    const top = rect.top - m.box.top + m.scroller.scrollTop;
+    return this.isLong(block, m) ? top - EDGE : top + rect.height - m.line;
+  }
 
-    let nextBlock = null;
+  goTo(block, m, behavior) {
+    this.clearHighlights();
+    block.classList.add('highlight');
+    m.scroller.scrollTo({ top: this.targetFor(block, m), behavior });
+  }
 
-    for (const block of blocks) {
-      const rect = block.getBoundingClientRect();
-      const containerRect = scrollContainer.getBoundingClientRect();
+  scrollToNextBlock(behavior = 'smooth') {
+    const m = this.metrics();
+    if (!m) return;
 
-      const blockTopRelativeToContainer =
-        rect.top - containerRect.top + scrollTop;
-      const blockBottomRelativeToContainer =
-        blockTopRelativeToContainer + rect.height;
-
-      const blockBottomRelativeToViewport =
-        blockBottomRelativeToContainer - scrollTop;
-
-      if (blockBottomRelativeToViewport > readingLinePosition + 10) {
-        nextBlock = block;
-        break;
+    // Page through the rest of a long block before leaving it.
+    const cur = m.current;
+    if (cur && this.isLong(cur, m)) {
+      const rect = cur.getBoundingClientRect();
+      if (rect.bottom > m.box.bottom - EDGE) {
+        m.scroller.scrollTo({ top: m.scroller.scrollTop + m.height * PAGE, behavior });
+        return;
       }
     }
 
-    if (nextBlock) {
-      this.clearHighlights();
-      nextBlock.classList.add('highlight');
-      const rect = nextBlock.getBoundingClientRect();
-      const containerRect = scrollContainer.getBoundingClientRect();
-
-      const blockTopRelativeToContainer =
-        rect.top - containerRect.top + scrollTop;
-      const blockHeight = rect.height;
-
-      const targetScroll =
-        blockTopRelativeToContainer + blockHeight - readingLinePosition;
-
-      scrollContainer.scrollTo({
-        top: targetScroll,
-        behavior,
-      });
-    }
+    let next = m.blocks.find((block) => {
+      const rect = block.getBoundingClientRect();
+      return rect.bottom - m.box.top > m.line + 10;
+    });
+    // A long block aligned to the top still crosses the line: step past it.
+    if (next && next === cur) next = m.blocks[m.blocks.indexOf(cur) + 1];
+    if (next) this.goTo(next, m, behavior);
   }
 
   scrollToPreviousBlock() {
-    const scrollContainer = this.shadowRoot.querySelector('.scroll-container');
-    const textContent = this.shadowRoot.getElementById('textContent');
+    const m = this.metrics();
+    if (!m) return;
 
-    if (!scrollContainer || !textContent) return;
-
-    const blocks = Array.from(textContent.querySelectorAll('.stop'));
-    const containerHeight = scrollContainer.clientHeight;
-    const scrollTop = scrollContainer.scrollTop;
-    const readingLinePosition = containerHeight * this.readingLinePosition;
-
-    let previousBlock = null;
-
-    for (let i = blocks.length - 1; i >= 0; i--) {
-      const block = blocks[i];
-      const rect = block.getBoundingClientRect();
-      const containerRect = scrollContainer.getBoundingClientRect();
-
-      const blockTopRelativeToContainer =
-        rect.top - containerRect.top + scrollTop;
-      const blockBottomRelativeToContainer =
-        blockTopRelativeToContainer + rect.height;
-
-      const blockBottomRelativeToViewport =
-        blockBottomRelativeToContainer - scrollTop;
-
-      if (blockBottomRelativeToViewport < readingLinePosition - 10) {
-        previousBlock = block;
-        break;
+    const cur = m.current;
+    if (cur && this.isLong(cur, m)) {
+      const target = this.targetFor(cur, m);
+      if (m.scroller.scrollTop > target + 1) {
+        m.scroller.scrollTo({
+          top: Math.max(target, m.scroller.scrollTop - m.height * PAGE),
+          behavior: 'smooth',
+        });
+        return;
       }
     }
 
-    if (previousBlock) {
-      this.clearHighlights();
-      previousBlock.classList.add('highlight');
-      const rect = previousBlock.getBoundingClientRect();
-      const containerRect = scrollContainer.getBoundingClientRect();
-
-      const blockTopRelativeToContainer =
-        rect.top - containerRect.top + scrollTop;
-      const blockHeight = rect.height;
-
-      const targetScroll =
-        blockTopRelativeToContainer + blockHeight - readingLinePosition;
-
-      scrollContainer.scrollTo({
-        top: targetScroll,
-        behavior: 'smooth',
-      });
-    }
+    const prev = cur
+      ? m.blocks[m.blocks.indexOf(cur) - 1]
+      : m.blocks.findLast(
+          (block) => block.getBoundingClientRect().bottom - m.box.top < m.line - 10
+        );
+    if (prev) this.goTo(prev, m, 'smooth');
   }
 }
 
