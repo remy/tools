@@ -339,6 +339,11 @@
     "description": "Calculate tax-inclusive (gross) and tax-exclusive (net) values with customizable tax rates and real-time conversion",
     "title": "Dynamic Tax Calculator"
   },
+  "text-reader": {
+    "category": "Web Demos",
+    "description": "A tap-to-advance text and Markdown reader web component that steps through paragraphs against a fixed reading line",
+    "title": "Text Reader"
+  },
   "this-is-england": {
     "category": "Learning",
     "description": "Fifty tiny stories about what makes England\u2026 England.",
