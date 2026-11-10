@@ -216,7 +216,7 @@ class TextReader extends HTMLElement {
         }
 
         .text-content {
-          font-size: 18px;
+          font-size: var(--text-reader-font-size, 18px);
           line-height: 1.7;
           color: #404040;
           white-space: pre-wrap;
@@ -278,7 +278,7 @@ class TextReader extends HTMLElement {
 
         @media (max-width: 640px) {
           .text-content {
-            font-size: 17px;
+            font-size: var(--text-reader-font-size, 17px);
           }
         }
 
