@@ -11,6 +11,8 @@ function marker(text) {
   return span;
 }
 
+const LIST_ITEM = /^(\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?)(.*)$/;
+
 function renderLine(line, parent) {
   let m;
   if ((m = line.match(/^(#{1,6})(\s+)(.*)$/))) {
@@ -29,9 +31,17 @@ function renderLine(line, parent) {
     q.className = 'quote';
     parent.append(marker(m[1]), q);
     renderInline(m[2], q);
-  } else if ((m = line.match(/^(\s*(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?)(.*)$/))) {
-    parent.append(marker(m[1]));
-    renderInline(m[2], parent);
+  } else if ((m = line.match(LIST_ITEM))) {
+    // Marker (with any nesting indent) in one column, text in the next, so
+    // wrapped lines hang under the text rather than the marker.
+    const li = document.createElement('span');
+    li.className = 'li';
+    li.setAttribute('role', 'listitem');
+    const body = document.createElement('span');
+    li.append(marker(m[1]), body);
+    renderInline(m[2], body);
+    parent.append(li);
+    return true;
   } else {
     renderInline(line, parent);
   }
@@ -234,6 +244,15 @@ class TextReader extends HTMLElement {
 
         strong { font-weight: 700; }
 
+        .seg {
+          display: block;
+        }
+
+        .li {
+          display: grid;
+          grid-template-columns: auto 1fr;
+        }
+
         a {
           color: #2563eb;
           text-decoration: underline;
@@ -334,10 +353,27 @@ class TextReader extends HTMLElement {
         p.classList.add('code-block');
         p.textContent = text;
       } else {
-        text.split('\n').forEach((line, idx) => {
-          if (idx) p.appendChild(document.createElement('br'));
-          renderLine(line, p);
-        });
+        // Runs of non-list lines go in a .seg; list items stand alone. Both
+        // are block-level so each can be a reading-line stop.
+        let seg = null;
+        for (const line of text.split('\n')) {
+          const tmp = document.createElement('span');
+          if (renderLine(line, tmp)) {
+            p.append(...tmp.childNodes);
+            seg = null;
+          } else {
+            if (seg) seg.append(document.createElement('br'));
+            else p.append((seg = Object.assign(document.createElement('span'), { className: 'seg' })));
+            seg.append(...tmp.childNodes);
+          }
+        }
+      }
+      // Reading-line stops: each list item and the text around it, or the
+      // whole paragraph when it has no list.
+      if (p.querySelector('.li')) {
+        for (const el of p.children) el.classList.add('stop');
+      } else {
+        p.classList.add('stop');
       }
       container.appendChild(p);
     }
@@ -392,7 +428,7 @@ class TextReader extends HTMLElement {
 
     if (!scrollContainer || !textContent) return;
 
-    const blocks = textContent.querySelectorAll('p');
+    const blocks = textContent.querySelectorAll('.stop');
     const containerHeight = scrollContainer.clientHeight;
     const scrollTop = scrollContainer.scrollTop;
     const readingLinePosition = containerHeight * this.readingLinePosition;
@@ -443,7 +479,7 @@ class TextReader extends HTMLElement {
 
     if (!scrollContainer || !textContent) return;
 
-    const blocks = Array.from(textContent.querySelectorAll('p'));
+    const blocks = Array.from(textContent.querySelectorAll('.stop'));
     const containerHeight = scrollContainer.clientHeight;
     const scrollTop = scrollContainer.scrollTop;
     const readingLinePosition = containerHeight * this.readingLinePosition;
