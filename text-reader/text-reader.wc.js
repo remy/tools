@@ -187,6 +187,10 @@ class TextReader extends HTMLElement {
           flex: 1;
           position: relative;
           overflow: hidden;
+          /* A stacking context of its own, so the reading line can take a
+             negative z-index and paint under the text without disappearing
+             behind the container's background. */
+          isolation: isolate;
         }
 
         .reading-line {
@@ -198,7 +202,8 @@ class TextReader extends HTMLElement {
           background: #3b82f6;
           opacity: 0.3;
           pointer-events: none;
-          z-index: 10;
+          /* Behind the text: the glyphs sit on top of the line. */
+          z-index: -1;
         }
 
         .scroll-container {
@@ -216,6 +221,7 @@ class TextReader extends HTMLElement {
         }
 
         .text-content {
+          --pad-x: 16px;
           font-size: var(--text-reader-font-size, 18px);
           line-height: 1.7;
           color: #404040;
@@ -225,8 +231,16 @@ class TextReader extends HTMLElement {
 
         .text-content p {
           margin-bottom: 16px;
-          padding-left: 16px;
-          padding-right: 16px;
+          padding-inline: var(--pad-x);
+        }
+
+        /* In a paragraph holding a list, each line is its own stop and so
+           carries the highlight itself. Push them back out over the
+           paragraph's padding so their highlight covers the same width as a
+           whole-paragraph one. */
+        .text-content p > .stop {
+          padding-inline: var(--pad-x);
+          margin-inline: calc(var(--pad-x) * -1);
         }
 
         .md {
