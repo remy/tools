@@ -1,9 +1,10 @@
 // The shaft: rows of platforms with gaps, plus the traps hung between them.
-import { L, R, H, PLAT_H, PAL, PX_PER_M } from './config.js';
-import { rand, randi, chance, clamp, pick, overlap } from './util.js';
+import { L, R, H, PLAT_H, PAL, PX_PER_M, SEED } from './config.js';
+import { clamp, seeded, reseed } from './util.js';
 import { FloorSaw, Pendulum, FlySaw, Spikes, WallSpikes, Laser } from './traps.js';
 
 export const START_Y = 130;
+const { rand, randi, chance, pick } = seeded; // layout is deterministic
 
 export class World {
   constructor() {
@@ -16,6 +17,7 @@ export class World {
     this.traps = [];
     this.nextY = START_Y;
     this.count = 0;
+    reseed(SEED);
   }
 
   generate(untilY) {

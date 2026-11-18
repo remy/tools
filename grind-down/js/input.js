@@ -1,4 +1,4 @@
-// Keyboard, touch buttons and gamepad, merged into one state per frame.
+// Keyboard, touch halves and gamepad, merged into one state per frame.
 const KEYS = {
   ArrowLeft: 'left', KeyA: 'left',
   ArrowRight: 'right', KeyD: 'right',
@@ -8,7 +8,7 @@ const KEYS = {
 export class Input {
   constructor({ canvas, touchRoot, onAny, onTouch }) {
     this.held = new Set();
-    this.pointers = new Map(); // touch pointerId -> 'left' | 'right' | 'jump'
+    this.pointers = new Map(); // touch pointerId -> 'left' | 'right', oldest first
     this.zones = Object.fromEntries([...touchRoot.querySelectorAll('[data-zone]')].map((el) => [el.dataset.zone, el]));
     this.left = this.right = this.jump = false;
     this.jumpPressed = this.anyPressed = this.pausePressed = this.mutePressed = false;
@@ -38,17 +38,17 @@ export class Input {
       if (e.pointerType === 'mouse') { this.anyPressed = true; this.onAny?.(); }
     });
 
-    // Touch: bottom quarter of the screen is left/right, everything else jumps.
+    // Touch: each half of the screen moves that way; touching both halves jumps,
+    // still moving the way of the first finger down.
     const side = (e) => (e.clientX < innerWidth / 2 ? 'left' : 'right');
-    const zoneOf = (e) => (e.clientY > innerHeight * 0.75 ? side(e) : 'jump');
 
     addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' || e.target.closest('button')) return;
       e.preventDefault();
       onTouch?.();
-      const z = zoneOf(e);
-      this.pointers.set(e.pointerId, z);
-      if (z === 'jump') this.jumpPressed = true;
+      const was = this.both();
+      this.pointers.set(e.pointerId, side(e));
+      if (!was && this.both()) this.jumpPressed = true;
       this.anyPressed = true;
       this.onAny?.();
       this.paint();
@@ -56,8 +56,8 @@ export class Input {
 
     addEventListener('pointermove', (e) => {
       const z = this.pointers.get(e.pointerId);
-      if (!z || z === 'jump') return;
-      const s = side(e); // a move finger can slide between left and right
+      if (!z || this.pointers.size > 1) return;
+      const s = side(e); // a lone finger can slide between left and right
       if (s !== z) { this.pointers.set(e.pointerId, s); this.paint(); }
     });
 
@@ -72,6 +72,10 @@ export class Input {
   has(zone) {
     for (const z of this.pointers.values()) if (z === zone) return true;
     return false;
+  }
+
+  both() {
+    return this.has('left') && this.has('right');
   }
 
   paint() {
@@ -92,9 +96,10 @@ export class Input {
       if (any && !this.prevPadAny) { this.anyPressed = true; this.onAny?.(); }
       this.prevPadAny = any;
     }
-    this.left = this.held.has('left') || this.has('left') || pl;
-    this.right = this.held.has('right') || this.has('right') || pr;
-    this.jump = this.held.has('jump') || this.has('jump') || pj;
+    const dir = this.pointers.values().next().value; // first finger down steers
+    this.left = this.held.has('left') || dir === 'left' || pl;
+    this.right = this.held.has('right') || dir === 'right' || pr;
+    this.jump = this.held.has('jump') || this.both() || pj;
     if (this.jump && !this.prevJump) this.jumpPressed = true;
     this.prevJump = this.jump;
   }
