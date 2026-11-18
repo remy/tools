@@ -4,6 +4,22 @@ export const chance = (p) => Math.random() < p;
 export const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 export const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// Seeded generator (mulberry32) for the level layout, so every run is the same shaft.
+let seedState = 0;
+export const reseed = (n) => { seedState = n >>> 0; };
+const next = () => {
+  let t = (seedState = (seedState + 0x6d2b79f5) | 0);
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+export const seeded = {
+  rand: (a, b) => a + next() * (b - a),
+  randi: (a, b) => Math.floor(a + next() * (b + 1 - a)),
+  chance: (p) => next() < p,
+  pick: (arr) => arr[Math.floor(next() * arr.length)],
+};
+
 export function overlap(ax, ay, aw, ah, bx, by, bw, bh) {
   return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
 }

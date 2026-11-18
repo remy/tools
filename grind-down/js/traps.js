@@ -1,6 +1,6 @@
 // Every way to die. Layers: 0 behind platforms, 1 on platforms (under blood), 2 in front.
 import { L, R, H, PLAT_H, PAL } from './config.js';
-import { rand, clamp, chance, circleRect, overlap } from './util.js';
+import { rand, clamp, chance, circleRect, overlap, seeded } from './util.js';
 
 class Trap {
   constructor(y0, y1) {
@@ -18,8 +18,8 @@ class SawBase extends Trap {
     super(y0, y1);
     this.isSaw = true;
     this.r = r;
-    this.spin = Math.random() * 8;
-    this.dir = chance(0.5) ? 1 : -1;
+    this.spin = seeded.rand(0, 8);
+    this.dir = seeded.chance(0.5) ? 1 : -1;
     this.cx = 0; this.cy = 0;
   }
   update(dt, fx, camY) {
@@ -58,9 +58,9 @@ export class FloorSaw extends SawBase {
     this.rowY = rowY;
     this.min = x0 + r + 1;
     this.max = x1 - r - 1;
-    this.cx = rand(this.min, this.max);
+    this.cx = seeded.rand(this.min, this.max);
     this.cy = rowY + 1;
-    this.vx = speed * (chance(0.5) ? 1 : -1);
+    this.vx = speed * (seeded.chance(0.5) ? 1 : -1);
   }
   update(dt, fx, camY) {
     this.cx += this.vx * dt;
@@ -87,7 +87,7 @@ export class Pendulum extends SawBase {
     const room = Math.min(px - L - r - 1, R - r - 1 - px) / len;
     this.amp = Math.min(1.25, Math.asin(clamp(room, 0, 1)));
     this.w = speed;
-    this.t = rand(0, 10);
+    this.t = seeded.rand(0, 10);
     this.place();
   }
   place() {
@@ -118,7 +118,7 @@ export class FlySaw extends SawBase {
   constructor(y, vx) {
     const r = 6;
     super(r, y - r, y + r);
-    this.cx = rand(L + r, R - r);
+    this.cx = seeded.rand(L + r, R - r);
     this.cy = y;
     this.vx = vx;
   }
@@ -148,7 +148,7 @@ export class Spikes extends Trap {
   constructor(x0, n, rowY) {
     super(rowY - 5, rowY);
     this.x0 = x0; this.n = n; this.rowY = rowY;
-    this.tiles = Array.from({ length: n }, () => chance(0.2));
+    this.tiles = Array.from({ length: n }, () => seeded.chance(0.2));
   }
   set bloody(v) { if (v && this.tiles) this.tiles.fill(true); }
   get bloody() { return false; }
@@ -182,7 +182,7 @@ export class WallSpikes extends Trap {
     super(y0, y0 + n * 4);
     this.side = side; this.n = n;
     this.x = side === 'left' ? L : R - 5;
-    this.tiles = Array.from({ length: n }, () => chance(0.2));
+    this.tiles = Array.from({ length: n }, () => seeded.chance(0.2));
   }
   set bloody(v) { if (v && this.tiles) this.tiles.fill(true); }
   get bloody() { return false; }
@@ -221,7 +221,7 @@ export class Laser extends Trap {
     this.period = period;
     this.onDur = 0.75;
     this.warnDur = 0.7;
-    this.t = rand(0, period);
+    this.t = seeded.rand(0, period);
     this.wasOn = false;
   }
   get phase() { return this.t % this.period; }

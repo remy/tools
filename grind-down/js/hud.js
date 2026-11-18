@@ -35,7 +35,7 @@ export function drawTitle(ctx, t, best, touch) {
   drawText(ctx, "DON'T GET SQUISHED.", W / 2, 120, PAL.text, { ...SH, align: 'center' });
   drawText(ctx, "DON'T GET SLICED.", W / 2, 128, PAL.text, { ...SH, align: 'center' });
   const help = touch
-    ? ['HOLD BOTTOM LEFT/RIGHT: MOVE', 'TAP ANYWHERE ELSE: JUMP', '']
+    ? ['HOLD LEFT/RIGHT SIDE: MOVE', 'TOUCH BOTH SIDES: JUMP', '']
     : ['ARROWS OR A/D: MOVE', 'SPACE OR UP: JUMP', 'P: PAUSE   M: MUTE'];
   help.forEach((line, i) => drawText(ctx, line, W / 2, 150 + i * 8, PAL.steelM, { ...SH, align: 'center' }));
   if (best) drawText(ctx, 'BEST ' + best + 'M', W / 2, 186, PAL.hud, { ...SH, align: 'center' });

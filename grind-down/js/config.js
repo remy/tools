@@ -9,6 +9,7 @@ export const GRIND_Y = 15; // screen-space kill line under the grinder
 export const STEP = 1 / 120;
 export const GRAV = 540;
 export const PX_PER_M = 16;
+export const SEED = 1337; // level layout seed: same shaft every run
 
 export const PAL = {
   bg: '#120a18',
