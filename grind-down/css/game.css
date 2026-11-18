@@ -1,0 +1,102 @@
+:root {
+  color-scheme: dark;
+  --bg: #0a0610;
+  --frame: #1f1428;
+  --btn: rgb(255 246 232 / 0.12);
+  --btn-on: rgb(255 48 72 / 0.45);
+  --ink: #fff6e8;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#stage {
+  display: grid;
+  place-items: center;
+  height: 100dvh;
+}
+
+canvas {
+  display: block;
+  image-rendering: pixelated;
+  background: #120a18;
+  box-shadow: 0 0 0 4px var(--frame), 0 0 80px #000;
+}
+
+/* Visual hints only; touches are read from the whole window in input.js */
+#touch {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template: 3fr 1fr / 1fr 1fr;
+  pointer-events: none;
+}
+#touch[hidden] { display: none; }
+
+.zone {
+  display: grid;
+  place-items: center;
+  color: rgb(255 246 232 / 0.35);
+  font: bold 28px/1 ui-monospace, monospace;
+  transition: background 80ms;
+}
+.zone[data-zone="jump"] {
+  grid-column: 1 / -1;
+  align-items: end;
+  padding-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+.zone[data-zone="left"],
+.zone[data-zone="right"] {
+  border-top: 2px dashed rgb(255 246 232 / 0.15);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.zone[data-zone="left"] { border-right: 2px dashed rgb(255 246 232 / 0.15); }
+.zone.on { background: var(--btn-on); color: var(--ink); }
+.zone[data-zone="jump"].on { background: rgb(255 246 232 / 0.06); }
+
+#mute {
+  position: fixed;
+  top: max(8px, env(safe-area-inset-top));
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  border: 2px solid rgb(255 246 232 / 0.25);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: bold 18px/1 ui-monospace, monospace;
+  cursor: pointer;
+}
+#mute { right: 8px; }
+#mute[aria-pressed="true"] { opacity: 0.4; text-decoration: line-through; }
+
+html { -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+body.touch #stage { place-items: start center; padding-top: env(safe-area-inset-top); }
+
+/* Overlays only show, faintly pulsing, on the title screen */
+#touch, #mute {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0s 0.3s;
+}
+body[data-state="title"] :is(#touch, #mute) {
+  visibility: visible;
+  transition: none;
+  animation: hint-pulse 2.4s ease-in-out infinite;
+}
+@keyframes hint-pulse {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}

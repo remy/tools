@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <meta name="description" content="Fall forever down an endless pixel shaft, dodging saws, spikes and lasers while the grinder closes in from above. Arrow keys or WASD on desktop, tap zones on mobile; your deepest run is saved.">
+  <meta name="category" content="Game">
+  <title>Grind Down</title>
+  <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+  <main id="stage">
+    <canvas id="game" width="160" height="256" aria-label="Grind Down: a falling arcade game"></canvas>
+  </main>
+
+  <div id="touch" hidden aria-hidden="true">
+    <div class="zone" data-zone="jump"><span>TAP ANYWHERE: JUMP</span></div>
+    <div class="zone" data-zone="left"><span>◀</span></div>
+    <div class="zone" data-zone="right"><span>▶</span></div>
+  </div>
+
+  <button type="button" id="mute" aria-label="Toggle sound" aria-pressed="false">♪</button>
+
+  <script type="module" src="js/main.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+</html>
