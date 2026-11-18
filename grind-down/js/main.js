@@ -29,6 +29,8 @@ function enableTouch() {
   if (touchMode) return;
   touchMode = true;
   touchRoot.hidden = false;
+  document.body.classList.add('touch');
+  resize();
 }
 
 const muteBtn = document.getElementById('mute');
@@ -324,6 +326,12 @@ function frame(now) {
 // --- Layout -------------------------------------------------------------------------------
 // Whole device pixels per game pixel, so the pixel art stays crisp at any size.
 function resize() {
+  if (touchMode) { // fill the width, pinned to the top, as long as the height fits
+    const w = Math.min(innerWidth, innerHeight * W / H);
+    canvas.style.width = w + 'px';
+    canvas.style.height = w * H / W + 'px';
+    return;
+  }
   const dpr = devicePixelRatio || 1;
   const s = Math.min(innerWidth / W, (innerHeight - 24) / H);
   const scale = Math.max(1, Math.floor(s * dpr)) / dpr;
