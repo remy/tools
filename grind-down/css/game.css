@@ -75,6 +75,8 @@ canvas {
 
 html { -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
 
+body.touch #stage { place-items: start center; }
+
 /* Overlays only show, faintly pulsing, on the title screen */
 #touch, #mute {
   opacity: 0;
