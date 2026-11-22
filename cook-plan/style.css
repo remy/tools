@@ -1152,51 +1152,68 @@ button {
   }
 }
 
-/* Two columns once there is room for them. Multi-column flow fills the left
-   column before the right, so the timeline still reads top-to-bottom then
-   across — the one arrangement that doesn't scramble a sequence of times.
-   Applied only to longer plans (see TWO_COLUMN_MIN_GROUPS): splitting five
-   stops leaves one column looking abandoned. */
+/* The timeline and the chime log, side by side once there is room. The log
+   stays put while the timeline scrolls: on a two-hour cook the point of it is
+   to see what has just gone off without leaving the stage you are on. */
+.schedule-main {
+  display: grid;
+  gap: var(--space-lg);
+}
+
+.schedule-aside {
+  /* Stacked, the log belongs above the timeline — below it would be past the
+     end of a two-hour cook. */
+  order: -1;
+
+  & h2 {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-2);
+    margin-bottom: var(--space-md);
+  }
+}
+
+.schedule-aside-empty {
+  font-size: 0.8125rem;
+  color: var(--text-3);
+  line-height: 1.45;
+}
+
+.schedule-aside:has(.notifications:not([hidden])) .schedule-aside-empty {
+  display: none;
+}
+
+/* Narrow, there is no column to fill and nothing has chimed yet, so the
+   heading and its placeholder are just something else to scroll past. */
+@media (max-width: 1023px) {
+  .schedule-aside:not(:has(.notifications:not([hidden]))) {
+    display: none;
+  }
+}
+
 @media (min-width: 1024px) {
-  #view-schedule .container:has(.timeline-2col) {
-    max-width: 68rem;
+  /* The schedule view alone widens — the editor is a column of form rows and
+     has nothing to do with the extra space. */
+  #view-schedule .container {
+    max-width: 64rem;
   }
 
-  .timeline-2col {
-    /* The single-column timeline is a flex column, and multi-column layout has
-       no effect on a flex container — it has to go back to being a block. */
-    display: block;
-    columns: 2;
-    column-gap: var(--space-3xl);
+  .schedule-main {
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    gap: var(--space-2xl);
+    align-items: start;
+  }
 
-    /* The single full-height spine only ever covers the first column, so each
-       stop draws its own short segment instead; stacked, they join up. */
-    &::before {
-      display: none;
-    }
-
-    & .tl-event {
-      break-inside: avoid;
-
-      &::before {
-        content: '';
-        position: absolute;
-        left: 3.75rem;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        z-index: -1;
-        background: var(--border);
-      }
-
-      /* Inside a column the band stops short of the gutter, so the two
-         columns' highlights can never run into each other. */
-      &.tl-current::after,
-      &.tl-next::after {
-        inset-inline: calc(var(--space-sm) * -1);
-        border-radius: var(--radius);
-      }
-    }
+  .schedule-aside {
+    order: 0;
+    position: sticky;
+    top: var(--space-lg);
+    /* Its own scrollbar rather than the page's, so a long stack of chimes
+       can't push the column taller than the screen. */
+    max-height: calc(100dvh - var(--space-2xl));
+    overflow-y: auto;
   }
 }
 
@@ -1640,9 +1657,6 @@ body.simulating .clock-time {
   color: #fff;
 }
 
-@media print {
-  .sim-bar { display: none !important; }
-}
 
 /* ---- Settings dialog ---- */
 #btn-settings {
@@ -1686,10 +1700,18 @@ body.simulating .clock-time {
 }
 
 @media print {
+  /* The chime log is a record of a cook in progress — on paper it is a list of
+     things that already happened, and an empty column beside the timeline. */
   .clock-bar .wake-lock-btn,
   .schedule-footer,
-  .app-header .header-actions {
+  .app-header .header-actions,
+  .schedule-aside,
+  .sim-bar {
     display: none !important;
+  }
+
+  .schedule-main {
+    display: block;
   }
 
   .clock-bar {

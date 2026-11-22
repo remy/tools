@@ -16,13 +16,9 @@ import { initSimUI } from './sim-dialog.js';
 import { buildShareLink } from './share-link.js';
 import { exportJSON } from './render-input.js';
 
-// Below this many stops, two columns would leave one of them nearly empty.
-const TWO_COLUMN_MIN_GROUPS = 6;
-
 export function renderScheduleView() {
   stopClock();
   const { items, conflicts, events } = computeSchedule();
-  const groups = groupEvents(events);
 
   const app = document.getElementById('app');
   app.innerHTML = `
@@ -48,9 +44,6 @@ export function renderScheduleView() {
             </div>
           </div>
 
-          <!-- Notifications: in-memory only, populated as chimes fire -->
-          <div class="notifications" id="notifications" hidden></div>
-
           <!-- Serve summary -->
           <div class="serve-summary">
             <div class="serve-stat">
@@ -70,12 +63,21 @@ export function renderScheduleView() {
           <!-- Conflicts -->
           ${conflicts.length > 0 ? renderConflicts(conflicts) : ''}
 
-          <!-- Timeline -->
-          <div class="timeline-section">
-            <h2>Timeline</h2>
-            <div class="timeline${groups.length >= TWO_COLUMN_MIN_GROUPS ? ' timeline-2col' : ''}" id="timeline">
-              ${renderTimeline(events, items)}
+          <!-- Timeline, with the chime log beside it once there is room -->
+          <div class="schedule-main">
+            <div class="timeline-section">
+              <h2>Timeline</h2>
+              <div class="timeline" id="timeline">
+                ${renderTimeline(events, items)}
+              </div>
             </div>
+
+            <!-- Notifications: in-memory only, populated as chimes fire -->
+            <aside class="schedule-aside">
+              <h2>Chimes</h2>
+              <div class="notifications" id="notifications" hidden></div>
+              <p class="schedule-aside-empty">Each chime is logged here as the cook goes on.</p>
+            </aside>
           </div>
 
           <!-- Appliance summary -->
