@@ -17,20 +17,31 @@ let lastStageKey = null;
 let notifications = [];
 const MAX_NOTIFICATIONS = 20;
 
-function addNotification(ev) {
-  const id = chimeKey(ev);
+// How many of a moment's other events to name before giving up and counting.
+const NOTIFICATION_DETAIL = 3;
+
+// One notification per moment, led by its most significant event. The rest are
+// folded into the sub-line: fifteen separate cards for "serve" would bury
+// everything earlier in the stack under a single instant.
+function addNotification(lead, all) {
+  const id = chimeKey(lead);
   if (notifications.some(n => n.id === id)) return;
+
+  const others = all.filter(ev => ev !== lead).map(ev => ev.label);
+  const extra = others.length > NOTIFICATION_DETAIL
+    ? [...others.slice(0, NOTIFICATION_DETAIL), `+${others.length - NOTIFICATION_DETAIL} more`]
+    : others;
+
   notifications.unshift({
     id,
-    label: ev.label,
-    sub: ev.sub,
-    type: ev.type,
-    time: ev.time,
+    label: lead.label,
+    sub: [lead.sub, ...extra].filter(Boolean).join(' \u00b7 ') || null,
+    type: lead.type,
+    time: lead.time,
   });
   if (notifications.length > MAX_NOTIFICATIONS) {
     notifications = notifications.slice(0, MAX_NOTIFICATIONS);
   }
-  renderNotifications();
 }
 
 export function dismissNotification(id) {
@@ -75,6 +86,20 @@ export function setNextDayOffset(val) {
 
 function chimeKey(ev) {
   return `${ev.time}:${ev.type}:${ev.itemId || ''}`;
+}
+
+// Which event speaks for a moment, most significant first. The end of a cook
+// is a dozen events on one minute -- every dish ready, several out of the oven,
+// and serve -- and they are one moment, not a dozen. Only the leader is
+// sounded, so SERVE wins over the things that merely finished with it.
+const CHIME_PRIORITY = ['serve', 'cook_end', 'cook_start', 'prep', 'set', 'ready'];
+
+function leadEvent(evs) {
+  for (const type of CHIME_PRIORITY) {
+    const match = evs.find(ev => ev.type === type);
+    if (match) return match;
+  }
+  return evs[0];
 }
 
 // Pre-seed so past events (and events right now on first load) don't trigger
@@ -163,16 +188,24 @@ function updateClock(events) {
   const nowS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   const nowM = Math.floor(nowS / 60) - nextDayOffset;  // adjusted for next-day schedules
 
-  // Fire chimes for events whose time has just been reached
+  // Fire a chime for events whose time has just been reached. Every one of them
+  // is marked as fired, but they share a single bell: a bell per event meant a
+  // dozen overlapping two-second tones at the end of a cook, each in its own
+  // AudioContext and so each starting a few milliseconds apart -- which came
+  // out as a ragged run of bongs rather than one chime.
+  const due = [];
   for (const ev of events) {
-    if (ev.time === nowM) {
-      const key = chimeKey(ev);
-      if (!chimesFired.has(key)) {
-        chimesFired.add(key);
-        playChime(ev.type);
-        addNotification(ev);
-      }
-    }
+    if (ev.time !== nowM) continue;
+    const key = chimeKey(ev);
+    if (chimesFired.has(key)) continue;
+    chimesFired.add(key);
+    due.push(ev);
+  }
+  if (due.length > 0) {
+    const lead = leadEvent(due);
+    playChime(lead.type);
+    addNotification(lead, due);
+    renderNotifications();
   }
 
   clockTimeEl.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
