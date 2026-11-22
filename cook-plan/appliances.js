@@ -81,6 +81,34 @@ export function assignAppliances(items) {
     return best;
   }
 
+  // Microwave reservations, with the cooldown pad in front of them. The combi
+  // is either thing on demand -- what it cannot be is both at once, and it
+  // needs a few minutes off the heat before it will microwave. So an oven dish
+  // that runs up to (or over) a microwave slot is what makes the two
+  // incompatible; the device being dual-mode is not the problem.
+  function combiOvenBlocked(start, end, excludeId) {
+    return clashingMicrowave(start, end, excludeId).length > 0;
+  }
+
+  // The shelf with the most room, for when a dish fits nowhere and has to go
+  // somewhere anyway -- a smaller pile-up makes for a clearer conflict.
+  function emptiestShelf(usage, start, end, excludeId, numShelves) {
+    let best = 1, most = -1;
+    for (let shelf = 1; shelf <= numShelves; shelf++) {
+      const free = 2 - slotsOnShelf(usage, shelf, start, end, excludeId);
+      if (free > most) { most = free; best = shelf; }
+    }
+    return best;
+  }
+
+  // Microwave bookings that an oven run over [start, end) cannot live with.
+  function clashingMicrowave(start, end, excludeId) {
+    return combiUsage.filter(u =>
+      u.itemId !== excludeId && u.mode === 'microwave' &&
+      start < u.end && end + COMBI_COOLDOWN > u.start
+    );
+  }
+
   function combiModeAt(start, end, excludeId) {
     // Returns 'oven', 'microwave', or null (free)
     const overlapping = combiUsage.filter(u =>
@@ -116,7 +144,18 @@ export function assignAppliances(items) {
   const isPinned = (item) =>
     (item.appliancePref && item.appliancePref !== 'auto') ||
     shelfPrefOf(item, cfg.mainOvenShelves) !== null;
-  const order = [...sorted.filter(isPinned), ...sorted.filter(it => !isPinned(it))];
+
+  // A microwave dish has exactly one home. An oven dish has two and can route
+  // around a reservation -- but only around one that is already there, so the
+  // microwave gets its slot first. Taken in clock order instead, a tray of
+  // parsnips parks itself in the combi at quarter past and the red cabbage
+  // finds the only microwave in the kitchen busy being an oven.
+  const needsMicrowave = (item) => COOK_TYPE_MAP[item.cookType]?.resource === 'combi';
+  const order = [
+    ...sorted.filter(isPinned),
+    ...sorted.filter(it => !isPinned(it) && needsMicrowave(it)),
+    ...sorted.filter(it => !isPinned(it) && !needsMicrowave(it)),
+  ];
 
   for (const item of order) {
     const { cookStart, cookEnd } = item._s;
@@ -207,18 +246,35 @@ export function assignAppliances(items) {
       // neighbour in the main one: a crumble that only fits beside the
       // potatoes is better off on its own in the combi than sharing their
       // shelf. Ties go to the main oven, which is what "main oven first" means.
-      const combiMode = combiModeAt(cookStart, cookEnd, item.id);
-      const combiOpt = (tryCombi && cfg.hasCombi && (combiMode === null || combiMode === 'oven'))
+      const combiOpt = (tryCombi && cfg.hasCombi && !combiOvenBlocked(cookStart, cookEnd, item.id))
         ? bestShelf(combiUsage, cookStart, cookEnd, item.id, slots, 1, 2, food)
+        : null;
+
+      // Last resort, worked out before anything is placed: would the combi take
+      // this dish if the microwave bookings in the way were given up?
+      const displaced = tryCombi && cfg.hasCombi
+        ? clashingMicrowave(cookStart, cookEnd, item.id) : [];
+      const forcedOpt = displaced.length > 0
+        ? bestShelf(combiUsage.filter(u => !displaced.includes(u)),
+                    cookStart, cookEnd, item.id, slots, 1, 2, food)
         : null;
 
       if (mainOpt && (!combiOpt || mainOpt.score >= combiOpt.score)) {
         takeMain(mainOpt.shelf, false);
       } else if (combiOpt) {
         takeCombi();
+      } else if (forcedOpt) {
+        // Nothing fits politely. Keeping the combi clear for a microwave dish is
+        // a preference, not a rule: a tray with nowhere at all to go takes the
+        // combi anyway. That makes the combi an oven for the window, so the
+        // booking it displaces is dropped rather than left holding a slot it
+        // can no longer use -- otherwise it would push the next tray out too.
+        // conflicts.js reports which microwave dish lost its slot.
+        for (const u of displaced) combiUsage.splice(combiUsage.indexOf(u), 1);
+        takeCombi();
       } else {
         // Nowhere fits: into the main oven anyway, and conflicts.js will say so.
-        takeMain(1, false);
+        takeMain(emptiestShelf(mainOvenUsage, cookStart, cookEnd, item.id, cfg.mainOvenShelves), false);
       }
     }
   }

@@ -125,46 +125,44 @@ export function detectConflicts(items) {
         itemIds,
       });
     }
-    // Mode conflicts and cooldown -- still pair-wise since mode is per-item
-    for (let i = 0; i < combiItems.length; i++) {
-      for (let j = i + 1; j < combiItems.length; j++) {
-        const a = combiItems[i], b = combiItems[j];
-        const overlapStart = Math.max(a._s.cookStart, b._s.cookStart);
-        const overlapEnd   = Math.min(a._s.cookEnd,   b._s.cookEnd);
-        const modeA = a._appliance === 'combi' ? 'oven' : 'microwave';
-        const modeB = b._appliance === 'combi' ? 'oven' : 'microwave';
+    // Mode clashes, reported per microwave dish rather than per pair. Three
+    // trays sharing the combi oven is one problem, not three, and the combi
+    // being dual-mode is not the problem at all -- what the cook needs to know
+    // is what is tying it up and that something has to give.
+    for (const mw of mwItems) {
+      const overlapping = ovenItems.filter(o =>
+        o._s.cookStart < mw._s.cookEnd && o._s.cookEnd > mw._s.cookStart
+      );
+      const tooSoon = ovenItems.filter(o =>
+        o._s.cookEnd <= mw._s.cookStart
+        && mw._s.cookStart - o._s.cookEnd < COMBI_COOLDOWN
+      );
 
-        if (overlapEnd > overlapStart && modeA !== modeB) {
-          conflicts.push({
-            type: 'combi-mode',
-            message: `Combi mode conflict: "${a.name}" needs it as ${modeA} but "${b.name}" needs it as ${modeB} during ${formatTime(overlapStart)}\u2013${formatTime(overlapEnd)}.`,
-            itemIds: [a.id, b.id],
-          });
-        }
-
-        // Cooldown: oven ends, then microwave starts
-        if (modeA === 'oven' && modeB === 'microwave' && a._s.cookEnd <= b._s.cookStart) {
-          const gap = b._s.cookStart - a._s.cookEnd;
-          if (gap < COMBI_COOLDOWN) {
-            conflicts.push({
-              type: 'combi-cooldown',
-              message: `Combi needs ${COMBI_COOLDOWN}m cooldown before microwave use. "${a.name}" (oven) ends ${formatTime(a._s.cookEnd)}, "${b.name}" (microwave) starts ${formatTime(b._s.cookStart)} \u2014 only ${gap}m gap.`,
-              itemIds: [a.id, b.id],
-            });
-          }
-        }
-        if (modeB === 'oven' && modeA === 'microwave' && b._s.cookEnd <= a._s.cookStart) {
-          const gap = a._s.cookStart - b._s.cookEnd;
-          if (gap < COMBI_COOLDOWN) {
-            conflicts.push({
-              type: 'combi-cooldown',
-              message: `Combi needs ${COMBI_COOLDOWN}m cooldown before microwave use. "${b.name}" (oven) ends ${formatTime(b._s.cookEnd)}, "${a.name}" (microwave) starts ${formatTime(a._s.cookStart)} \u2014 only ${gap}m gap.`,
-              itemIds: [a.id, b.id],
-            });
-          }
-        }
+      if (overlapping.length > 0) {
+        const until = formatTime(Math.max(...overlapping.map(o => o._s.cookEnd)));
+        conflicts.push({
+          type: 'combi-mode',
+          message: `Combi is in use as an oven until ${until} (${names(overlapping)}), `
+            + `so it can't microwave "${mw.name}" at ${formatTime(mw._s.cookStart)}. `
+            + `Move a dish to the main oven, or cook "${mw.name}" another way.`,
+          itemIds: [mw.id, ...overlapping.map(o => o.id)],
+        });
+      } else if (tooSoon.length > 0) {
+        const last = tooSoon.reduce((a, b) => (b._s.cookEnd > a._s.cookEnd ? b : a));
+        const gap = mw._s.cookStart - last._s.cookEnd;
+        conflicts.push({
+          type: 'combi-cooldown',
+          message: `Combi needs ${COMBI_COOLDOWN}m to cool down before it will microwave. `
+            + `"${last.name}" comes out at ${formatTime(last._s.cookEnd)} and `
+            + `"${mw.name}" wants it at ${formatTime(mw._s.cookStart)} \u2014 only ${gap}m gap.`,
+          itemIds: [mw.id, last.id],
+        });
       }
     }
+  }
+
+  function names(arr) {
+    return arr.map(i => `"${i.name}"`).join(', ');
   }
 
   function checkHobConflicts() {
