@@ -8,6 +8,9 @@ import { escHtml, formatCountdown, formatTime, nowMins } from './utils.js';
 let clockInterval = null;
 let chimesFired = new Set();
 let nextDayOffset = 0;  // 1440 if the schedule is for the next calendar day
+// Which timeline stop is the current one, so a change of stage can be brought
+// into view. Null means "not looked yet" rather than "nothing is active".
+let lastStageKey = null;
 
 // In-memory notification stack — never persisted. When a chime fires we push
 // the event so the user can see what triggered the sound when they tab back in.
@@ -141,6 +144,7 @@ function playChime(type) {
 
 export function startClock(events) {
   initChimes(events);
+  lastStageKey = null;
   updateClock(events);
   clockInterval = setInterval(() => updateClock(events), 1000);
 }
@@ -193,7 +197,7 @@ function updateClock(events) {
 
   // Update past/active classes on grouped timeline rows
   // Each row may contain .tl-tracker elements that map back to original events
-  const tlRows = document.querySelectorAll('.tl-event');
+  const tlRows = [...document.querySelectorAll('.tl-event')];
   tlRows.forEach(row => {
     const trackers = row.querySelectorAll('.tl-tracker');
     const rowEvents = [...trackers].map(el =>
@@ -206,5 +210,51 @@ function updateClock(events) {
     row.classList.toggle('tl-active', isActive && !isPast);
   });
 
+  markCurrentStage(tlRows, nowM);
+
   // Update appliance slots (re-render just slot bars would need full re-render; skip for perf)
+}
+
+// Which stop the cook has got to.
+//
+// "In progress" is no help on its own: a turkey is in progress for two hours,
+// and so is everything that went in after it, which is how you end up with
+// half the timeline lit at once. The stage you are *up to* is the last
+// instruction whose time has come — that one gets the band, the one after it
+// gets a quieter outline, and the rest are history or still to come. Before
+// anything has started the first stop is both.
+function markCurrentStage(rows, nowM) {
+  let current = null;
+  let next = null;
+  for (const row of rows) {
+    const time = Number(row.dataset.time);
+    if (!Number.isFinite(time)) continue;
+    if (time <= nowM) current = row;
+    else if (!next) next = row;
+  }
+  if (!current) current = next;
+
+  for (const row of rows) {
+    row.classList.toggle('tl-current', row === current);
+    row.classList.toggle('tl-next', row === next && row !== current);
+  }
+
+  revealStage(current);
+}
+
+// The timeline is long and the cook is somewhere in the middle of it, so the
+// current stage is scrolled to rather than waited for. Only a *change* of stage
+// moves the page — otherwise every tick would drag the view back and there
+// would be no reading ahead.
+function revealStage(row) {
+  const key = row?.dataset.time ?? null;
+  if (key === lastStageKey) return;
+  const firstLook = lastStageKey === null;
+  lastStageKey = key;
+  if (!row) return;
+  const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  row.scrollIntoView({
+    block: 'center',
+    behavior: (firstLook || still) ? 'auto' : 'smooth',
+  });
 }

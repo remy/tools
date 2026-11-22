@@ -58,6 +58,11 @@ export function buildEvents(items, serveTime) {
         applianceKey: appKey,
         applianceLabel: appLabel,
         shelfInfo: item._shelf ?? null,
+        // Dishes already on this shelf that this one could genuinely go in a
+        // single tray with (see foods.js). Carried separately from `sub` so the
+        // merged-event formatting below doesn't have to parse it back out.
+        trayMates: item._trayMates || [],
+        shelfPinned: !!item._shelfPinned,
         ct,
       });
       events.push({

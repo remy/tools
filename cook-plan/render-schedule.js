@@ -6,7 +6,7 @@ import { state, saveItem, resetState, setView } from './state.js';
 import { EV_TYPE_CHIP } from './constants.js';
 import { escHtml, formatTime, formatDuration, nowMins } from './utils.js';
 import { applianceConfig } from './appliances.js';
-import { applianceLabel, mergedLabel, mergedSub } from './events.js';
+import { applianceLabel, mergedLabel, mergedSub, joinNames } from './events.js';
 import { computeSchedule } from './schedule.js';
 import { startClock, stopClock, getNextDayOffset, dismissNotification, clearNotifications, renderNotifications } from './clock.js';
 import { toggleWakeLock, releaseWakeLock } from './wake-lock.js';
@@ -15,22 +15,26 @@ import { renderHeader, bindHeader } from './header.js';
 import { buildShareLink } from './share-link.js';
 import { exportJSON } from './render-input.js';
 
+// Below this many stops, two columns would leave one of them nearly empty.
+const TWO_COLUMN_MIN_GROUPS = 6;
+
 export function renderScheduleView() {
   stopClock();
   const { items, conflicts, events } = computeSchedule();
+  const groups = groupEvents(events);
 
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="view" id="view-schedule">
       <div class="container">
-        ${renderHeader('<button class="btn btn-secondary btn-sm" id="btn-edit-plan">\u270f\ufe0f Edit</button>')}
+        ${renderHeader('<button class="btn btn-secondary btn-sm" id="btn-edit-plan">✏️ Edit</button>')}
 
         <div class="schedule-view">
           <!-- Clock bar -->
           <div class="clock-bar" id="clock-bar">
             <div class="clock-bar-top">
               <div class="clock-next" id="clock-next"></div>
-              <button class="wake-lock-btn" id="wake-lock-btn">\ud83d\udd06 Keep awake</button>
+              <button class="wake-lock-btn" id="wake-lock-btn">🔆 Keep awake</button>
             </div>
             <div class="clock-now">
               <span class="clock-time" id="clock-time">--:--:--</span>
@@ -63,7 +67,7 @@ export function renderScheduleView() {
           <!-- Timeline -->
           <div class="timeline-section">
             <h2>Timeline</h2>
-            <div class="timeline" id="timeline">
+            <div class="timeline${groups.length >= TWO_COLUMN_MIN_GROUPS ? ' timeline-2col' : ''}" id="timeline">
               ${renderTimeline(events, items)}
             </div>
           </div>
@@ -73,10 +77,10 @@ export function renderScheduleView() {
 
           <!-- Footer -->
           <div class="schedule-footer">
-            <button class="btn btn-secondary btn-sm" id="btn-share">\ud83d\udccb Copy link</button>
+            <button class="btn btn-secondary btn-sm" id="btn-share">📋 Copy link</button>
             <button class="btn btn-secondary btn-sm" id="btn-new-cook">Start new cook</button>
-            <button class="btn btn-ghost btn-sm" id="btn-export">\u2b07 Export JSON</button>
-            <button class="btn btn-ghost btn-sm" id="btn-print">\ud83d\udda8 Print</button>
+            <button class="btn btn-ghost btn-sm" id="btn-export">⬇ Export JSON</button>
+            <button class="btn btn-ghost btn-sm" id="btn-print">🖨 Print</button>
           </div>
         </div>
       </div>
@@ -95,7 +99,7 @@ export function renderConflicts(conflicts) {
     <div class="conflicts-section">
       ${conflicts.map(c => `
         <div class="conflict-card">
-          <strong>\u26a0\ufe0f Conflict</strong>
+          <strong>⚠️ Conflict</strong>
           <div class="conflict-detail">${escHtml(c.message)}</div>
         </div>
       `).join('')}
@@ -103,19 +107,23 @@ export function renderConflicts(conflicts) {
   `;
 }
 
-export function renderTimeline(events, items) {
-  const nextDayOffset = getNextDayOffset();
-  const nowM = nowMins() - nextDayOffset;
-
-  // Group events by time
+// Events sharing a clock time are one stop on the timeline.
+function groupEvents(events) {
   const groups = [];
   for (const ev of events) {
     const last = groups[groups.length - 1];
     if (last && last.time === ev.time) last.events.push(ev);
     else groups.push({ time: ev.time, events: [ev] });
   }
+  return groups;
+}
 
-  return groups.map(group => {
+export function renderTimeline(events, items) {
+  const nextDayOffset = getNextDayOffset();
+  const nowM = nowMins() - nextDayOffset;
+  const cfg = applianceConfig();
+
+  return groupEvents(events).map(group => {
     const isServeGroup = group.events.some(ev => ev.type === 'serve');
     // A group is past if ALL events in it are past
     const isPast   = group.events.every(ev => ev.endTime < nowM);
@@ -144,25 +152,22 @@ export function renderTimeline(events, items) {
       const names = evs.map(e => e.itemName).filter(Boolean);
       const label = mergedLabel(type, evs, names);
       const sub   = mergedSub(type, evs);
+      const tray  = trayNote(evs);
 
-      // Override inputs (one per event in this cluster that canOverride)
+      // One panel of manual adjustments per overridable event in this cluster
       const overridable = evs.filter(e => e.canOverride && e.itemId);
-      const overrideHtml = overridable.map(ev => {
+      const editHtml = overridable.map(ev => {
         const item = items.find(i => i.id === ev.itemId);
-        const override = item?.overrideCookStart || '';
-        const namePrefix = evs.length > 1 ? `<span class="override-name">${escHtml(ev.itemName)}:</span> ` : '';
-        return `
-          <div class="tl-override">
-            <label>${namePrefix}Override cook start:</label>
-            <input type="time" class="override-input" data-id="${ev.itemId}" value="${override}">
-            ${override ? `<button class="btn-clear-override" data-id="${ev.itemId}" title="Clear override">\u2715</button>` : ''}
-          </div>
-        `;
+        const namePrefix = evs.length > 1 ? `<span class="override-name">${escHtml(ev.itemName)}</span>` : '';
+        return `<div class="tl-edit-row" data-id="${ev.itemId}">
+            ${namePrefix}
+            ${editFields(ev, item, cfg)}
+          </div>`;
       }).join('');
 
       // Edit toggle: only present when at least one event in the cluster can be overridden
       const editBtn = overridable.length > 0
-        ? `<button type="button" class="tl-edit" aria-label="Edit cook start" title="Edit cook start">\u270f\ufe0f Edit</button>`
+        ? `<button type="button" class="tl-edit" aria-label="Adjust this step" title="Adjust time, oven and shelf">✏️ Edit</button>`
         : '';
 
       // Hidden trackers so the clock updater can find each original event
@@ -177,19 +182,108 @@ export function renderTimeline(events, items) {
           ${editBtn}
           <div class="tl-label">${escHtml(label)}</div>
           ${sub ? `<div class="tl-sub">${escHtml(sub)}</div>` : ''}
-          ${overrideHtml}
+          ${tray ? `<div class="tl-tray">🍲 ${escHtml(tray)}</div>` : ''}
+          ${editHtml ? `<div class="tl-override">${editHtml}</div>` : ''}
         </div>
       `;
     }).join('');
 
     return `
-      <div class="${cls}">
-        <div class="tl-time">${formatTime(group.time)}</div>
+      <div class="${cls}" data-time="${group.time}">
+        <div class="tl-time">
+          ${formatTime(group.time)}
+          <span class="tl-stage tl-stage-now">Now</span>
+          <span class="tl-stage tl-stage-next">Next</span>
+        </div>
         <div class="tl-dot"><span></span></div>
         <div class="tl-content">${evRows}</div>
       </div>
     `;
   }).join('');
+}
+
+// Tray advice for a step, printed only where the catalogue actually recommends
+// the pairing — so it reads as advice rather than as a description of where
+// things happened to land. Two dishes going in at the same moment are told to
+// share one tray; a dish whose partner is already in (or still to come) is told
+// what it is sharing with, which is the cue to use a big tray and leave room.
+function trayNote(evs) {
+  const inCluster = new Set(evs.map(e => e.itemName));
+  const together = new Set();
+  const apart = new Set();
+  for (const ev of evs) {
+    for (const mate of ev.trayMates || []) {
+      if (inCluster.has(mate)) {
+        together.add(ev.itemName);
+        together.add(mate);
+      } else {
+        apart.add(mate);
+      }
+    }
+  }
+  if (together.size >= 2) {
+    const also = apart.size ? ` (and ${joinNames([...apart])})` : '';
+    return `One tray: ${joinNames([...together])}${also}`;
+  }
+  if (apart.size) return `Shares a tray with ${joinNames([...apart])}`;
+  return null;
+}
+
+// The manual adjustments for a single dish: when it goes in, and where.
+function editFields(ev, item, cfg) {
+  const resource = ev.ct?.resource;
+  const override = item?.overrideCookStart || '';
+  const fields = [`
+    <label class="tl-field">
+      <span>Cook start</span>
+      <span class="tl-field-control">
+        <input type="time" class="override-input" data-id="${ev.itemId}" value="${escHtml(override)}">
+        ${override ? `<button type="button" class="btn-clear-override" data-id="${ev.itemId}" title="Clear override">✕</button>` : ''}
+      </span>
+    </label>`];
+
+  if (resource === 'oven') {
+    const pref = item?.appliancePref || 'auto';
+    fields.push(`
+      <label class="tl-field">
+        <span>Oven</span>
+        <select class="tl-appl-input" data-id="${ev.itemId}">
+          <option value="auto" ${pref === 'auto' ? 'selected' : ''}>Auto</option>
+          <option value="main" ${pref === 'main' ? 'selected' : ''}>Main oven</option>
+          ${cfg.hasCombi ? `<option value="combi" ${pref === 'combi' ? 'selected' : ''}>Combi oven</option>` : ''}
+        </select>
+      </label>`);
+
+    if (cfg.mainOvenShelves > 1) {
+      const shelfPref = item?.shelfPref ? String(item.shelfPref) : 'auto';
+      fields.push(`
+        <label class="tl-field">
+          <span>Shelf</span>
+          <select class="tl-shelf-input" data-id="${ev.itemId}">
+            <option value="auto" ${shelfPref === 'auto' ? 'selected' : ''}>Auto</option>
+            ${Array.from({ length: cfg.mainOvenShelves }, (_, i) => i + 1).map(n =>
+              `<option value="${n}" ${shelfPref === String(n) ? 'selected' : ''}>Shelf ${n}</option>`
+            ).join('')}
+          </select>
+        </label>`);
+    }
+  }
+
+  if (resource === 'hob') {
+    const pref = item?.appliancePref || 'auto';
+    fields.push(`
+      <label class="tl-field">
+        <span>Hob</span>
+        <select class="tl-appl-input" data-id="${ev.itemId}">
+          <option value="auto" ${pref === 'auto' ? 'selected' : ''}>Auto</option>
+          ${Array.from({ length: cfg.hobCount }, (_, i) => i + 1).map(n =>
+            `<option value="hob${n}" ${pref === `hob${n}` ? 'selected' : ''}>Hob ${n}</option>`
+          ).join('')}
+        </select>
+      </label>`);
+  }
+
+  return fields.join('');
 }
 
 export function renderApplianceSummary(items) {
@@ -217,17 +311,25 @@ export function renderApplianceSummary(items) {
     return html + '</div>';
   }
 
+  // Shelf is called out here too, so a hand-picked one is verifiable at a
+  // glance; a pin marks the ones the cook chose rather than the planner.
+  function ovenLine(i) {
+    const shelf = cfg.mainOvenShelves > 1 && i._shelf
+      ? `Shelf ${i._shelf}${i._shelfPinned ? ' 📌' : ''} · ` : '';
+    return `<span>${escHtml(i.name)}: ${shelf}${formatTime(i._s.cookStart)}–${formatTime(i._s.cookEnd)}</span>`;
+  }
+
   return `
     <div class="appliance-section">
       <h2>Appliances</h2>
       <div class="appliance-grid">
         <div class="appliance-card">
           <div class="app-name">Main Oven</div>
-          <div class="app-capacity">${cfg.mainOvenShelves * 2} slots (${cfg.mainOvenShelves} shelf${cfg.mainOvenShelves > 1 ? ' \u00d7 2' : ''})</div>
+          <div class="app-capacity">${cfg.mainOvenShelves * 2} slots (${cfg.mainOvenShelves} shelf${cfg.mainOvenShelves > 1 ? ' × 2' : ''})</div>
           ${slotBar(mainUsed, cfg.mainOvenShelves * 2)}
           <div class="app-items">
             ${ovenItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
-              ovenItems.map(i => `<span>${escHtml(i.name)}: ${formatTime(i._s.cookStart)}\u2013${formatTime(i._s.cookEnd)}</span>`).join('')}
+              ovenItems.map(ovenLine).join('')}
           </div>
         </div>
         ${cfg.hasCombi ? `
@@ -237,7 +339,7 @@ export function renderApplianceSummary(items) {
           ${slotBar(combiUsed, 2)}
           <div class="app-items">
             ${combiItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
-              combiItems.map(i => `<span>${escHtml(i.name)} (${i._appliance === 'combi' ? 'oven' : 'MW'}): ${formatTime(i._s.cookStart)}\u2013${formatTime(i._s.cookEnd)}</span>`).join('')}
+              combiItems.map(i => `<span>${escHtml(i.name)} (${i._appliance === 'combi' ? 'oven' : 'MW'}): ${formatTime(i._s.cookStart)}–${formatTime(i._s.cookEnd)}</span>`).join('')}
           </div>
         </div>` : ''}
         <div class="appliance-card">
@@ -251,12 +353,52 @@ export function renderApplianceSummary(items) {
           </div>
           <div class="app-items">
             ${hobItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
-              hobItems.map(i => `<span>${escHtml(i.name)} (${applianceLabel(i._appliance, null)}): ${formatTime(i._s.cookStart)}\u2013${formatTime(i._s.cookEnd)}</span>`).join('')}
+              hobItems.map(i => `<span>${escHtml(i.name)} (${applianceLabel(i._appliance, null)}): ${formatTime(i._s.cookStart)}–${formatTime(i._s.cookEnd)}</span>`).join('')}
           </div>
         </div>
       </div>
     </div>
   `;
+}
+
+// Read the adjustment panel back onto the items. Returns true when something
+// actually changed, i.e. when the schedule needs recomputing.
+function commitEdits(subEvent) {
+  let changed = false;
+
+  const setField = (selector, apply) => {
+    subEvent.querySelectorAll(selector).forEach(input => {
+      const item = state.items.find(i => i.id === input.dataset.id);
+      if (!item) return;
+      if (apply(item, input.value)) {
+        saveItem(item);
+        changed = true;
+      }
+    });
+  };
+
+  setField('.override-input', (item, value) => {
+    const next = value || null;
+    if ((item.overrideCookStart || null) === next) return false;
+    item.overrideCookStart = next;
+    return true;
+  });
+
+  setField('.tl-appl-input', (item, value) => {
+    const next = value || 'auto';
+    if ((item.appliancePref || 'auto') === next) return false;
+    item.appliancePref = next;
+    return true;
+  });
+
+  setField('.tl-shelf-input', (item, value) => {
+    const next = value === 'auto' ? null : value;
+    if ((item.shelfPref ?? null) === next) return false;
+    item.shelfPref = next;
+    return true;
+  });
+
+  return changed;
 }
 
 export function bindScheduleEvents(items, events) {
@@ -292,7 +434,7 @@ export function bindScheduleEvents(items, events) {
     try {
       await navigator.clipboard.writeText(link);
       const btn = document.getElementById('btn-share');
-      if (btn) { btn.textContent = '\u2705 Copied!'; setTimeout(() => { if (btn) btn.textContent = '\ud83d\udccb Copy link'; }, 2000); }
+      if (btn) { btn.textContent = '✅ Copied!'; setTimeout(() => { if (btn) btn.textContent = '📋 Copy link'; }, 2000); }
     } catch {
       // Clipboard blocked (e.g. insecure context) — surface the link to copy by hand.
       prompt('Copy this URL to share:', link);
@@ -304,7 +446,7 @@ export function bindScheduleEvents(items, events) {
 
   document.getElementById('wake-lock-btn')?.addEventListener('click', toggleWakeLock);
 
-  // Edit / save toggle for override inputs (commits on save click)
+  // Edit / save toggle for the adjustment panel (commits on save click)
   document.getElementById('timeline')?.addEventListener('click', e => {
     const editBtn = e.target.closest('.tl-edit');
     if (editBtn) {
@@ -313,23 +455,11 @@ export function bindScheduleEvents(items, events) {
       const editing = subEvent.classList.toggle('editing');
       if (editing) {
         editBtn.innerHTML = '💾 Save';
-        editBtn.setAttribute('aria-label', 'Save cook start');
+        editBtn.setAttribute('aria-label', 'Save changes');
         // Focus the first input so the user can pick a time straight away
         subEvent.querySelector('.override-input')?.focus();
-      } else {
-        // Commit any changed values then re-render the schedule
-        let changed = false;
-        subEvent.querySelectorAll('.override-input').forEach(inp => {
-          const id = inp.dataset.id;
-          const item = state.items.find(i => i.id === id);
-          const newVal = inp.value || null;
-          if (item && (item.overrideCookStart || null) !== newVal) {
-            item.overrideCookStart = newVal;
-            saveItem(item);
-            changed = true;
-          }
-        });
-        if (changed) renderScheduleView();
+      } else if (commitEdits(subEvent)) {
+        renderScheduleView();
       }
       return;
     }

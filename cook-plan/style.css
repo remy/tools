@@ -14,6 +14,9 @@
   --accent-glow: rgba(234, 88, 12, 0.2);
   --amber: #f59e0b;
   --amber-soft: #fef3c7;
+  /* The solid band behind whichever stage is happening right now. */
+  --now-bg: #ffe8d1;
+  --now-sub: #9a3412;
 
   --bg: #fafafa;
   --bg-card: #ffffff;
@@ -50,6 +53,8 @@
     --accent-soft: #431407;
     --accent-glow: rgba(234, 88, 12, 0.3);
     --amber-soft: #451a03;
+    --now-bg: #3d1709;
+    --now-sub: #fdba74;
 
     --bg: #0a0a0a;
     --bg-card: #171717;
@@ -809,6 +814,7 @@ button {
   align-items: flex-start;
   padding-block: var(--space-sm);
   position: relative;
+  isolation: isolate;
 
   & .tl-time {
     font-size: 0.8125rem;
@@ -818,6 +824,21 @@ button {
     text-align: right;
     padding-top: 0.125rem;
     line-height: 1.4;
+  }
+
+  /* Both labels are rendered on every stop; CSS alone decides which stop
+     shows which, so the clock moves the highlight by toggling a class and
+     nothing else. */
+  & .tl-stage {
+    display: none;
+    margin-top: 0.1875rem;
+    padding: 0 0.25rem;
+    border-radius: 0.1875rem;
+    font-family: inherit;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
 
   & .tl-dot {
@@ -890,7 +911,7 @@ button {
     }
 
     & .tl-sub-event.editing .tl-override {
-      display: flex;
+      display: block;
     }
 
     & .tl-chip {
@@ -938,19 +959,58 @@ button {
       color: var(--text-2);
       margin-top: 0.125rem;
     }
+    & .tl-tray {
+      font-size: 0.8125rem;
+      color: var(--now-sub);
+      margin-top: 0.125rem;
+    }
     & .tl-override {
       display: none;
-      align-items: center;
-      gap: var(--space-sm);
-      margin-top: var(--space-xs);
+      margin-top: var(--space-sm);
+      padding: var(--space-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
 
-      & label {
+      & .tl-edit-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+        align-items: flex-end;
+      }
+      & .tl-edit-row + .tl-edit-row {
+        margin-top: var(--space-sm);
+        padding-top: var(--space-sm);
+        border-top: 1px dashed var(--border);
+      }
+      & .override-name {
+        flex-basis: 100%;
         font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-2);
+      }
+      & .tl-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.125rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
         color: var(--text-3);
       }
-      & input[type='time'] {
+      & .tl-field-control {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+      }
+      & input[type='time'],
+      & select {
         font-size: 0.8125rem;
-        padding: 0.125rem 0.375rem;
+        font-weight: 400;
+        letter-spacing: normal;
+        text-transform: none;
+        padding: 0.1875rem 0.375rem;
         border: 1px solid var(--border);
         border-radius: 0.25rem;
         background: var(--bg);
@@ -978,6 +1038,8 @@ button {
     }
   }
 
+  /* Mid-cook: a dish is in the oven. Several stops are in this state at once
+     for most of a roast, so it stays quiet — it is not where the cook is up to. */
   &.tl-active {
     & .tl-dot span {
       background: var(--accent);
@@ -987,6 +1049,73 @@ button {
     & .tl-label {
       color: var(--accent);
       font-weight: 600;
+    }
+  }
+
+  /* The stage the cook is up to: one solid band running the full width of the
+     page. The cook is somewhere down the timeline rather than at the top of the
+     screen, so this has to be findable without reading any of the other stops.
+     The band is a pseudo-element, not a background on the row, so it can bleed
+     past the container's gutters without dragging the time column and dots out
+     of line with every other stop. */
+  &.tl-current {
+    opacity: 1;   /* outranks .tl-past, which a passed stop still carries */
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset-block: 0;
+      inset-inline: calc(var(--space-lg) * -1);
+      z-index: -1;
+      background: var(--now-bg);
+      border-left: 4px solid var(--accent);
+    }
+    & .tl-time {
+      color: var(--text);
+    }
+    & .tl-stage-now {
+      display: block;
+      background: var(--accent);
+      color: #fff;
+    }
+    & .tl-dot span {
+      background: var(--accent);
+      box-shadow: 0 0 0 4px
+        color-mix(in srgb, var(--accent) 25%, transparent);
+    }
+    & .tl-label {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    & .tl-sub-event {
+      border-left-color: var(--accent);
+    }
+    & .tl-chip {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+  }
+
+  /* What comes next: outlined rather than filled, so there is never a question
+     which of the two is happening now. */
+  &.tl-next {
+    &::after {
+      content: '';
+      position: absolute;
+      inset-block: 0;
+      inset-inline: calc(var(--space-lg) * -1);
+      z-index: -1;
+      border-left: 4px solid color-mix(in srgb, var(--accent) 35%, transparent);
+      background: color-mix(in srgb, var(--now-bg) 45%, transparent);
+    }
+    & .tl-stage-next {
+      display: block;
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 0 0.1875rem;
     }
   }
 
@@ -1008,6 +1137,65 @@ button {
     }
     & .tl-label {
       color: var(--danger);
+    }
+  }
+}
+
+/* The band bleeds by one gutter, so it reaches the screen edge on a phone.
+   There it would look like a card with its corners sliced off, so the radius
+   only arrives once the container has margins of its own to sit inside. */
+@media (min-width: 640px) {
+  .tl-event.tl-current::after,
+  .tl-event.tl-next::after {
+    inset-inline: calc(var(--space-xl) * -1);
+    border-radius: var(--radius);
+  }
+}
+
+/* Two columns once there is room for them. Multi-column flow fills the left
+   column before the right, so the timeline still reads top-to-bottom then
+   across — the one arrangement that doesn't scramble a sequence of times.
+   Applied only to longer plans (see TWO_COLUMN_MIN_GROUPS): splitting five
+   stops leaves one column looking abandoned. */
+@media (min-width: 1024px) {
+  #view-schedule .container:has(.timeline-2col) {
+    max-width: 68rem;
+  }
+
+  .timeline-2col {
+    /* The single-column timeline is a flex column, and multi-column layout has
+       no effect on a flex container — it has to go back to being a block. */
+    display: block;
+    columns: 2;
+    column-gap: var(--space-3xl);
+
+    /* The single full-height spine only ever covers the first column, so each
+       stop draws its own short segment instead; stacked, they join up. */
+    &::before {
+      display: none;
+    }
+
+    & .tl-event {
+      break-inside: avoid;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 3.75rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        z-index: -1;
+        background: var(--border);
+      }
+
+      /* Inside a column the band stops short of the gutter, so the two
+         columns' highlights can never run into each other. */
+      &.tl-current::after,
+      &.tl-next::after {
+        inset-inline: calc(var(--space-sm) * -1);
+        border-radius: var(--radius);
+      }
     }
   }
 }
@@ -1227,6 +1415,20 @@ dialog[open] {
 }
 
 /* Slot picker */
+/* Autocomplete follow-up: the catalogue's timings, offered or just applied. */
+.food-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+
+  & .food-suggest-note {
+    font-size: 0.75rem;
+    color: var(--text-2);
+  }
+}
+
 .slot-picker {
   display: flex;
   align-items: center;
@@ -1348,5 +1550,14 @@ dialog[open] {
 
   .tl-event.tl-past {
     opacity: 1;
+  }
+
+  /* A printed plan is read off the worktop over the whole cook, so "now" is
+     whenever you happen to look at it — the highlight would be a lie by the
+     time the ink is dry. */
+  .tl-event.tl-current::after,
+  .tl-event.tl-next::after,
+  .tl-stage {
+    display: none !important;
   }
 }

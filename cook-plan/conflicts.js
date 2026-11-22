@@ -38,33 +38,54 @@ export function detectConflicts(items) {
     const cfg = applianceConfig();
     const maxSlots = cfg.mainOvenShelves * 2;
     const ovenItems = items.filter(i =>
-      COOK_TYPE_MAP[i.cookType]?.resource === 'oven' && i._appliance === 'main' && i._s.cookTime > 0
+      COOK_TYPE_MAP[i.cookType]?.resource === 'oven' && i._appliance === 'main' && i.cookTime > 0
     );
-    const usage = ovenItems.map(i => ({
+    const describe = (id) => {
+      const it = ovenItems.find(i => i.id === id);
+      return it ? `"${it.name}" (${it.shelfSlots||1} slot${(it.shelfSlots||1)>1?'s':''})` : id;
+    };
+    const toUsage = (arr) => arr.map(i => ({
       start: i._s.cookStart, end: i._s.cookEnd,
       slots: i.shelfSlots || 1, itemId: i.id,
     }));
-    const over = sweepConflicts(usage, maxSlots);
+
+    const over = sweepConflicts(toUsage(ovenItems), maxSlots);
     const seen = new Set();
     for (const { time, slots, itemIds } of over) {
       const key = [...itemIds].sort().join(',');
       if (seen.has(key)) continue;
       seen.add(key);
-      const names = itemIds.map(id => {
-        const it = ovenItems.find(i => i.id === id);
-        return it ? `"${it.name}" (${it.shelfSlots||1} slot${(it.shelfSlots||1)>1?'s':''})` : id;
-      });
       conflicts.push({
         type: 'oven',
-        message: `Main oven overcapacity at ${formatTime(time)}: ${names.join(', ')} = ${slots}/${maxSlots} slots.`,
+        message: `Main oven overcapacity at ${formatTime(time)}: ${itemIds.map(describe).join(', ')} = ${slots}/${maxSlots} slots.`,
         itemIds,
       });
+    }
+
+    // A shelf holds two slots however much room the oven has overall, so an
+    // oven that is only half full can still have a shelf with three things on
+    // it — by a hand-picked shelf that doesn't fit, or by the allocator having
+    // nowhere left to put something. Neither shows up in the total above.
+    const shelfSeen = new Set();
+    for (let shelf = 1; shelf <= cfg.mainOvenShelves; shelf++) {
+      const onShelf = ovenItems.filter(i => (i._shelf ?? 1) === shelf);
+      if (onShelf.length < 2) continue;
+      for (const { time, slots, itemIds } of sweepConflicts(toUsage(onShelf), 2)) {
+        const key = shelf + ':' + [...itemIds].sort().join(',');
+        if (shelfSeen.has(key)) continue;
+        shelfSeen.add(key);
+        conflicts.push({
+          type: 'oven-shelf',
+          message: `Main oven shelf ${shelf} overcapacity at ${formatTime(time)}: ${itemIds.map(describe).join(', ')} = ${slots}/2 slots. Move one to another shelf.`,
+          itemIds,
+        });
+      }
     }
   }
 
   function checkCombiConflicts() {
     const combiItems = items.filter(i =>
-      (i._appliance === 'combi' || i._appliance === 'combi-mw') && i._s.cookTime > 0
+      (i._appliance === 'combi' || i._appliance === 'combi-mw') && i.cookTime > 0
     );
     const ovenItems = combiItems.filter(i => i._appliance === 'combi');
     const mwItems   = combiItems.filter(i => i._appliance === 'combi-mw');
@@ -148,7 +169,7 @@ export function detectConflicts(items) {
 
   function checkHobConflicts() {
     const hobItems = items.filter(i =>
-      COOK_TYPE_MAP[i.cookType]?.resource === 'hob' && i._s.cookTime > 0
+      COOK_TYPE_MAP[i.cookType]?.resource === 'hob' && i.cookTime > 0
     );
     // Check all time slices where more than 5 items are on hobs
     const events = [];
