@@ -1490,6 +1490,160 @@ dialog[open] {
   mask-image: url(/icons/settings.svg);
 }
 
+.icon-stopwatch {
+  width: 1.25rem;
+  height: 1.25rem;
+  -webkit-mask-image: url(/icons/stopwatch.svg);
+  mask-image: url(/icons/stopwatch.svg);
+}
+
+/* ---- Simulated clock ---- */
+/* The pill, pinned above everything, is the only thing that says the time on
+   screen is made up -- so it stays visible however far the timeline scrolls,
+   and it is loud enough not to be read as part of the plan. */
+.sim-bar {
+  position: fixed;
+  z-index: 50;
+  left: 50%;
+  bottom: var(--space-lg);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: stretch;
+  max-width: calc(100vw - var(--space-lg) * 2);
+  background: var(--amber);
+  color: #1c1310;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  font-size: 0.8125rem;
+
+  & button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 999px;
+    &:hover { background: rgba(0, 0, 0, 0.12); }
+  }
+
+  & .sim-bar-main {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-width: 0;
+  }
+
+  & strong {
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  & .sim-bar-exit {
+    font-size: 1.125rem;
+    line-height: 1;
+    padding-inline: var(--space-md);
+  }
+}
+
+/* A running simulation gets a pulse; a paused one sits still. */
+.sim-bar-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #1c1310;
+  flex: none;
+  animation: sim-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes sim-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sim-bar-dot { animation: none; }
+}
+
+/* The live clock readout is the one place a fake time could be taken for real,
+   so it is tinted while the simulation is on. */
+body.simulating .clock-time {
+  color: var(--amber);
+}
+
+.sim-readout {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+
+  & .sim-readout-time {
+    font-family: ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  & .sim-readout-state {
+    font-size: 0.8125rem;
+    color: var(--text-2);
+  }
+}
+
+.sim-range {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.sim-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-3);
+  font-family: ui-monospace, monospace;
+  margin-bottom: var(--space-lg);
+}
+
+/* Every control row wraps rather than scrolls -- at 325px the nudge buttons
+   need two lines and that is fine. */
+.sim-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+
+  & .btn {
+    width: auto;
+    flex: 1 1 auto;
+    white-space: nowrap;
+  }
+}
+
+/* The nudges are a set of equals, so they go in a grid rather than wrapping
+   into a short second row of stretched buttons. */
+.sim-nudges {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+
+@media (max-width: 460px) {
+  .sim-nudges {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sim-rates .btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+@media print {
+  .sim-bar { display: none !important; }
+}
+
 /* ---- Settings dialog ---- */
 #btn-settings {
   position: relative;

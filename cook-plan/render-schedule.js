@@ -12,6 +12,7 @@ import { startClock, stopClock, getNextDayOffset, dismissNotification, clearNoti
 import { toggleWakeLock, releaseWakeLock } from './wake-lock.js';
 import { showInputView } from './router.js';
 import { renderHeader, bindHeader } from './header.js';
+import { initSimUI } from './sim-dialog.js';
 import { buildShareLink } from './share-link.js';
 import { exportJSON } from './render-input.js';
 
@@ -27,7 +28,12 @@ export function renderScheduleView() {
   app.innerHTML = `
     <div class="view" id="view-schedule">
       <div class="container">
-        ${renderHeader('<button class="btn btn-secondary btn-sm" id="btn-edit-plan">✏️ Edit</button>')}
+        ${renderHeader(`
+          <button class="btn btn-secondary btn-sm" id="btn-edit-plan">✏️ Edit</button>
+          <button class="btn-icon" id="btn-simulate" aria-label="Simulate the clock">
+            <span class="icon-mask icon-stopwatch" aria-hidden="true"></span>
+          </button>
+        `)}
 
         <div class="schedule-view">
           <!-- Clock bar -->
@@ -89,6 +95,8 @@ export function renderScheduleView() {
 
   bindScheduleEvents(items, events);
   startClock(events);
+  // After startClock, so the simulate controls act on a clock that is running.
+  initSimUI(events);
   // Re-paint any notifications that survived the re-render (e.g. after toggling
   // an override). The notification stack itself is module-private to clock.js.
   renderNotifications();

@@ -2,6 +2,11 @@
 // Cook Planner — utils.js
 // =============================================
 
+// "Now" comes from the simulated clock rather than Date directly, so that
+// setting a fake time moves every part of the app at once rather than just the
+// readout. With no simulation running it is the real clock.
+import { now } from './sim-clock.js';
+
 export function parseTime(str) {
   if (!str) return null;
   const [h, m] = str.split(':').map(Number);
@@ -34,13 +39,13 @@ export function formatCountdown(totalSeconds) {
 }
 
 export function nowMins() {
-  const now = new Date();
-  return now.getHours() * 60 + now.getMinutes();
+  const n = now();
+  return n.getHours() * 60 + n.getMinutes();
 }
 
 export function nowSecs() {
-  const now = new Date();
-  return now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const n = now();
+  return n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds();
 }
 
 export function uid() {

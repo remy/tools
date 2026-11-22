@@ -3,14 +3,21 @@
 // =============================================
 
 import { escHtml, formatCountdown, formatTime, nowMins } from './utils.js';
+import { now as clockNow } from './sim-clock.js';
 
 // Module-private state
 let clockInterval = null;
 let chimesFired = new Set();
+// The events the running clock is ticking against, kept so the simulated clock
+// can resync without the caller having to hand them back.
+let currentEvents = [];
 let nextDayOffset = 0;  // 1440 if the schedule is for the next calendar day
 // Which timeline stop is the current one, so a change of stage can be brought
 // into view. Null means "not looked yet" rather than "nothing is active".
 let lastStageKey = null;
+// The minute the clock was last resynced to, so that two changes landing on the
+// same minute don't sound its chime twice.
+let lastSyncMinute = null;
 
 // In-memory notification stack — never persisted. When a chime fires we push
 // the event so the user can see what triggered the sound when they tab back in.
@@ -82,6 +89,16 @@ export function getNextDayOffset() {
 
 export function setNextDayOffset(val) {
   nextDayOffset = val;
+}
+
+// Whether the plan belongs to tomorrow rather than today: if every event is
+// more than an hour in the past, the cook must be the next day's. It lives
+// here rather than in computeSchedule because the simulated clock can change
+// the answer without the schedule itself changing at all -- scrubbing back to
+// lunchtime makes a plan that was "tomorrow's" today's again.
+export function syncDayOffset(events) {
+  const last = events.reduce((m, ev) => Math.max(m, ev.endTime ?? ev.time), 0);
+  nextDayOffset = nowMins() > last + 60 ? 1440 : 0;
 }
 
 function chimeKey(ev) {
@@ -168,8 +185,11 @@ function playChime(type) {
 }
 
 export function startClock(events) {
+  currentEvents = events;
+  syncDayOffset(events);
   initChimes(events);
   lastStageKey = null;
+  lastSyncMinute = null;
   updateClock(events);
   clockInterval = setInterval(() => updateClock(events), 1000);
 }
@@ -178,13 +198,31 @@ export function stopClock() {
   if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
 }
 
+// The simulated clock has moved. Everything before the new now counts as done
+// -- otherwise scrubbing back and forth would replay every chime on the way --
+// but *strictly* before, so that landing on a moment still sounds it. Stepping
+// a minute at a time through a cook to hear what it does is the whole point.
+//
+// Landing on the same minute twice does not, though: one gesture can set the
+// time and then pause it, and two bells for one landing is the complaint this
+// app has already had once.
+export function resyncClock() {
+  syncDayOffset(currentEvents);
+  const nowM = nowMins() - nextDayOffset;
+  const cutoff = nowM === lastSyncMinute ? nowM + 1 : nowM;
+  lastSyncMinute = nowM;
+  chimesFired = new Set(currentEvents.filter(ev => ev.time < cutoff).map(chimeKey));
+  lastStageKey = null;
+  if (document.getElementById('clock-time')) updateClock(currentEvents);
+}
+
 function updateClock(events) {
   const clockTimeEl = document.getElementById('clock-time');
   const clockDateEl = document.getElementById('clock-date');
   const clockNextEl = document.getElementById('clock-next');
   if (!clockTimeEl) { stopClock(); return; }
 
-  const now = new Date();
+  const now = clockNow();
   const nowS = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   const nowM = Math.floor(nowS / 60) - nextDayOffset;  // adjusted for next-day schedules
 

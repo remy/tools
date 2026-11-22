@@ -3,11 +3,11 @@
 // =============================================
 
 import { state } from './state.js';
-import { parseTime, nowMins } from './utils.js';
+import { parseTime } from './utils.js';
 import { assignAppliances } from './appliances.js';
 import { detectConflicts } from './conflicts.js';
 import { buildEvents } from './events.js';
-import { setNextDayOffset } from './clock.js';
+import { syncDayOffset } from './clock.js';
 
 export function computeSchedule() {
   const target = parseTime(state.targetTime);
@@ -53,10 +53,7 @@ export function computeSchedule() {
   const serveTime = Math.max(baseServe, lastFinish);
   const events = buildEvents(assigned, serveTime);
 
-  // If every scheduled event is more than 60 minutes in the past, the schedule
-  // must be for the next calendar day -- offset all "now" comparisons by +1 day.
-  const maxEventTime = events.reduce((m, ev) => Math.max(m, ev.endTime ?? ev.time), 0);
-  setNextDayOffset(nowMins() > maxEventTime + 60 ? 1440 : 0);
+  syncDayOffset(events);
 
   return { items: assigned, conflicts, events };
 }

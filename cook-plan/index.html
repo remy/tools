@@ -41,6 +41,26 @@
     </div>
   </dialog>
 
+  <!-- Simulate: a fake clock, for seeing what the plan does later on -->
+  <dialog id="sim-dialog" aria-labelledby="sim-title">
+    <div class="dialog-header">
+      <h2 class="dialog-title" id="sim-title">Simulate the clock</h2>
+      <button class="btn-icon dialog-close" id="sim-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="dialog-body" id="sim-body"></div>
+  </dialog>
+
+  <!-- Shown whenever the clock is simulated, so it can never be mistaken for real -->
+  <div class="sim-bar" id="sim-bar" hidden>
+    <button class="sim-bar-main" id="sim-bar-open">
+      <span class="sim-bar-dot" aria-hidden="true"></span>
+      <span>Simulated</span>
+      <strong id="sim-bar-time">--:--:--</strong>
+      <span id="sim-bar-rate"></span>
+    </button>
+    <button class="sim-bar-exit" id="sim-bar-exit" aria-label="Back to real time">&times;</button>
+  </div>
+
   <script src="/vendor/pouchdb/pouchdb.min.js"></script>
   <script type="module" src="main.js"></script>
 <script>navigator.serviceWorker?.register("/sw.js")</script>
