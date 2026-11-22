@@ -896,6 +896,24 @@ button {
       border-left-color: var(--green);
     }
 
+    /* The live count sits under the step's own details, where the static
+       "1h 30m" it is counting towards already is. */
+    & .tl-elapsed {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 0.3em;
+      margin-top: var(--space-xs);
+      font-size: 0.8125rem;
+      color: var(--text-2);
+    }
+
+    & .tl-elapsed-value {
+      font-family: ui-monospace, monospace;
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
     & .tl-tracker {
       display: none;
     }
@@ -1749,7 +1767,8 @@ body.simulating .clock-time {
      time the ink is dry. */
   .tl-event.tl-current::after,
   .tl-event.tl-next::after,
-  .tl-stage {
+  .tl-stage,
+  .tl-elapsed {
     display: none !important;
   }
 }

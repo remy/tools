@@ -282,8 +282,36 @@ function updateClock(events) {
   });
 
   markCurrentStage(tlRows, nowM);
+  tickElapsed(nowM);
 
   // Update appliance slots (re-render just slot bars would need full re-render; skip for perf)
+}
+
+// How long each step that is currently under way has been under way: the
+// chicken went in at 14:05, and at twenty to three the thing worth knowing is
+// that it has been in for 35 minutes. Shown only between the step's start and
+// its end -- before, there is nothing to count; after, the row is past and the
+// step's full length is already printed beside it.
+function tickElapsed(nowM) {
+  for (const el of document.querySelectorAll('.tl-elapsed')) {
+    const start = Number(el.dataset.start);
+    const end = Number(el.dataset.end);
+    if (!Number.isFinite(start) || !Number.isFinite(end)) continue;
+    const running = nowM >= start && nowM <= end;
+    el.hidden = !running;
+    if (running) {
+      el.querySelector('.tl-elapsed-value').textContent = elapsedText(nowM - start);
+    }
+  }
+}
+
+// Hours and minutes, with the hours dropped when there are none. The minutes
+// are padded once hours appear so a ticking figure doesn't jump a character
+// wider between 1h 9m and 1h 10m.
+function elapsedText(mins) {
+  const m = Math.max(0, mins);
+  const h = Math.floor(m / 60);
+  return h === 0 ? `${m}m` : `${h}h ${String(m % 60).padStart(2, '0')}m`;
 }
 
 // Which stop the cook has got to.

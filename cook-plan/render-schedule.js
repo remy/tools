@@ -180,6 +180,17 @@ export function renderTimeline(events, items) {
         ? `<button type="button" class="tl-edit" aria-label="Adjust this step" title="Adjust time, oven and shelf">✏️ Edit</button>`
         : '';
 
+      // How long this step has been going. Only steps that take time get one --
+      // "chicken out of oven" is an instant, not something you can be 40
+      // minutes into. The clock fills it in and decides when to show it, so
+      // the markup carries the window rather than a value.
+      const runsUntil = Math.max(...evs.map(e => e.endTime ?? e.time));
+      const elapsedHtml = runsUntil > group.time
+        ? `<div class="tl-elapsed" data-start="${group.time}" data-end="${runsUntil}" hidden>
+            <span class="tl-elapsed-value"></span> so far
+          </div>`
+        : '';
+
       // Hidden trackers so the clock updater can find each original event
       const trackers = evs.map(ev =>
         `<span class="tl-tracker" data-item="${ev.itemId || ''}" data-type="${ev.type}" aria-hidden="true"></span>`
@@ -192,6 +203,7 @@ export function renderTimeline(events, items) {
           ${editBtn}
           <div class="tl-label">${escHtml(label)}</div>
           ${sub ? `<div class="tl-sub">${escHtml(sub)}</div>` : ''}
+          ${elapsedHtml}
           ${tray ? `<div class="tl-tray">🍲 ${escHtml(tray)}</div>` : ''}
           ${editHtml ? `<div class="tl-override">${editHtml}</div>` : ''}
         </div>
