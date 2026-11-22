@@ -109,7 +109,7 @@ function chimeKey(ev) {
 // is a dozen events on one minute -- every dish ready, several out of the oven,
 // and serve -- and they are one moment, not a dozen. Only the leader is
 // sounded, so SERVE wins over the things that merely finished with it.
-const CHIME_PRIORITY = ['serve', 'cook_end', 'cook_start', 'prep', 'set', 'ready'];
+const CHIME_PRIORITY = ['serve', 'cook_end', 'serve_prep', 'cook_start', 'prep', 'set', 'ready'];
 
 function leadEvent(evs) {
   for (const type of CHIME_PRIORITY) {
@@ -135,6 +135,7 @@ function playChime(type) {
       cook_start: 523.25,  // C5 -- things going in
       cook_end:   783.99,  // G5 -- higher/urgent: things coming out
       set:        440.00,  // A4 -- soft
+      serve_prep: 659.25,  // E5 -- hands needed, but nothing is burning
       serve:      987.77,  // B5 -- bright fanfare note
     };
     const freq  = freqMap[type] ?? 523.25;

@@ -9,7 +9,7 @@ export function buildEvents(items, serveTime) {
   const events = [];
 
   for (const item of items) {
-    const { cookStart, prepStart, cookEnd, setEnd } = item._s;
+    const { cookStart, prepStart, cookEnd, setEnd, serveEnd } = item._s;
     const ct = COOK_TYPE_MAP[item.cookType];
 
     if (item.prepTime > 0) {
@@ -92,9 +92,24 @@ export function buildEvents(items, serveTime) {
       });
     }
 
+    // Carving, plating, saucing: the last hands-on job, and the reason a dish
+    // that needs it has to come out of the oven earlier than one that doesn't.
+    if (item.servePrep > 0) {
+      events.push({
+        time: setEnd,
+        endTime: serveEnd,
+        type: 'serve_prep',
+        label: `${item.name} \u2014 carve / plate`,
+        sub: formatDuration(item.servePrep),
+        itemId: item.id,
+        itemName: item.name,
+        applianceKey: 'serve_prep',
+      });
+    }
+
     events.push({
-      time: setEnd,
-      endTime: setEnd,
+      time: serveEnd,
+      endTime: serveEnd,
       type: 'ready',
       label: `${item.name} ready`,
       sub: null,
@@ -107,8 +122,8 @@ export function buildEvents(items, serveTime) {
   // Cooked items that are already done before serve get a "ready and waiting"
   // note. Prep-only items aren't included \u2014 they're not "out of the oven".
   const restingNotes = items
-    .filter(it => it.cookType !== 'none' && it.cookTime > 0 && it._s.setEnd < serveTime)
-    .map(it => `${it.name} been out ${formatDuration(serveTime - it._s.setEnd)}`)
+    .filter(it => it.cookType !== 'none' && it.cookTime > 0 && it._s.serveEnd < serveTime)
+    .map(it => `${it.name} been out ${formatDuration(serveTime - it._s.serveEnd)}`)
     .join(' \u00b7 ');
 
   events.push({
@@ -150,7 +165,8 @@ export function mergedLabel(type, evs, names) {
       if (resource === 'hob') return `${joinNames(names)} off hob`;
       return `${joinNames(names)} done`;
     }
-    case 'set':   return `${joinNames(names)} \u2014 rest / set`;
+    case 'set':        return `${joinNames(names)} \u2014 rest / set`;
+    case 'serve_prep': return `${joinNames(names)} \u2014 carve / plate`;
     case 'ready': return `${joinNames(names)} ready`;
     default:      return evs[0]?.label || '';
   }

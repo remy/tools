@@ -17,81 +17,85 @@
 // 200°C+, mid 180–190°C, low 150–170°C. `tray` says whether a dish is loose on
 // a baking tray ('open', so it can share one) or sealed in its own dish or tin
 // ('dish' — happy to share a shelf, but never a tray).
+//
+// `serve` is the hands-on job between resting and eating — carving a joint,
+// turning out a pudding. Nearly everything is zero: a tray of parsnips goes
+// from the oven to the table.
 // =============================================
 
-// name, cookType, prep, cook, rest, slots, family, heat, tray
+// name, cookType, prep, cook, rest, serve, slots, family, heat, tray
 const RAW = [
   // ── Big roasts ──
-  ['Turkey',               'oven', 20, 180, 30, 2, 'poultry',  'mid', 'dish'],
-  ['Turkey crown',         'oven', 15, 120, 25, 2, 'poultry',  'mid', 'dish'],
-  ['Roast chicken',        'oven', 10,  90, 15, 2, 'poultry',  'mid', 'dish'],
-  ['Chicken thighs',       'oven',  5,  45,  5, 1, 'poultry',  'mid', 'open'],
-  ['Roast duck',           'oven', 15, 120, 20, 2, 'poultry',  'mid', 'dish'],
-  ['Roast goose',          'oven', 20, 150, 30, 2, 'poultry',  'mid', 'dish'],
-  ['Beef joint',           'oven', 15,  90, 25, 2, 'red-meat', 'hot', 'dish'],
-  ['Rib of beef',          'oven', 20, 120, 30, 2, 'red-meat', 'hot', 'dish'],
-  ['Leg of lamb',          'oven', 15, 105, 25, 2, 'red-meat', 'mid', 'dish'],
-  ['Shoulder of lamb',     'oven', 15, 240, 30, 2, 'red-meat', 'low', 'dish'],
-  ['Pork loin',            'oven', 15, 100, 20, 2, 'red-meat', 'mid', 'dish'],
-  ['Pork belly',           'oven', 20, 150, 15, 2, 'red-meat', 'low', 'dish'],
-  ['Gammon joint',         'oven', 15, 120, 15, 2, 'red-meat', 'mid', 'dish'],
-  ['Beef Wellington',      'oven', 30,  40, 15, 2, 'pastry',   'hot', 'dish'],
-  ['Nut roast',            'oven', 20,  50, 10, 1, 'veg-bake', 'mid', 'dish'],
+  ['Turkey',               'oven', 20, 180, 30, 20, 2, 'poultry',  'mid', 'dish'],
+  ['Turkey crown',         'oven', 15, 120, 25, 15, 2, 'poultry',  'mid', 'dish'],
+  ['Roast chicken',        'oven', 10,  90, 15, 10, 2, 'poultry',  'mid', 'dish'],
+  ['Chicken thighs',       'oven',  5,  45,  5,  0, 1, 'poultry',  'mid', 'open'],
+  ['Roast duck',           'oven', 15, 120, 20, 10, 2, 'poultry',  'mid', 'dish'],
+  ['Roast goose',          'oven', 20, 150, 30, 15, 2, 'poultry',  'mid', 'dish'],
+  ['Beef joint',           'oven', 15,  90, 25, 10, 2, 'red-meat', 'hot', 'dish'],
+  ['Rib of beef',          'oven', 20, 120, 30, 15, 2, 'red-meat', 'hot', 'dish'],
+  ['Leg of lamb',          'oven', 15, 105, 25, 10, 2, 'red-meat', 'mid', 'dish'],
+  ['Shoulder of lamb',     'oven', 15, 240, 30, 10, 2, 'red-meat', 'low', 'dish'],
+  ['Pork loin',            'oven', 15, 100, 20, 10, 2, 'red-meat', 'mid', 'dish'],
+  ['Pork belly',           'oven', 20, 150, 15, 10, 2, 'red-meat', 'low', 'dish'],
+  ['Gammon joint',         'oven', 15, 120, 15, 10, 2, 'red-meat', 'mid', 'dish'],
+  ['Beef Wellington',      'oven', 30,  40, 15,  5, 2, 'pastry',   'hot', 'dish'],
+  ['Nut roast',            'oven', 20,  50, 10,  5, 1, 'veg-bake', 'mid', 'dish'],
 
   // ── Roast veg: the tray-sharers ──
-  ['Roast potatoes',       'oven', 20,  55,  0, 2, 'root-veg', 'hot', 'open'],
-  ['Hasselback potatoes',  'oven', 20,  60,  0, 2, 'root-veg', 'hot', 'open'],
-  ['Parsnips',             'oven', 10,  40,  0, 1, 'root-veg', 'hot', 'open'],
-  ['Honey-roast carrots',  'oven', 10,  35,  0, 1, 'root-veg', 'hot', 'open'],
-  ['Roast swede',          'oven', 10,  45,  0, 1, 'root-veg', 'hot', 'open'],
-  ['Roast beetroot',       'oven', 10,  50,  0, 1, 'root-veg', 'hot', 'open'],
-  ['Sweet potatoes',       'oven', 10,  40,  0, 1, 'root-veg', 'hot', 'open'],
-  ['Roast veg medley',     'oven', 15,  40,  0, 2, 'root-veg', 'hot', 'open'],
-  ['Roast onions',         'oven',  5,  35,  0, 1, 'allium',   'hot', 'open'],
-  ['Roast shallots',       'oven',  5,  30,  0, 1, 'allium',   'hot', 'open'],
-  ['Roast leeks',          'oven',  5,  30,  0, 1, 'allium',   'mid', 'open'],
-  ['Roast sprouts',        'oven',  8,  25,  0, 1, 'brassica', 'hot', 'open'],
-  ['Roast cauliflower',    'oven',  8,  30,  0, 1, 'brassica', 'hot', 'open'],
-  ['Roast broccoli',       'oven',  5,  20,  0, 1, 'brassica', 'hot', 'open'],
+  ['Roast potatoes',       'oven', 20,  55,  0,  0, 2, 'root-veg', 'hot', 'open'],
+  ['Hasselback potatoes',  'oven', 20,  60,  0,  0, 2, 'root-veg', 'hot', 'open'],
+  ['Parsnips',             'oven', 10,  40,  0,  0, 1, 'root-veg', 'hot', 'open'],
+  ['Honey-roast carrots',  'oven', 10,  35,  0,  0, 1, 'root-veg', 'hot', 'open'],
+  ['Roast swede',          'oven', 10,  45,  0,  0, 1, 'root-veg', 'hot', 'open'],
+  ['Roast beetroot',       'oven', 10,  50,  0,  0, 1, 'root-veg', 'hot', 'open'],
+  ['Sweet potatoes',       'oven', 10,  40,  0,  0, 1, 'root-veg', 'hot', 'open'],
+  ['Roast veg medley',     'oven', 15,  40,  0,  0, 2, 'root-veg', 'hot', 'open'],
+  ['Roast onions',         'oven',  5,  35,  0,  0, 1, 'allium',   'hot', 'open'],
+  ['Roast shallots',       'oven',  5,  30,  0,  0, 1, 'allium',   'hot', 'open'],
+  ['Roast leeks',          'oven',  5,  30,  0,  0, 1, 'allium',   'mid', 'open'],
+  ['Roast sprouts',        'oven',  8,  25,  0,  0, 1, 'brassica', 'hot', 'open'],
+  ['Roast cauliflower',    'oven',  8,  30,  0,  0, 1, 'brassica', 'hot', 'open'],
+  ['Roast broccoli',       'oven',  5,  20,  0,  0, 1, 'brassica', 'hot', 'open'],
 
   // ── Trimmings ──
-  ['Pigs in blankets',     'oven', 10,  30,  0, 1, 'sausage',  'mid', 'open'],
-  ['Pork sausages',        'oven',  2,  30,  0, 1, 'sausage',  'mid', 'open'],
-  ['Stuffing balls',       'oven', 10,  30,  0, 1, 'stuffing', 'mid', 'open'],
-  ['Sage & onion stuffing','oven', 10,  35,  0, 1, 'stuffing', 'mid', 'dish'],
-  ['Yorkshire puddings',   'oven', 10,  22,  0, 1, 'batter',   'hot', 'dish'],
-  ['Toad in the hole',     'oven', 15,  40,  0, 2, 'batter',   'hot', 'dish'],
-  ['Pork crackling',       'oven',  5,  25,  0, 1, 'red-meat', 'hot', 'open'],
-  ['Cauliflower cheese',   'oven', 20,  30,  5, 2, 'veg-bake', 'mid', 'dish'],
-  ['Dauphinoise potatoes', 'oven', 20,  75, 10, 2, 'veg-bake', 'mid', 'dish'],
-  ['Bread rolls',          'oven',  2,  10,  0, 1, 'bread',    'hot', 'open'],
-  ['Garlic bread',         'oven',  2,  15,  0, 1, 'bread',    'hot', 'open'],
-  ['Salmon fillets',       'oven',  5,  20,  5, 1, 'fish',     'mid', 'open'],
+  ['Pigs in blankets',     'oven', 10,  30,  0,  0, 1, 'sausage',  'mid', 'open'],
+  ['Pork sausages',        'oven',  2,  30,  0,  0, 1, 'sausage',  'mid', 'open'],
+  ['Stuffing balls',       'oven', 10,  30,  0,  0, 1, 'stuffing', 'mid', 'open'],
+  ['Sage & onion stuffing','oven', 10,  35,  0,  0, 1, 'stuffing', 'mid', 'dish'],
+  ['Yorkshire puddings',   'oven', 10,  22,  0,  0, 1, 'batter',   'hot', 'dish'],
+  ['Toad in the hole',     'oven', 15,  40,  0,  0, 2, 'batter',   'hot', 'dish'],
+  ['Pork crackling',       'oven',  5,  25,  0,  0, 1, 'red-meat', 'hot', 'open'],
+  ['Cauliflower cheese',   'oven', 20,  30,  5,  0, 2, 'veg-bake', 'mid', 'dish'],
+  ['Dauphinoise potatoes', 'oven', 20,  75, 10,  5, 2, 'veg-bake', 'mid', 'dish'],
+  ['Bread rolls',          'oven',  2,  10,  0,  0, 1, 'bread',    'hot', 'open'],
+  ['Garlic bread',         'oven',  2,  15,  0,  0, 1, 'bread',    'hot', 'open'],
+  ['Salmon fillets',       'oven',  5,  20,  5,  0, 1, 'fish',     'mid', 'open'],
 
   // ── Hob ──
-  ['Mashed potatoes',      'boil', 15,  20,  0, 1, 'root-veg', 'mid', 'open'],
-  ['Boiled potatoes',      'boil', 10,  20,  0, 1, 'root-veg', 'mid', 'open'],
-  ['Brussels sprouts',     'boil', 10,   8,  0, 1, 'brassica', 'mid', 'open'],
-  ['Carrots',              'boil',  5,  15,  0, 1, 'root-veg', 'mid', 'open'],
-  ['Green beans',          'boil',  3,   6,  0, 1, 'brassica', 'mid', 'open'],
-  ['Garden peas',          'boil',  2,   5,  0, 1, 'brassica', 'mid', 'open'],
-  ['Cauliflower',          'boil',  5,  10,  0, 1, 'brassica', 'mid', 'open'],
-  ['Broccoli',             'boil',  3,   6,  0, 1, 'brassica', 'mid', 'open'],
-  ['Red cabbage',          'pan',  10,  45,  0, 1, 'brassica', 'mid', 'dish'],
-  ['Gravy',                'pan',   5,  15,  0, 1, 'sauce',    'mid', 'dish'],
-  ['Bread sauce',          'pan',   5,  15,  0, 1, 'sauce',    'mid', 'dish'],
-  ['Cranberry sauce',      'pan',   5,  10,  0, 1, 'sauce',    'mid', 'dish'],
+  ['Mashed potatoes',      'boil', 15,  20,  0,  0, 1, 'root-veg', 'mid', 'open'],
+  ['Boiled potatoes',      'boil', 10,  20,  0,  0, 1, 'root-veg', 'mid', 'open'],
+  ['Brussels sprouts',     'boil', 10,   8,  0,  0, 1, 'brassica', 'mid', 'open'],
+  ['Carrots',              'boil',  5,  15,  0,  0, 1, 'root-veg', 'mid', 'open'],
+  ['Green beans',          'boil',  3,   6,  0,  0, 1, 'brassica', 'mid', 'open'],
+  ['Garden peas',          'boil',  2,   5,  0,  0, 1, 'brassica', 'mid', 'open'],
+  ['Cauliflower',          'boil',  5,  10,  0,  0, 1, 'brassica', 'mid', 'open'],
+  ['Broccoli',             'boil',  3,   6,  0,  0, 1, 'brassica', 'mid', 'open'],
+  ['Red cabbage',          'pan',  10,  45,  0,  0, 1, 'brassica', 'mid', 'dish'],
+  ['Gravy',                'pan',   5,  15,  0,  0, 1, 'sauce',    'mid', 'dish'],
+  ['Bread sauce',          'pan',   5,  15,  0,  0, 1, 'sauce',    'mid', 'dish'],
+  ['Cranberry sauce',      'pan',   5,  10,  0,  0, 1, 'sauce',    'mid', 'dish'],
 
   // ── Pudding ──
-  ['Apple crumble',        'oven', 20,  40, 10, 2, 'dessert',  'mid', 'dish'],
-  ['Apple pie',            'oven', 15,  45, 10, 2, 'dessert',  'mid', 'dish'],
-  ['Christmas pudding',    'boil',  5, 120,  0, 1, 'dessert',  'mid', 'dish'],
-  ['Mince pies',           'oven',  2,  18,  0, 1, 'dessert',  'mid', 'open'],
+  ['Apple crumble',        'oven', 20,  40, 10,  0, 2, 'dessert',  'mid', 'dish'],
+  ['Apple pie',            'oven', 15,  45, 10,  5, 2, 'dessert',  'mid', 'dish'],
+  ['Christmas pudding',    'boil',  5, 120,  0,  5, 1, 'dessert',  'mid', 'dish'],
+  ['Mince pies',           'oven',  2,  18,  0,  0, 1, 'dessert',  'mid', 'open'],
 ];
 
 export const FOODS = RAW.map(
-  ([name, cookType, prepTime, cookTime, setTime, shelfSlots, family, heat, tray]) => ({
-    name, cookType, prepTime, cookTime, setTime, shelfSlots, family, heat, tray,
+  ([name, cookType, prepTime, cookTime, setTime, servePrep, shelfSlots, family, heat, tray]) => ({
+    name, cookType, prepTime, cookTime, setTime, servePrep, shelfSlots, family, heat, tray,
   })
 );
 

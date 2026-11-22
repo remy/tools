@@ -115,14 +115,28 @@ export function openItemModal(editId) {
         </div>
       </div>
 
-      <div class="form-group">
-        <label class="form-label" for="if-set">Rest / set time <span style="font-weight:400;color:var(--text-2)">(after cooking)</span></label>
-        <div class="input-time-group" style="max-width:12rem">
-          <input class="input" id="if-set" type="number" min="0" max="999"
-            value="${item?.setTime ?? 0}" placeholder="0">
-          <span class="time-unit">min</span>
+      <div class="input-row">
+        <div class="form-group">
+          <label class="form-label" for="if-set">Rest / set</label>
+          <div class="input-time-group">
+            <input class="input" id="if-set" type="number" min="0" max="999"
+              value="${item?.setTime ?? 0}" placeholder="0">
+            <span class="time-unit">min</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="if-serve">Serving prep</label>
+          <div class="input-time-group">
+            <input class="input" id="if-serve" type="number" min="0" max="999"
+              value="${item?.servePrep ?? 0}" placeholder="0">
+            <span class="time-unit">min</span>
+          </div>
         </div>
       </div>
+      <p class="settings-hint">Rest is the dish sitting on its own after cooking;
+        serving prep is the hands-on job after that — carving, plating, saucing.
+        Both are counted back from the serve time, so a chicken that needs ten
+        minutes of carving goes in ten minutes earlier.</p>
 
       <div class="dialog-footer">
         ${item ? `<button type="button" class="btn btn-danger btn-sm" id="btn-delete-item" data-id="${item.id}">Delete</button>` : ''}
@@ -184,6 +198,7 @@ export function openItemModal(editId) {
     document.getElementById('if-prep').value = food.prepTime;
     document.getElementById('if-cook').value = food.cookTime;
     document.getElementById('if-set').value  = food.setTime;
+    document.getElementById('if-serve').value = food.servePrep;
   }
 
   // Does the form already say what the catalogue would say?
@@ -191,7 +206,8 @@ export function openItemModal(editId) {
     return document.getElementById('if-cook-type').value === food.cookType
       && Number(document.getElementById('if-prep').value) === food.prepTime
       && Number(document.getElementById('if-cook').value) === food.cookTime
-      && Number(document.getElementById('if-set').value)  === food.setTime;
+      && Number(document.getElementById('if-set').value)  === food.setTime
+      && Number(document.getElementById('if-serve').value) === food.servePrep;
   }
 
   const suggestEl = document.getElementById('if-suggest');
@@ -250,7 +266,7 @@ export function openItemModal(editId) {
     setSlots(parseInt(slotEl.dataset.slot));
   });
 
-  for (const id of ['if-prep', 'if-cook', 'if-set']) {
+  for (const id of ['if-prep', 'if-cook', 'if-set', 'if-serve']) {
     document.getElementById(id).addEventListener('input', () => {
       touched.add('times');
       refreshSuggestion({ autoApply: false });
@@ -278,17 +294,18 @@ export function openItemModal(editId) {
     const shelfPref    = (resource === 'oven' && shelfPrefRaw !== 'auto') ? shelfPrefRaw : null;
     const prepTime = parseInt(document.getElementById('if-prep').value) || 0;
     const cookTime = parseInt(document.getElementById('if-cook').value) || 0;
-    const setTime  = parseInt(document.getElementById('if-set').value)  || 0;
+    const setTime   = parseInt(document.getElementById('if-set').value)   || 0;
+    const servePrep = parseInt(document.getElementById('if-serve').value) || 0;
 
     // Only the item that changed is written — the rest of the cook is left
     // alone so a second device editing a different dish doesn't lose its edit.
     let saved;
     if (item) {
-      saved = Object.assign(item, { name, cookType, shelfSlots, appliancePref, shelfPref, prepTime, cookTime, setTime });
+      saved = Object.assign(item, { name, cookType, shelfSlots, appliancePref, shelfPref, prepTime, cookTime, setTime, servePrep });
     } else {
       saved = {
         id: uid(), name, cookType, shelfSlots, appliancePref, shelfPref,
-        prepTime, cookTime, setTime, overrideCookStart: null,
+        prepTime, cookTime, setTime, servePrep, overrideCookStart: null,
         order: nextOrder(), createdAt: Date.now(),
       };
       state.items.push(saved);
@@ -311,6 +328,7 @@ function summarise(food) {
   if (food.prepTime) parts.push(`prep ${food.prepTime}m`);
   if (food.cookTime) parts.push(`cook ${food.cookTime}m`);
   if (food.setTime)  parts.push(`rest ${food.setTime}m`);
+  if (food.servePrep) parts.push(`serving ${food.servePrep}m`);
   return parts.join(' · ');
 }
 

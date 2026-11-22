@@ -9,13 +9,18 @@ import { detectConflicts } from './conflicts.js';
 import { buildEvents } from './events.js';
 import { syncDayOffset } from './clock.js';
 
+// Everything a dish needs from first touch to being on the table.
+function totalDuration(it) {
+  return (it.prepTime || 0) + (it.cookTime || 0) + (it.setTime || 0) + (it.servePrep || 0);
+}
+
 export function computeSchedule() {
   const target = parseTime(state.targetTime);
   if (target === null) return { items: [], conflicts: [], events: [] };
 
   // In start mode, find the longest item so everything back-schedules to finish together
   const maxDuration = state.mode === 'start'
-    ? Math.max(...state.items.map(it => (it.prepTime || 0) + (it.cookTime || 0) + (it.setTime || 0)))
+    ? Math.max(...state.items.map(totalDuration))
     : 0;
   const startModeFinish = target + maxDuration;
 
@@ -25,16 +30,22 @@ export function computeSchedule() {
     if (item.overrideCookStart) {
       cookStart = parseTime(item.overrideCookStart);
     } else if (state.mode === 'end') {
-      const cookEnd = target - (item.setTime || 0);
+      // Back from the table: carving and plating happen last, so a dish that
+      // needs ten minutes of that has to be out of the oven ten minutes
+      // earlier than one that goes straight to the table.
+      const setEnd  = target - (item.servePrep || 0);
+      const cookEnd = setEnd - (item.setTime || 0);
       cookStart = cookEnd - (item.cookTime || 0);
     } else {
       // start mode: stagger so all items finish together when the longest item does
-      cookStart = startModeFinish - (item.setTime || 0) - (item.cookTime || 0);
+      cookStart = startModeFinish
+        - (item.servePrep || 0) - (item.setTime || 0) - (item.cookTime || 0);
     }
     const prepStart = cookStart - (item.prepTime || 0);
     const cookEnd   = cookStart + (item.cookTime || 0);
     const setEnd    = cookEnd + (item.setTime || 0);
-    return { ...item, _s: { cookStart, prepStart, cookEnd, setEnd } };
+    const serveEnd  = setEnd + (item.servePrep || 0);
+    return { ...item, _s: { cookStart, prepStart, cookEnd, setEnd, serveEnd } };
   });
 
   // Optional: snap nearby start times together so the schedule rounds to natural clusters
@@ -48,7 +59,7 @@ export function computeSchedule() {
   // must shift SERVE later — eating before something is ready makes no sense.
   const baseServe = state.mode === 'start' ? startModeFinish : target;
   const lastFinish = assigned.length > 0
-    ? Math.max(...assigned.map(it => it._s.setEnd))
+    ? Math.max(...assigned.map(it => it._s.serveEnd))
     : baseServe;
   const serveTime = Math.max(baseServe, lastFinish);
   const events = buildEvents(assigned, serveTime);
@@ -87,6 +98,7 @@ export function snapTimings(items, threshold) {
         prepStart: s.prepStart + shift,
         cookEnd:   s.cookEnd   + shift,
         setEnd:    s.setEnd    + shift,
+        serveEnd:  s.serveEnd  + shift,
       }});
     } else {
       result.push(item);

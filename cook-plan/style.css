@@ -30,6 +30,14 @@
 
   --green: #10b981;
   --green-soft: #d1fae5;
+  /* Carving and plating: the last hands-on job, and the only step that is
+     neither heat nor waiting, so it gets a colour that is neither. */
+  --plate: #8b5cf6;
+  --plate-soft: #ede9fe;
+  /* The running count. Not orange: the step's own label is orange, and a
+     figure that changes under it should read as a separate thing rather than
+     as part of the heading. */
+  --timer: #0f766e;
   --danger: #ef4444;
   --danger-soft: #fee2e2;
 
@@ -67,6 +75,9 @@
     --text-3: #71717a;
 
     --green-soft: #022c22;
+    --plate: #a78bfa;
+    --plate-soft: #2e1065;
+    --timer: #2dd4bf;
     --danger-soft: #450a0a;
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -717,6 +728,7 @@ button {
   &.notification-cook_start { --bar-colour: var(--accent); }
   &.notification-cook_end  { --bar-colour: var(--text-3); }
   &.notification-set       { --bar-colour: #3b82f6; }
+  &.notification-serve_prep { --bar-colour: var(--plate); }
   &.notification-ready     { --bar-colour: var(--green); }
   &.notification-serve     { --bar-colour: var(--amber); }
 }
@@ -892,6 +904,9 @@ button {
     & .tl-type-set {
       border-left-color: #3b82f6;
     }
+    & .tl-type-serve_prep {
+      border-left-color: var(--plate);
+    }
     & .tl-type-ready {
       border-left-color: var(--green);
     }
@@ -911,7 +926,7 @@ button {
       font-family: ui-monospace, monospace;
       font-variant-numeric: tabular-nums;
       font-weight: 600;
-      color: var(--accent);
+      color: var(--timer);
     }
 
     & .tl-tracker {
@@ -968,6 +983,11 @@ button {
       background: #dbeafe;
       color: #1d4ed8;
       border-color: #3b82f6;
+    }
+    & .tl-type-serve_prep .tl-chip {
+      background: var(--plate-soft);
+      color: var(--plate);
+      border-color: var(--plate);
     }
     & .tl-type-ready .tl-chip {
       background: var(--green-soft);

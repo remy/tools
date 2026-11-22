@@ -9,8 +9,8 @@
 // Two layers of compression keep the hash short and readable:
 // 1. KEYS: every JSON key is the first letter of its property name. Where two
 //    properties share an initial we fall back to two letters (cookType/cookTime
-//    → ct/co; shelfSlots/setTime → sh/se; hasCombi/hobCount → ha/ho;
-//    shelfPref → sp).
+//    → ct/co; shelfSlots/setTime/servePrep → sh/se/sv; hasCombi/hobCount →
+//    ha/ho; shelfPref → sp).
 // 2. VALUES: anything equal to its default — null, 0, the documented default
 //    string — is omitted on encode and refilled on decode.
 //
@@ -32,6 +32,7 @@ function compactItem(item) {
   if (item.prepTime) out.p = item.prepTime;
   if (item.cookTime) out.co = item.cookTime;
   if (item.setTime) out.se = item.setTime;
+  if (item.servePrep) out.sv = item.servePrep;
   if (item.overrideCookStart) out.o = item.overrideCookStart;
   return out;
 }
@@ -47,6 +48,7 @@ function expandItem(c) {
     prepTime: c.p || 0,
     cookTime: c.co || 0,
     setTime: c.se || 0,
+    servePrep: c.sv || 0,
     overrideCookStart: c.o ?? null,
   };
 }

@@ -20,6 +20,12 @@ export function renderScheduleView() {
   stopClock();
   const { items, conflicts, events } = computeSchedule();
 
+  // Everything from the first thing you touch to the food being on the table:
+  // prep, cooking, resting and carving, not just the longest cook time.
+  const firstAt   = events.length > 0 ? events[0].time : null;
+  const serveAt   = events.find(ev => ev.type === 'serve')?.time ?? null;
+  const totalSpan = (firstAt != null && serveAt != null) ? serveAt - firstAt : null;
+
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="view" id="view-schedule">
@@ -44,19 +50,26 @@ export function renderScheduleView() {
             </div>
           </div>
 
-          <!-- Serve summary -->
+          <!-- Serve summary. The serve time is read off the schedule rather
+               than from the target: in start mode the target is when cooking
+               begins, and in either mode a hand-set start can push the meal
+               later than planned. -->
           <div class="serve-summary">
             <div class="serve-stat">
-              <div class="serve-stat-label">${state.mode === 'end' ? 'Serving at' : 'Starting at'}</div>
-              <div class="serve-stat-value">${state.targetTime}</div>
+              <div class="serve-stat-label">First action</div>
+              <div class="serve-stat-value">${firstAt != null ? formatTime(firstAt) : '--:--'}</div>
+            </div>
+            <div class="serve-stat">
+              <div class="serve-stat-label">Serving at</div>
+              <div class="serve-stat-value">${serveAt != null ? formatTime(serveAt) : '--:--'}</div>
+            </div>
+            <div class="serve-stat">
+              <div class="serve-stat-label">Start to table</div>
+              <div class="serve-stat-value">${totalSpan ? formatDuration(totalSpan) : '\u2014'}</div>
             </div>
             <div class="serve-stat">
               <div class="serve-stat-label">Items</div>
               <div class="serve-stat-value">${state.items.length}</div>
-            </div>
-            <div class="serve-stat">
-              <div class="serve-stat-label">First action</div>
-              <div class="serve-stat-value">${events.length > 0 ? formatTime(events[0].time) : '--:--'}</div>
             </div>
           </div>
 
