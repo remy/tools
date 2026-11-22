@@ -168,6 +168,7 @@ export function assignAppliances(items) {
     const ct = COOK_TYPE_MAP[item.cookType];
     const food = lookupFood(item.name);
     item._trayMates = [];
+    item._moveTo = null;
     if (!ct) { item._appliance = null; continue; }
 
     if (ct.resource === 'none') {
@@ -283,10 +284,100 @@ export function assignAppliances(items) {
     }
   }
 
+  // A microwave dish that still has no slot may be rescuable: see if what is
+  // in the combi can move to the main oven partway through and let it in.
+  const byId = new Map(sorted.map(it => [it.id, it]));
+  for (const mw of order) {
+    if (COOK_TYPE_MAP[mw.cookType]?.resource !== 'combi') continue;
+    if (!(mw.cookTime > 0) || !cfg.hasCombi) continue;
+    if (combiUsage.some(u => u.itemId === mw.id && u.mode === 'microwave')) continue;
+    mw._relocation = tryRelocate(mw) ? 'done' : 'impossible';
+  }
+
   annotateTrayMates(sorted, mainOvenUsage);
   annotateTrayMates(sorted, combiUsage);
 
   return sorted;
+
+  // Freeing the combi by moving what is in it.
+  //
+  // A dish is often in the combi only because the main oven was full when it
+  // went in. Shelves come free as things come out, so it can frequently move
+  // across partway through and carry on cooking in the main oven, which leaves
+  // the combi empty and cooling in time to microwave something. That is a real
+  // job for the cook, so it is only proposed when it genuinely fits: every
+  // dish in the way has to be out before the cooldown starts, and the main
+  // oven has to hold all of them, at once, for the rest of their cooking.
+  function tryRelocate(mw) {
+    const { cookStart: mwStart, cookEnd: mwEnd } = mw._s;
+    const freeBy = mwStart - COMBI_COOLDOWN;
+
+    const blockers = combiUsage.filter(u =>
+      u.mode === 'oven' && u.start < mwEnd && u.end + COMBI_COOLDOWN > mwStart
+    );
+    if (blockers.length === 0) return false;
+    // A combi chosen by hand stays chosen. Undoing an override to make room is
+    // the planner overruling the cook, which is the wrong way round.
+    if (blockers.some(u => byId.get(u.itemId)?.appliancePref === 'combi')) return false;
+
+    // The only moments worth trying are when something changes: a dish going
+    // in, or a main-oven shelf coming free.
+    const candidates = [...new Set([
+      ...blockers.map(b => b.start),
+      ...mainOvenUsage.map(u => u.end),
+      freeBy,
+    ])].filter(t => t <= freeBy).sort((a, b) => a - b);
+
+    for (const at of candidates) {
+      const moves = planMoves(blockers, at);
+      if (moves) { applyMoves(moves, mw); return true; }
+    }
+    return false;
+  }
+
+  // Can the main oven take every dish in the way, from `at` onwards, all at
+  // the same time? Longest remaining cook first: the awkward one to place
+  // should pick its shelf before the easy ones fill them.
+  function planMoves(blockers, at) {
+    const trial = [...mainOvenUsage];
+    const moves = [];
+    const hardestFirst = [...blockers].sort((a, b) =>
+      (b.end - Math.max(b.start, at)) - (a.end - Math.max(a.start, at)));
+
+    for (const b of hardestFirst) {
+      const start = Math.max(b.start, at);
+      if (start >= b.end) continue;           // finished before the move: nothing to do
+      let shelf = null;
+      for (let n = 1; n <= cfg.mainOvenShelves; n++) {
+        if (slotsOnShelf(trial, n, start, b.end, b.itemId) + b.slots <= 2) { shelf = n; break; }
+      }
+      if (shelf === null) return null;
+      trial.push({ start, end: b.end, shelf, slots: b.slots, itemId: b.itemId, food: b.food });
+      moves.push({ usage: b, at: start, shelf });
+    }
+    return moves.length > 0 ? moves : null;
+  }
+
+  function applyMoves(moves, mw) {
+    for (const { usage, at, shelf } of moves) {
+      const item = byId.get(usage.itemId);
+      mainOvenUsage.push({ ...usage, start: at, shelf });
+      if (at <= usage.start) {
+        // It never goes near the combi after all: a reassignment, not a move.
+        combiUsage.splice(combiUsage.indexOf(usage), 1);
+        if (item) { item._appliance = 'main'; item._shelf = shelf; }
+      } else {
+        usage.end = at;                       // the combi half of its cook
+        if (item) item._moveTo = { shelf, at, forItem: mw.name };
+      }
+    }
+    combiUsage.push({
+      start: mw._s.cookStart, end: mw._s.cookEnd, mode: 'microwave',
+      shelf: 1, slots: 1, itemId: mw.id, food: lookupFood(mw.name),
+    });
+    mw._appliance = 'combi-mw';
+    mw._shelf = 1;
+  }
 }
 
 // Note, on each dish, which of its shelf-mates it could genuinely go in one

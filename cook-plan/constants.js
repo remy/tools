@@ -29,6 +29,7 @@ export const EV_TYPE_CHIP = {
   cook_start: 'IN',
   cook_end:   'OUT',
   preheat:    'HEAT',
+  move:       'MOVE',
   set:        'REST',
   serve_prep: 'PLATE',
   ready:      'READY',

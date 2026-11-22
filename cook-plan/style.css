@@ -727,6 +727,7 @@ button {
   &.notification-prep      { --bar-colour: var(--amber); }
   &.notification-preheat   { --bar-colour: var(--amber); }
   &.notification-cook_start { --bar-colour: var(--accent); }
+  &.notification-move      { --bar-colour: var(--accent); }
   &.notification-cook_end  { --bar-colour: var(--text-3); }
   &.notification-set       { --bar-colour: #3b82f6; }
   &.notification-serve_prep { --bar-colour: var(--plate); }
@@ -900,7 +901,9 @@ button {
     & .tl-type-preheat {
       border-left-color: var(--amber);
     }
-    & .tl-type-cook_start {
+    /* Moving a dish between ovens is an oven job like putting one in. */
+    & .tl-type-cook_start,
+    & .tl-type-move {
       border-left-color: var(--accent);
     }
     & .tl-type-cook_end {
@@ -980,7 +983,8 @@ button {
       color: var(--amber);
       border-color: var(--amber);
     }
-    & .tl-type-cook_start .tl-chip {
+    & .tl-type-cook_start .tl-chip,
+    & .tl-type-move .tl-chip {
       background: var(--accent-soft);
       color: var(--accent);
       border-color: var(--accent);

@@ -324,19 +324,37 @@ function editFields(ev, item, cfg) {
 export function renderApplianceSummary(items) {
   const cfg = applianceConfig();
   const nextDayOffset = getNextDayOffset();
-  const ovenItems  = items.filter(i => i._appliance === 'main');
-  const combiItems = items.filter(i => i._appliance === 'combi' || i._appliance === 'combi-mw');
-  const hobItems   = items.filter(i => i._appliance?.startsWith('hob'));
+  const hobItems = items.filter(i => i._appliance?.startsWith('hob'));
+
+  // A dish that moves between ovens belongs to both cards, for the stretch it
+  // actually spends in each. Everything else is one window covering its cook.
+  const mainWindows = [];
+  const combiWindows = [];
+  for (const i of items) {
+    if (i._appliance === 'main') {
+      mainWindows.push({ item: i, shelf: i._shelf, start: i._s.cookStart, end: i._s.cookEnd });
+    } else if (i._appliance === 'combi' || i._appliance === 'combi-mw') {
+      combiWindows.push({
+        item: i, start: i._s.cookStart, end: i._moveTo ? i._moveTo.at : i._s.cookEnd,
+        mode: i._appliance === 'combi' ? 'oven' : 'MW',
+      });
+      if (i._moveTo) {
+        mainWindows.push({
+          item: i, shelf: i._moveTo.shelf, start: i._moveTo.at, end: i._s.cookEnd, moved: true,
+        });
+      }
+    }
+  }
 
   // Current slot usage at nowMins
   const now = nowMins() - nextDayOffset;
-  function usedSlots(arr) {
-    return arr.filter(i => i._s.cookStart <= now && i._s.cookEnd > now)
-              .reduce((s, i) => s + (i.shelfSlots || 1), 0);
+  function usedSlots(wins) {
+    return wins.filter(w => w.start <= now && w.end > now)
+               .reduce((s, w) => s + (w.item.shelfSlots || 1), 0);
   }
 
-  const mainUsed  = usedSlots(ovenItems);
-  const combiUsed = usedSlots(combiItems);
+  const mainUsed  = usedSlots(mainWindows);
+  const combiUsed = usedSlots(combiWindows);
 
   function slotBar(used, total) {
     let html = `<div class="slot-bar" aria-label="${used} of ${total} slots used">`;
@@ -348,10 +366,11 @@ export function renderApplianceSummary(items) {
 
   // Shelf is called out here too, so a hand-picked one is verifiable at a
   // glance; a pin marks the ones the cook chose rather than the planner.
-  function ovenLine(i) {
-    const shelf = cfg.mainOvenShelves > 1 && i._shelf
-      ? `Shelf ${i._shelf}${i._shelfPinned ? ' 📌' : ''} · ` : '';
-    return `<span>${escHtml(i.name)}: ${shelf}${formatTime(i._s.cookStart)}–${formatTime(i._s.cookEnd)}</span>`;
+  function ovenLine(w) {
+    const shelf = cfg.mainOvenShelves > 1 && w.shelf
+      ? `Shelf ${w.shelf}${w.item._shelfPinned ? ' 📌' : ''} · ` : '';
+    const moved = w.moved ? ' · moved in' : '';
+    return `<span>${escHtml(w.item.name)}: ${shelf}${formatTime(w.start)}–${formatTime(w.end)}${moved}</span>`;
   }
 
   return `
@@ -363,8 +382,8 @@ export function renderApplianceSummary(items) {
           <div class="app-capacity">${cfg.mainOvenShelves * 2} slots (${cfg.mainOvenShelves} shelf${cfg.mainOvenShelves > 1 ? ' × 2' : ''})</div>
           ${slotBar(mainUsed, cfg.mainOvenShelves * 2)}
           <div class="app-items">
-            ${ovenItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
-              ovenItems.map(ovenLine).join('')}
+            ${mainWindows.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
+              mainWindows.map(ovenLine).join('')}
           </div>
         </div>
         ${cfg.hasCombi ? `
@@ -373,8 +392,8 @@ export function renderApplianceSummary(items) {
           <div class="app-capacity">2 slots (1 shelf), oven or MW</div>
           ${slotBar(combiUsed, 2)}
           <div class="app-items">
-            ${combiItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
-              combiItems.map(i => `<span>${escHtml(i.name)} (${i._appliance === 'combi' ? 'oven' : 'MW'}): ${formatTime(i._s.cookStart)}–${formatTime(i._s.cookEnd)}</span>`).join('')}
+            ${combiWindows.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
+              combiWindows.map(w => `<span>${escHtml(w.item.name)} (${w.mode}): ${formatTime(w.start)}–${formatTime(w.end)}${w.item._moveTo ? ' · then main oven' : ''}</span>`).join('')}
           </div>
         </div>` : ''}
         <div class="appliance-card">

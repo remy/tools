@@ -80,6 +80,23 @@ export function buildEvents(items, serveTime) {
       });
     }
 
+    // Started in the combi, finishes in the main oven. A real job with a time
+    // of its own, and the only reason the microwave gets its slot.
+    if (item._moveTo) {
+      events.push({
+        time: item._moveTo.at,
+        endTime: item._moveTo.at,
+        type: 'move',
+        label: `Move ${item.name} \u2192 Main Oven`,
+        sub: `Shelf ${item._moveTo.shelf} \u00b7 frees the combi for ${item._moveTo.forItem}`,
+        itemId: item.id,
+        itemName: item.name,
+        // Each move is its own instruction: two dishes going to different
+        // shelves is two jobs, not one line with a shelf missing from it.
+        applianceKey: `move-${item.id}`,
+      });
+    }
+
     if (item.setTime > 0) {
       events.push({
         time: cookEnd,
