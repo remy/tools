@@ -101,15 +101,17 @@ export function syncDayOffset(events) {
   nextDayOffset = nowMins() > last + 60 ? 1440 : 0;
 }
 
+// Events without a dish of their own -- heating an oven, serve -- fall back to
+// the appliance, so two ovens warming up on the same minute stay distinct.
 function chimeKey(ev) {
-  return `${ev.time}:${ev.type}:${ev.itemId || ''}`;
+  return `${ev.time}:${ev.type}:${ev.itemId || ev.applianceKey || ''}`;
 }
 
 // Which event speaks for a moment, most significant first. The end of a cook
 // is a dozen events on one minute -- every dish ready, several out of the oven,
 // and serve -- and they are one moment, not a dozen. Only the leader is
 // sounded, so SERVE wins over the things that merely finished with it.
-const CHIME_PRIORITY = ['serve', 'cook_end', 'serve_prep', 'cook_start', 'prep', 'set', 'ready'];
+const CHIME_PRIORITY = ['serve', 'cook_end', 'serve_prep', 'cook_start', 'preheat', 'prep', 'set', 'ready'];
 
 function leadEvent(evs) {
   for (const type of CHIME_PRIORITY) {
@@ -135,6 +137,7 @@ function playChime(type) {
       cook_start: 523.25,  // C5 -- things going in
       cook_end:   783.99,  // G5 -- higher/urgent: things coming out
       set:        440.00,  // A4 -- soft
+      preheat:    349.23,  // F4 -- low: go and press a button
       serve_prep: 659.25,  // E5 -- hands needed, but nothing is burning
       serve:      987.77,  // B5 -- bright fanfare note
     };

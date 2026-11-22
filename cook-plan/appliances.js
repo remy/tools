@@ -12,6 +12,10 @@ export function applianceConfig() {
     mainOvenShelves: a.mainOvenShelves ?? 2,   // 1 -> 2 slots, 2 -> 4 slots
     hasCombi:        a.hasCombi !== false,       // default true
     hobCount:        a.hobCount ?? 5,
+    // How long an oven takes to come up to temperature. Not a property of any
+    // dish -- it is the kitchen's, and it is why the first instruction of a
+    // roast is "turn the oven on" rather than "put the chicken in".
+    preheatMins:     a.preheatMins ?? 6,
   };
 }
 

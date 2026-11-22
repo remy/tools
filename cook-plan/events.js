@@ -4,6 +4,7 @@
 
 import { COOK_TYPE_MAP } from './constants.js';
 import { formatDuration } from './utils.js';
+import { applianceConfig } from './appliances.js';
 
 export function buildEvents(items, serveTime) {
   const events = [];
@@ -135,11 +136,46 @@ export function buildEvents(items, serveTime) {
     itemId: null,
   });
 
+  events.push(...preheatEvents(items, applianceConfig().preheatMins));
+
   // Sort; serve goes last if same time
   events.sort((a, b) => a.time - b.time || (a.type === 'serve' ? 1 : b.type === 'serve' ? -1 : 0));
 
   // Deduplicate adjacent ready + serve at same time
   return events;
+}
+
+// An oven does not start hot. Each one that gets used needs turning on before
+// the first dish goes into it, which is a job for the cook and so a stop on the
+// timeline -- one per oven, at its own first use. A microwave needs none, and a
+// hob heats while you stand over it.
+function preheatEvents(items, preheatMins) {
+  if (!(preheatMins > 0)) return [];
+
+  const firstUse = new Map();
+  for (const item of items) {
+    if (!(item.cookTime > 0)) continue;
+    if (COOK_TYPE_MAP[item.cookType]?.resource !== 'oven') continue;
+    const key = item._appliance;
+    if (key !== 'main' && key !== 'combi') continue;
+    const at = item._s.cookStart;
+    if (!firstUse.has(key) || at < firstUse.get(key)) firstUse.set(key, at);
+  }
+
+  return [...firstUse].map(([key, at]) => {
+    const label = applianceLabel(key, null);
+    return {
+      time: at - preheatMins,
+      endTime: at,
+      type: 'preheat',
+      label: `Heat ${label}`,
+      sub: formatDuration(preheatMins),
+      itemId: null,
+      itemName: null,
+      applianceKey: `preheat-${key}`,
+      applianceLabel: label,
+    };
+  });
 }
 
 export function joinNames(names) {

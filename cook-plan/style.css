@@ -725,6 +725,7 @@ button {
 
   /* Per-type accent matches the timeline chip colours */
   &.notification-prep      { --bar-colour: var(--amber); }
+  &.notification-preheat   { --bar-colour: var(--amber); }
   &.notification-cook_start { --bar-colour: var(--accent); }
   &.notification-cook_end  { --bar-colour: var(--text-3); }
   &.notification-set       { --bar-colour: #3b82f6; }
@@ -892,7 +893,11 @@ button {
     }
 
     /* Per-type left border colours */
-    & .tl-type-prep {
+    /* Heating an oven and prepping a dish are the same kind of thing -- a job
+       to do before anything cooks -- so they share a colour and differ by
+       their chip. */
+    & .tl-type-prep,
+    & .tl-type-preheat {
       border-left-color: var(--amber);
     }
     & .tl-type-cook_start {
@@ -969,7 +974,8 @@ button {
       border: 1px solid var(--border);
     }
 
-    & .tl-type-prep .tl-chip {
+    & .tl-type-prep .tl-chip,
+    & .tl-type-preheat .tl-chip {
       background: var(--amber-soft);
       color: var(--amber);
       border-color: var(--amber);
