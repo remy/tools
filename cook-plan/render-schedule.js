@@ -77,6 +77,10 @@ export function renderScheduleView() {
           ${conflicts.length > 0 ? renderConflicts(conflicts) : ''}
           ${renderNotices(items)}
 
+          <!-- What is in which oven: read while planning, so it sits above the
+               timeline rather than past the end of it -->
+          ${renderApplianceSummary(items)}
+
           <!-- Timeline, with the chime log beside it once there is room -->
           <div class="schedule-main">
             <div class="timeline-section">
@@ -93,9 +97,6 @@ export function renderScheduleView() {
               <p class="schedule-aside-empty">Each chime is logged here as the cook goes on.</p>
             </aside>
           </div>
-
-          <!-- Appliance summary -->
-          ${renderApplianceSummary(items)}
 
           <!-- Footer -->
           <div class="schedule-footer">
@@ -184,6 +185,19 @@ function groupEvents(events) {
   return groups;
 }
 
+// What a cook does in a single minute, in order: get the oven going, take out
+// what is done, shift anything that is moving, chop, put the next lot in, then
+// the things that are merely true afterwards. Anything unrecognised sorts last
+// rather than jumping the queue.
+const CLUSTER_ORDER = [
+  'preheat', 'cook_end', 'move', 'prep', 'cook_start', 'set', 'serve_prep', 'ready', 'serve',
+];
+
+function clusterRank(type) {
+  const n = CLUSTER_ORDER.indexOf(type);
+  return n === -1 ? CLUSTER_ORDER.length : n;
+}
+
 export function renderTimeline(events, items) {
   const nextDayOffset = getNextDayOffset();
   const nowM = nowMins() - nextDayOffset;
@@ -201,14 +215,21 @@ export function renderTimeline(events, items) {
     if (isActive)     cls += ' tl-active';
     if (isServeGroup) cls += ' tl-serve';
 
-    // Within the time-group, merge events that share the same type+applianceKey
+    // Within the time-group, merge events that share the same type and
+    // destination. Coming *out*, the appliance only decides the verb -- "out
+    // of oven" or "off hob" -- so two dishes leaving two different ovens are
+    // one instruction, not two rows with something else between them.
     const clusters = [];
     for (const ev of group.events) {
-      const key = `${ev.type}::${ev.applianceKey || ''}`;
+      const bucket = ev.type === 'cook_end' ? (ev.ct?.resource || '') : (ev.applianceKey || '');
+      const key = `${ev.type}::${bucket}`;
       const existing = clusters.find(c => c.key === key);
       if (existing) existing.events.push(ev);
       else clusters.push({ key, type: ev.type, events: [ev] });
     }
+    // ...and put them in the order the jobs actually get done, rather than the
+    // order the events happened to be built in.
+    clusters.sort((a, b) => clusterRank(a.type) - clusterRank(b.type));
 
     const evRows = clusters.map(cluster => {
       const { type, events: evs } = cluster;

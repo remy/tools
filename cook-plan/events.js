@@ -218,7 +218,10 @@ export function mergedLabel(type, evs, names) {
     }
     case 'cook_end': {
       const resource = ct?.resource;
-      if (resource === 'oven' || resource === 'combi') return `${joinNames(names)} out of oven`;
+      // 'combi' as a cook type means the microwave; an oven dish that happens
+      // to be cooking in the combi has resource 'oven' like any other.
+      if (resource === 'combi') return `${joinNames(names)} out of the microwave`;
+      if (resource === 'oven') return `${joinNames(names)} out of oven`;
       if (resource === 'hob') return `${joinNames(names)} off hob`;
       return `${joinNames(names)} done`;
     }
@@ -277,7 +280,8 @@ export function cookStartLabel(item, ct, appLabel) {
 }
 
 export function cookEndLabel(item, ct) {
-  if (ct?.resource === 'oven' || ct?.resource === 'combi') return `${item.name} out of oven`;
+  if (ct?.resource === 'combi') return `${item.name} out of the microwave`;
+  if (ct?.resource === 'oven') return `${item.name} out of oven`;
   if (ct?.resource === 'hob') return `${item.name} off hob`;
   return `${item.name} done`;
 }
