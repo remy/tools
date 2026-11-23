@@ -19,7 +19,9 @@
 // and the form is human-readable. Two legacy base64 formats are still decoded.
 // =============================================
 
-const APP_DEFAULTS = { mainOvenShelves: 2, hasCombi: true, hobCount: 5, preheatMins: 6 };
+const APP_DEFAULTS = {
+  mainOvenShelves: 2, hasCombi: true, hobCount: 5, preheatMins: 6, holdMins: 15,
+};
 
 // ---- v2 compact (current) ---------------------------------------------------
 
@@ -66,6 +68,7 @@ function compactState(s) {
   if (a.hasCombi !== APP_DEFAULTS.hasCombi) ac.ha = a.hasCombi;
   if (a.hobCount !== APP_DEFAULTS.hobCount) ac.ho = a.hobCount;
   if ((a.preheatMins ?? APP_DEFAULTS.preheatMins) !== APP_DEFAULTS.preheatMins) ac.ph = a.preheatMins;
+  if ((a.holdMins ?? APP_DEFAULTS.holdMins) !== APP_DEFAULTS.holdMins) ac.hd = a.holdMins;
   if (Object.keys(ac).length) c.a = ac;
 
   c.i = (s.items || []).map(compactItem);
@@ -83,6 +86,7 @@ function expandState(c) {
       hasCombi: c.a?.ha ?? APP_DEFAULTS.hasCombi,
       hobCount: c.a?.ho ?? APP_DEFAULTS.hobCount,
       preheatMins: c.a?.ph ?? APP_DEFAULTS.preheatMins,
+      holdMins: c.a?.hd ?? APP_DEFAULTS.holdMins,
     },
     items: (c.i || []).map(expandItem),
   };

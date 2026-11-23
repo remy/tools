@@ -41,7 +41,9 @@ export const DEFAULT_STATE = {
   mode: 'end',       // 'start' | 'end'
   targetTime: '17:00',
   items: [],
-  appliances: { mainOvenShelves: 2, hasCombi: true, hobCount: 5, preheatMins: 6 },
+  appliances: {
+    mainOvenShelves: 2, hasCombi: true, hobCount: 5, preheatMins: 6, holdMins: 15,
+  },
   snapMins: 0,
 };
 

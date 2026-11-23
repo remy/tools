@@ -130,7 +130,11 @@ export function buildEvents(items, serveTime) {
       endTime: serveEnd,
       type: 'ready',
       label: `${item.name} ready`,
-      sub: null,
+      // A dish finished early to free an appliance needs covering, or the
+      // minutes it saved the plan cost it its heat.
+      sub: item._holdFor > 0 && serveEnd < serveTime
+        ? `Cover and set aside \u00b7 ${formatDuration(serveTime - serveEnd)} until serve`
+        : null,
       itemId: item.id,
       itemName: item.name,
       applianceKey: 'ready',

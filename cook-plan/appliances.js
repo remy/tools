@@ -16,6 +16,10 @@ export function applianceConfig() {
     // dish -- it is the kitchen's, and it is why the first instruction of a
     // roast is "turn the oven on" rather than "put the chicken in".
     preheatMins:     a.preheatMins ?? 6,
+    // How long a dish may be finished early and left covered, when that is
+    // what frees an appliance. Also the kitchen's, not the dish's: it is
+    // really a statement about how tolerant this cook is of food standing.
+    holdMins:        a.holdMins ?? 15,
   };
 }
 

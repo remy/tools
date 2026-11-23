@@ -56,6 +56,16 @@ export function renderApplianceSettings() {
         the first dish goes in</p>
     </div>
     <div class="form-group">
+      <label class="form-label" for="set-hold">Keep warm</label>
+      <div class="input-time-group" style="max-width:12rem">
+        <input class="input" id="set-hold" type="number" min="0" max="120"
+          value="${cfg.holdMins}">
+        <span class="time-unit">min</span>
+      </div>
+      <p class="form-hint">How long a dish may finish early and sit covered, when
+        that is what frees an appliance for something else</p>
+    </div>
+    <div class="form-group">
       <label class="form-label">Round timings</label>
       <div class="seg-control" data-setting="snap">
         ${SNAP_OPTIONS.map((o) =>
@@ -77,11 +87,13 @@ export function renderApplianceSettings() {
 // zero, so it waits rather than wiping the value out from under the cursor.
 // The schedule itself is repainted when the dialog closes, as for every other
 // setting here.
+const TIME_SETTINGS = { 'set-preheat': 'preheatMins', 'set-hold': 'holdMins' };
+
 function handleInput(e) {
-  if (e.target.id !== 'set-preheat') return;
-  if (e.target.value === '') return;
+  const key = TIME_SETTINGS[e.target.id];
+  if (!key || e.target.value === '') return;
   const mins = Math.min(120, Math.max(0, parseInt(e.target.value, 10) || 0));
-  state.appliances = { ...applianceConfig(), preheatMins: mins };
+  state.appliances = { ...applianceConfig(), [key]: mins };
   savePlan();
 }
 
