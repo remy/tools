@@ -75,6 +75,7 @@ export function renderScheduleView() {
 
           <!-- Conflicts -->
           ${conflicts.length > 0 ? renderConflicts(conflicts) : ''}
+          ${renderNotices(items)}
 
           <!-- Timeline, with the chime log beside it once there is room -->
           <div class="schedule-main">
@@ -115,6 +116,48 @@ export function renderScheduleView() {
   // Re-paint any notifications that survived the re-render (e.g. after toggling
   // an override). The notification stack itself is module-private to clock.js.
   renderNotifications();
+}
+
+// Things the planner has arranged that you would never guess from the list of
+// dishes: a tray changing oven halfway through, or coming out early to sit
+// covered. Both need knowing about while there is still time to disagree,
+// rather than being discovered at twenty to four — so they go at the top with
+// the conflicts rather than only on the stop they happen at.
+export function renderNotices(items) {
+  const notes = [];
+
+  for (const i of items) {
+    if (!i._moveTo) continue;
+    notes.push(`${i.name} starts in the Combi Oven and moves across to the Main Oven`
+      + `${i._moveTo.shelf ? `, shelf ${i._moveTo.shelf},` : ''} at ${formatTime(i._moveTo.at)}`
+      + ` — that is what frees the combi to microwave ${i._moveTo.forItem}.`);
+  }
+
+  // Grouped by how long each waits, since that is the part worth reading.
+  const byHold = new Map();
+  for (const i of items) {
+    if (!(i._holdFor > 0)) continue;
+    if (!byHold.has(i._holdFor)) byHold.set(i._holdFor, []);
+    byHold.get(i._holdFor).push(i.name);
+  }
+  for (const [mins, names] of byHold) {
+    const many = names.length > 1;
+    notes.push(`${joinNames(names)} ${many ? 'come' : 'comes'} out ${formatDuration(mins)}`
+      + ` before everything else so the combi is free in time.`
+      + ` Cover ${many ? 'them' : 'it'} and ${many ? 'they' : 'it'} will keep.`);
+  }
+
+  if (notes.length === 0) return '';
+  return `
+    <div class="notices-section">
+      ${notes.map(n => `
+        <div class="notice-card">
+          <strong>Heads up</strong>
+          <div class="notice-detail">${escHtml(n)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
 }
 
 export function renderConflicts(conflicts) {

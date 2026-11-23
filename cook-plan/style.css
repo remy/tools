@@ -14,6 +14,8 @@
   --accent-glow: rgba(234, 88, 12, 0.2);
   --amber: #f59e0b;
   --amber-soft: #fef3c7;
+  /* Amber is too pale to write in on a pale amber card. */
+  --amber-ink: #b45309;
   /* The solid band behind whichever stage is happening right now. */
   --now-bg: #ffe8d1;
   --now-sub: #9a3412;
@@ -61,6 +63,7 @@
     --accent-soft: #431407;
     --accent-glow: rgba(234, 88, 12, 0.3);
     --amber-soft: #451a03;
+    --amber-ink: #fbbf24;
     --now-bg: #3d1709;
     --now-sub: #fdba74;
 
@@ -766,6 +769,34 @@ button {
       font-weight: 600;
       font-size: 1rem;
     }
+  }
+}
+
+/* Heads-up notices. Amber rather than red: nothing is wrong with the plan,
+   there is just something in it you would not have thought of. */
+.notices-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.notice-card {
+  background: var(--amber-soft);
+  border: 1px solid var(--amber);
+  border-radius: 0.375rem;
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.875rem;
+  color: var(--amber-ink);
+
+  & strong {
+    font-weight: 600;
+  }
+
+  & .notice-detail {
+    margin-top: var(--space-xs);
+    color: var(--text);
+    font-size: 0.8125rem;
   }
 }
 
