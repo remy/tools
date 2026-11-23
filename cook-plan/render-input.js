@@ -82,6 +82,7 @@ export function renderItemCard(item) {
   if (item.prepTime > 0)  badges.push(`<span class="item-badge">Prep ${formatDuration(item.prepTime)}</span>`);
   if (item.cookTime > 0)  badges.push(`<span class="item-badge">Cook ${formatDuration(item.cookTime)}</span>`);
   if (item.setTime > 0)   badges.push(`<span class="item-badge">Rest ${formatDuration(item.setTime)}</span>`);
+  if (item.servePrep > 0) badges.push(`<span class="item-badge">Serve ${formatDuration(item.servePrep)}</span>`);
   if (ct.resource === 'oven' || ct.resource === 'combi') {
     const slots = item.shelfSlots || 1;
     badges.push(`<span class="item-badge">${slots === 1 ? '\u00bd shelf' : slots === 2 ? '1 shelf' : slots + ' slots'}</span>`);

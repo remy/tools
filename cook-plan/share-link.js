@@ -9,7 +9,8 @@
 // Two layers of compression keep the hash short and readable:
 // 1. KEYS: every JSON key is the first letter of its property name. Where two
 //    properties share an initial we fall back to two letters (cookType/cookTime
-//    → ct/co; shelfSlots/setTime → sh/se; hasCombi/hobCount → ha/ho).
+//    → ct/co; shelfSlots/setTime/servePrep → sh/se/sv; hasCombi/hobCount →
+//    ha/ho; shelfPref → sp).
 // 2. VALUES: anything equal to its default — null, 0, the documented default
 //    string — is omitted on encode and refilled on decode.
 //
@@ -18,7 +19,9 @@
 // and the form is human-readable. Two legacy base64 formats are still decoded.
 // =============================================
 
-const APP_DEFAULTS = { mainOvenShelves: 2, hasCombi: true, hobCount: 5 };
+const APP_DEFAULTS = {
+  mainOvenShelves: 2, hasCombi: true, hobCount: 5, preheatMins: 6, holdMins: 15,
+};
 
 // ---- v2 compact (current) ---------------------------------------------------
 
@@ -27,9 +30,11 @@ function compactItem(item) {
   if (item.cookType && item.cookType !== 'oven') out.ct = item.cookType;
   if (item.shelfSlots && item.shelfSlots !== 1) out.sh = item.shelfSlots;
   if (item.appliancePref && item.appliancePref !== 'auto') out.a = item.appliancePref;
+  if (item.shelfPref) out.sp = item.shelfPref;
   if (item.prepTime) out.p = item.prepTime;
   if (item.cookTime) out.co = item.cookTime;
   if (item.setTime) out.se = item.setTime;
+  if (item.servePrep) out.sv = item.servePrep;
   if (item.overrideCookStart) out.o = item.overrideCookStart;
   return out;
 }
@@ -41,9 +46,11 @@ function expandItem(c) {
     cookType: c.ct || 'oven',
     shelfSlots: c.sh ?? 1,
     appliancePref: c.a || 'auto',
+    shelfPref: c.sp ?? null,
     prepTime: c.p || 0,
     cookTime: c.co || 0,
     setTime: c.se || 0,
+    servePrep: c.sv || 0,
     overrideCookStart: c.o ?? null,
   };
 }
@@ -60,6 +67,8 @@ function compactState(s) {
   if (a.mainOvenShelves !== APP_DEFAULTS.mainOvenShelves) ac.m = a.mainOvenShelves;
   if (a.hasCombi !== APP_DEFAULTS.hasCombi) ac.ha = a.hasCombi;
   if (a.hobCount !== APP_DEFAULTS.hobCount) ac.ho = a.hobCount;
+  if ((a.preheatMins ?? APP_DEFAULTS.preheatMins) !== APP_DEFAULTS.preheatMins) ac.ph = a.preheatMins;
+  if ((a.holdMins ?? APP_DEFAULTS.holdMins) !== APP_DEFAULTS.holdMins) ac.hd = a.holdMins;
   if (Object.keys(ac).length) c.a = ac;
 
   c.i = (s.items || []).map(compactItem);
@@ -76,6 +85,8 @@ function expandState(c) {
       mainOvenShelves: c.a?.m ?? APP_DEFAULTS.mainOvenShelves,
       hasCombi: c.a?.ha ?? APP_DEFAULTS.hasCombi,
       hobCount: c.a?.ho ?? APP_DEFAULTS.hobCount,
+      preheatMins: c.a?.ph ?? APP_DEFAULTS.preheatMins,
+      holdMins: c.a?.hd ?? APP_DEFAULTS.holdMins,
     },
     items: (c.i || []).map(expandItem),
   };

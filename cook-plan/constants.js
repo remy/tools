@@ -28,7 +28,10 @@ export const EV_TYPE_CHIP = {
   prep:       'PREP',
   cook_start: 'IN',
   cook_end:   'OUT',
+  preheat:    'HEAT',
+  move:       'MOVE',
   set:        'REST',
+  serve_prep: 'PLATE',
   ready:      'READY',
   serve:      '',
 };
@@ -38,7 +41,9 @@ export const DEFAULT_STATE = {
   mode: 'end',       // 'start' | 'end'
   targetTime: '17:00',
   items: [],
-  appliances: { mainOvenShelves: 2, hasCombi: true, hobCount: 5 },
+  appliances: {
+    mainOvenShelves: 2, hasCombi: true, hobCount: 5, preheatMins: 6, holdMins: 15,
+  },
   snapMins: 0,
 };
 

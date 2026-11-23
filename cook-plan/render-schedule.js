@@ -5,13 +5,15 @@
 import { state, saveItem, resetState, setView } from './state.js';
 import { EV_TYPE_CHIP } from './constants.js';
 import { escHtml, formatTime, formatDuration, nowMins } from './utils.js';
-import { applianceConfig } from './appliances.js';
-import { applianceLabel, mergedLabel, mergedSub } from './events.js';
+import { applianceConfig, applianceWindows } from './appliances.js';
+import { applianceLabel, mergedLabel, mergedSub, joinNames } from './events.js';
 import { computeSchedule } from './schedule.js';
 import { startClock, stopClock, getNextDayOffset, dismissNotification, clearNotifications, renderNotifications } from './clock.js';
 import { toggleWakeLock, releaseWakeLock } from './wake-lock.js';
 import { showInputView } from './router.js';
 import { renderHeader, bindHeader } from './header.js';
+import { initSimUI } from './sim-dialog.js';
+import { initAppliancePeek } from './appliance-peek.js';
 import { buildShareLink } from './share-link.js';
 import { exportJSON } from './render-input.js';
 
@@ -19,18 +21,29 @@ export function renderScheduleView() {
   stopClock();
   const { items, conflicts, events } = computeSchedule();
 
+  // Everything from the first thing you touch to the food being on the table:
+  // prep, cooking, resting and carving, not just the longest cook time.
+  const firstAt   = events.length > 0 ? events[0].time : null;
+  const serveAt   = events.find(ev => ev.type === 'serve')?.time ?? null;
+  const totalSpan = (firstAt != null && serveAt != null) ? serveAt - firstAt : null;
+
   const app = document.getElementById('app');
   app.innerHTML = `
     <div class="view" id="view-schedule">
       <div class="container">
-        ${renderHeader('<button class="btn btn-secondary btn-sm" id="btn-edit-plan">\u270f\ufe0f Edit</button>')}
+        ${renderHeader(`
+          <button class="btn btn-secondary btn-sm" id="btn-edit-plan">✏️ Edit</button>
+          <button class="btn-icon" id="btn-simulate" aria-label="Simulate the clock">
+            <span class="icon-mask icon-stopwatch" aria-hidden="true"></span>
+          </button>
+        `)}
 
         <div class="schedule-view">
           <!-- Clock bar -->
           <div class="clock-bar" id="clock-bar">
             <div class="clock-bar-top">
               <div class="clock-next" id="clock-next"></div>
-              <button class="wake-lock-btn" id="wake-lock-btn">\ud83d\udd06 Keep awake</button>
+              <button class="wake-lock-btn" id="wake-lock-btn">🔆 Keep awake</button>
             </div>
             <div class="clock-now">
               <span class="clock-time" id="clock-time">--:--:--</span>
@@ -38,45 +51,60 @@ export function renderScheduleView() {
             </div>
           </div>
 
-          <!-- Notifications: in-memory only, populated as chimes fire -->
-          <div class="notifications" id="notifications" hidden></div>
-
-          <!-- Serve summary -->
+          <!-- Serve summary. The serve time is read off the schedule rather
+               than from the target: in start mode the target is when cooking
+               begins, and in either mode a hand-set start can push the meal
+               later than planned. -->
           <div class="serve-summary">
             <div class="serve-stat">
-              <div class="serve-stat-label">${state.mode === 'end' ? 'Serving at' : 'Starting at'}</div>
-              <div class="serve-stat-value">${state.targetTime}</div>
+              <div class="serve-stat-label">First action</div>
+              <div class="serve-stat-value">${firstAt != null ? formatTime(firstAt) : '--:--'}</div>
+            </div>
+            <div class="serve-stat">
+              <div class="serve-stat-label">Serving at</div>
+              <div class="serve-stat-value">${serveAt != null ? formatTime(serveAt) : '--:--'}</div>
+            </div>
+            <div class="serve-stat">
+              <div class="serve-stat-label">Start to table</div>
+              <div class="serve-stat-value">${totalSpan ? formatDuration(totalSpan) : '\u2014'}</div>
             </div>
             <div class="serve-stat">
               <div class="serve-stat-label">Items</div>
               <div class="serve-stat-value">${state.items.length}</div>
             </div>
-            <div class="serve-stat">
-              <div class="serve-stat-label">First action</div>
-              <div class="serve-stat-value">${events.length > 0 ? formatTime(events[0].time) : '--:--'}</div>
-            </div>
           </div>
 
           <!-- Conflicts -->
           ${conflicts.length > 0 ? renderConflicts(conflicts) : ''}
+          ${renderNotices(items)}
 
-          <!-- Timeline -->
-          <div class="timeline-section">
-            <h2>Timeline</h2>
-            <div class="timeline" id="timeline">
-              ${renderTimeline(events, items)}
-            </div>
-          </div>
-
-          <!-- Appliance summary -->
+          <!-- What is in which oven: read while planning, so it sits above the
+               timeline rather than past the end of it -->
           ${renderApplianceSummary(items)}
+
+          <!-- Timeline, with the chime log beside it once there is room -->
+          <div class="schedule-main">
+            <div class="timeline-section">
+              <h2>Timeline</h2>
+              <div class="timeline" id="timeline">
+                ${renderTimeline(events, items)}
+              </div>
+            </div>
+
+            <!-- Notifications: in-memory only, populated as chimes fire -->
+            <aside class="schedule-aside">
+              <h2>Chimes</h2>
+              <div class="notifications" id="notifications" hidden></div>
+              <p class="schedule-aside-empty">Each chime is logged here as the cook goes on.</p>
+            </aside>
+          </div>
 
           <!-- Footer -->
           <div class="schedule-footer">
-            <button class="btn btn-secondary btn-sm" id="btn-share">\ud83d\udccb Copy link</button>
+            <button class="btn btn-secondary btn-sm" id="btn-share">📋 Copy link</button>
             <button class="btn btn-secondary btn-sm" id="btn-new-cook">Start new cook</button>
-            <button class="btn btn-ghost btn-sm" id="btn-export">\u2b07 Export JSON</button>
-            <button class="btn btn-ghost btn-sm" id="btn-print">\ud83d\udda8 Print</button>
+            <button class="btn btn-ghost btn-sm" id="btn-export">⬇ Export JSON</button>
+            <button class="btn btn-ghost btn-sm" id="btn-print">🖨 Print</button>
           </div>
         </div>
       </div>
@@ -85,9 +113,54 @@ export function renderScheduleView() {
 
   bindScheduleEvents(items, events);
   startClock(events);
+  // After startClock, so the simulate controls act on a clock that is running.
+  initSimUI(events);
+  initAppliancePeek(items);
   // Re-paint any notifications that survived the re-render (e.g. after toggling
   // an override). The notification stack itself is module-private to clock.js.
   renderNotifications();
+}
+
+// Things the planner has arranged that you would never guess from the list of
+// dishes: a tray changing oven halfway through, or coming out early to sit
+// covered. Both need knowing about while there is still time to disagree,
+// rather than being discovered at twenty to four — so they go at the top with
+// the conflicts rather than only on the stop they happen at.
+export function renderNotices(items) {
+  const notes = [];
+
+  for (const i of items) {
+    if (!i._moveTo) continue;
+    notes.push(`${i.name} starts in the Combi Oven and moves across to the Main Oven`
+      + `${i._moveTo.shelf ? `, shelf ${i._moveTo.shelf},` : ''} at ${formatTime(i._moveTo.at)}`
+      + ` — that is what frees the combi to microwave ${i._moveTo.forItem}.`);
+  }
+
+  // Grouped by how long each waits, since that is the part worth reading.
+  const byHold = new Map();
+  for (const i of items) {
+    if (!(i._holdFor > 0)) continue;
+    if (!byHold.has(i._holdFor)) byHold.set(i._holdFor, []);
+    byHold.get(i._holdFor).push(i.name);
+  }
+  for (const [mins, names] of byHold) {
+    const many = names.length > 1;
+    notes.push(`${joinNames(names)} ${many ? 'come' : 'comes'} out ${formatDuration(mins)}`
+      + ` before everything else so the combi is free in time.`
+      + ` Cover ${many ? 'them' : 'it'} and ${many ? 'they' : 'it'} will keep.`);
+  }
+
+  if (notes.length === 0) return '';
+  return `
+    <div class="notices-section">
+      ${notes.map(n => `
+        <div class="notice-card">
+          <strong>Heads up</strong>
+          <div class="notice-detail">${escHtml(n)}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
 }
 
 export function renderConflicts(conflicts) {
@@ -95,7 +168,7 @@ export function renderConflicts(conflicts) {
     <div class="conflicts-section">
       ${conflicts.map(c => `
         <div class="conflict-card">
-          <strong>\u26a0\ufe0f Conflict</strong>
+          <strong>⚠️ Conflict</strong>
           <div class="conflict-detail">${escHtml(c.message)}</div>
         </div>
       `).join('')}
@@ -103,19 +176,53 @@ export function renderConflicts(conflicts) {
   `;
 }
 
-export function renderTimeline(events, items) {
-  const nextDayOffset = getNextDayOffset();
-  const nowM = nowMins() - nextDayOffset;
-
-  // Group events by time
+// Events sharing a clock time are one stop on the timeline.
+function groupEvents(events) {
   const groups = [];
   for (const ev of events) {
     const last = groups[groups.length - 1];
     if (last && last.time === ev.time) last.events.push(ev);
     else groups.push({ time: ev.time, events: [ev] });
   }
+  return groups;
+}
 
-  return groups.map(group => {
+// Appliances worth peeking into. 'set', 'ready' and the like are bookkeeping
+// keys rather than things with a door.
+const PEEKABLE = (key) => key === 'main' || key === 'combi' || key === 'combi-mw'
+  || /^hob\d+$/.test(key || '');
+
+// The appliance's own name becomes the handle: it is already written in the
+// step, so making it the thing you hover avoids inventing a second control for
+// the same idea. Operates on already-escaped markup, and appliance labels are
+// plain words, so the match is exact and safe.
+function peekTrigger(html, label, key, time) {
+  if (!html || !label || !PEEKABLE(key) || !html.includes(label)) return null;
+  const btn = `<button type="button" class="appl-peek" popovertarget="appliance-peek"`
+    + ` data-appliance="${escHtml(key)}" data-at="${time}"`
+    + ` title="What's in the ${escHtml(label)} at ${formatTime(time)}?">${escHtml(label)}</button>`;
+  return html.split(label).join(btn);
+}
+
+// What a cook does in a single minute, in order: get the oven going, take out
+// what is done, shift anything that is moving, chop, put the next lot in, then
+// the things that are merely true afterwards. Anything unrecognised sorts last
+// rather than jumping the queue.
+const CLUSTER_ORDER = [
+  'preheat', 'cook_end', 'move', 'prep', 'cook_start', 'set', 'serve_prep', 'ready', 'serve',
+];
+
+function clusterRank(type) {
+  const n = CLUSTER_ORDER.indexOf(type);
+  return n === -1 ? CLUSTER_ORDER.length : n;
+}
+
+export function renderTimeline(events, items) {
+  const nextDayOffset = getNextDayOffset();
+  const nowM = nowMins() - nextDayOffset;
+  const cfg = applianceConfig();
+
+  return groupEvents(events).map(group => {
     const isServeGroup = group.events.some(ev => ev.type === 'serve');
     // A group is past if ALL events in it are past
     const isPast   = group.events.every(ev => ev.endTime < nowM);
@@ -127,14 +234,21 @@ export function renderTimeline(events, items) {
     if (isActive)     cls += ' tl-active';
     if (isServeGroup) cls += ' tl-serve';
 
-    // Within the time-group, merge events that share the same type+applianceKey
+    // Within the time-group, merge events that share the same type and
+    // destination. Coming *out*, the appliance only decides the verb -- "out
+    // of oven" or "off hob" -- so two dishes leaving two different ovens are
+    // one instruction, not two rows with something else between them.
     const clusters = [];
     for (const ev of group.events) {
-      const key = `${ev.type}::${ev.applianceKey || ''}`;
+      const bucket = ev.type === 'cook_end' ? (ev.ct?.resource || '') : (ev.applianceKey || '');
+      const key = `${ev.type}::${bucket}`;
       const existing = clusters.find(c => c.key === key);
       if (existing) existing.events.push(ev);
       else clusters.push({ key, type: ev.type, events: [ev] });
     }
+    // ...and put them in the order the jobs actually get done, rather than the
+    // order the events happened to be built in.
+    clusters.sort((a, b) => clusterRank(a.type) - clusterRank(b.type));
 
     const evRows = clusters.map(cluster => {
       const { type, events: evs } = cluster;
@@ -144,25 +258,33 @@ export function renderTimeline(events, items) {
       const names = evs.map(e => e.itemName).filter(Boolean);
       const label = mergedLabel(type, evs, names);
       const sub   = mergedSub(type, evs);
+      const tray  = trayNote(evs);
 
-      // Override inputs (one per event in this cluster that canOverride)
+      // One panel of manual adjustments per overridable event in this cluster
       const overridable = evs.filter(e => e.canOverride && e.itemId);
-      const overrideHtml = overridable.map(ev => {
+      const editHtml = overridable.map(ev => {
         const item = items.find(i => i.id === ev.itemId);
-        const override = item?.overrideCookStart || '';
-        const namePrefix = evs.length > 1 ? `<span class="override-name">${escHtml(ev.itemName)}:</span> ` : '';
-        return `
-          <div class="tl-override">
-            <label>${namePrefix}Override cook start:</label>
-            <input type="time" class="override-input" data-id="${ev.itemId}" value="${override}">
-            ${override ? `<button class="btn-clear-override" data-id="${ev.itemId}" title="Clear override">\u2715</button>` : ''}
-          </div>
-        `;
+        const namePrefix = evs.length > 1 ? `<span class="override-name">${escHtml(ev.itemName)}</span>` : '';
+        return `<div class="tl-edit-row" data-id="${ev.itemId}">
+            ${namePrefix}
+            ${editFields(ev, item, cfg)}
+          </div>`;
       }).join('');
 
       // Edit toggle: only present when at least one event in the cluster can be overridden
       const editBtn = overridable.length > 0
-        ? `<button type="button" class="tl-edit" aria-label="Edit cook start" title="Edit cook start">\u270f\ufe0f Edit</button>`
+        ? `<button type="button" class="tl-edit" aria-label="Adjust this step" title="Adjust time, oven and shelf">✏️ Edit</button>`
+        : '';
+
+      // How long this step has been going. Only steps that take time get one --
+      // "chicken out of oven" is an instant, not something you can be 40
+      // minutes into. The clock fills it in and decides when to show it, so
+      // the markup carries the window rather than a value.
+      const runsUntil = Math.max(...evs.map(e => e.endTime ?? e.time));
+      const elapsedHtml = runsUntil > group.time
+        ? `<div class="tl-elapsed" data-start="${group.time}" data-end="${runsUntil}" hidden>
+            <span class="tl-elapsed-value"></span> so far
+          </div>`
         : '';
 
       // Hidden trackers so the clock updater can find each original event
@@ -170,21 +292,41 @@ export function renderTimeline(events, items) {
         `<span class="tl-tracker" data-item="${ev.itemId || ''}" data-type="${ev.type}" aria-hidden="true"></span>`
       ).join('');
 
+      // One handle per step, preferring the sub-line where the appliance detail
+      // already lives, falling back to the label for steps like "Heat Combi
+      // Oven" that only name it there.
+      const applLabel = evs[0].applianceLabel;
+      const applKey = (evs[0].applianceKey || '').replace(/^preheat-/, '');
+      let labelHtml = escHtml(label);
+      let subHtml = sub ? escHtml(sub) : '';
+      const peekedSub = peekTrigger(subHtml, applLabel, applKey, group.time);
+      if (peekedSub) subHtml = peekedSub;
+      else {
+        const peekedLabel = peekTrigger(labelHtml, applLabel, applKey, group.time);
+        if (peekedLabel) labelHtml = peekedLabel;
+      }
+
       return `
         <div class="tl-sub-event tl-type-${type}" data-item="${evs[0].itemId || ''}" data-type="${type}">
           ${trackers}
           ${chip ? `<span class="tl-chip">${chip}</span>` : ''}
           ${editBtn}
-          <div class="tl-label">${escHtml(label)}</div>
-          ${sub ? `<div class="tl-sub">${escHtml(sub)}</div>` : ''}
-          ${overrideHtml}
+          <div class="tl-label">${labelHtml}</div>
+          ${subHtml ? `<div class="tl-sub">${subHtml}</div>` : ''}
+          ${elapsedHtml}
+          ${tray ? `<div class="tl-tray">🍲 ${escHtml(tray)}</div>` : ''}
+          ${editHtml ? `<div class="tl-override">${editHtml}</div>` : ''}
         </div>
       `;
     }).join('');
 
     return `
-      <div class="${cls}">
-        <div class="tl-time">${formatTime(group.time)}</div>
+      <div class="${cls}" data-time="${group.time}">
+        <div class="tl-time">
+          ${formatTime(group.time)}
+          <span class="tl-stage tl-stage-now">Now</span>
+          <span class="tl-stage tl-stage-next">Next</span>
+        </div>
         <div class="tl-dot"><span></span></div>
         <div class="tl-content">${evRows}</div>
       </div>
@@ -192,22 +334,108 @@ export function renderTimeline(events, items) {
   }).join('');
 }
 
+// Tray advice for a step, printed only where the catalogue actually recommends
+// the pairing — so it reads as advice rather than as a description of where
+// things happened to land. Two dishes going in at the same moment are told to
+// share one tray; a dish whose partner is already in (or still to come) is told
+// what it is sharing with, which is the cue to use a big tray and leave room.
+function trayNote(evs) {
+  const inCluster = new Set(evs.map(e => e.itemName));
+  const together = new Set();
+  const apart = new Set();
+  for (const ev of evs) {
+    for (const mate of ev.trayMates || []) {
+      if (inCluster.has(mate)) {
+        together.add(ev.itemName);
+        together.add(mate);
+      } else {
+        apart.add(mate);
+      }
+    }
+  }
+  if (together.size >= 2) {
+    const also = apart.size ? ` (and ${joinNames([...apart])})` : '';
+    return `One tray: ${joinNames([...together])}${also}`;
+  }
+  if (apart.size) return `Shares a tray with ${joinNames([...apart])}`;
+  return null;
+}
+
+// The manual adjustments for a single dish: when it goes in, and where.
+function editFields(ev, item, cfg) {
+  const resource = ev.ct?.resource;
+  const override = item?.overrideCookStart || '';
+  const fields = [`
+    <label class="tl-field">
+      <span>Cook start</span>
+      <span class="tl-field-control">
+        <input type="time" class="override-input" data-id="${ev.itemId}" value="${escHtml(override)}">
+        ${override ? `<button type="button" class="btn-clear-override" data-id="${ev.itemId}" title="Clear override">✕</button>` : ''}
+      </span>
+    </label>`];
+
+  if (resource === 'oven') {
+    const pref = item?.appliancePref || 'auto';
+    fields.push(`
+      <label class="tl-field">
+        <span>Oven</span>
+        <select class="tl-appl-input" data-id="${ev.itemId}">
+          <option value="auto" ${pref === 'auto' ? 'selected' : ''}>Auto</option>
+          <option value="main" ${pref === 'main' ? 'selected' : ''}>Main oven</option>
+          ${cfg.hasCombi ? `<option value="combi" ${pref === 'combi' ? 'selected' : ''}>Combi oven</option>` : ''}
+        </select>
+      </label>`);
+
+    if (cfg.mainOvenShelves > 1) {
+      const shelfPref = item?.shelfPref ? String(item.shelfPref) : 'auto';
+      fields.push(`
+        <label class="tl-field">
+          <span>Shelf</span>
+          <select class="tl-shelf-input" data-id="${ev.itemId}">
+            <option value="auto" ${shelfPref === 'auto' ? 'selected' : ''}>Auto</option>
+            ${Array.from({ length: cfg.mainOvenShelves }, (_, i) => i + 1).map(n =>
+              `<option value="${n}" ${shelfPref === String(n) ? 'selected' : ''}>Shelf ${n}</option>`
+            ).join('')}
+          </select>
+        </label>`);
+    }
+  }
+
+  if (resource === 'hob') {
+    const pref = item?.appliancePref || 'auto';
+    fields.push(`
+      <label class="tl-field">
+        <span>Hob</span>
+        <select class="tl-appl-input" data-id="${ev.itemId}">
+          <option value="auto" ${pref === 'auto' ? 'selected' : ''}>Auto</option>
+          ${Array.from({ length: cfg.hobCount }, (_, i) => i + 1).map(n =>
+            `<option value="hob${n}" ${pref === `hob${n}` ? 'selected' : ''}>Hob ${n}</option>`
+          ).join('')}
+        </select>
+      </label>`);
+  }
+
+  return fields.join('');
+}
+
 export function renderApplianceSummary(items) {
   const cfg = applianceConfig();
   const nextDayOffset = getNextDayOffset();
-  const ovenItems  = items.filter(i => i._appliance === 'main');
-  const combiItems = items.filter(i => i._appliance === 'combi' || i._appliance === 'combi-mw');
-  const hobItems   = items.filter(i => i._appliance?.startsWith('hob'));
+  const hobItems = items.filter(i => i._appliance?.startsWith('hob'));
+
+  const wins = applianceWindows(items);
+  const mainWindows  = wins.filter(w => w.key === 'main');
+  const combiWindows = wins.filter(w => w.key === 'combi' || w.key === 'combi-mw');
 
   // Current slot usage at nowMins
   const now = nowMins() - nextDayOffset;
-  function usedSlots(arr) {
-    return arr.filter(i => i._s.cookStart <= now && i._s.cookEnd > now)
-              .reduce((s, i) => s + (i.shelfSlots || 1), 0);
+  function usedSlots(wins) {
+    return wins.filter(w => w.start <= now && w.end > now)
+               .reduce((s, w) => s + (w.item.shelfSlots || 1), 0);
   }
 
-  const mainUsed  = usedSlots(ovenItems);
-  const combiUsed = usedSlots(combiItems);
+  const mainUsed  = usedSlots(mainWindows);
+  const combiUsed = usedSlots(combiWindows);
 
   function slotBar(used, total) {
     let html = `<div class="slot-bar" aria-label="${used} of ${total} slots used">`;
@@ -217,17 +445,26 @@ export function renderApplianceSummary(items) {
     return html + '</div>';
   }
 
+  // Shelf is called out here too, so a hand-picked one is verifiable at a
+  // glance; a pin marks the ones the cook chose rather than the planner.
+  function ovenLine(w) {
+    const shelf = cfg.mainOvenShelves > 1 && w.shelf
+      ? `Shelf ${w.shelf}${w.item._shelfPinned ? ' 📌' : ''} · ` : '';
+    const moved = w.moved ? ' · moved in' : '';
+    return `<span>${escHtml(w.item.name)}: ${shelf}${formatTime(w.start)}–${formatTime(w.end)}${moved}</span>`;
+  }
+
   return `
     <div class="appliance-section">
       <h2>Appliances</h2>
       <div class="appliance-grid">
         <div class="appliance-card">
           <div class="app-name">Main Oven</div>
-          <div class="app-capacity">${cfg.mainOvenShelves * 2} slots (${cfg.mainOvenShelves} shelf${cfg.mainOvenShelves > 1 ? ' \u00d7 2' : ''})</div>
+          <div class="app-capacity">${cfg.mainOvenShelves * 2} slots (${cfg.mainOvenShelves} shelf${cfg.mainOvenShelves > 1 ? ' × 2' : ''})</div>
           ${slotBar(mainUsed, cfg.mainOvenShelves * 2)}
           <div class="app-items">
-            ${ovenItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
-              ovenItems.map(i => `<span>${escHtml(i.name)}: ${formatTime(i._s.cookStart)}\u2013${formatTime(i._s.cookEnd)}</span>`).join('')}
+            ${mainWindows.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
+              mainWindows.map(ovenLine).join('')}
           </div>
         </div>
         ${cfg.hasCombi ? `
@@ -236,8 +473,8 @@ export function renderApplianceSummary(items) {
           <div class="app-capacity">2 slots (1 shelf), oven or MW</div>
           ${slotBar(combiUsed, 2)}
           <div class="app-items">
-            ${combiItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
-              combiItems.map(i => `<span>${escHtml(i.name)} (${i._appliance === 'combi' ? 'oven' : 'MW'}): ${formatTime(i._s.cookStart)}\u2013${formatTime(i._s.cookEnd)}</span>`).join('')}
+            ${combiWindows.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
+              combiWindows.map(w => `<span>${escHtml(w.item.name)} (${w.mode}): ${formatTime(w.start)}–${formatTime(w.end)}${w.item._moveTo ? ' · then main oven' : ''}</span>`).join('')}
           </div>
         </div>` : ''}
         <div class="appliance-card">
@@ -251,12 +488,52 @@ export function renderApplianceSummary(items) {
           </div>
           <div class="app-items">
             ${hobItems.length === 0 ? '<span style="color:var(--text-3)">Nothing scheduled</span>' :
-              hobItems.map(i => `<span>${escHtml(i.name)} (${applianceLabel(i._appliance, null)}): ${formatTime(i._s.cookStart)}\u2013${formatTime(i._s.cookEnd)}</span>`).join('')}
+              hobItems.map(i => `<span>${escHtml(i.name)} (${applianceLabel(i._appliance, null)}): ${formatTime(i._s.cookStart)}–${formatTime(i._s.cookEnd)}</span>`).join('')}
           </div>
         </div>
       </div>
     </div>
   `;
+}
+
+// Read the adjustment panel back onto the items. Returns true when something
+// actually changed, i.e. when the schedule needs recomputing.
+function commitEdits(subEvent) {
+  let changed = false;
+
+  const setField = (selector, apply) => {
+    subEvent.querySelectorAll(selector).forEach(input => {
+      const item = state.items.find(i => i.id === input.dataset.id);
+      if (!item) return;
+      if (apply(item, input.value)) {
+        saveItem(item);
+        changed = true;
+      }
+    });
+  };
+
+  setField('.override-input', (item, value) => {
+    const next = value || null;
+    if ((item.overrideCookStart || null) === next) return false;
+    item.overrideCookStart = next;
+    return true;
+  });
+
+  setField('.tl-appl-input', (item, value) => {
+    const next = value || 'auto';
+    if ((item.appliancePref || 'auto') === next) return false;
+    item.appliancePref = next;
+    return true;
+  });
+
+  setField('.tl-shelf-input', (item, value) => {
+    const next = value === 'auto' ? null : value;
+    if ((item.shelfPref ?? null) === next) return false;
+    item.shelfPref = next;
+    return true;
+  });
+
+  return changed;
 }
 
 export function bindScheduleEvents(items, events) {
@@ -292,7 +569,7 @@ export function bindScheduleEvents(items, events) {
     try {
       await navigator.clipboard.writeText(link);
       const btn = document.getElementById('btn-share');
-      if (btn) { btn.textContent = '\u2705 Copied!'; setTimeout(() => { if (btn) btn.textContent = '\ud83d\udccb Copy link'; }, 2000); }
+      if (btn) { btn.textContent = '✅ Copied!'; setTimeout(() => { if (btn) btn.textContent = '📋 Copy link'; }, 2000); }
     } catch {
       // Clipboard blocked (e.g. insecure context) — surface the link to copy by hand.
       prompt('Copy this URL to share:', link);
@@ -304,7 +581,7 @@ export function bindScheduleEvents(items, events) {
 
   document.getElementById('wake-lock-btn')?.addEventListener('click', toggleWakeLock);
 
-  // Edit / save toggle for override inputs (commits on save click)
+  // Edit / save toggle for the adjustment panel (commits on save click)
   document.getElementById('timeline')?.addEventListener('click', e => {
     const editBtn = e.target.closest('.tl-edit');
     if (editBtn) {
@@ -313,23 +590,11 @@ export function bindScheduleEvents(items, events) {
       const editing = subEvent.classList.toggle('editing');
       if (editing) {
         editBtn.innerHTML = '💾 Save';
-        editBtn.setAttribute('aria-label', 'Save cook start');
+        editBtn.setAttribute('aria-label', 'Save changes');
         // Focus the first input so the user can pick a time straight away
         subEvent.querySelector('.override-input')?.focus();
-      } else {
-        // Commit any changed values then re-render the schedule
-        let changed = false;
-        subEvent.querySelectorAll('.override-input').forEach(inp => {
-          const id = inp.dataset.id;
-          const item = state.items.find(i => i.id === id);
-          const newVal = inp.value || null;
-          if (item && (item.overrideCookStart || null) !== newVal) {
-            item.overrideCookStart = newVal;
-            saveItem(item);
-            changed = true;
-          }
-        });
-        if (changed) renderScheduleView();
+      } else if (commitEdits(subEvent)) {
+        renderScheduleView();
       }
       return;
     }

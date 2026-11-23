@@ -37,43 +37,88 @@ export function detectConflicts(items) {
   function checkOvenConflicts() {
     const cfg = applianceConfig();
     const maxSlots = cfg.mainOvenShelves * 2;
-    const ovenItems = items.filter(i =>
-      COOK_TYPE_MAP[i.cookType]?.resource === 'oven' && i._appliance === 'main' && i._s.cookTime > 0
-    );
-    const usage = ovenItems.map(i => ({
-      start: i._s.cookStart, end: i._s.cookEnd,
-      slots: i.shelfSlots || 1, itemId: i.id,
-    }));
-    const over = sweepConflicts(usage, maxSlots);
+    // What is in the main oven, and when. A dish that moves across from the
+    // combi partway through its cook is in here only from the move onwards, so
+    // it is that stretch that gets swept rather than the whole cook.
+    const mainUsage = [];
+    for (const i of items) {
+      if (COOK_TYPE_MAP[i.cookType]?.resource !== 'oven' || !(i.cookTime > 0)) continue;
+      const slots = i.shelfSlots || 1;
+      if (i._appliance === 'main') {
+        mainUsage.push({ start: i._s.cookStart, end: i._s.cookEnd, shelf: i._shelf ?? 1, slots, itemId: i.id });
+      } else if (i._appliance === 'combi' && i._moveTo) {
+        mainUsage.push({ start: i._moveTo.at, end: i._s.cookEnd, shelf: i._moveTo.shelf, slots, itemId: i.id });
+      }
+    }
+    const describe = (id) => {
+      const it = items.find(i => i.id === id);
+      return it ? `"${it.name}" (${it.shelfSlots||1} slot${(it.shelfSlots||1)>1?'s':''})` : id;
+    };
+
+    const over = sweepConflicts(mainUsage, maxSlots);
     const seen = new Set();
     for (const { time, slots, itemIds } of over) {
       const key = [...itemIds].sort().join(',');
       if (seen.has(key)) continue;
       seen.add(key);
-      const names = itemIds.map(id => {
-        const it = ovenItems.find(i => i.id === id);
-        return it ? `"${it.name}" (${it.shelfSlots||1} slot${(it.shelfSlots||1)>1?'s':''})` : id;
-      });
       conflicts.push({
         type: 'oven',
-        message: `Main oven overcapacity at ${formatTime(time)}: ${names.join(', ')} = ${slots}/${maxSlots} slots.`,
+        message: `Main oven overcapacity at ${formatTime(time)}: ${itemIds.map(describe).join(', ')} = ${slots}/${maxSlots} slots.`,
         itemIds,
       });
+    }
+
+    // A shelf holds two slots however much room the oven has overall, so an
+    // oven that is only half full can still have a shelf with three things on
+    // it — by a hand-picked shelf that doesn't fit, or by the allocator having
+    // nowhere left to put something. Neither shows up in the total above.
+    const shelfSeen = new Set();
+    for (let shelf = 1; shelf <= cfg.mainOvenShelves; shelf++) {
+      const onShelf = mainUsage.filter(u => u.shelf === shelf);
+      if (onShelf.length < 2) continue;
+      for (const { time, slots, itemIds } of sweepConflicts(onShelf, 2)) {
+        const key = shelf + ':' + [...itemIds].sort().join(',');
+        if (shelfSeen.has(key)) continue;
+        shelfSeen.add(key);
+        conflicts.push({
+          type: 'oven-shelf',
+          message: `Main oven shelf ${shelf} overcapacity at ${formatTime(time)}: ${itemIds.map(describe).join(', ')} = ${slots}/2 slots. Move one to another shelf.`,
+          itemIds,
+        });
+      }
     }
   }
 
   function checkCombiConflicts() {
+    const cfg = applianceConfig();
     const combiItems = items.filter(i =>
-      (i._appliance === 'combi' || i._appliance === 'combi-mw') && i._s.cookTime > 0
+      (i._appliance === 'combi' || i._appliance === 'combi-mw') && i.cookTime > 0
     );
     const ovenItems = combiItems.filter(i => i._appliance === 'combi');
     const mwItems   = combiItems.filter(i => i._appliance === 'combi-mw');
 
+    // The combi is the only microwave in the model, so without one these
+    // dishes have nowhere at all to cook -- not a clash, an absence.
+    if (!cfg.hasCombi && mwItems.length > 0) {
+      conflicts.push({
+        type: 'combi-capacity',
+        message: `There is no combi or microwave in the kitchen, so `
+          + `${names(mwItems)} ${mwItems.length > 1 ? 'have' : 'has'} nowhere to cook. `
+          + `Change the cook type, or turn the combi on in Settings.`,
+        itemIds: mwItems.map(i => i.id),
+      });
+      return;
+    }
+
+    // A dish that moves out to the main oven partway through holds the combi
+    // only up to the move.
+    const combiEnd = (i) => i._moveTo ? i._moveTo.at : i._s.cookEnd;
+
     // Oven mode: 2-slot capacity
     const ovenUsage = ovenItems.map(i => ({
-      start: i._s.cookStart, end: i._s.cookEnd,
+      start: i._s.cookStart, end: combiEnd(i),
       slots: i.shelfSlots || 1, itemId: i.id,
-    }));
+    })).filter(u => u.end > u.start);
     const ovenOver = sweepConflicts(ovenUsage, 2);
     const seen = new Set();
     for (const { time, slots, itemIds } of ovenOver) {
@@ -104,51 +149,55 @@ export function detectConflicts(items) {
         itemIds,
       });
     }
-    // Mode conflicts and cooldown -- still pair-wise since mode is per-item
-    for (let i = 0; i < combiItems.length; i++) {
-      for (let j = i + 1; j < combiItems.length; j++) {
-        const a = combiItems[i], b = combiItems[j];
-        const overlapStart = Math.max(a._s.cookStart, b._s.cookStart);
-        const overlapEnd   = Math.min(a._s.cookEnd,   b._s.cookEnd);
-        const modeA = a._appliance === 'combi' ? 'oven' : 'microwave';
-        const modeB = b._appliance === 'combi' ? 'oven' : 'microwave';
+    // Mode clashes, reported per microwave dish rather than per pair. Three
+    // trays sharing the combi oven is one problem, not three, and the combi
+    // being dual-mode is not the problem at all -- what the cook needs to know
+    // is what is tying it up and that something has to give.
+    for (const mw of mwItems) {
+      const overlapping = ovenItems.filter(o =>
+        o._s.cookStart < mw._s.cookEnd && combiEnd(o) > mw._s.cookStart
+      );
+      const tooSoon = ovenItems.filter(o =>
+        combiEnd(o) <= mw._s.cookStart
+        && mw._s.cookStart - combiEnd(o) < COMBI_COOLDOWN
+      );
 
-        if (overlapEnd > overlapStart && modeA !== modeB) {
-          conflicts.push({
-            type: 'combi-mode',
-            message: `Combi mode conflict: "${a.name}" needs it as ${modeA} but "${b.name}" needs it as ${modeB} during ${formatTime(overlapStart)}\u2013${formatTime(overlapEnd)}.`,
-            itemIds: [a.id, b.id],
-          });
-        }
+      // The planner has already tried to move what is in the way; saying so
+      // stops the advice being "move a dish" when there is nowhere to move it.
+      const nowhere = mw._relocation === 'impossible'
+        ? ` The main oven is full for that stretch, so there is nothing to move.`
+        : '';
 
-        // Cooldown: oven ends, then microwave starts
-        if (modeA === 'oven' && modeB === 'microwave' && a._s.cookEnd <= b._s.cookStart) {
-          const gap = b._s.cookStart - a._s.cookEnd;
-          if (gap < COMBI_COOLDOWN) {
-            conflicts.push({
-              type: 'combi-cooldown',
-              message: `Combi needs ${COMBI_COOLDOWN}m cooldown before microwave use. "${a.name}" (oven) ends ${formatTime(a._s.cookEnd)}, "${b.name}" (microwave) starts ${formatTime(b._s.cookStart)} \u2014 only ${gap}m gap.`,
-              itemIds: [a.id, b.id],
-            });
-          }
-        }
-        if (modeB === 'oven' && modeA === 'microwave' && b._s.cookEnd <= a._s.cookStart) {
-          const gap = a._s.cookStart - b._s.cookEnd;
-          if (gap < COMBI_COOLDOWN) {
-            conflicts.push({
-              type: 'combi-cooldown',
-              message: `Combi needs ${COMBI_COOLDOWN}m cooldown before microwave use. "${b.name}" (oven) ends ${formatTime(b._s.cookEnd)}, "${a.name}" (microwave) starts ${formatTime(a._s.cookStart)} \u2014 only ${gap}m gap.`,
-              itemIds: [a.id, b.id],
-            });
-          }
-        }
+      if (overlapping.length > 0) {
+        const until = formatTime(Math.max(...overlapping.map(combiEnd)));
+        conflicts.push({
+          type: 'combi-mode',
+          message: `Combi is in use as an oven until ${until} (${names(overlapping)}), `
+            + `so it can't microwave "${mw.name}" at ${formatTime(mw._s.cookStart)}.`
+            + `${nowhere} Cook "${mw.name}" another way, or make room in the main oven.`,
+          itemIds: [mw.id, ...overlapping.map(o => o.id)],
+        });
+      } else if (tooSoon.length > 0) {
+        const last = tooSoon.reduce((a, b) => (combiEnd(b) > combiEnd(a) ? b : a));
+        const gap = mw._s.cookStart - combiEnd(last);
+        conflicts.push({
+          type: 'combi-cooldown',
+          message: `Combi needs ${COMBI_COOLDOWN}m to cool down before it will microwave. `
+            + `"${last.name}" comes out at ${formatTime(combiEnd(last))} and `
+            + `"${mw.name}" wants it at ${formatTime(mw._s.cookStart)} \u2014 only ${gap}m gap.`,
+          itemIds: [mw.id, last.id],
+        });
       }
     }
   }
 
+  function names(arr) {
+    return arr.map(i => `"${i.name}"`).join(', ');
+  }
+
   function checkHobConflicts() {
     const hobItems = items.filter(i =>
-      COOK_TYPE_MAP[i.cookType]?.resource === 'hob' && i._s.cookTime > 0
+      COOK_TYPE_MAP[i.cookType]?.resource === 'hob' && i.cookTime > 0
     );
     // Check all time slices where more than 5 items are on hobs
     const events = [];
