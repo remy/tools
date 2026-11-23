@@ -1581,6 +1581,96 @@ dialog[open] {
 }
 
 /* ---- Print ---- */
+/* ---- Appliance peek ---- */
+/* The appliance's name in a step, made into a handle. It has to keep reading
+   as part of the sentence it sits in, so it borrows every font property from
+   its surroundings and says "hover me" with a dotted rule and the cursor. */
+.appl-peek {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--accent);
+    text-decoration-style: solid;
+  }
+}
+
+#appliance-peek {
+  /* A popover is centred by the UA, which is right for a dialog and wrong for
+     a tooltip; anchor positioning hangs it off the name instead, and flips it
+     when there is no room below or to the side. */
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  position-anchor: --appl-peek;
+  position-area: block-end span-inline-end;
+  position-try-fallbacks: flip-block, flip-inline;
+
+  width: max-content;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  font-size: 0.8125rem;
+
+  & .peek-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    align-items: baseline;
+    font-weight: 600;
+    margin-bottom: var(--space-sm);
+
+    & span {
+      font-family: ui-monospace, monospace;
+      font-weight: 500;
+      color: var(--text-2);
+    }
+  }
+
+  & .peek-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+
+    & li {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-lg);
+      align-items: baseline;
+    }
+  }
+
+  & .peek-dish {
+    font-weight: 500;
+  }
+
+  & .peek-when,
+  & .peek-foot,
+  & .peek-empty {
+    color: var(--text-2);
+  }
+
+  & .peek-foot {
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-light);
+    font-size: 0.75rem;
+  }
+}
+
 /* ---- Shared icons ---- */
 /* Masked rather than inlined so the icon takes `currentColor` and follows the
    light/dark scheme like any other text. */
@@ -1829,7 +1919,14 @@ body.simulating .clock-time {
   .tl-event.tl-current::after,
   .tl-event.tl-next::after,
   .tl-stage,
-  .tl-elapsed {
+  .tl-elapsed,
+  #appliance-peek {
     display: none !important;
+  }
+
+  /* On paper there is nothing to hover, so the handle is just a name again. */
+  .appl-peek {
+    text-decoration: none;
+    color: inherit;
   }
 }

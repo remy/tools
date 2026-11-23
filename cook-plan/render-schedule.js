@@ -5,7 +5,7 @@
 import { state, saveItem, resetState, setView } from './state.js';
 import { EV_TYPE_CHIP } from './constants.js';
 import { escHtml, formatTime, formatDuration, nowMins } from './utils.js';
-import { applianceConfig } from './appliances.js';
+import { applianceConfig, applianceWindows } from './appliances.js';
 import { applianceLabel, mergedLabel, mergedSub, joinNames } from './events.js';
 import { computeSchedule } from './schedule.js';
 import { startClock, stopClock, getNextDayOffset, dismissNotification, clearNotifications, renderNotifications } from './clock.js';
@@ -13,6 +13,7 @@ import { toggleWakeLock, releaseWakeLock } from './wake-lock.js';
 import { showInputView } from './router.js';
 import { renderHeader, bindHeader } from './header.js';
 import { initSimUI } from './sim-dialog.js';
+import { initAppliancePeek } from './appliance-peek.js';
 import { buildShareLink } from './share-link.js';
 import { exportJSON } from './render-input.js';
 
@@ -114,6 +115,7 @@ export function renderScheduleView() {
   startClock(events);
   // After startClock, so the simulate controls act on a clock that is running.
   initSimUI(events);
+  initAppliancePeek(items);
   // Re-paint any notifications that survived the re-render (e.g. after toggling
   // an override). The notification stack itself is module-private to clock.js.
   renderNotifications();
@@ -183,6 +185,23 @@ function groupEvents(events) {
     else groups.push({ time: ev.time, events: [ev] });
   }
   return groups;
+}
+
+// Appliances worth peeking into. 'set', 'ready' and the like are bookkeeping
+// keys rather than things with a door.
+const PEEKABLE = (key) => key === 'main' || key === 'combi' || key === 'combi-mw'
+  || /^hob\d+$/.test(key || '');
+
+// The appliance's own name becomes the handle: it is already written in the
+// step, so making it the thing you hover avoids inventing a second control for
+// the same idea. Operates on already-escaped markup, and appliance labels are
+// plain words, so the match is exact and safe.
+function peekTrigger(html, label, key, time) {
+  if (!html || !label || !PEEKABLE(key) || !html.includes(label)) return null;
+  const btn = `<button type="button" class="appl-peek" popovertarget="appliance-peek"`
+    + ` data-appliance="${escHtml(key)}" data-at="${time}"`
+    + ` title="What's in the ${escHtml(label)} at ${formatTime(time)}?">${escHtml(label)}</button>`;
+  return html.split(label).join(btn);
 }
 
 // What a cook does in a single minute, in order: get the oven going, take out
@@ -273,13 +292,27 @@ export function renderTimeline(events, items) {
         `<span class="tl-tracker" data-item="${ev.itemId || ''}" data-type="${ev.type}" aria-hidden="true"></span>`
       ).join('');
 
+      // One handle per step, preferring the sub-line where the appliance detail
+      // already lives, falling back to the label for steps like "Heat Combi
+      // Oven" that only name it there.
+      const applLabel = evs[0].applianceLabel;
+      const applKey = (evs[0].applianceKey || '').replace(/^preheat-/, '');
+      let labelHtml = escHtml(label);
+      let subHtml = sub ? escHtml(sub) : '';
+      const peekedSub = peekTrigger(subHtml, applLabel, applKey, group.time);
+      if (peekedSub) subHtml = peekedSub;
+      else {
+        const peekedLabel = peekTrigger(labelHtml, applLabel, applKey, group.time);
+        if (peekedLabel) labelHtml = peekedLabel;
+      }
+
       return `
         <div class="tl-sub-event tl-type-${type}" data-item="${evs[0].itemId || ''}" data-type="${type}">
           ${trackers}
           ${chip ? `<span class="tl-chip">${chip}</span>` : ''}
           ${editBtn}
-          <div class="tl-label">${escHtml(label)}</div>
-          ${sub ? `<div class="tl-sub">${escHtml(sub)}</div>` : ''}
+          <div class="tl-label">${labelHtml}</div>
+          ${subHtml ? `<div class="tl-sub">${subHtml}</div>` : ''}
           ${elapsedHtml}
           ${tray ? `<div class="tl-tray">🍲 ${escHtml(tray)}</div>` : ''}
           ${editHtml ? `<div class="tl-override">${editHtml}</div>` : ''}
@@ -390,25 +423,9 @@ export function renderApplianceSummary(items) {
   const nextDayOffset = getNextDayOffset();
   const hobItems = items.filter(i => i._appliance?.startsWith('hob'));
 
-  // A dish that moves between ovens belongs to both cards, for the stretch it
-  // actually spends in each. Everything else is one window covering its cook.
-  const mainWindows = [];
-  const combiWindows = [];
-  for (const i of items) {
-    if (i._appliance === 'main') {
-      mainWindows.push({ item: i, shelf: i._shelf, start: i._s.cookStart, end: i._s.cookEnd });
-    } else if (i._appliance === 'combi' || i._appliance === 'combi-mw') {
-      combiWindows.push({
-        item: i, start: i._s.cookStart, end: i._moveTo ? i._moveTo.at : i._s.cookEnd,
-        mode: i._appliance === 'combi' ? 'oven' : 'MW',
-      });
-      if (i._moveTo) {
-        mainWindows.push({
-          item: i, shelf: i._moveTo.shelf, start: i._moveTo.at, end: i._s.cookEnd, moved: true,
-        });
-      }
-    }
-  }
+  const wins = applianceWindows(items);
+  const mainWindows  = wins.filter(w => w.key === 'main');
+  const combiWindows = wins.filter(w => w.key === 'combi' || w.key === 'combi-mw');
 
   // Current slot usage at nowMins
   const now = nowMins() - nextDayOffset;

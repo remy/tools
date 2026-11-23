@@ -384,6 +384,35 @@ export function assignAppliances(items) {
   }
 }
 
+// Every stretch a dish spends in an appliance, keyed by the appliance it is
+// in. A dish that moves between ovens has two; everything else has one. Both
+// the summary cards and the hover peek read the schedule through this, so
+// neither can disagree with the other about what is where.
+export function applianceWindows(items) {
+  const wins = [];
+  for (const i of items) {
+    if (!(i.cookTime > 0)) continue;
+    const app = i._appliance;
+    if (app === 'main') {
+      wins.push({ item: i, key: 'main', shelf: i._shelf, start: i._s.cookStart, end: i._s.cookEnd });
+    } else if (app === 'combi' || app === 'combi-mw') {
+      wins.push({
+        item: i, key: app, mode: app === 'combi' ? 'oven' : 'MW',
+        start: i._s.cookStart, end: i._moveTo ? i._moveTo.at : i._s.cookEnd,
+      });
+      if (i._moveTo) {
+        wins.push({
+          item: i, key: 'main', shelf: i._moveTo.shelf,
+          start: i._moveTo.at, end: i._s.cookEnd, moved: true,
+        });
+      }
+    } else if (app?.startsWith('hob')) {
+      wins.push({ item: i, key: app, start: i._s.cookStart, end: i._s.cookEnd });
+    }
+  }
+  return wins;
+}
+
 // Note, on each dish, which of its shelf-mates it could genuinely go in one
 // tray with. Only pairings the catalogue actually recommends get a mention —
 // two things landing on the same shelf is not by itself advice worth printing.
