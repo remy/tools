@@ -94,6 +94,11 @@
     "description": "Convert distances between km, miles, yards, feet, meters, steps and more. Optionally set a travel speed or running pace (min/km) to calculate how long a journey will take.",
     "title": "Distance & Time Converter"
   },
+  "eml-reader": {
+    "category": "Developer Tools",
+    "description": "Drop a .eml file to read an email offline \u2014 rendered HTML, plain text, full headers, MIME structure and attachments \u2014 and export any part as .txt, .html, .eml, .json or its original file.",
+    "title": "EML Reader"
+  },
   "emoji-accessibility": {
     "category": "Developer Tools",
     "description": "Browse every Unicode emoji alongside the text screen readers announce. Compare how VoiceOver, Narrator, NVDA, JAWS, and TalkBack verbalise each one.",
