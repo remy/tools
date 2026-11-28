@@ -87,10 +87,13 @@
             <button class="btn btn-sm btn-ghost" data-copy="text" type="button">Copy</button>
             <button class="btn btn-sm" data-download="text" type="button">
               <span class="icon-mask icon-download" aria-hidden="true"></span>
-              Download .txt
+              <span id="textDownloadLabel">Download .txt</span>
             </button>
           </div>
         </div>
+        <p class="notice" id="textNotice" hidden>
+          This message has no plain-text part, so its HTML body has been converted to Markdown.
+        </p>
         <pre class="text-body" id="plainSource"></pre>
       </section>
 

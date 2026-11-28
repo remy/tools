@@ -14,6 +14,7 @@ import {
   renderLinkedText,
   safeFilename,
 } from './format.js';
+import { htmlToMarkdown } from './markdown.js';
 import {
   attachmentFilename,
   buildExportGroups,
@@ -41,6 +42,8 @@ const ui = {
   htmlFrame: el('htmlFrame'),
   textBody: el('textBody'),
   plainSource: el('plainSource'),
+  textNotice: el('textNotice'),
+  textDownloadLabel: el('textDownloadLabel'),
   textMeta: el('textMeta'),
   htmlSource: el('htmlSource'),
   htmlMeta: el('htmlMeta'),
@@ -59,6 +62,8 @@ const state = {
   message: null,
   file: null,
   bodyPart: null,
+  /* Markdown stood in for a missing text/plain body, or null. */
+  derivedText: null,
   objectUrls: [],
 };
 
@@ -67,6 +72,20 @@ const state = {
 function baseName() {
   const raw = state.file?.name || 'email';
   return safeFilename(raw.replace(/\.(eml|mht|mhtml|msg|txt)$/i, ''), 'email');
+}
+
+function resolveImageSrc(src) {
+  if (!/^cid:/i.test(src)) return src;
+  const id = decodeURIComponent(src.slice(4)).replace(/^<|>$/g, '');
+  const part = state.message?.inlineById.get(id);
+  return part?.filename || part?.contentId || src;
+}
+
+/* An HTML-only message still deserves a text version, so convert the body. */
+function deriveText(message) {
+  if (message.plain || !message.html) return null;
+  const markdown = htmlToMarkdown(partText(message.html), { resolveImage: resolveImageSrc });
+  return markdown.trim() ? markdown : null;
 }
 
 function trackUrl(url) {
@@ -413,7 +432,7 @@ function renderStructure() {
 
 const TAB_DEFINITIONS = [
   { key: 'rendered', label: 'Rendered' },
-  { key: 'text', label: 'Plain text', when: (m) => Boolean(m.plain) },
+  { key: 'text', label: 'Plain text', when: (m) => Boolean(m.plain) || Boolean(state.derivedText) },
   { key: 'html', label: 'HTML source', when: (m) => Boolean(m.html) },
   { key: 'headers', label: 'Headers', count: (m) => m.headers.length },
   { key: 'attachments', label: 'Attachments', count: (m) => m.attachments.length },
@@ -452,7 +471,7 @@ function renderTabs() {
     tab.dataset.key = def.key;
     tab.setAttribute('role', 'tab');
     tab.setAttribute('aria-controls', `pane-${def.key}`);
-    tab.textContent = def.label;
+    tab.textContent = def.key === 'text' && state.derivedText ? 'Markdown' : def.label;
     if (def.count) {
       const count = document.createElement('span');
       count.className = 'tab-count';
@@ -491,6 +510,7 @@ function openExportDialog() {
     rawBlob: state.rawBlob,
     fileName: state.file?.name,
     fileSize: state.file?.size,
+    derivedText: state.derivedText,
   });
   for (const group of groups) {
     const title = document.createElement('div');
@@ -545,8 +565,11 @@ function currentFor(kind) {
     };
   }
   if (kind === 'text') {
-    return message.plain
-      ? { text: partText(message.plain), filename: `${stem}.txt`, type: 'text/plain;charset=utf-8' }
+    if (message.plain) {
+      return { text: partText(message.plain), filename: `${stem}.txt`, type: 'text/plain;charset=utf-8' };
+    }
+    return state.derivedText
+      ? { text: state.derivedText, filename: `${stem}.md`, type: 'text/markdown;charset=utf-8' }
       : null;
   }
   if (kind === 'html') {
@@ -599,6 +622,7 @@ function reset() {
   state.message = null;
   state.file = null;
   state.bodyPart = null;
+  state.derivedText = null;
   state.rawBlob = null;
   ui.panel.hidden = true;
   ui.errorBox.hidden = true;
@@ -635,6 +659,13 @@ function render() {
   if (message.plain) {
     setText(ui.textMeta, `text/plain${message.plain.charset ? `; charset=${message.plain.charset}` : ''} · ${message.plain.encoding}`);
     renderLinkedText(ui.plainSource, partText(message.plain));
+    ui.textNotice.hidden = true;
+    setText(ui.textDownloadLabel, 'Download .txt');
+  } else if (state.derivedText) {
+    setText(ui.textMeta, `text/markdown · ${formatBytes(new Blob([state.derivedText]).size)}`);
+    renderLinkedText(ui.plainSource, state.derivedText);
+    ui.textNotice.hidden = false;
+    setText(ui.textDownloadLabel, 'Download .md');
   }
   if (message.html) {
     setText(ui.htmlMeta, `text/html${message.html.charset ? `; charset=${message.html.charset}` : ''} · ${message.html.encoding}`);
@@ -676,6 +707,7 @@ async function loadFile(file) {
     state.file = file;
     state.message = message;
     state.bodyPart = message.preferred;
+    state.derivedText = deriveText(message);
     state.rawBlob = new Blob([buffer], { type: 'message/rfc822' });
     render();
   } catch (error) {

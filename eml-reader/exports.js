@@ -73,7 +73,7 @@ export function messageAsJson(message, fileName) {
 }
 
 /* Everything on offer in the Export dialog, grouped for display. */
-export function buildExportGroups({ message, stem, rawBlob, fileName, fileSize }) {
+export function buildExportGroups({ message, stem, rawBlob, fileName, fileSize, derivedText }) {
   const groups = [];
 
   const bodyItems = message.bodies.map((part) => {
@@ -85,6 +85,14 @@ export function buildExportGroups({ message, stem, rawBlob, fileName, fileSize }
       run: () => download(name, partText(part), `${part.mimeType};charset=utf-8`),
     };
   });
+  if (derivedText) {
+    const name = `${stem}.md`;
+    bodyItems.push({
+      name,
+      meta: `Markdown, converted from the HTML body · ${formatBytes(derivedText.length)}`,
+      run: () => download(name, derivedText, 'text/markdown;charset=utf-8'),
+    });
+  }
   if (bodyItems.length) groups.push({ title: 'Body', items: bodyItems });
 
   groups.push({
