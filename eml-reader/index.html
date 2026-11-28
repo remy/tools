@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Drop a .eml file to read an email offline — rendered HTML, plain text, full headers, MIME structure and attachments — and export any part as .txt, .html, .eml, .json or its original file.">
+  <meta name="category" content="Developer Tools">
+  <title>EML Reader</title>
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cstyle%3Epath%7Bfill:%2318181b%7D@media (prefers-color-scheme:dark)%7Bpath%7Bfill:%23fafafa%7D%7D%3C/style%3E%3Cpath d='M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 4-8 5-8-5V6l8 5 8-5Z'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container">
+    <header class="page-head">
+      <h1>EML Reader</h1>
+      <p class="subtitle">
+        Drop a <code>.eml</code> file to read it — rendered body, plain text, full headers, MIME
+        structure and attachments — then export any part. Parsed entirely in your browser; nothing
+        is uploaded.
+      </p>
+    </header>
+
+    <section class="upload-zone" id="uploadZone">
+      <div class="upload-inner">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+          aria-hidden="true">
+          <rect x="2.5" y="5" width="19" height="14" rx="2" />
+          <path d="M2.5 7l9.5 6 9.5-6" />
+        </svg>
+        <p>Drop an <strong>.eml</strong> file here, paste one, or <label class="file-label" for="fileInput">browse</label></p>
+        <p class="hint">Also reads <code>.mht</code>, <code>.mhtml</code> and raw MIME messages.</p>
+      </div>
+      <input type="file" id="fileInput" accept=".eml,.mht,.mhtml,.msg,message/rfc822,text/plain" hidden>
+    </section>
+
+    <div class="error-box" id="errorBox" hidden></div>
+
+    <section class="tool-panel" id="toolPanel" hidden>
+      <header class="file-bar">
+        <div class="file-bar-text">
+          <div class="file-name" id="fileName"></div>
+          <div class="file-meta" id="fileMeta"></div>
+        </div>
+        <div class="file-bar-actions">
+          <button class="btn btn-primary" id="exportBtn" type="button">
+            <span class="icon-mask icon-download" aria-hidden="true"></span>
+            Export…
+          </button>
+          <button class="btn btn-ghost" id="clearBtn" type="button">Change file</button>
+        </div>
+      </header>
+
+      <dl class="summary" id="summary"></dl>
+
+      <nav class="tabs" id="tabs" role="tablist" aria-label="Email views"></nav>
+
+      <section class="pane" id="pane-rendered" role="tabpanel" aria-labelledby="tab-rendered">
+        <div class="pane-bar">
+          <div class="pane-bar-group" id="renderedPicker"></div>
+          <div class="pane-bar-group">
+            <label class="switch" id="remoteToggleWrap" hidden>
+              <input type="checkbox" id="remoteImages">
+              <span>Load remote images</span>
+            </label>
+            <button class="btn btn-sm btn-ghost" data-copy="rendered" type="button">Copy source</button>
+            <button class="btn btn-sm" data-download="rendered" type="button">
+              <span class="icon-mask icon-download" aria-hidden="true"></span>
+              Download
+            </button>
+          </div>
+        </div>
+        <p class="notice" id="renderedNotice" hidden></p>
+        <iframe class="html-frame" id="htmlFrame" title="Rendered email body"
+          sandbox="allow-popups allow-popups-to-escape-sandbox" hidden></iframe>
+        <pre class="text-body" id="textBody" hidden></pre>
+        <p class="empty-note" id="renderedEmpty" hidden>This message has no readable body part.</p>
+      </section>
+
+      <section class="pane" id="pane-text" role="tabpanel" aria-labelledby="tab-text" hidden>
+        <div class="pane-bar">
+          <div class="pane-bar-group"><span class="pane-label" id="textMeta"></span></div>
+          <div class="pane-bar-group">
+            <button class="btn btn-sm btn-ghost" data-copy="text" type="button">Copy</button>
+            <button class="btn btn-sm" data-download="text" type="button">
+              <span class="icon-mask icon-download" aria-hidden="true"></span>
+              Download .txt
+            </button>
+          </div>
+        </div>
+        <pre class="text-body" id="plainSource"></pre>
+      </section>
+
+      <section class="pane" id="pane-html" role="tabpanel" aria-labelledby="tab-html" hidden>
+        <div class="pane-bar">
+          <div class="pane-bar-group"><span class="pane-label" id="htmlMeta"></span></div>
+          <div class="pane-bar-group">
+            <button class="btn btn-sm btn-ghost" data-copy="html" type="button">Copy</button>
+            <button class="btn btn-sm" data-download="html" type="button">
+              <span class="icon-mask icon-download" aria-hidden="true"></span>
+              Download .html
+            </button>
+          </div>
+        </div>
+        <pre class="text-body code" id="htmlSource"></pre>
+      </section>
+
+      <section class="pane" id="pane-headers" role="tabpanel" aria-labelledby="tab-headers" hidden>
+        <div class="pane-bar">
+          <div class="pane-bar-group">
+            <label class="switch">
+              <input type="checkbox" id="decodeHeaders" checked>
+              <span>Decode encoded words</span>
+            </label>
+          </div>
+          <div class="pane-bar-group">
+            <button class="btn btn-sm btn-ghost" data-copy="headers" type="button">Copy</button>
+            <button class="btn btn-sm" data-download="headers" type="button">
+              <span class="icon-mask icon-download" aria-hidden="true"></span>
+              Download .txt
+            </button>
+          </div>
+        </div>
+        <table class="headers-table">
+          <thead>
+            <tr><th scope="col">Header</th><th scope="col">Value</th></tr>
+          </thead>
+          <tbody id="headersBody"></tbody>
+        </table>
+      </section>
+
+      <section class="pane" id="pane-attachments" role="tabpanel" aria-labelledby="tab-attachments" hidden>
+        <ul class="attachment-list" id="attachmentList"></ul>
+        <p class="empty-note" id="attachmentsEmpty" hidden>This message has no attachments.</p>
+      </section>
+
+      <section class="pane" id="pane-structure" role="tabpanel" aria-labelledby="tab-structure" hidden>
+        <p class="notice">Every MIME part in the message. Download gives you the part's decoded bytes.</p>
+        <div class="tree" id="structureTree"></div>
+      </section>
+
+      <section class="pane" id="pane-raw" role="tabpanel" aria-labelledby="tab-raw" hidden>
+        <div class="pane-bar">
+          <div class="pane-bar-group"><span class="pane-label" id="rawMeta"></span></div>
+          <div class="pane-bar-group">
+            <button class="btn btn-sm btn-ghost" data-copy="raw" type="button">Copy</button>
+            <button class="btn btn-sm" data-download="raw" type="button">
+              <span class="icon-mask icon-download" aria-hidden="true"></span>
+              Download .eml
+            </button>
+          </div>
+        </div>
+        <pre class="text-body code" id="rawSource"></pre>
+      </section>
+    </section>
+  </div>
+
+  <dialog class="export-dialog" id="exportDialog">
+    <form method="dialog" class="export-form">
+      <header class="export-head">
+        <h2>Export</h2>
+        <button class="btn btn-ghost btn-sm" value="close" type="submit" aria-label="Close">Close</button>
+      </header>
+      <div class="export-body" id="exportBody"></div>
+    </form>
+  </dialog>
+
+  <script>
+    /* Capture the dropped/pasted/chosen file straight away, before the parser
+     * module has finished loading, and hand it over once it registers. */
+    (function () {
+      const zone = document.getElementById('uploadZone');
+      const input = document.getElementById('fileInput');
+      let pending = null;
+      let handler = null;
+
+      function dispatch(file) {
+        if (!file) return;
+        if (handler) handler(file);
+        else {
+          pending = file;
+          zone.classList.add('loading');
+        }
+      }
+
+      zone.addEventListener('click', (e) => {
+        if (e.target.closest('label')) return;
+        input.click();
+      });
+      input.addEventListener('change', () => {
+        dispatch(input.files[0]);
+        input.value = '';
+      });
+
+      const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes('Files');
+      let depth = 0;
+      window.addEventListener('dragenter', (e) => {
+        if (!hasFiles(e)) return;
+        e.preventDefault();
+        depth += 1;
+        document.body.classList.add('dragover');
+      });
+      window.addEventListener('dragover', (e) => { if (hasFiles(e)) e.preventDefault(); });
+      window.addEventListener('dragleave', (e) => {
+        if (!hasFiles(e)) return;
+        depth = Math.max(0, depth - 1);
+        if (depth === 0) document.body.classList.remove('dragover');
+      });
+      window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        depth = 0;
+        document.body.classList.remove('dragover');
+        dispatch(e.dataTransfer?.files?.[0]);
+      });
+
+      window.addEventListener('paste', (e) => {
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        const clipboard = e.clipboardData;
+        if (!clipboard) return;
+        const file = Array.from(clipboard.files || [])[0];
+        if (file) {
+          e.preventDefault();
+          dispatch(file);
+          return;
+        }
+        const text = clipboard.getData('text/plain');
+        if (text && /^[\w-]+:/m.test(text)) {
+          e.preventDefault();
+          dispatch(new File([text], 'pasted.eml', { type: 'message/rfc822' }));
+        }
+      });
+
+      window.__emlEarly = {
+        register(fn) {
+          handler = fn;
+          zone.classList.remove('loading');
+          if (pending) {
+            const file = pending;
+            pending = null;
+            fn(file);
+          }
+        },
+      };
+    })();
+  </script>
+
+  <script type="module" src="script.js"></script>
+  <script>navigator.serviceWorker?.register("/sw.js")</script>
+</body>
+
+</html>
